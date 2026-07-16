@@ -27,6 +27,9 @@ import EconCSLib.Algorithm.Online
 -- Math: infrastructure with no game vocabulary
 import EconCSLib.Math.Simplex
 
+-- Math/Convex
+import EconCSLib.Math.Convex.FinitePolyhedron
+
 -- Math/LinearAlgebra
 import EconCSLib.Math.LinearAlgebra.FourierMotzkin
 import EconCSLib.Math.LinearAlgebra.Farkas
