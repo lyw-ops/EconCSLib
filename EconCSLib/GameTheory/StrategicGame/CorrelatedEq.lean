@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
 import EconCSLib.GameTheory.StrategicGame.MixedStrategy
+import EconCSLib.GameTheory.StrategicGame.Nash
 import EconCSLib.Math.Convex.FinitePolyhedron
 import EconCSLib.Math.Simplex
 
@@ -58,6 +59,14 @@ finite product distributions and their coordinate marginals.
 * `isExtendedNashEquilibrium_iff_signalwise` - finite ex-ante/ex-post equivalence
 * `isExtendedNashEquilibrium_trivial_iff_isMixedNashEq` - trivial information
   recovers ordinary mixed Nash equilibrium
+* `piProduct_mem_correlatedEquilibriumDistributions_of_isMixedNashEq` - [MSZ
+  Theorem 8.7]: the product distribution of a mixed Nash equilibrium is a
+  correlated equilibrium
+* `piProduct_mem_correlatedEquilibriumDistributions_of_mixedNashEquilibrium` -
+  the same theorem for the all-mixed-deviations predicate returned by the
+  library's Nash existence theorem
+* `vertex_mem_correlatedEquilibriumDistributions_iff_isNashEquilibrium` - a
+  point-mass distribution is correlated exactly at a pure Nash equilibrium
 * `inducedDistribution_canonical_truthful` - canonical truthful play induces its prior
 * `behaviorProfileToMixedContingentPlan_canonical_truthful` - the behavioral
   truthful profile couples to the point mass on the identity contingent plan
@@ -1229,6 +1238,21 @@ theorem inducedDistribution_val {Omega : Type uOmega} [Fintype Omega]
         I.prior.val omega * extendedActionProbability I sigma omega s :=
   rfl
 
+/-- Under trivial information, the distribution induced by a mixed profile is
+its independent product distribution. This is Equation (8.10) in [MSZ,
+Section 8.2]. -/
+theorem inducedDistribution_trivial_eq_piProduct (p : MixedProfile G) :
+    inducedDistribution
+        (trivialInformationStructure.{u_N, u_U, u_S, 0, 0} G)
+        (trivialExtendedProfile.{u_N, u_U, u_S, 0, 0} G p) =
+      stdSimplex.piProduct p := by
+  classical
+  apply Subtype.ext
+  funext s
+  rw [inducedDistribution_val, stdSimplex.piProduct_apply]
+  simp [trivialInformationStructure, trivialExtendedProfile,
+    extendedActionProbability, extendedMixedProfile]
+
 /-- The action probability generated at an event by mixed complete plans is the
 fiber sum over all plan profiles realizing that action profile. -/
 theorem extendedActionProbability_mixedContingentPlan_eq_fiberSum
@@ -1904,6 +1928,65 @@ theorem inducedDistribution_mem_correlatedEquilibriumDistributions
   intro i s t
   exact obedienceDifference_of_isCorrelatedEquilibrium I sigma hsigma i s t
 
+/-- **[MSZ, Theorem 8.7].** The independent product distribution induced by a
+mixed Nash equilibrium is a correlated-equilibrium distribution. The proof
+passes through the one-event, one-signal information extension, whose
+equilibrium predicate is proved equivalent to ordinary mixed Nash
+equilibrium. -/
+theorem piProduct_mem_correlatedEquilibriumDistributions_of_isMixedNashEq
+    (p : MixedProfile G) (hp : IsMixedNashEq G p) :
+    stdSimplex.piProduct p ∈ CorrelatedEquilibriumDistributions G := by
+  have hext :
+      IsExtendedNashEquilibrium
+          (trivialInformationStructure.{u_N, u_U, u_S, 0, 0} G)
+          (trivialExtendedProfile.{u_N, u_U, u_S, 0, 0} G p) :=
+    (isExtendedNashEquilibrium_trivial_iff_isMixedNashEq G p).2 hp
+  rw [← inducedDistribution_trivial_eq_piProduct (G := G) p]
+  exact inducedDistribution_mem_correlatedEquilibriumDistributions
+    (trivialInformationStructure.{u_N, u_U, u_S, 0, 0} G)
+    (trivialExtendedProfile.{u_N, u_U, u_S, 0, 0} G p)
+    hext
+
+/-- Obedience at a point mass reduces to the corresponding pure unilateral
+deviation inequality when the recommended action is the point's own action,
+and is zero for every other recommendation. -/
+private theorem obedienceDifference_vertex
+    (sigma : G.Profile) (i : N) (s t : G.strategy i) :
+    obedienceDifference (stdSimplex.vertex sigma) i s t =
+      if sigma i = s then
+        G.payoff sigma i - G.payoff (deviate sigma i t) i
+      else 0 := by
+  classical
+  unfold obedienceDifference
+  rw [Finset.sum_eq_single sigma]
+  · simp
+  · intro rho _ hrho
+    simp [hrho]
+  · intro hsigma
+    exact (hsigma (Finset.mem_univ sigma)).elim
+
+/-- A point mass at `sigma` is a correlated-equilibrium distribution exactly
+when `sigma` is a pure Nash equilibrium. This is the pure-strategy boundary
+case of [MSZ, Theorem 8.7], with the converse supplied by the obedience
+inequalities. -/
+theorem vertex_mem_correlatedEquilibriumDistributions_iff_isNashEquilibrium
+    (sigma : G.Profile) :
+    stdSimplex.vertex sigma ∈ CorrelatedEquilibriumDistributions G ↔
+      IsNashEquilibrium G sigma := by
+  rw [mem_correlatedEquilibriumDistributions_iff_obedience]
+  constructor
+  · intro h i t
+    have hi := h i (sigma i) t
+    rw [obedienceDifference_vertex] at hi
+    simpa using hi
+  · intro h i s t
+    by_cases hs : sigma i = s
+    · subst s
+      have hi : G.payoff (deviate sigma i t) i ≤ G.payoff sigma i := h i t
+      rw [obedienceDifference_vertex]
+      simpa using (sub_nonneg.mpr hi)
+    · rw [obedienceDifference_vertex, if_neg hs]
+
 /-- A mixed-plan equilibrium of any finite information extension induces an
 element of `CED(G)`, independently of universe levels. -/
 theorem inducedMixedContingentPlanDistribution_mem_correlatedEquilibriumDistributions
@@ -2181,5 +2264,26 @@ theorem correlatedEquilibriumDistributions_image_isCompact
   exact V.finite_toSet.isCompact_convexHull ℝ
 
 end FiniteCorrelatedEquilibrium
+
+section RealNashProduct
+
+variable {N : Type u_N} [Fintype N] [DecidableEq N]
+variable {G : StrategicGame.{u_N, 0, u_S} N ℝ}
+variable [∀ i : N, Fintype (G.strategy i)]
+variable [∀ i : N, DecidableEq (G.strategy i)]
+
+/-- Real-payoff bridge from the all-mixed-deviations Nash predicate used by
+the Brouwer existence theorem to [MSZ, Theorem 8.7]. Pure deviations are
+special cases of mixed deviations, and the two expected-payoff definitions
+unfold to the same finite product sum. -/
+theorem piProduct_mem_correlatedEquilibriumDistributions_of_mixedNashEquilibrium
+    (p : MixedS G) (hp : mixedNashEquilibrium G p) :
+    stdSimplex.piProduct p ∈ CorrelatedEquilibriumDistributions G := by
+  apply piProduct_mem_correlatedEquilibriumDistributions_of_isMixedNashEq p
+  intro i s
+  have h := hp i (pureToMixed s)
+  simpa [evaluate_at_mixed, expectedPayoff, deviateMixed] using h
+
+end RealNashProduct
 
 end StrategicGame
