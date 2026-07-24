@@ -36,6 +36,19 @@ reviews:
         Do not leave comments for harmless tactic or formatting preferences when the proof is
         clear and robust. Lean CI is the authority for elaboration and kernel checking.
 
+        Enforce docs/maintainers/review-policy.md. For every commit that introduces a
+        structure or class, verify that related newly introduced constructors, field users,
+        definitions, functions, and intermediate or important theorems remain in the same
+        Lean module. Flag cross-module API expansion in the same commit unless the author
+        gives a concrete exception rationale.
+
+        Review all declaration names against Mathlib's naming conventions:
+        https://leanprover-community.github.io/contribute/naming.html. In particular, require
+        American English, UpperCamelCase for Types/Props/structures/classes, snake_case for
+        theorem names, lowerCamelCase for non-Prop terms, and the established structural lemma
+        patterns such as `.ext`, `.ext_iff`, `*_injective`, and `*_of_*` where applicable.
+        When flagging a name, suggest one concrete compliant replacement.
+
     - path: "EconCSLib/OpenProblem/**/*.lean"
       instructions: |
         These modules deliberately describe unresolved research questions. Verify that the
