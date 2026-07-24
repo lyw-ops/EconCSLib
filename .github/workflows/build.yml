@@ -22,26 +22,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install elan
-        run: |
-          curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf \
-            | sh -s -- -y --default-toolchain none
-          echo "$HOME/.elan/bin" >> $GITHUB_PATH
-
-      - name: Cache Lake packages
-        uses: actions/cache@v4
+      # Official Lean CI action: installs the pinned toolchain, restores the
+      # Lake/Mathlib caches, runs `lake build`, and independently rechecks the
+      # environment with leanchecker.
+      - name: Build and validate Lean
+        uses: leanprover/lean-action@v1
         with:
-          path: |
-            ~/.elan
-            .lake
-          key: ${{ runner.os }}-lake-${{ hashFiles('lean-toolchain', 'lakefile.toml') }}
+          build: true
+          leanchecker: true
 
-      - name: Fetch Mathlib cache
-        run: lake exe cache get
-
-      - name: Build
-        run: lake build
-
+      # These project-specific checks remain outside lean-action.
       - name: Build examples
         run: lake build EconCSLib.Examples
 
