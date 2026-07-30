@@ -9,11 +9,16 @@ import EconCSLib.GameTheory.StrategicGame.NashEquilibrium
 /-!
 # EconCSLib.GameTheory.ExtensiveGame.GameTreeStrategicForm
 
-Strategic-form extraction for finite perfect-information `GameTree` games.
+Structural endpoint-plan normal-form extraction for finite `GameTree` games.
 
 The extracted normal-form game gives every player a complete contingent plan:
-at each node context `(mover, head, tail)`, choose one of the available
-children.  During play, the node's mover selects which player's plan is used.
+at each structural endpoint context `(mover, head, tail)`, choose one of the
+available children. Equal subtree values at distinct history occurrences are
+merged. During play, the node's mover selects which player's plan is used.
+
+Thus this is not the canonical occurrence-sensitive strategic form of a
+root-bound EFG. For that strategy space use `toOccurrenceObservedGame`; its
+pure profiles are indexed by complete decision-history occurrences.
 
 ## Main definitions
 
@@ -33,8 +38,8 @@ namespace GameTree
 variable {N U : Type*}
 variable [DecidableEq N]
 
-/-- A single player's pure strategy in the normal form of a `GameTree`:
-    a complete contingent plan choosing a child at every possible node. -/
+/-- A single player's structural endpoint plan: choose a child at every
+possible node value, with equal occurrences intentionally identified. -/
 def PlayerStrategy (N U : Type*) : Type _ :=
   (m : N) → (h : GameTree N U) → (t : List (GameTree N U)) →
     { c : GameTree N U // c ∈ h :: t }

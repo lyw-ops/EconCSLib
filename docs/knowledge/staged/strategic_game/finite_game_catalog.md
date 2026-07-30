@@ -32,19 +32,20 @@ looking for a specific existence result should start here.
 - **Kuhn's SPE existence (no chance)** — every finite perfect-information game
   without chance moves has a pure subgame-perfect equilibrium, constructed by
   backward induction.
-  Lean: `EconCSLib.ExtensiveGame.GameTreeSPE :: Kuhn_exists_SPE`.
+  Lean: `EconCSLib.GameTheory.ExtensiveGame.Compiler.GameTreeOccurrenceObserved ::
+  Kuhn_exists_occurrencePureSPE`.
   Knowledge node: [[game_theory.extensive_game.perfect_information.kuhn_spe_existence_no_chance]].
 
 - **Zermelo's determinacy (2-player zero-sum, perfect information)** — every
   finite 2-player zero-sum perfect-information game is determined: `optStrategy`
   is a saddle with value `value₀ g`.
-  Lean: `EconCSLib.ExtensiveGame.Zermelo :: zermelo_determinacy`.
+  Lean: `EconCSLib.GameTheory.ExtensiveGame.Zermelo :: zermelo_determinacy`.
   Knowledge node: [[game_theory.extensive_game.perfect_information.zermelo_determinacy]].
 
 - **Backward-induction value** — the `value` function assigns a payoff vector
   to every node by backward induction; `valueList` is the mutually recursive
   helper over lists of subtrees.
-  Lean: `EconCSLib.ExtensiveGame.BackwardInduction :: GameTree.value`,
+  Lean: `EconCSLib.GameTheory.ExtensiveGame.BackwardInduction :: GameTree.value`,
   `GameTree.valueList`.
 
 - **Loomis minimax** — every finite matrix game over `ℝ` satisfies
@@ -76,9 +77,11 @@ looking for a specific existence result should start here.
 ## Scope
 
 This node covers *finite* games only.  Infinite-horizon, continuous-action, and
-stochastic game results live in their own sections of the knowledge base.  The
-chance-node extension of Kuhn's theorem (requiring vNM lottery utility) is
-tracked by [[game_theory.extensive_game.kuhn_spe_existence_with_chance]].
+stochastic game results live in their own sections of the knowledge base. The
+chance-node extension of Kuhn's theorem is tracked by
+[[game_theory.extensive_game.perfect_information.kuhn_spe_existence_with_chance]];
+the current real-payoff stochastic-tree layer has normalized chance execution
+but not yet the general SPE existence proof.
 
 ## See also
 

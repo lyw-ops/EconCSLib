@@ -11,12 +11,12 @@ uses:
   - game_theory.extensive_game.perfect_information.subgame_perfect_equilibrium
 lean:
   modules:
-    - EconCSLib.GameTheory.ExtensiveGame.GameTreeNE
+    - EconCSLib.GameTheory.ExtensiveGame.Observed.SPE
   declarations:
-    - IsSubgamePerfect.toNE
+    - ExtensiveGame.ObservedGame.IsPureStandardSubgamePerfect.isNashAtInit
 verification:
   statement: accepted
-  proof: gap
+  proof: accepted
   alignment: aligned
 tags:
   - extensive-game

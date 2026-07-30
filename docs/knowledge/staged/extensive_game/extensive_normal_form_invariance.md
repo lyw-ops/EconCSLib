@@ -2,7 +2,7 @@
 id: game_theory.extensive_game.normal_form.extensive_normal_form_invariance
 title: Normal Form Invariance Of Extensive Representations
 kind: proposition
-status: formalized
+status: staged
 primary_topic: game_theory.extensive_game
 topics:
   - game_theory.extensive_game
@@ -10,15 +10,9 @@ topics:
 uses:
   - game_theory.extensive_game.imperfect_information.imperfect_information_pure_strategy
   - game_theory.extensive_game.normal_form.normal_form_reduction
-lean:
-  modules:
-    - EconCSLib.GameTheory.ExtensiveGame.GameTreeStrategicForm
-  declarations:
-    - GameTree.toStrategicGame_nash_iff_isNashAt
 verification:
   statement: accepted
   proof: gap
-  alignment: aligned
 tags:
   - extensive-game
   - normal-form
@@ -39,6 +33,14 @@ The statement is structural rather than an equilibrium theorem. Each elementary
 transformation preserves the pure strategy sets up to canonical identification and
 preserves the outcome induced by every strategy profile. Chains of these moves
 therefore preserve the normal form.
+
+## Lean Status
+
+The existing `GameTree.toStrategicGame_nash_iff_isNashAt` theorem proves the
+Nash correspondence for one fixed `GameTree` and its induced strategic game.
+It does not formalize interchange, coalescing, superfluous-move elimination,
+or the claimed characterization by chains of elementary transformations.
+This broader proposition therefore remains staged.
 
 ## References
 

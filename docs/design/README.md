@@ -48,7 +48,7 @@ exactly where every constraint enters.
 | Module | Source | Design notes | Status |
 |--------|--------|-------------|--------|
 | Strategic games | `GameTheory/StrategicGame/` | [`strategic_game.md`](strategic_game.md) | Available |
-| Extensive games | `GameTheory/ExtensiveGame/` | [`extensive_game.md`](extensive_game.md) | Available |
+| Extensive games | `GameTheory/ExtensiveGame/` | [`extensive_game.md`](extensive_game.md), [`efg-governance.md`](efg-governance.md), [`efg-module-status.md`](efg-module-status.md), [`efg-public-api.md`](efg-public-api.md), [`efg-import-granularity.md`](efg-import-granularity.md), [`efg-api-migration.md`](efg-api-migration.md), [`efg-representation-compilation.md`](efg-representation-compilation.md), [`observed-game-constructors.md`](observed-game-constructors.md) | Available |
 | Coalitional games | `GameTheory/CoalitionalGame/` | — | Planned |
 | Social choice (voting, fair division) | `SocialChoice/` | — | Planned |
 | Matching | `MarketDesign/Matching/` | — | Planned |

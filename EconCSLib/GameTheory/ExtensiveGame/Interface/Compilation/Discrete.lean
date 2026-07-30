@@ -1,0 +1,25 @@
+/-
+Copyright (c) 2026 EconCSLib contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+
+import EconCSLib.GameTheory.ExtensiveGame.Interface.Equilibrium.Discrete
+import EconCSLib.GameTheory.ExtensiveGame.FOSG.FOSG
+import EconCSLib.GameTheory.ExtensiveGame.FOSG.FOSGBehavioralSerialization
+import EconCSLib.GameTheory.ExtensiveGame.FOSG.Sequentialization.Equilibrium
+import EconCSLib.GameTheory.ExtensiveGame.FOSG.FOSGContinuation
+import EconCSLib.GameTheory.ExtensiveGame.Compiler.GameTreeOccurrenceObserved
+import EconCSLib.GameTheory.ExtensiveGame.Compiler.StochasticGameTreeObserved
+import EconCSLib.GameTheory.ExtensiveGame.Compiler.FiniteImperfectObserved
+
+/-!
+# Discrete EFG compilation
+
+Stable public import for the PMF-valued FOSG serializers and finite reference
+observed-EFG compilers.
+
+It extends `Interface.Equilibrium.Discrete` and does not import the analytic
+measurable-kernel execution/equilibrium stack. The older
+`Interface.Compilation` path remains a compatibility aggregate that also
+re-exports analytic equilibrium.
+-/

@@ -21,7 +21,9 @@ The design follows the Bourbaki principle — separate concerns into independent
 * **ExtensiveGame** — adds player assignment, initial state, and payoffs on top of Arena.
 
 This state-space approach supports both finite and infinite games.
-Inductive game trees embed as a special case (see `ExtensiveGame/Embedding.lean`).
+Inductive game trees compile as a special case (see
+`ExtensiveGame/Compiler/GameTreeObserved.lean` and its occurrence-sensitive
+companion).
 
 ## Main definitions
 
@@ -87,6 +89,50 @@ structure ExtensiveGame (N : Type*) (U : Type*) extends Arena where
 namespace ExtensiveGame
 
 variable {N : Type*} {U : Type*}
+
+/-- Add an initial state, mover assignment, and payoff function to an ordinary
+arena.
+
+All game-semantic data are explicit arguments; in particular this constructor
+does not infer chance nodes or terminal payoffs from the arena. It composes
+with observed-game presentation constructors without duplicating the arena's
+state, action, or transition fields. -/
+abbrev ofArena (arena : Arena) (init : arena.State)
+    (mover : arena.State → Option N)
+    (payoff : arena.State → N → U) :
+    ExtensiveGame N U where
+  toArena := arena
+  init := init
+  mover := mover
+  payoff := payoff
+
+@[simp]
+theorem ofArena_toArena (arena : Arena) (init : arena.State)
+    (mover : arena.State → Option N)
+    (payoff : arena.State → N → U) :
+    (ofArena arena init mover payoff).toArena = arena :=
+  rfl
+
+@[simp]
+theorem ofArena_init (arena : Arena) (init : arena.State)
+    (mover : arena.State → Option N)
+    (payoff : arena.State → N → U) :
+    (ofArena arena init mover payoff).init = init :=
+  rfl
+
+@[simp]
+theorem ofArena_mover (arena : Arena) (init : arena.State)
+    (mover : arena.State → Option N)
+    (payoff : arena.State → N → U) (state : arena.State) :
+    (ofArena arena init mover payoff).mover state = mover state :=
+  rfl
+
+@[simp]
+theorem ofArena_payoff (arena : Arena) (init : arena.State)
+    (mover : arena.State → Option N)
+    (payoff : arena.State → N → U) (state : arena.State) (i : N) :
+    (ofArena arena init mover payoff).payoff state i = payoff state i :=
+  rfl
 
 /-- The arena of a game. -/
 abbrev arena (G : ExtensiveGame N U) : Arena := G.toArena

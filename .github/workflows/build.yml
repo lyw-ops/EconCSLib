@@ -48,6 +48,21 @@ jobs:
       - name: Check Lean sources for placeholders
         run: python3 scripts/check_lean_placeholders.py EconCSLib
 
+      - name: Check EFG architecture governance
+        run: python3 scripts/check_efg_governance.py
+
+      - name: Report EFG declaration usage
+        run: |
+          python3 scripts/report_efg_declaration_usage.py \
+            --check \
+            --output /tmp/efg-declaration-usage.md
+
+      - name: Upload EFG declaration usage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: efg-declaration-usage
+          path: /tmp/efg-declaration-usage.md
+
       - name: Check diff whitespace
         run: |
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then

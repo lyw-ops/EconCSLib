@@ -2,24 +2,16 @@
 id: game_theory.extensive_game.perfect_information.strictly_competitive_perfect_information_determined
 title: Strictly Competitive Perfect-Information Determinacy
 kind: theorem
-status: formalized
+status: staged
 primary_topic: game_theory.extensive_game
 topics:
   - game_theory.extensive_game
   - game_theory.extensive_game.perfect_information
 uses:
   - game_theory.extensive_game.perfect_information.zermelo_determinacy
-lean:
-  modules:
-    - EconCSLib.GameTheory.ExtensiveGame.Zermelo
-  declarations:
-    - GameTree.zermelo_determinacy
-    - GameTree.value_zero_sum
-    - GameTree.value₀_eq_outcome_and_zeroSum
 verification:
   statement: accepted
   proof: gap
-  alignment: aligned
 tags:
   - extensive-game
   - determinacy
@@ -39,6 +31,14 @@ Order outcomes by player 1's preference. Let $R_k$ be the smallest initial segme
 of outcomes that player 1 can guarantee. Player 1 can guarantee $R_k$, while by
 Zermelo determinacy player 2 can guarantee the complement of $R_{k-1}$. This
 identifies the threshold outcome and gives determinacy.
+
+## Lean Status
+
+`GameTree.zermelo_determinacy` proves a rational-payoff, two-player zero-sum
+saddle theorem. A formal encoding from arbitrary strictly competitive outcome
+orders to that representation, together with preservation of winning
+strategies, is still missing. The general strictly competitive result remains
+staged.
 
 ## References
 

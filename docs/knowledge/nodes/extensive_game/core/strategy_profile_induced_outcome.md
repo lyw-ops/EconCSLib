@@ -9,13 +9,15 @@ topics:
   - game_theory.extensive_game.core
 lean:
   modules:
-    - EconCSLib.GameTheory.ExtensiveGame.Strategy
-    - EconCSLib.GameTheory.ExtensiveGame.Play
+    - EconCSLib.GameTheory.ExtensiveGame.Execution.StoppedExecution
+    - EconCSLib.GameTheory.ExtensiveGame.Observed.Game
     - EconCSLib.GameTheory.ExtensiveGame.GameTreeSPE
   declarations:
-    - ExtensiveGame.StrategyProfile
-    - ExtensiveGame.StrategyProfile.actionAt
-    - ExtensiveGame.finalPayoff
+    - Arena.HistoryPolicy
+    - ExtensiveGame.stoppedPayoff
+    - ExtensiveGame.ObservedGame.PureProfile
+    - ExtensiveGame.ObservedGame.PureProfile.actionAt
+    - ExtensiveGame.ObservedGame.stoppedPayoff
     - GameTree.outcome
 verification:
   definition: accepted
@@ -29,13 +31,21 @@ tags:
 
 # Strategy Profile And Induced Outcome
 
-A strategy profile $\sigma=(\sigma_i)_{i\in I}$ specifies one successor at every
-decision position. Starting from the origin and following the successor prescribed
-by the player who controls the current position gives a unique terminal outcome
+A pure strategy profile $\sigma=(\sigma_i)_{i\in I}$ specifies an action at
+every decision information state. In a terminating extensive-form game,
+starting from the origin and following the action prescribed by the controlling
+player gives a unique terminal outcome
 $$
   F(\sigma)\in R.
 $$
 Payoffs under the strategy profile are then $g_i(F(\sigma))$.
+
+For an inductive finite `GameTree`, `GameTree.outcome` is total because
+termination is structural. For a general `ExtensiveGame`, execution is instead
+history-sensitive and fuel-bounded: `ExtensiveGame.stoppedPayoff` and
+`ObservedGame.stoppedPayoff` return `none` when the supplied fuel expires
+before a terminal history. Thus the general API does not pretend that arbitrary
+arenas terminate.
 
 ## References
 
