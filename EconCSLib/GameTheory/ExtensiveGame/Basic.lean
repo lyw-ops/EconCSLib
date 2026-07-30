@@ -97,7 +97,7 @@ All game-semantic data are explicit arguments; in particular this constructor
 does not infer chance nodes or terminal payoffs from the arena. It composes
 with observed-game presentation constructors without duplicating the arena's
 state, action, or transition fields. -/
-abbrev ofArena (arena : Arena) (init : arena.State)
+def ofArena (arena : Arena) (init : arena.State)
     (mover : arena.State → Option N)
     (payoff : arena.State → N → U) :
     ExtensiveGame N U where
@@ -123,15 +123,15 @@ theorem ofArena_init (arena : Arena) (init : arena.State)
 @[simp]
 theorem ofArena_mover (arena : Arena) (init : arena.State)
     (mover : arena.State → Option N)
-    (payoff : arena.State → N → U) (state : arena.State) :
-    (ofArena arena init mover payoff).mover state = mover state :=
+    (payoff : arena.State → N → U) :
+    (ofArena arena init mover payoff).mover = mover :=
   rfl
 
 @[simp]
 theorem ofArena_payoff (arena : Arena) (init : arena.State)
     (mover : arena.State → Option N)
-    (payoff : arena.State → N → U) (state : arena.State) (i : N) :
-    (ofArena arena init mover payoff).payoff state i = payoff state i :=
+    (payoff : arena.State → N → U) :
+    (ofArena arena init mover payoff).payoff = payoff :=
   rfl
 
 /-- The arena of a game. -/
