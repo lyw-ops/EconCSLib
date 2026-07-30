@@ -2,7 +2,7 @@
 id: game_theory.extensive_game.perfect_information.zermelo_determinacy
 title: Zermelo Saddle Determinacy For Rational Zero-Sum GameTrees
 kind: theorem
-status: formalized
+status: proved
 primary_topic: game_theory.extensive_game
 topics:
   - game_theory.extensive_game

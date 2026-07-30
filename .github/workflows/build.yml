@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    branches: [main, experiment/efg-review-baseline]
   workflow_dispatch:
 
 permissions:
@@ -22,26 +22,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install elan
-        run: |
-          curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf \
-            | sh -s -- -y --default-toolchain none
-          echo "$HOME/.elan/bin" >> $GITHUB_PATH
-
-      - name: Cache Lake packages
-        uses: actions/cache@v4
+      # Official Lean CI action: installs the pinned toolchain, restores the
+      # Lake/Mathlib caches, runs `lake build`, and independently rechecks the
+      # environment with leanchecker.
+      - name: Build and validate Lean
+        uses: leanprover/lean-action@v1
         with:
-          path: |
-            ~/.elan
-            .lake
-          key: ${{ runner.os }}-lake-${{ hashFiles('lean-toolchain', 'lakefile.toml') }}
+          build: true
+          leanchecker: true
 
-      - name: Fetch Mathlib cache
-        run: lake exe cache get
-
-      - name: Build
-        run: lake build
-
+      # These project-specific checks remain outside lean-action.
       - name: Build examples
         run: lake build EconCSLib.Examples
 
@@ -62,6 +52,15 @@ jobs:
         with:
           name: efg-declaration-usage
           path: /tmp/efg-declaration-usage.md
+
+      - name: Check per-commit review scope
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          if [ -n "$BASE_SHA" ] && [ "$BASE_SHA" != "0000000000000000000000000000000000000000" ]; then
+            python3 scripts/check_commit_scope.py --base "$BASE_SHA" --head "$HEAD_SHA"
+          fi
 
       - name: Check diff whitespace
         run: |
