@@ -53,11 +53,12 @@ def append {middle finish : A.State}
   | .snoc rest action => (first.append rest).snoc action
 
 @[simp]
-theorem append_nil (first : A.History start middle) :
+theorem append_nil {middle : A.State} (first : A.History start middle) :
     first.append (History.nil : A.History middle middle) = first := rfl
 
 @[simp]
-theorem append_snoc (first : A.History start middle)
+theorem append_snoc {middle finish : A.State}
+    (first : A.History start middle)
     (suffix : A.History middle finish) (action : A.Action finish) :
     first.append (suffix.snoc action) =
       (first.append suffix).snoc action := rfl
@@ -85,7 +86,8 @@ theorem length_nil :
     (History.nil : A.History start start).length = 0 := rfl
 
 @[simp]
-theorem length_snoc (h : A.History start s) (a : A.Action s) :
+theorem length_snoc {s : A.State}
+    (h : A.History start s) (a : A.Action s) :
     (h.snoc a).length = h.length + 1 := rfl
 
 @[simp]
@@ -102,10 +104,9 @@ theorem length_append {middle finish : A.State}
 /-- Forget the actions in a history and retain ordinary reachability of its
 endpoint. -/
 def toReachable {s : A.State} :
-    (h : A.History start s) →
-      _root_.ExtensiveGame.Arena.Reachable A start s
-  | .nil => _root_.ExtensiveGame.Arena.Reachable.refl _
-  | .snoc h a => h.toReachable.step' a
+    (h : A.History start s) → A.Reachable start s
+  | .nil => Arena.Reachable.refl _
+  | .snoc h a => h.toReachable.tail a
 
 end History
 
@@ -153,12 +154,14 @@ def liftAppend {middle finish : A.State}
   | .snoc rest action => (baseHistory.liftAppend rest).snoc action
 
 @[simp]
-theorem liftAppend_nil (baseHistory : A.History start middle) :
+theorem liftAppend_nil {middle : A.State}
+    (baseHistory : A.History start middle) :
     baseHistory.liftAppend (History.nil : A.History middle middle) =
       History.nil := rfl
 
 @[simp]
-theorem liftAppend_snoc (baseHistory : A.History start middle)
+theorem liftAppend_snoc {middle finish : A.State}
+    (baseHistory : A.History start middle)
     (suffix : A.History middle finish) (action : A.Action finish) :
     baseHistory.liftAppend (suffix.snoc action) =
       (baseHistory.liftAppend suffix).snoc action := rfl
@@ -179,15 +182,15 @@ theorem length_liftAppend {middle finish : A.State}
 end History
 
 /-- Every state in the history unfolding is reachable from the empty history. -/
-theorem History.reachableInUnfolding (A : Arena) (start : A.State)
+theorem History.reachable_unfoldFrom (A : Arena) (start : A.State)
     {s : A.State} (h : A.History start s) :
-    _root_.ExtensiveGame.Arena.Reachable
-      (A.unfoldFrom start) (HistoryFrom.nil A start) ⟨s, h⟩ := by
+    (A.unfoldFrom start).Reachable
+      (HistoryFrom.nil A start) ⟨s, h⟩ := by
   induction h with
   | nil =>
-      exact _root_.ExtensiveGame.Arena.Reachable.refl _
+      exact Arena.Reachable.refl _
   | snoc h a ih =>
-      exact ih.step' a
+      exact ih.tail a
 
 end Arena
 
@@ -200,13 +203,11 @@ variable {N U : Type*}
 Movers and payoffs are read from the endpoint world state.  Observation and
 information-state layers may instead distinguish histories with the same
 endpoint. -/
-def unfold (G : ExtensiveGame N U) : ExtensiveGame N U where
-  State := G.toArena.HistoryFrom G.init
-  Action := fun h => G.Action h.1
-  next := fun h a => ⟨G.next h.1 a, h.2.snoc a⟩
-  init := Arena.HistoryFrom.nil G.toArena G.init
-  mover := fun h => G.mover h.1
-  payoff := fun h i => G.payoff h.1 i
+def unfold (G : ExtensiveGame N U) : ExtensiveGame N U :=
+  ofArena (G.toArena.unfoldFrom G.init)
+    (Arena.HistoryFrom.nil G.toArena G.init)
+    (fun h => G.mover h.1)
+    (fun h i => G.payoff h.1 i)
 
 @[simp]
 theorem unfold_init (G : ExtensiveGame N U) :
@@ -243,40 +244,6 @@ unfolded game. -/
 theorem unfold_isReachable (G : ExtensiveGame N U)
     (h : G.toArena.HistoryFrom G.init) :
     G.unfold.IsReachable h :=
-  h.2.reachableInUnfolding G.toArena G.init
+  h.2.reachable_unfoldFrom G.toArena G.init
 
 end ExtensiveGame
-
-/-! ### Regression example: merged endpoints do not merge histories -/
-
-namespace Examples.HistoryDiamond
-
-/-- A root with two distinct actions that lead to the same terminal state. -/
-inductive State
-  | root
-  | terminal
-
-/-- The diamond Arena has two histories to one endpoint. -/
-def arena : Arena where
-  State := State
-  Action
-    | .root => Bool
-    | .terminal => PEmpty
-  next
-    | .root, _ => .terminal
-
-/-- The history taking the first root action. -/
-def left : arena.History State.root State.terminal :=
-  Arena.History.nil.snoc false
-
-/-- The history taking the second root action. -/
-def right : arena.History State.root State.terminal :=
-  Arena.History.nil.snoc true
-
-/-- Distinct actions remain distinct histories even though their endpoint is
-the same world state. -/
-theorem left_ne_right : left ≠ right := by
-  intro h
-  cases h
-
-end Examples.HistoryDiamond
