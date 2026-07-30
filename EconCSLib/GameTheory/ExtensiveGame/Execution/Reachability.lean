@@ -57,7 +57,7 @@ def IsReachable (G : ExtensiveGame N U) (s : G.State) : Prop :=
   Arena.Reachable G.toArena G.init s
 
 /-- The initial state is always reachable. -/
-theorem isReachable_init (G : ExtensiveGame N U) : G.IsReachable G.init :=
+theorem is_reachable_init (G : ExtensiveGame N U) : G.IsReachable G.init :=
   Arena.Reachable.refl _
 
 /-- If `s` is reachable and we take action `a`, then `next s a` is reachable. -/
