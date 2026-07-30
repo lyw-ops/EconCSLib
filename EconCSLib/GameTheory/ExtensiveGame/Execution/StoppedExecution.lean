@@ -29,12 +29,14 @@ action to the accumulated history.
 
 ## Main results
 
-* `stoppedHistoryFrom_terminal` — terminal histories are fixed points.
+* `stoppedHistoryFrom_eq_self_of_terminal` — terminal histories are fixed points.
 * `stoppedHistoryFrom_add` — execution composes by addition of fuel.
+* `stoppedHistoryFrom_length_le` — a run appends at most `fuel` actions.
 * `stoppedHistoryFrom_terminal_or_length_eq` — a run either terminates or uses
   every available step.
 * `stoppedHistoryFrom_add_of_terminal` — once stopped, additional fuel has no
   effect.
+* `stoppedHistoryFrom_eq_of_terminal` — any two terminating fuel bounds agree.
 -/
 
 namespace Arena
@@ -263,16 +265,32 @@ theorem stoppedPayoff_eq_none_of_not_terminal
     G.stoppedPayoff policy fuel = none := by
   simp [stoppedPayoff, hterminal]
 
+/-- Once both fuel bounds reach a terminal state, they return the same payoff. -/
+theorem stoppedPayoff_eq_of_terminal
+    (G : ExtensiveGame N U)
+    [(s : G.State) → Decidable (G.isTerminal s)]
+    (policy : G.toArena.HistoryPolicy G.init) (first second : ℕ)
+    (hfirst :
+      G.isTerminal (G.toArena.stoppedHistory policy first).1)
+    (hsecond :
+      G.isTerminal (G.toArena.stoppedHistory policy second).1) :
+    G.stoppedPayoff policy first = G.stoppedPayoff policy second := by
+  unfold stoppedPayoff Arena.stoppedHistory
+  rw [Arena.stoppedHistoryFrom_eq_of_terminal
+    policy _ first second hfirst hsecond]
+
 end ExtensiveGame
 
 /-! ### Regression example: a terminal action is never requested -/
 
 namespace Examples.TerminalStoppedExecution
 
+/-- A root with a single action leading to a terminal state with no actions. -/
 inductive State
   | root
   | terminal
 
+/-- The one-step arena whose terminal state has an empty action type. -/
 def arena : Arena where
   State := State
   Action
@@ -281,6 +299,7 @@ def arena : Arena where
   next
     | .root, _ => .terminal
 
+/-- A policy that supplies the unique action at the nonterminal root. -/
 def policy : arena.HistoryPolicy State.root :=
   fun current hnonterminal => by
     cases h : current.1 with
@@ -302,6 +321,7 @@ local instance terminalDecidable :
     | .terminal =>
         isTrue ⟨fun action => nomatch action⟩
 
+/-- One unit of fuel reaches the terminal state. -/
 theorem one_step_reaches_terminal :
     (arena.stoppedHistory policy 1).1 = State.terminal := by
   have hroot :
@@ -314,6 +334,7 @@ theorem one_step_reaches_terminal :
       policy (Arena.HistoryFrom.nil arena State.root) 0 hroot]
   rfl
 
+/-- Additional fuel cannot move an execution beyond a terminal state. -/
 theorem extra_fuel_does_not_move :
     arena.stoppedHistory policy 5 = arena.stoppedHistory policy 1 := by
   have hterminal : arena.IsTerminal (arena.stoppedHistory policy 1).1 := by
