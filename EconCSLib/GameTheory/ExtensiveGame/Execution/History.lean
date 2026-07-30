@@ -128,12 +128,12 @@ def unfoldFrom (A : Arena) (start : A.State) : Arena where
   next := fun h a => ⟨A.next h.1 a, h.2.snoc a⟩
 
 @[simp]
-theorem unfoldFrom_next (A : Arena) (start : A.State)
+theorem unfold_from_next (A : Arena) (start : A.State)
     (h : A.HistoryFrom start) (a : A.Action h.1) :
     (A.unfoldFrom start).next h a = ⟨A.next h.1 a, h.2.snoc a⟩ := rfl
 
 @[simp]
-theorem unfoldFrom_isTerminal_iff (A : Arena) (start : A.State)
+theorem unfold_from_is_terminal_iff (A : Arena) (start : A.State)
     (h : A.HistoryFrom start) :
     (A.unfoldFrom start).IsTerminal h ↔ A.IsTerminal h.1 := Iff.rfl
 
@@ -154,20 +154,20 @@ def liftAppend {middle finish : A.State}
   | .snoc rest action => (baseHistory.liftAppend rest).snoc action
 
 @[simp]
-theorem liftAppend_nil {middle : A.State}
+theorem lift_append_nil {middle : A.State}
     (baseHistory : A.History start middle) :
     baseHistory.liftAppend (History.nil : A.History middle middle) =
       History.nil := rfl
 
 @[simp]
-theorem liftAppend_snoc {middle finish : A.State}
+theorem lift_append_snoc {middle finish : A.State}
     (baseHistory : A.History start middle)
     (suffix : A.History middle finish) (action : A.Action finish) :
     baseHistory.liftAppend (suffix.snoc action) =
       (baseHistory.liftAppend suffix).snoc action := rfl
 
 @[simp]
-theorem length_liftAppend {middle finish : A.State}
+theorem length_lift_append {middle finish : A.State}
     (baseHistory : A.History start middle)
     (suffix : A.History middle finish) :
     (baseHistory.liftAppend suffix).length = suffix.length := by
@@ -182,7 +182,7 @@ theorem length_liftAppend {middle finish : A.State}
 end History
 
 /-- Every state in the history unfolding is reachable from the empty history. -/
-theorem History.reachable_unfoldFrom (A : Arena) (start : A.State)
+theorem History.reachable_unfold_from (A : Arena) (start : A.State)
     {s : A.State} (h : A.History start s) :
     (A.unfoldFrom start).Reachable
       (HistoryFrom.nil A start) ⟨s, h⟩ := by
@@ -229,21 +229,21 @@ theorem unfold_payoff (G : ExtensiveGame N U)
     G.unfold.payoff h i = G.payoff h.1 i := rfl
 
 @[simp]
-theorem unfold_isTerminal_iff (G : ExtensiveGame N U)
+theorem unfold_is_terminal_iff (G : ExtensiveGame N U)
     (h : G.toArena.HistoryFrom G.init) :
     G.unfold.isTerminal h ↔ G.isTerminal h.1 := Iff.rfl
 
 /-- History unfolding preserves the absence of chance nodes. -/
-theorem unfold_noChance (G : ExtensiveGame N U) (h : G.NoChance) :
+theorem unfold_no_chance (G : ExtensiveGame N U) (h : G.NoChance) :
     G.unfold.NoChance := by
   intro s hs
   exact h s.1 hs
 
 /-- Every history-state is reachable from the initial empty history in the
 unfolded game. -/
-theorem unfold_isReachable (G : ExtensiveGame N U)
+theorem unfold_is_reachable (G : ExtensiveGame N U)
     (h : G.toArena.HistoryFrom G.init) :
     G.unfold.IsReachable h :=
-  h.2.reachable_unfoldFrom G.toArena G.init
+  h.2.reachable_unfold_from G.toArena G.init
 
 end ExtensiveGame
