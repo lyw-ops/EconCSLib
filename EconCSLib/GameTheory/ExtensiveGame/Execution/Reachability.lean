@@ -17,37 +17,40 @@ execution modules need not import those historical APIs.
 
 ## Main definitions
 
-* `ExtensiveGame.Arena.Reachable` — finite transition reachability between
-  Arena states.
+* `Arena.Reachable` — finite transition reachability between Arena states.
 * `ExtensiveGame.IsReachable` — reachability from an extensive game's initial
   state.
 -/
 
-namespace ExtensiveGame
-
-variable {N : Type*} {U : Type*}
+namespace Arena
 
 /-- A state `t` is reachable from `s` if there is a path of transitions from
 `s` to `t`. -/
-inductive Arena.Reachable (A : Arena) : A.State → A.State → Prop where
-  | refl (s : A.State) : Arena.Reachable A s s
+inductive Reachable (A : Arena) : A.State → A.State → Prop where
+  | refl (s : A.State) : Reachable A s s
   | step {s t : A.State} (a : A.Action s)
-      (h : Arena.Reachable A (A.next s a) t) :
-      Arena.Reachable A s t
+      (h : Reachable A (A.next s a) t) :
+      Reachable A s t
 
 /-- Reachable is transitive. -/
-theorem Arena.Reachable.trans {A : Arena} {s t u : A.State}
-    (h1 : Arena.Reachable A s t) (h2 : Arena.Reachable A t u) :
-    Arena.Reachable A s u := by
+theorem Reachable.trans {A : Arena} {s t u : A.State}
+    (h1 : A.Reachable s t) (h2 : A.Reachable t u) :
+    A.Reachable s u := by
   induction h1 with
   | refl => exact h2
-  | step a _ ih => exact Arena.Reachable.step a (ih h2)
+  | step a _ ih => exact Reachable.step a (ih h2)
 
 /-- One step extends reachability. -/
-theorem Arena.Reachable.step' {A : Arena} {s t : A.State}
-    (h : Arena.Reachable A s t) (a : A.Action t) :
-    Arena.Reachable A s (A.next t a) :=
-  h.trans (Arena.Reachable.step a (Arena.Reachable.refl _))
+theorem Reachable.tail {A : Arena} {s t : A.State}
+    (h : A.Reachable s t) (a : A.Action t) :
+    A.Reachable s (A.next t a) :=
+  h.trans (Reachable.step a (Reachable.refl _))
+
+end Arena
+
+namespace ExtensiveGame
+
+variable {N : Type*} {U : Type*}
 
 /-- A state is reachable in the game if it is reachable from `init`. -/
 def IsReachable (G : ExtensiveGame N U) (s : G.State) : Prop :=
@@ -61,6 +64,6 @@ theorem isReachable_init (G : ExtensiveGame N U) : G.IsReachable G.init :=
 theorem IsReachable.next {G : ExtensiveGame N U} {s : G.State}
     (h : G.IsReachable s) (a : G.Action s) :
     G.IsReachable (G.next s a) :=
-  h.step' a
+  h.tail a
 
 end ExtensiveGame
