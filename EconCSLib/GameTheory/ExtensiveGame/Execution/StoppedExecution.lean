@@ -29,14 +29,14 @@ action to the accumulated history.
 
 ## Main results
 
-* `stoppedHistoryFrom_eq_self_of_terminal` — terminal histories are fixed points.
-* `stoppedHistoryFrom_add` — execution composes by addition of fuel.
-* `stoppedHistoryFrom_length_le` — a run appends at most `fuel` actions.
-* `stoppedHistoryFrom_terminal_or_length_eq` — a run either terminates or uses
+* `stopped_history_from_eq_self_of_terminal` — terminal histories are fixed points.
+* `stopped_history_from_add` — execution composes by addition of fuel.
+* `stopped_history_from_length_le` — a run appends at most `fuel` actions.
+* `stopped_history_from_terminal_or_length_eq` — a run either terminates or uses
   every available step.
-* `stoppedHistoryFrom_add_of_terminal` — once stopped, additional fuel has no
+* `stopped_history_from_add_of_terminal` — once stopped, additional fuel has no
   effect.
-* `stoppedHistoryFrom_eq_of_terminal` — any two terminating fuel bounds agree.
+* `stopped_history_from_eq_of_terminal` — any two terminating fuel bounds agree.
 -/
 
 namespace Arena
@@ -73,20 +73,20 @@ def stoppedHistory
   stoppedHistoryFrom policy (HistoryFrom.nil A start) fuel
 
 @[simp]
-theorem stoppedHistoryFrom_zero
+theorem stopped_history_from_zero
     [(s : A.State) → Decidable (A.IsTerminal s)]
     (policy : A.HistoryPolicy start) (current : A.HistoryFrom start) :
     stoppedHistoryFrom policy current 0 = current := rfl
 
 @[simp]
-theorem stoppedHistoryFrom_succ_of_terminal
+theorem stopped_history_from_succ_of_terminal
     [(s : A.State) → Decidable (A.IsTerminal s)]
     (policy : A.HistoryPolicy start) (current : A.HistoryFrom start)
     (fuel : ℕ) (hterminal : A.IsTerminal current.1) :
     stoppedHistoryFrom policy current (fuel + 1) = current := by
   simp [stoppedHistoryFrom, hterminal]
 
-theorem stoppedHistoryFrom_succ_of_not_terminal
+theorem stopped_history_from_succ_of_not_terminal
     [(s : A.State) → Decidable (A.IsTerminal s)]
     (policy : A.HistoryPolicy start) (current : A.HistoryFrom start)
     (fuel : ℕ) (hterminal : ¬ A.IsTerminal current.1) :
@@ -97,17 +97,17 @@ theorem stoppedHistoryFrom_succ_of_not_terminal
   simp [stoppedHistoryFrom, hterminal]
 
 /-- A terminal accumulated history is a fixed point for every fuel value. -/
-theorem stoppedHistoryFrom_eq_self_of_terminal
+theorem stopped_history_from_eq_self_of_terminal
     [(s : A.State) → Decidable (A.IsTerminal s)]
     (policy : A.HistoryPolicy start) (current : A.HistoryFrom start)
     (hterminal : A.IsTerminal current.1) :
     ∀ fuel, stoppedHistoryFrom policy current fuel = current
   | 0 => rfl
-  | fuel + 1 => stoppedHistoryFrom_succ_of_terminal policy current fuel hterminal
+  | fuel + 1 => stopped_history_from_succ_of_terminal policy current fuel hterminal
 
 /-- Running for `first + second` steps is the same as running for `first`
 steps and then continuing the resulting history for `second` more steps. -/
-theorem stoppedHistoryFrom_add
+theorem stopped_history_from_add
     [(s : A.State) → Decidable (A.IsTerminal s)]
     (policy : A.HistoryPolicy start) (current : A.HistoryFrom start)
     (first second : ℕ) :
@@ -120,20 +120,20 @@ theorem stoppedHistoryFrom_add
   | succ first ih =>
       by_cases hterminal : A.IsTerminal current.1
       · rw [Nat.succ_add]
-        rw [stoppedHistoryFrom_succ_of_terminal policy current _ hterminal]
-        rw [stoppedHistoryFrom_succ_of_terminal policy current first hterminal]
+        rw [stopped_history_from_succ_of_terminal policy current _ hterminal]
+        rw [stopped_history_from_succ_of_terminal policy current first hterminal]
         exact
-          (stoppedHistoryFrom_eq_self_of_terminal
+          (stopped_history_from_eq_self_of_terminal
             policy current hterminal second).symm
       · rw [Nat.succ_add]
-        rw [stoppedHistoryFrom_succ_of_not_terminal policy current _ hterminal]
-        rw [stoppedHistoryFrom_succ_of_not_terminal policy current first hterminal]
+        rw [stopped_history_from_succ_of_not_terminal policy current _ hterminal]
+        rw [stopped_history_from_succ_of_not_terminal policy current first hterminal]
         exact ih
           ⟨A.next current.1 (policy current hterminal),
             current.2.snoc (policy current hterminal)⟩
 
 /-- Execution never appends more actions than the supplied fuel. -/
-theorem stoppedHistoryFrom_length_le
+theorem stopped_history_from_length_le
     [(s : A.State) → Decidable (A.IsTerminal s)]
     (policy : A.HistoryPolicy start) (current : A.HistoryFrom start) :
     ∀ fuel,
@@ -145,9 +145,9 @@ theorem stoppedHistoryFrom_length_le
       simp
   | succ fuel ih =>
       by_cases hterminal : A.IsTerminal current.1
-      · rw [stoppedHistoryFrom_succ_of_terminal policy current fuel hterminal]
+      · rw [stopped_history_from_succ_of_terminal policy current fuel hterminal]
         omega
-      · rw [stoppedHistoryFrom_succ_of_not_terminal policy current fuel hterminal]
+      · rw [stopped_history_from_succ_of_not_terminal policy current fuel hterminal]
         have hle := ih
           ⟨A.next current.1 (policy current hterminal),
             current.2.snoc (policy current hterminal)⟩
@@ -155,7 +155,7 @@ theorem stoppedHistoryFrom_length_le
 
 /-- A fuel-bounded run either reaches a terminal endpoint or appends exactly
 one action for every available unit of fuel. -/
-theorem stoppedHistoryFrom_terminal_or_length_eq
+theorem stopped_history_from_terminal_or_length_eq
     [(s : A.State) → Decidable (A.IsTerminal s)]
     (policy : A.HistoryPolicy start) (current : A.HistoryFrom start) :
     ∀ fuel,
@@ -170,9 +170,9 @@ theorem stoppedHistoryFrom_terminal_or_length_eq
       · exact Or.inr (by simp)
   | succ fuel ih =>
       by_cases hterminal : A.IsTerminal current.1
-      · rw [stoppedHistoryFrom_succ_of_terminal policy current fuel hterminal]
+      · rw [stopped_history_from_succ_of_terminal policy current fuel hterminal]
         exact Or.inl hterminal
-      · rw [stoppedHistoryFrom_succ_of_not_terminal policy current fuel hterminal]
+      · rw [stopped_history_from_succ_of_not_terminal policy current fuel hterminal]
         rcases ih
             ⟨A.next current.1 (policy current hterminal),
               current.2.snoc (policy current hterminal)⟩ with hstopped | hlength
@@ -182,7 +182,7 @@ theorem stoppedHistoryFrom_terminal_or_length_eq
 
 /-- Once a run has reached a terminal endpoint, adding more fuel cannot change
 its result. -/
-theorem stoppedHistoryFrom_add_of_terminal
+theorem stopped_history_from_add_of_terminal
     [(s : A.State) → Decidable (A.IsTerminal s)]
     (policy : A.HistoryPolicy start) (current : A.HistoryFrom start)
     (first second : ℕ)
@@ -190,15 +190,15 @@ theorem stoppedHistoryFrom_add_of_terminal
       A.IsTerminal (stoppedHistoryFrom policy current first).1) :
     stoppedHistoryFrom policy current (first + second) =
       stoppedHistoryFrom policy current first := by
-  rw [stoppedHistoryFrom_add]
-  exact stoppedHistoryFrom_eq_self_of_terminal policy _ hterminal second
+  rw [stopped_history_from_add]
+  exact stopped_history_from_eq_self_of_terminal policy _ hterminal second
 
 /-- Any two fuel bounds that both reach a terminal endpoint produce exactly
 the same accumulated history.
 
 This is the uniqueness fact needed to turn existential termination into a
 well-defined total terminal-outcome semantics. -/
-theorem stoppedHistoryFrom_eq_of_terminal
+theorem stopped_history_from_eq_of_terminal
     [(s : A.State) → Decidable (A.IsTerminal s)]
     (policy : A.HistoryPolicy start) (current : A.HistoryFrom start)
     (first second : ℕ)
@@ -209,20 +209,20 @@ theorem stoppedHistoryFrom_eq_of_terminal
   rcases Nat.le_total first second with hle | hle
   · obtain ⟨extra, rfl⟩ := Nat.exists_eq_add_of_le hle
     exact
-      (stoppedHistoryFrom_add_of_terminal
+      (stopped_history_from_add_of_terminal
         policy current first extra hfirst).symm
   · obtain ⟨extra, rfl⟩ := Nat.exists_eq_add_of_le hle
     exact
-      stoppedHistoryFrom_add_of_terminal
+      stopped_history_from_add_of_terminal
         policy current second extra hsecond
 
 /-- From the empty history, a nonterminal result has length exactly `fuel`. -/
-theorem stoppedHistory_terminal_or_length_eq
+theorem stopped_history_terminal_or_length_eq
     [(s : A.State) → Decidable (A.IsTerminal s)]
     (policy : A.HistoryPolicy start) (fuel : ℕ) :
     A.IsTerminal (stoppedHistory policy fuel).1 ∨
       (stoppedHistory policy fuel).2.length = fuel := by
-  rcases stoppedHistoryFrom_terminal_or_length_eq policy
+  rcases stopped_history_from_terminal_or_length_eq policy
       (HistoryFrom.nil A start) fuel with hterminal | hlength
   · exact Or.inl hterminal
   · exact Or.inr (by simpa [stoppedHistory, HistoryFrom.nil] using hlength)
@@ -246,7 +246,7 @@ def stoppedPayoff
   let result := G.toArena.stoppedHistory policy fuel
   if G.isTerminal result.1 then some (G.payoff result.1) else none
 
-theorem stoppedPayoff_eq_some_of_terminal
+theorem stopped_payoff_eq_some_of_terminal
     (G : ExtensiveGame N U)
     [(s : G.State) → Decidable (G.isTerminal s)]
     (policy : G.toArena.HistoryPolicy G.init) (fuel : ℕ)
@@ -256,7 +256,7 @@ theorem stoppedPayoff_eq_some_of_terminal
       some (G.payoff (G.toArena.stoppedHistory policy fuel).1) := by
   simp [stoppedPayoff, hterminal]
 
-theorem stoppedPayoff_eq_none_of_not_terminal
+theorem stopped_payoff_eq_none_of_not_terminal
     (G : ExtensiveGame N U)
     [(s : G.State) → Decidable (G.isTerminal s)]
     (policy : G.toArena.HistoryPolicy G.init) (fuel : ℕ)
@@ -266,7 +266,7 @@ theorem stoppedPayoff_eq_none_of_not_terminal
   simp [stoppedPayoff, hterminal]
 
 /-- Once both fuel bounds reach a terminal state, they return the same payoff. -/
-theorem stoppedPayoff_eq_of_terminal
+theorem stopped_payoff_eq_of_terminal
     (G : ExtensiveGame N U)
     [(s : G.State) → Decidable (G.isTerminal s)]
     (policy : G.toArena.HistoryPolicy G.init) (first second : ℕ)
@@ -276,7 +276,7 @@ theorem stoppedPayoff_eq_of_terminal
       G.isTerminal (G.toArena.stoppedHistory policy second).1) :
     G.stoppedPayoff policy first = G.stoppedPayoff policy second := by
   unfold stoppedPayoff Arena.stoppedHistory
-  rw [Arena.stoppedHistoryFrom_eq_of_terminal
+  rw [Arena.stopped_history_from_eq_of_terminal
     policy _ first second hfirst hsecond]
 
 end ExtensiveGame
@@ -330,7 +330,7 @@ theorem one_step_reaches_terminal :
     intro hterminal
     exact hterminal.false PUnit.unit
   rw [Arena.stoppedHistory,
-    arena.stoppedHistoryFrom_succ_of_not_terminal
+    arena.stopped_history_from_succ_of_not_terminal
       policy (Arena.HistoryFrom.nil arena State.root) 0 hroot]
   rfl
 
@@ -342,7 +342,7 @@ theorem extra_fuel_does_not_move :
     change IsEmpty PEmpty
     exact ⟨fun action => nomatch action⟩
   simpa using
-    arena.stoppedHistoryFrom_add_of_terminal
+    arena.stopped_history_from_add_of_terminal
       policy (Arena.HistoryFrom.nil arena State.root) 1 4 hterminal
 
 end Examples.TerminalStoppedExecution
