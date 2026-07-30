@@ -6,7 +6,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import EconCSLib.GameTheory.ExtensiveGame.Execution.StoppedExecution
 
 /-!
-# Deprecated play compatibility import
+# EconCSLib.GameTheory.ExtensiveGame.Play (deprecated compatibility import)
 
 The former `Arena.play` API required an action at every state, including
 terminal states whose action type is empty, and therefore did not model
