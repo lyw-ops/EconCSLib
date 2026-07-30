@@ -50,7 +50,7 @@ def reachableSubgameAt (G : ExtensiveGame iota U) (root : G.State) :
     ExtensiveGame iota U where
   State := {s : G.State // Arena.Reachable G.toArena root s}
   Action := fun s => G.Action s.1
-  next := fun s a => ⟨G.next s.1 a, s.2.step' a⟩
+  next := fun s a => ⟨G.next s.1 a, s.2.tail a⟩
   init := ⟨root, Arena.Reachable.refl _⟩
   mover := fun s => G.mover s.1
   payoff := fun s i => G.payoff s.1 i
@@ -73,6 +73,6 @@ theorem reachableSubgameAt_payoff (G : ExtensiveGame iota U) (root : G.State)
 theorem reachableSubgameAt_next (G : ExtensiveGame iota U) (root : G.State)
     (s : (G.reachableSubgameAt root).State)
     (a : (G.reachableSubgameAt root).Action s) :
-    (G.reachableSubgameAt root).next s a = ⟨G.next s.1 a, s.2.step' a⟩ := rfl
+    (G.reachableSubgameAt root).next s a = ⟨G.next s.1 a, s.2.tail a⟩ := rfl
 
 end ExtensiveGame
