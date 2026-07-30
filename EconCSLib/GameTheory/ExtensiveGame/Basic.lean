@@ -107,28 +107,28 @@ def ofArena (arena : Arena) (init : arena.State)
   payoff := payoff
 
 @[simp]
-theorem ofArena_toArena (arena : Arena) (init : arena.State)
+theorem of_arena_to_arena (arena : Arena) (init : arena.State)
     (mover : arena.State → Option N)
     (payoff : arena.State → N → U) :
     (ofArena arena init mover payoff).toArena = arena :=
   rfl
 
 @[simp]
-theorem ofArena_init (arena : Arena) (init : arena.State)
+theorem of_arena_init (arena : Arena) (init : arena.State)
     (mover : arena.State → Option N)
     (payoff : arena.State → N → U) :
     (ofArena arena init mover payoff).init = init :=
   rfl
 
 @[simp]
-theorem ofArena_mover (arena : Arena) (init : arena.State)
+theorem of_arena_mover (arena : Arena) (init : arena.State)
     (mover : arena.State → Option N)
     (payoff : arena.State → N → U) :
     (ofArena arena init mover payoff).mover = mover :=
   rfl
 
 @[simp]
-theorem ofArena_payoff (arena : Arena) (init : arena.State)
+theorem of_arena_payoff (arena : Arena) (init : arena.State)
     (mover : arena.State → Option N)
     (payoff : arena.State → N → U) :
     (ofArena arena init mover payoff).payoff = payoff :=
