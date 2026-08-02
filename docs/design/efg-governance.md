@@ -116,7 +116,13 @@ The source does not perfectly mirror the diagram:
    `ControlledMorphism.Core`, lawful-subgame transport by `.Subgame`, and
    recall transport by `.Recall`; their exact EFG/local closures are 8 / 8,
    10 / 10, and 11 / 11.
-8. FOSG sequentialization keeps its observed chance-game value independent of
+8. The eleven flat `Observed.Controlled*` modules have the fixed four-role
+   taxonomy documented in
+   [`efg-controlled-api.md`](efg-controlled-api.md): one carrier, five
+   canonical semantic owners, two declaration-free compatibility aggregates,
+   and three downstream payoff-aware adapters. Canonical owners cannot reach
+   an adapter, and each adapter has an exact import and namespace contract.
+9. FOSG sequentialization keeps its observed chance-game value independent of
    continuation-root selection. `observedChanceGameCore` is root-free,
    `rootPresentation` owns the source-root predicate, and the established
    root-parameterized `observedChanceGame` name is a definitionally equal
@@ -502,6 +508,9 @@ rather than remaining an invisible transitive import. Review and CI maintain:
 - `Observed.ControlledInfrastructure` and `Observed.ControlledMorphism`
   remain import-only with exact direct leaf imports, while internal consumers
   import defining leaves;
+- the flat `Observed.Controlled*` family cannot grow without a registered role;
+  canonical controlled owners cannot reach the three payoff-aware adapters,
+  whose exact imports and namespaces are fixed;
 - compatibility aggregates are imported only by other compatibility paths or
   intentional compatibility-boundary regressions;
 - the governed EFG/GameForm/PMF source graph is acyclic;
