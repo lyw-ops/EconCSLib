@@ -142,6 +142,61 @@ EXPECTED_COMPATIBILITY_AGGREGATE_IMPORTS = {
     },
 }
 
+CONTROLLED_FLAT_MODULE_ROLES = {
+    f"{EFG_PREFIX}Observed.Controlled": "carrier",
+    f"{EFG_PREFIX}Observed.ControlledAnalyticLaw": "canonical-semantic-owner",
+    f"{EFG_PREFIX}Observed.ControlledDiscreteLaw": "canonical-semantic-owner",
+    f"{EFG_PREFIX}Observed.ControlledDiscretePathLaw": "canonical-semantic-owner",
+    f"{EFG_PREFIX}Observed.ControlledLaw": "canonical-semantic-owner",
+    f"{EFG_PREFIX}Observed.ControlledSemantics": "canonical-semantic-owner",
+    f"{EFG_PREFIX}Observed.ControlledInfrastructure": "compatibility-aggregate",
+    f"{EFG_PREFIX}Observed.ControlledMorphism": "compatibility-aggregate",
+    f"{EFG_PREFIX}Observed.ControlledDiscreteLawCompat": "payoff-aware-adapter",
+    f"{EFG_PREFIX}Observed.ControlledInfrastructureCompat": "payoff-aware-adapter",
+    f"{EFG_PREFIX}Observed.ControlledMorphismCompat": "payoff-aware-adapter",
+}
+
+EXPECTED_PAYOFF_AWARE_ADAPTER_IMPORTS = {
+    f"{EFG_PREFIX}Observed.ControlledDiscreteLawCompat": {
+        f"{EFG_PREFIX}Observed.Chance",
+        f"{EFG_PREFIX}Observed.ControlledDiscreteLaw",
+    },
+    f"{EFG_PREFIX}Observed.ControlledInfrastructureCompat": {
+        CONTROLLED_INFRASTRUCTURE_RECALL,
+        f"{EFG_PREFIX}Observed.Quasi",
+        f"{EFG_PREFIX}Observed.SignalRecall",
+    },
+    f"{EFG_PREFIX}Observed.ControlledMorphismCompat": {
+        CONTROLLED_MORPHISM_CORE,
+        f"{EFG_PREFIX}Observed.Morphism.Inverse",
+    },
+}
+
+EXPECTED_PAYOFF_AWARE_ADAPTER_NAMESPACES = {
+    f"{EFG_PREFIX}Observed.ControlledDiscreteLawCompat":
+        "ExtensiveGame.ObservedChanceGame",
+    f"{EFG_PREFIX}Observed.ControlledInfrastructureCompat":
+        "ExtensiveGame.ObservedGame",
+    f"{EFG_PREFIX}Observed.ControlledMorphismCompat":
+        "ExtensiveGame.ObservedGame",
+}
+
+CONTROLLED_CANONICAL_OWNERS = {
+    module
+    for module, role in CONTROLLED_FLAT_MODULE_ROLES.items()
+    if role in {"carrier", "canonical-semantic-owner"}
+} | {
+    f"{EFG_PREFIX}Observed.ControlledInfrastructure.Core",
+    CONTROLLED_INFRASTRUCTURE_WELL_FORMED,
+    f"{EFG_PREFIX}Observed.ControlledInfrastructure.Subgame",
+    f"{EFG_PREFIX}Observed.ControlledInfrastructure.Finite",
+    f"{EFG_PREFIX}Observed.ControlledInfrastructure.Quasi",
+    CONTROLLED_INFRASTRUCTURE_RECALL,
+    CONTROLLED_MORPHISM_CORE,
+    CONTROLLED_MORPHISM_SUBGAME,
+    CONTROLLED_MORPHISM_RECALL,
+}
+
 CORE_FORBIDDEN_CLOSURE_MODULES = {
     f"{EFG_PREFIX}Execution.Objective",
     f"{EFG_PREFIX}Winning.Basic",
@@ -720,6 +775,97 @@ def run(root: Path) -> list[str]:
                 f"actual={sorted(actual_imports)}"
             )
 
+    controlled_flat_prefix = f"{EFG_PREFIX}Observed.Controlled"
+    actual_controlled_flat_modules = {
+        module
+        for module in scoped
+        if module.startswith(controlled_flat_prefix)
+        and "." not in module[len(controlled_flat_prefix):]
+    }
+    expected_controlled_flat_modules = set(CONTROLLED_FLAT_MODULE_ROLES)
+    if actual_controlled_flat_modules != expected_controlled_flat_modules:
+        missing = sorted(
+            expected_controlled_flat_modules - actual_controlled_flat_modules
+        )
+        extra = sorted(
+            actual_controlled_flat_modules - expected_controlled_flat_modules
+        )
+        errors.append(
+            "flat Observed.Controlled* module family differs from its governed "
+            f"role map; missing={missing}, extra={extra}"
+        )
+
+    expected_status_for_controlled_role = {
+        "carrier": "Canonical",
+        "canonical-semantic-owner": "Canonical",
+        "compatibility-aggregate": "Compatibility",
+        "payoff-aware-adapter": "Internal",
+    }
+    for module, role in sorted(CONTROLLED_FLAT_MODULE_ROLES.items()):
+        row = rows.get(module)
+        expected_status = expected_status_for_controlled_role[role]
+        if row is None:
+            errors.append(f"{status_path}: missing controlled role row for {module}")
+        elif row.status != expected_status:
+            errors.append(
+                f"{status_path}: {module} has role {role} and must be "
+                f"registered {expected_status}, found {row.status}"
+            )
+
+    payoff_aware_adapters = set(EXPECTED_PAYOFF_AWARE_ADAPTER_IMPORTS)
+    for adapter, expected_imports in EXPECTED_PAYOFF_AWARE_ADAPTER_IMPORTS.items():
+        actual_imports = graph.get(adapter)
+        if actual_imports is None:
+            errors.append(f"missing controlled payoff-aware adapter: {adapter}")
+            continue
+        if actual_imports != expected_imports:
+            errors.append(
+                f"{module_path(adapter, root)}: direct imports differ from "
+                f"the payoff-aware adapter contract; "
+                f"expected={sorted(expected_imports)}, "
+                f"actual={sorted(actual_imports)}"
+            )
+        source = strip_lean_comments_and_strings(
+            module_path(adapter, root).read_text(encoding="utf-8")
+        )
+        namespace = EXPECTED_PAYOFF_AWARE_ADAPTER_NAMESPACES[adapter]
+        if not re.search(
+            rf"^namespace\s+{re.escape(namespace)}\s*$",
+            source,
+            re.MULTILINE,
+        ):
+            errors.append(
+                f"{module_path(adapter, root)}: payoff-aware adapter must "
+                f"declare only under namespace {namespace}"
+            )
+        if re.search(
+            r"^namespace\s+ExtensiveGame\.(?:ControlledObservedGame|"
+            r"DiscreteControlledObservedChanceGame)\b",
+            source,
+            re.MULTILINE,
+        ):
+            errors.append(
+                f"{module_path(adapter, root)}: payoff-aware adapter reopens "
+                "a payoff-free controlled owner namespace"
+            )
+        if not DECLARATION_RE.search(source):
+            errors.append(
+                f"{module_path(adapter, root)}: payoff-aware adapter contains "
+                "no adapter declaration"
+            )
+
+    for owner in sorted(CONTROLLED_CANONICAL_OWNERS):
+        if owner not in graph:
+            errors.append(f"missing controlled canonical owner: {owner}")
+            continue
+        leaked_adapters = closure(graph, owner) & payoff_aware_adapters
+        if leaked_adapters:
+            errors.append(
+                f"{module_path(owner, root)}: controlled canonical owner "
+                "depends on downstream payoff-aware adapter(s): "
+                + ", ".join(sorted(leaked_adapters))
+            )
+
     structural_core_closure = closure(graph, STRUCTURAL_CORE)
     structural_core_efg_closure = {
         module
@@ -872,11 +1018,28 @@ def main() -> int:
     simulation_count = sum(
         module.startswith(f"{EFG_PREFIX}Simulation.") for module in rows
     )
+    controlled_role_counts = {
+        role: sum(
+            registered_role == role
+            for registered_role in CONTROLLED_FLAT_MODULE_ROLES.values()
+        )
+        for role in {
+            "carrier",
+            "canonical-semantic-owner",
+            "compatibility-aggregate",
+            "payoff-aware-adapter",
+        }
+    }
     print(
         f"EFG governance checks passed: {len(rows)} registered modules, "
         f"{compatibility_count} import-only compatibility paths, "
         f"root {root_counts[0]}/{root_counts[1]}, "
-        f"Simulation {simulation_count}."
+        f"Simulation {simulation_count}, controlled flat "
+        f"{len(CONTROLLED_FLAT_MODULE_ROLES)}="
+        f"{controlled_role_counts['carrier']} carrier/"
+        f"{controlled_role_counts['canonical-semantic-owner']} owners/"
+        f"{controlled_role_counts['compatibility-aggregate']} aggregates/"
+        f"{controlled_role_counts['payoff-aware-adapter']} adapters."
     )
     return 0
 
