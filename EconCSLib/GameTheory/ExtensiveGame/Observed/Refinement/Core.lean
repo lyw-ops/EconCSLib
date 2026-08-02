@@ -449,9 +449,9 @@ theorem continuationIsNash_iff_of_strategySurjective
           hsurjective)
         profile
 
-/-- Bounded Nash on presentation-designated continuations of a lifted fine profile reflects to bounded Nash on presentation-designated continuations of its
-coarse source profile. -/
-theorem isPureNashOnDesignatedContinuationsAtFuel_of_map
+/-- Bounded Nash on explicitly mapped roots of a lifted fine profile reflects
+to bounded Nash on the selected coarse source roots. -/
+theorem isPureNashOnRootsAtFuel_of_map
     {V : Type uV} [DecidableEq N] [Preorder V]
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
@@ -460,19 +460,22 @@ theorem isPureNashOnDesignatedContinuationsAtFuel_of_map
     (r : G.InformationRefinement H)
     (hNoChanceG : G.base.NoChance)
     (hNoChanceH : H.base.NoChance)
+    (sourceRoots : G.RootPresentation)
+    (targetRoots : H.RootPresentation)
+    (hroots :
+      r.MapsRootPresentations sourceRoots targetRoots)
     (utility : Option (N → U) → N → V)
     (profile : G.PureProfile)
     (fuel : ℕ)
     (hSPE :
-      H.IsPureNashOnDesignatedContinuationsAtFuel
-        hNoChanceH utility (r.mapProfile profile) fuel) :
-    G.IsPureNashOnDesignatedContinuationsAtFuel
-      hNoChanceG utility profile fuel := by
+      H.IsPureNashOnRootsAtFuel
+        hNoChanceH targetRoots utility (r.mapProfile profile) fuel) :
+    G.IsPureNashOnRootsAtFuel
+      hNoChanceG sourceRoots utility profile fuel := by
   intro sourceRoot hsourceRoot
   have htargetRoot :
-      H.IsDesignatedContinuationRoot
-        (r.historyIso.stateEquiv sourceRoot) :=
-    (r.map_designatedContinuationRoot sourceRoot).mp hsourceRoot
+      targetRoots.IsRoot (r.historyIso.stateEquiv sourceRoot) :=
+    hroots sourceRoot hsourceRoot
   exact
     r.continuationIsNash_of_map
       hNoChanceG hNoChanceH utility profile
@@ -481,9 +484,9 @@ theorem isPureNashOnDesignatedContinuationsAtFuel_of_map
         (r.historyIso.stateEquiv sourceRoot)
         htargetRoot)
 
-/-- With strategy-surjective lifting, bounded pure Nash on presentation-designated continuations transfers in both
-directions. -/
-theorem isPureNashOnDesignatedContinuationsAtFuel_iff_of_strategySurjective
+/-- With strategy-surjective lifting and exact root correspondence, bounded
+pure Nash transfers in both directions. -/
+theorem isPureNashOnRootsAtFuel_iff_of_strategySurjective
     {V : Type uV} [DecidableEq N] [Preorder V]
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
@@ -493,13 +496,17 @@ theorem isPureNashOnDesignatedContinuationsAtFuel_iff_of_strategySurjective
     (hNoChanceG : G.base.NoChance)
     (hNoChanceH : H.base.NoChance)
     (hsurjective : r.StrategySurjective)
+    (sourceRoots : G.RootPresentation)
+    (targetRoots : H.RootPresentation)
+    (hroots :
+      r.PreservesRootPresentations sourceRoots targetRoots)
     (utility : Option (N → U) → N → V)
     (profile : G.PureProfile)
     (fuel : ℕ) :
-    G.IsPureNashOnDesignatedContinuationsAtFuel
-        hNoChanceG utility profile fuel ↔
-      H.IsPureNashOnDesignatedContinuationsAtFuel
-        hNoChanceH utility
+    G.IsPureNashOnRootsAtFuel
+        hNoChanceG sourceRoots utility profile fuel ↔
+      H.IsPureNashOnRootsAtFuel
+        hNoChanceH targetRoots utility
         (r.mapProfile profile) fuel := by
   constructor
   · intro hSPE targetRoot htargetRoot
@@ -507,10 +514,8 @@ theorem isPureNashOnDesignatedContinuationsAtFuel_iff_of_strategySurjective
       r.historyIso.stateEquiv.surjective
         targetRoot
     have hsourceRoot :
-        G.IsDesignatedContinuationRoot sourceRoot := by
-      exact
-        (r.map_designatedContinuationRoot sourceRoot).mpr
-          htargetRoot
+        sourceRoots.IsRoot sourceRoot :=
+      (hroots sourceRoot).mpr htargetRoot
     have hsourceNash :=
       hSPE sourceRoot hsourceRoot
     have hmapped :=
@@ -525,8 +530,9 @@ theorem isPureNashOnDesignatedContinuationsAtFuel_iff_of_strategySurjective
           utility (r.mapProfile profile) at hmapped
     exact hmapped
   · exact fun hSPE =>
-      r.isPureNashOnDesignatedContinuationsAtFuel_of_map
-        hNoChanceG hNoChanceH utility
+      r.isPureNashOnRootsAtFuel_of_map
+        hNoChanceG hNoChanceH sourceRoots targetRoots
+        (fun history => (hroots history).mp) utility
         profile fuel hSPE
 
 
