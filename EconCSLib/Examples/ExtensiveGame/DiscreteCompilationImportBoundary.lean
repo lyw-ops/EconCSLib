@@ -17,6 +17,10 @@ discrete equilibrium without importing measurable-kernel execution.
 #check StochasticGameTree.toObservedChanceGame
 #check StochasticGameTree.stochasticHistoryPMFFrom_map_payoff
 #check FiniteImperfectGame.ObservedChanceCompiler.toObservedChanceGame
+#check ExtensiveGame.FOSG.Sequentialization.observedChanceGameCore
+#check ExtensiveGame.FOSG.Sequentialization.observedChanceGame
+#check ExtensiveGame.FOSG.Sequentialization.observedChanceGame_eq_core
+#check ExtensiveGame.FOSG.Sequentialization.rootPresentation
 
 /--
 error: Unknown constant `Arena.pathLaw`
