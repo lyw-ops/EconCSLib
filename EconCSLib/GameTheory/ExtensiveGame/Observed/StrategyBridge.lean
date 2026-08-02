@@ -53,12 +53,13 @@ def pureSemantics
     (G : ObservedGame N U)
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
+    (roots : G.RootPresentation)
     (hNoChance : G.base.NoChance) :
     IndexedContinuationGameForm N where
   Strategy := G.PureStrategy
   Horizon := ℕ
   Root := G.base.toArena.HistoryFrom G.base.init
-  IsDeclaredRoot := G.IsDesignatedContinuationRoot
+  IsDeclaredRoot := roots.IsRoot
   Outcome := Option (N → U)
   outcome := fun fuel current profile =>
     G.stoppedPayoffFrom profile hNoChance current fuel
@@ -69,9 +70,10 @@ theorem pureSemantics_atIndex
     (G : ObservedGame N U)
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
+    (roots : G.RootPresentation)
     (hNoChance : G.base.NoChance) (fuel : ℕ) :
-    (pureSemantics G hNoChance).atIndex fuel =
-      G.pureContinuationFamily hNoChance fuel :=
+    (pureSemantics G roots hNoChance).atIndex fuel =
+      G.pureContinuationFamilyOnRoots roots hNoChance fuel :=
   rfl
 
 /-- All natural-number bounded behavioral continuation semantics as one
@@ -79,14 +81,15 @@ indexed continuation family. -/
 noncomputable def behavioralSemantics
     (G : ObservedChanceGame N U)
     [(state : G.observed.base.State) →
-      Decidable (G.observed.base.isTerminal state)] :
+      Decidable (G.observed.base.isTerminal state)]
+    (roots : G.observed.RootPresentation) :
     IndexedContinuationGameForm N where
   Strategy := G.observed.BehavioralStrategy
   Horizon := ℕ
   Root :=
     G.observed.base.toArena.HistoryFrom
       G.observed.base.init
-  IsDeclaredRoot := G.observed.IsDesignatedContinuationRoot
+  IsDeclaredRoot := roots.IsRoot
   Outcome := PMF (Option (N → U))
   outcome := fun fuel current profile =>
     G.behavioralStoppedPayoffLawFrom profile current fuel
@@ -97,9 +100,10 @@ theorem behavioralSemantics_atIndex
     (G : ObservedChanceGame N U)
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
+    (roots : G.observed.RootPresentation)
     (fuel : ℕ) :
-    (behavioralSemantics G).atIndex fuel =
-      G.behavioralContinuationFamily fuel :=
+    (behavioralSemantics G roots).atIndex fuel =
+      G.behavioralContinuationFamilyOnRoots roots fuel :=
   rfl
 
 /-- All natural-number bounded mixed continuation semantics as one indexed
@@ -108,14 +112,15 @@ noncomputable def mixedSemantics
     (G : ObservedChanceGame N U)
     [Fintype N]
     [(state : G.observed.base.State) →
-      Decidable (G.observed.base.isTerminal state)] :
+      Decidable (G.observed.base.isTerminal state)]
+    (roots : G.observed.RootPresentation) :
     IndexedContinuationGameForm N where
   Strategy := G.observed.MixedStrategy
   Horizon := ℕ
   Root :=
     G.observed.base.toArena.HistoryFrom
       G.observed.base.init
-  IsDeclaredRoot := G.observed.IsDesignatedContinuationRoot
+  IsDeclaredRoot := roots.IsRoot
   Outcome := PMF (Option (N → U))
   outcome := fun fuel current profile =>
     G.mixedStoppedPayoffLawFrom profile current fuel
@@ -127,9 +132,10 @@ theorem mixedSemantics_atIndex
     [Fintype N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
+    (roots : G.observed.RootPresentation)
     (fuel : ℕ) :
-    (mixedSemantics G).atIndex fuel =
-      G.mixedContinuationFamily fuel :=
+    (mixedSemantics G roots).atIndex fuel =
+      G.mixedContinuationFamilyOnRoots roots fuel :=
   rfl
 
 /-! ### Strict representation adapters over every bound -/
@@ -143,15 +149,19 @@ def pureIso
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (e : G.Iso H)
+    (sourceRoots : G.RootPresentation)
+    (targetRoots : H.RootPresentation)
+    (hroots :
+      e.PreservesRootPresentations sourceRoots targetRoots)
     (hNoChanceG : G.base.NoChance)
     (hNoChanceH : H.base.NoChance) :
-    (pureSemantics G hNoChanceG).Iso
-      (pureSemantics H hNoChanceH) where
+    (pureSemantics G sourceRoots hNoChanceG).Iso
+      (pureSemantics H targetRoots hNoChanceH) where
   horizonEquiv := Equiv.refl ℕ
   rootEquiv := e.historyIso.stateEquiv
   strategyEquiv := e.strategyEquiv
   outcomeEquiv := Equiv.refl _
-  map_declaredRoot := e.map_designatedContinuationRoot
+  map_declaredRoot := hroots
   map_outcome := by
     intro fuel current profile
     exact
@@ -166,14 +176,19 @@ noncomputable def behavioralIso
       Decidable (G.observed.base.isTerminal state)]
     [(state : H.observed.base.State) →
       Decidable (H.observed.base.isTerminal state)]
-    (e : G.Iso H) :
-    (behavioralSemantics G).Iso
-      (behavioralSemantics H) where
+    (e : G.Iso H)
+    (sourceRoots : G.observed.RootPresentation)
+    (targetRoots : H.observed.RootPresentation)
+    (hroots :
+      e.observedIso.PreservesRootPresentations
+        sourceRoots targetRoots) :
+    (behavioralSemantics G sourceRoots).Iso
+      (behavioralSemantics H targetRoots) where
   horizonEquiv := Equiv.refl ℕ
   rootEquiv := e.observedIso.historyIso.stateEquiv
   strategyEquiv := e.observedIso.behavioralStrategyEquiv
   outcomeEquiv := Equiv.refl _
-  map_declaredRoot := e.observedIso.map_designatedContinuationRoot
+  map_declaredRoot := hroots
   map_outcome := by
     intro fuel current profile
     exact
@@ -189,14 +204,19 @@ noncomputable def mixedIso
       Decidable (G.observed.base.isTerminal state)]
     [(state : H.observed.base.State) →
       Decidable (H.observed.base.isTerminal state)]
-    (e : G.Iso H) :
-    (mixedSemantics G).Iso
-      (mixedSemantics H) where
+    (e : G.Iso H)
+    (sourceRoots : G.observed.RootPresentation)
+    (targetRoots : H.observed.RootPresentation)
+    (hroots :
+      e.observedIso.PreservesRootPresentations
+        sourceRoots targetRoots) :
+    (mixedSemantics G sourceRoots).Iso
+      (mixedSemantics H targetRoots) where
   horizonEquiv := Equiv.refl ℕ
   rootEquiv := e.observedIso.historyIso.stateEquiv
   strategyEquiv := e.observedIso.mixedStrategyEquiv
   outcomeEquiv := Equiv.refl _
-  map_declaredRoot := e.observedIso.map_designatedContinuationRoot
+  map_declaredRoot := hroots
   map_outcome := by
     intro fuel current profile
     exact
@@ -215,6 +235,10 @@ def pure
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (e : G.Iso H)
+    (sourceRoots : G.RootPresentation)
+    (targetRoots : H.RootPresentation)
+    (hroots :
+      e.PreservesRootPresentations sourceRoots targetRoots)
     (hNoChanceG : G.base.NoChance)
     (hNoChanceH : H.base.NoChance)
     (utility : Option (N → U) → N → V)
@@ -222,15 +246,16 @@ def pure
     BoundedDesignatedNashBridge
       G.PureProfile H.PureProfile
       (fun profile =>
-        G.IsPureNashOnDesignatedContinuationsAtFuel
-          hNoChanceG utility profile fuel)
+        G.IsPureNashOnRootsAtFuel
+          hNoChanceG sourceRoots utility profile fuel)
       (fun profile =>
-        H.IsPureNashOnDesignatedContinuationsAtFuel
-          hNoChanceH utility profile fuel) where
+        H.IsPureNashOnRootsAtFuel
+          hNoChanceH targetRoots utility profile fuel) where
   mapProfile := e.mapProfile
   isNash_iff := fun profile =>
-    e.isPureNashOnDesignatedContinuationsAtFuel_iff
-      hNoChanceG hNoChanceH utility profile fuel
+    e.isPureNashOnRootsAtFuel_iff
+      hNoChanceG hNoChanceH sourceRoots targetRoots hroots
+      utility profile fuel
 
 /-- Strict chance-aware relabeling as a uniform behavioral-strategy
 designated-root Nash bridge. -/
@@ -242,21 +267,26 @@ noncomputable def behavioral
     [(state : H.observed.base.State) →
       Decidable (H.observed.base.isTerminal state)]
     (e : G.Iso H)
+    (sourceRoots : G.observed.RootPresentation)
+    (targetRoots : H.observed.RootPresentation)
+    (hroots :
+      e.observedIso.PreservesRootPresentations
+        sourceRoots targetRoots)
     (utility : PMF (Option (N → U)) → N → V)
     (fuel : ℕ) :
     BoundedDesignatedNashBridge
       G.observed.BehavioralProfile
       H.observed.BehavioralProfile
       (fun profile =>
-        G.IsBehavioralNashOnDesignatedContinuationsAtFuel
-          utility profile fuel)
+        G.IsBehavioralNashOnRootsAtFuel
+          sourceRoots utility profile fuel)
       (fun profile =>
-        H.IsBehavioralNashOnDesignatedContinuationsAtFuel
-          utility profile fuel) where
+        H.IsBehavioralNashOnRootsAtFuel
+          targetRoots utility profile fuel) where
   mapProfile := e.observedIso.mapBehavioralProfile
   isNash_iff := fun profile =>
-    e.isBehavioralNashOnDesignatedContinuationsAtFuel_iff
-      utility profile fuel
+    e.isBehavioralNashOnRootsAtFuel_iff
+      sourceRoots targetRoots hroots utility profile fuel
 
 /-- Strict chance-aware relabeling as a uniform mixed-strategy designated-root
 Nash bridge. -/
@@ -269,21 +299,26 @@ noncomputable def mixed
     [(state : H.observed.base.State) →
       Decidable (H.observed.base.isTerminal state)]
     (e : G.Iso H)
+    (sourceRoots : G.observed.RootPresentation)
+    (targetRoots : H.observed.RootPresentation)
+    (hroots :
+      e.observedIso.PreservesRootPresentations
+        sourceRoots targetRoots)
     (utility : PMF (Option (N → U)) → N → V)
     (fuel : ℕ) :
     BoundedDesignatedNashBridge
       G.observed.MixedProfile
       H.observed.MixedProfile
       (fun profile =>
-        G.IsMixedNashOnDesignatedContinuationsAtFuel
-          utility profile fuel)
+        G.IsMixedNashOnRootsAtFuel
+          sourceRoots utility profile fuel)
       (fun profile =>
-        H.IsMixedNashOnDesignatedContinuationsAtFuel
-          utility profile fuel) where
+        H.IsMixedNashOnRootsAtFuel
+          targetRoots utility profile fuel) where
   mapProfile := e.observedIso.mapMixedProfile
   isNash_iff := fun profile =>
-    e.isMixedNashOnDesignatedContinuationsAtFuel_iff
-      utility profile fuel
+    e.isMixedNashOnRootsAtFuel_iff
+      sourceRoots targetRoots hroots utility profile fuel
 
 /-- Constructive finite Kuhn equivalence as the same uniform designated-root
 Nash bridge.
@@ -298,21 +333,22 @@ noncomputable def kuhn
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteKuhnHypotheses)
+    (roots : G.observed.RootPresentation)
     (utility : PMF (Option (N → U)) → N → V)
     (fuel : ℕ) :
     BoundedDesignatedNashBridge
       G.observed.BehavioralProfile
       G.observed.MixedProfile
       (fun profile =>
-        G.IsBehavioralNashOnDesignatedContinuationsAtFuel
-          utility profile fuel)
+        G.IsBehavioralNashOnRootsAtFuel
+          roots utility profile fuel)
       (fun profile =>
-        G.IsMixedNashOnDesignatedContinuationsAtFuel
-          utility profile fuel) where
+        G.IsMixedNashOnRootsAtFuel
+          roots utility profile fuel) where
   mapProfile := h.behavioralToMixedProfile
   isNash_iff := fun profile =>
-    G.isBehavioralNashOnDesignatedContinuationsAtFuel_iff_mixed
-      h utility profile fuel
+    G.isBehavioralNashOnRootsAtFuel_iff_mixed
+      h roots utility profile fuel
 
 end ObservedStrategyBridge
 
