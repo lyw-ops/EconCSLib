@@ -492,6 +492,19 @@ noncomputable def statePathMeasure
   (policy.pathMeasure hterminal initialState).map
     eventPathStates
 
+/-- The state-path pushforward of an admissible event policy is a probability
+measure. -/
+instance statePathMeasure_isProbability
+    (policy : A.EventHistoryActionPolicy)
+    (hterminal : MeasurableSet A.terminalSet)
+    (initialState : A.State) :
+    IsProbabilityMeasure
+      (policy.statePathMeasure hterminal initialState) := by
+  rw [statePathMeasure]
+  exact
+    Measure.isProbabilityMeasure_map
+      measurable_eventPathStates.aemeasurable
+
 /-- One coordinate marginal of the state-path pushforward. -/
 noncomputable def stateCoordinateMeasure
     (policy : A.EventHistoryActionPolicy)
