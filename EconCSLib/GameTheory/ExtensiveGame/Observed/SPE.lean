@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Morphism.Operational
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphism.Subgame
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphismCompat
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism.Subgame
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Compat.Morphism
 
 /-!
 # EconCSLib.GameTheory.ExtensiveGame.Observed.SPE
