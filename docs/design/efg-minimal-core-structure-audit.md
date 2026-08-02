@@ -35,7 +35,7 @@ accuracy, not the mathematical carrier.
 | Assumption generality | Pass | Finiteness, decidability, recall, termination, and measurability remain external. |
 | Player-label compatibility | Pass for bijections | `relabelPlayers` reindexes mover, observation, information, actions, presentations, profiles, and lawful/complete subgame systems without changing Arena histories. |
 | Representation compatibility | Pass with explicit preservation claims | Compilers and relations retain their existing preservation packages; absence from a package is not inferred. |
-| Current validation health | Source and mathematical gates pass; branch is not merge-ready | Clean aggregate/example builds and semantic/governance checks pass, but the two existing branch commits violate the repository's one-file-per-commit CI rule. |
+| Current validation health | Source, mathematical, and local branch-history gates pass | Clean aggregate/example builds and semantic/governance checks pass; 174 scoped commits reconstruct the pre-audit source snapshot, and the subsequent single-file audit commit also passes the repository's commit-scope checker. |
 
 There remains no architectural reason to replace `Arena`.
 
@@ -601,16 +601,16 @@ does not depend on the formerly duplicated numbered artifacts.
 | Git/source integrity | Pass | `git diff --check` and `git fsck --full --no-dangling` pass. |
 | Generated cache hygiene | Pass | Numbered duplicate artifacts are 0; `.lake/build` was regenerated and is about 512 MiB after the library and example builds. |
 | `leanchecker` over the complete dependency cache | Inconclusive, not counted as a pass | The tool produced no output for several minutes while scanning the approximately 7.5 GiB package cache and was terminated; clean elaboration, the placeholder gate, and targeted axiom printing are the reproducible proof checks used here. |
-| Commit-scope CI | **Fail** | Existing commits `cd5bc04263b7` and `83a59718db46` change 145 and 11 files respectively; policy permits exactly one file per non-merge commit. Repair requires an explicitly authorized history rewrite/split. |
+| Commit-scope CI | Pass | The authorized history rebuild produced 174 non-merge commits from baseline `49f671ad7cfb` to reconstruct the pre-audit snapshot, followed by this single-file audit commit. Every commit changes exactly one file and every Lean commit adds at most one `structure` or `class`; the rebuilt pre-audit tree exactly matches backup snapshot tree `666598cfb500`. |
 
 The full build replays **150 warnings in 40 non-EFG source files**. No warning
 originates under `GameTheory/ExtensiveGame` in this run. Those warnings are
 repository-wide maintenance debt rather than evidence against the EFG
 semantic changes, but the repository as a whole is not warning-clean.
 
-Consequently, this audit certifies the current EFG source semantics and
-dependency architecture against the checks above; it does **not** certify the
-current branch as CI-merge-ready until its existing commit history is split.
+Consequently, this audit certifies the current EFG source semantics,
+dependency architecture, and local commit-scope history against the checks
+above. Remote-host CI remains a separate external check after publication.
 
 ## 13. Audit conclusion
 
@@ -628,5 +628,4 @@ changing Arena histories. The audit still records legacy compatibility
 surfaces and compiler-specific observation-fidelity/FOSG theorem tracks,
 without treating ambient terminal normalization as a core requirement or
 claiming that an existing serializer discharges compiler-specific premises.
-The source and mathematical validation gates pass, while the separate
-commit-history gate remains an explicit release blocker.
+The source, mathematical, and local commit-history validation gates pass.
