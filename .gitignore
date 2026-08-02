@@ -27,3 +27,4 @@ _site/
 
 # Temporary scratch development files (not part of the library)
 /Scratch/
+/tmp/
