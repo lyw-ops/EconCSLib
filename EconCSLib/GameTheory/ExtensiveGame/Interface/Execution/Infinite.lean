@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 
 import EconCSLib.GameTheory.ExtensiveGame.Interface.Execution.Finite
 import EconCSLib.GameTheory.ExtensiveGame.Execution.InfiniteTrajectory
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledDiscretePathLaw
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Law.DiscretePath
 import EconCSLib.GameTheory.ExtensiveGame.Observed.InfiniteExecution
 
 /-!
