@@ -132,6 +132,8 @@ noncomputable def weakSerialization
       (observedChanceGame G D rootPayoff sourceDeclaredRoot) where
   simulation :=
     probabilisticWeakSimulation G D rootPayoff sourceDeclaredRoot
+  targetRoots :=
+    rootPresentation G D rootPayoff sourceDeclaredRoot
   match_init := by
     let sourceInitial : G.WorldState → G.HistoryState :=
       fun world => ⟨world, FOSG.History.initial world⟩
@@ -218,7 +220,7 @@ noncomputable def weakSerialization
   map_terminalPayoff := by
     intro source target hrelated hterminal
     rw [hrelated]
-    simp [observedChanceGame, game, boundary, hterminal]
+    simp [observedChanceGameCore, game, boundary, hterminal]
   IsDeclaredMacroRoot := sourceDeclaredRoot
   map_declaredMacroRoot := by
     intro source target hrelated
