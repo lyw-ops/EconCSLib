@@ -103,3 +103,68 @@ structure FiniteTwoPlayerHypotheses
   zeroSum : W.IsTwoPlayerZeroSum
 
 /-- Legacy payoff-aware well-founded prefix hypothesis package. -/
+structure WellFoundedPrefixHypotheses
+    (G : ObservedGame (Fin 2) U)
+    (W : G.base.toArena.WinningCondition G.base.init (Fin 2)) : Type _ where
+  wellFounded : G.base.toArena.IsWellFoundedFrom G.base.init
+  noChance : G.base.NoChance
+  perfectInformation : G.PerfectInformation
+  zeroSum : W.IsTwoPlayerZeroSum
+  prefixDecision : Arena.WinningConditionFrom.PrefixDecision W
+
+/-- Exclusive no-chance two-player objectives cannot give both players a
+pathwise winning strategy. -/
+theorem not_both_havePathwiseWinningStrategy
+    {G : ObservedGame (Fin 2) U}
+    [(state : G.base.State) →
+      Decidable (G.base.isTerminal state)]
+    {W : G.base.toArena.WinningCondition G.base.init (Fin 2)}
+    (hNoChance : G.base.NoChance)
+    (hexclusive : W.IsExclusive) :
+    ¬ ((∃ strategy : G.PureStrategy 0,
+          G.HasPathwiseWinningStrategy W 0 strategy) ∧
+        (∃ strategy : G.PureStrategy 1,
+          G.HasPathwiseWinningStrategy W 1 strategy)) := by
+  rintro ⟨⟨strategyZero, hwinningZero⟩,
+    ⟨strategyOne, hwinningOne⟩⟩
+  let profile : G.PureProfile := fun i =>
+    if hzero : i = 0 then
+      hzero ▸ strategyZero
+    else
+      (Fin.eq_one_of_ne_zero i hzero) ▸ strategyOne
+  have hprofileZero : profile 0 = strategyZero := by simp [profile]
+  have hprofileOne : profile 1 = strategyOne := by simp [profile]
+  let play : G.base.toArena.CompletePlayFrom G.base.init :=
+    (profile.toHistoryPolicy G hNoChance).completePlay
+  have hcompatibleZero :
+      G.IsCompatibleWithPlayerStrategy 0 strategyZero play := by
+    have hprofile :=
+      profile.completePlay_isCompatibleWithPlayerStrategy hNoChance 0
+    simpa [play, hprofileZero] using hprofile
+  have hcompatibleOne :
+      G.IsCompatibleWithPlayerStrategy 1 strategyOne play := by
+    have hprofile :=
+      profile.completePlay_isCompatibleWithPlayerStrategy hNoChance 1
+    simpa [play, hprofileOne] using hprofile
+  have hwinsZero : play ∈ W 0 :=
+    hwinningZero play hcompatibleZero
+  have hwinsOne : play ∈ W 1 :=
+    hwinningOne play hcompatibleOne
+  exact Fin.zero_ne_one (hexclusive play hwinsZero hwinsOne)
+
+@[deprecated not_both_havePathwiseWinningStrategy
+  (since := "2026-07-31")]
+theorem not_both_haveWinningStrategy
+    {G : ObservedGame (Fin 2) U}
+    [(state : G.base.State) →
+      Decidable (G.base.isTerminal state)]
+    {W : G.base.toArena.WinningCondition G.base.init (Fin 2)}
+    (hNoChance : G.base.NoChance)
+    (hexclusive : W.IsExclusive) :
+    ¬ ((∃ strategy : G.PureStrategy 0,
+          G.HasPathwiseWinningStrategy W 0 strategy) ∧
+        (∃ strategy : G.PureStrategy 1,
+          G.HasPathwiseWinningStrategy W 1 strategy)) :=
+  G.not_both_havePathwiseWinningStrategy hNoChance hexclusive
+
+end ExtensiveGame.ObservedGame
