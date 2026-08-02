@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 
 import EconCSLib.GameTheory.ExtensiveGame.Execution.Objective
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.Quasi
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Quasi
 import Mathlib.Data.Fintype.Basic
 
 /-!
@@ -24,7 +24,7 @@ For observed games, compatibility with one player's pure strategy constrains
 only that player's decision coordinates. The API distinguishes pathwise
 robustness from winning against information-consistent opponent profiles.
 Pure and quasistrategy play-compatibility predicates are defined in the
-payoff-free `ControlledInfrastructure` leaves; this module adds their
+payoff-free `Controlled.Infrastructure` leaves; this module adds their
 winning-condition interpretations.
 
 ## Main definitions
