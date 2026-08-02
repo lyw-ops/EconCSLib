@@ -694,3 +694,67 @@ theorem FiniteTwoPlayerHypotheses.isTwoPlayerDetermined
 
 /-- Structural assumptions for well-founded prefix determinacy on the
 payoff-free carrier. -/
+structure WellFoundedPrefixHypotheses
+    (G : ControlledObservedGame (Fin 2))
+    (W : G.base.WinningCondition) : Type _ where
+  /-- Every legal history branch is structurally well founded. -/
+  wellFounded :
+    G.base.toArena.IsWellFoundedFrom G.base.init
+  /-- Every nonterminal history is player controlled. -/
+  noChance : G.base.NoChance
+  /-- Decision information determines the complete history. -/
+  perfectInformation : G.PerfectInformation
+  /-- Exactly one player wins each complete play. -/
+  zeroSum : W.IsTwoPlayerZeroSum
+  /-- Every play reaches a persistent finite decision prefix. -/
+  prefixDecision :
+    Arena.WinningConditionFrom.PrefixDecision W
+
+/-- In a payoff-free no-chance game with exclusive objectives, the two
+players cannot both have robust pathwise winning strategies. -/
+theorem not_both_havePathwiseWinningStrategy
+    {G : ControlledObservedGame (Fin 2)}
+    [(state : G.base.State) →
+      Decidable (G.base.isTerminal state)]
+    {W : G.base.WinningCondition}
+    (hNoChance : G.base.NoChance)
+    (hexclusive : W.IsExclusive) :
+    ¬ ((∃ strategy : G.PureStrategy 0,
+          G.HasPathwiseWinningStrategy W 0 strategy) ∧
+        (∃ strategy : G.PureStrategy 1,
+          G.HasPathwiseWinningStrategy W 1 strategy)) := by
+  rintro ⟨⟨strategyZero, hwinningZero⟩,
+    ⟨strategyOne, hwinningOne⟩⟩
+  let profile : G.PureProfile := fun i =>
+    if hzero : i = 0 then
+      hzero ▸ strategyZero
+    else
+      (Fin.eq_one_of_ne_zero i hzero) ▸ strategyOne
+  have hprofileZero : profile 0 = strategyZero := by
+    simp [profile]
+  have hprofileOne : profile 1 = strategyOne := by
+    simp [profile]
+  let play : G.base.CompletePlay :=
+    (profile.toHistoryPolicy hNoChance).completePlay
+  have hcompatibleZero :
+      G.IsCompatibleWithPlayerStrategy
+        0 strategyZero play := by
+    have hprofile :=
+      profile.completePlay_isCompatibleWithPlayerStrategy
+        hNoChance 0
+    simpa [play, hprofileZero] using hprofile
+  have hcompatibleOne :
+      G.IsCompatibleWithPlayerStrategy
+        1 strategyOne play := by
+    have hprofile :=
+      profile.completePlay_isCompatibleWithPlayerStrategy
+        hNoChance 1
+    simpa [play, hprofileOne] using hprofile
+  have hwinsZero : play ∈ W 0 :=
+    hwinningZero play hcompatibleZero
+  have hwinsOne : play ∈ W 1 :=
+    hwinningOne play hcompatibleOne
+  exact Fin.zero_ne_one
+    (hexclusive play hwinsZero hwinsOne)
+
+end ExtensiveGame.ControlledObservedGame
