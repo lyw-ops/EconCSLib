@@ -90,8 +90,6 @@ def observed : ObservedGame Unit ℝ where
     change nodeMover history.1 = some i at hmover
     change none = some i at hmover
     contradiction
-  IsDesignatedContinuationRoot := fun _ => True
-  init_isDesignatedContinuationRoot := trivial
 
 /-- Fair chance law at every active complete history. -/
 noncomputable def game : ObservedChanceGame Unit ℝ where
