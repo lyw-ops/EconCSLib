@@ -110,15 +110,22 @@ structure Iso (G H : ObservedGame N U) where
             (infoActionEquiv i (G.infoAt h i hsource) action)) =
         historyIso.actionEquiv h
           (G.actionEquiv h i hsource action)
-  /-- Presentation-designated continuation roots correspond exactly. -/
-  map_designatedContinuationRoot :
-    ∀ h : G.base.toArena.HistoryFrom G.base.init,
-      G.IsDesignatedContinuationRoot h ↔
-        H.IsDesignatedContinuationRoot (historyIso.stateEquiv h)
-
 namespace Iso
 
 variable {G H : ObservedGame N U}
+
+/-- Explicit correspondence of two separately supplied continuation-root
+presentations under a strict observed-game isomorphism.
+
+This property is intentionally not a field of `ObservedGame.Iso`: the same
+structural isomorphism can be reused for many analysis-root selections. -/
+def PreservesRootPresentations
+    (e : G.Iso H)
+    (sourceRoots : G.RootPresentation)
+    (targetRoots : H.RootPresentation) : Prop :=
+  ∀ history : G.base.toArena.HistoryFrom G.base.init,
+    sourceRoots.IsRoot history ↔
+      targetRoots.IsRoot (e.historyIso.stateEquiv history)
 
 /-- Strict observed-game isomorphisms are determined by their structural
 equivalences; all commuting-square fields are propositions. -/
@@ -383,9 +390,6 @@ def refl (G : ObservedGame N U) : G.Iso G where
   map_infoActionAt := by
     intro h i hsource htarget action
     rfl
-  map_designatedContinuationRoot := by
-    intro h
-    rfl
 
 /-- Identity isomorphisms leave local information actions unchanged, including
 the proof-irrelevant mover-index transport. -/
@@ -629,12 +633,6 @@ def trans {K : ObservedGame N U}
                 (f.historyIso.actionEquiv middleHistory)
                 (e.map_infoActionAt
                   history i hsource hmiddle action)
-  map_designatedContinuationRoot := by
-    intro history
-    exact
-      (e.map_designatedContinuationRoot history).trans
-        (f.map_designatedContinuationRoot
-          (e.historyIso.stateEquiv history))
 
 /-- The cast-stable local action equivalence is functorial under composition
 of strict observed-game isomorphisms. -/
