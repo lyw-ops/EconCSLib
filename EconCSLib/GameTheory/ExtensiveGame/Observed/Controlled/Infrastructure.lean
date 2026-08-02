@@ -12,15 +12,14 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Rec
 import EconCSLib.GameTheory.ExtensiveGame.Winning.Basic
 
 /-!
-# Controlled observed-game infrastructure compatibility aggregate
+# Controlled observed-game infrastructure facade
 
-API role: **legacy import aggregate**. It owns no declarations and must not be
-used as an implementation dependency.
+API role: **canonical aggregate facade**. It owns no declarations.
 
-Compatibility import for the historical mixed-responsibility
-`Observed.ControlledInfrastructure` path. New implementation modules should
-import the defining `ControlledInfrastructure.*` leaf, and winning-dependent
-quasistrategy predicates belong to `Winning.Basic`.
+This broad entry point re-exports the focused `Controlled.Infrastructure.*`
+responsibility leaves. New implementation modules should import the narrowest
+defining leaf, and winning-dependent quasistrategy predicates belong to
+`Winning.Basic`.
 
 This module intentionally contains imports and documentation only.
 -/
