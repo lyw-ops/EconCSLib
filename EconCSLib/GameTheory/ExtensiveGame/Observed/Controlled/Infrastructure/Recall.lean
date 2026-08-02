@@ -10,7 +10,7 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Wel
 
 Personal-decision histories, classic/private/public recall,
 no-absent-mindedness, and their factorization certificates. Recall uses the
-general `DecisionInfoWitness` from `ControlledInfrastructure.WellFormed` and has no
+general `DecisionInfoWitness` from `Controlled.Infrastructure.WellFormed` and has no
 finite-EFG, structural history-length, or execution dependency.
 -/
 
