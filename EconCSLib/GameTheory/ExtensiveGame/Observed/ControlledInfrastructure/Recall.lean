@@ -1,0 +1,549 @@
+/-
+Copyright (c) 2026 EconCSLib contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+
+import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.WellFormed
+
+/-!
+# Payoff-free recall infrastructure
+
+Personal-decision histories, classic/private/public recall,
+no-absent-mindedness, and their factorization certificates. Recall uses the
+general `DecisionInfoWitness` from `ControlledInfrastructure.WellFormed` and has no
+finite-EFG, structural history-length, or execution dependency.
+-/
+
+namespace ExtensiveGame.ControlledObservedGame
+
+variable {N : Type*} {G : ControlledObservedGame N}
+
+/-! ## Classic, private-signal, and public recall -/
+
+/-- One remembered information-state/action pair. -/
+abbrev PersonalDecision
+    (G : ControlledObservedGame N) (i : N) :=
+  Σ information : G.InfoState i,
+    G.InfoAction i information
+
+/-- Package the abstract decision represented by a concrete action. -/
+def personalDecisionAt
+    (G : ControlledObservedGame N) (i : N)
+    (history : G.base.History)
+    (hmover : G.base.mover history.1 = some i)
+    (action : G.base.Action history.1) :
+    G.PersonalDecision i :=
+  ⟨G.infoAt history i hmover,
+    (G.actionEquiv history i hmover).symm action⟩
+
+/-- Packaging an action just realized from the information fiber recovers
+that information/action pair. -/
+@[simp]
+theorem personalDecisionAt_actionEquiv
+    (G : ControlledObservedGame N) (i : N)
+    (history : G.base.History)
+    (hmover : G.base.mover history.1 = some i)
+    (action :
+      G.InfoAction i (G.infoAt history i hmover)) :
+    G.personalDecisionAt i history hmover
+        (G.actionEquiv history i hmover action) =
+      ⟨G.infoAt history i hmover, action⟩ := by
+  simp [personalDecisionAt]
+
+/-- Path-recursive worker extracting one player's past decisions. -/
+def ownDecisionHistoryPath [DecidableEq N]
+    (G : ControlledObservedGame N) (i : N) :
+    {state : G.base.State} →
+      G.base.toArena.History G.base.init state →
+        List (G.PersonalDecision i)
+  | _, .nil => []
+  | _, @Arena.History.snoc _ _ state path action =>
+      let previous : G.base.History := ⟨state, path⟩
+      if hmover : G.base.mover state = some i then
+        G.ownDecisionHistoryPath i path ++
+          [G.personalDecisionAt i previous hmover action]
+      else
+        G.ownDecisionHistoryPath i path
+
+/-- Ordered sequence of a player's past information/action decisions. -/
+def ownDecisionHistory [DecidableEq N]
+    (G : ControlledObservedGame N) (i : N)
+    (history : G.base.History) :
+    List (G.PersonalDecision i) :=
+  G.ownDecisionHistoryPath i history.2
+
+/-- A concrete occurrence of one remembered personal decision in a complete
+history. -/
+structure PersonalDecisionOccurrence
+    (G : ControlledObservedGame N) (i : N)
+    (history : G.base.History)
+    (decision : G.PersonalDecision i) where
+  /-- State at which the remembered decision occurred. -/
+  state : G.base.State
+  /-- Prefix ending at that decision state. -/
+  before : G.base.toArena.History G.base.init state
+  /-- Player `i` controls the occurrence. -/
+  mover : G.base.mover state = some i
+  /-- Concrete action chosen at the occurrence. -/
+  action : G.base.Action state
+  /-- Suffix following the remembered action. -/
+  after :
+    G.base.toArena.History
+      (G.base.next state action) history.1
+  /-- Prefix, action, and suffix reconstruct the complete history. -/
+  path_eq :
+    (before.snoc action).append after = history.2
+  /-- The concrete occurrence represents the requested abstract decision. -/
+  decision_eq :
+    G.personalDecisionAt
+        i ⟨state, before⟩ mover action =
+      decision
+
+/-- Every remembered personal decision has a concrete occurrence in the
+underlying occurrence-sensitive history. -/
+theorem exists_personalDecisionOccurrence_of_mem
+    [DecidableEq N]
+    (G : ControlledObservedGame N) (i : N)
+    (history : G.base.History)
+    (decision : G.PersonalDecision i)
+    (hmem : decision ∈ G.ownDecisionHistory i history) :
+    Nonempty
+      (G.PersonalDecisionOccurrence i history decision) := by
+  obtain ⟨finish, path⟩ := history
+  induction path with
+  | nil =>
+      simp [ownDecisionHistory, ownDecisionHistoryPath] at hmem
+  | @snoc state path action ih =>
+      let previous : G.base.History := ⟨state, path⟩
+      by_cases hmover : G.base.mover state = some i
+      · simp [ownDecisionHistory, ownDecisionHistoryPath, hmover]
+          at hmem
+        rcases hmem with hprevious | hcurrent
+        · obtain ⟨occurrence⟩ := ih hprevious
+          exact
+            ⟨{
+              state := occurrence.state
+              before := occurrence.before
+              mover := occurrence.mover
+              action := occurrence.action
+              after := occurrence.after.snoc action
+              path_eq := by
+                rw [Arena.History.append_snoc,
+                  occurrence.path_eq]
+              decision_eq := occurrence.decision_eq
+            }⟩
+        · have hdecision :
+              G.personalDecisionAt
+                  i previous hmover action =
+                decision := hcurrent.symm
+          exact
+            ⟨{
+              state := state
+              before := path
+              mover := hmover
+              action := action
+              after := Arena.History.nil
+              path_eq := by simp
+              decision_eq := hdecision
+            }⟩
+      · simp [ownDecisionHistory, ownDecisionHistoryPath, hmover]
+          at hmem
+        obtain ⟨occurrence⟩ := ih hmem
+        exact
+          ⟨{
+            state := occurrence.state
+            before := occurrence.before
+            mover := occurrence.mover
+            action := occurrence.action
+            after := occurrence.after.snoc action
+            path_eq := by
+              rw [Arena.History.append_snoc,
+                occurrence.path_eq]
+            decision_eq := occurrence.decision_eq
+          }⟩
+
+@[simp]
+theorem ownDecisionHistory_nil [DecidableEq N]
+    (G : ControlledObservedGame N) (i : N) :
+    G.ownDecisionHistory i
+        (Arena.HistoryFrom.nil G.base.toArena G.base.init) = [] :=
+  rfl
+
+@[simp]
+theorem ownDecisionHistory_snoc_of_mover [DecidableEq N]
+    (G : ControlledObservedGame N) (i : N)
+    {state : G.base.State}
+    (path : G.base.toArena.History G.base.init state)
+    (action : G.base.Action state)
+    (hmover : G.base.mover state = some i) :
+    G.ownDecisionHistory i
+        ⟨G.base.next state action, path.snoc action⟩ =
+      G.ownDecisionHistory i ⟨state, path⟩ ++
+        [G.personalDecisionAt i ⟨state, path⟩ hmover action] := by
+  simp [ownDecisionHistory, ownDecisionHistoryPath, hmover]
+
+@[simp]
+theorem ownDecisionHistory_snoc_of_not_mover [DecidableEq N]
+    (G : ControlledObservedGame N) (i : N)
+    {state : G.base.State}
+    (path : G.base.toArena.History G.base.init state)
+    (action : G.base.Action state)
+    (hmover : G.base.mover state ≠ some i) :
+    G.ownDecisionHistory i
+        ⟨G.base.next state action, path.snoc action⟩ =
+      G.ownDecisionHistory i ⟨state, path⟩ := by
+  simp [ownDecisionHistory, ownDecisionHistoryPath, hmover]
+
+/-- Appending a legal suffix cannot shorten remembered own decisions. -/
+theorem ownDecisionHistory_length_le_append [DecidableEq N]
+    (G : ControlledObservedGame N) (i : N)
+    {middle finish : G.base.State}
+    (basePath :
+      G.base.toArena.History G.base.init middle)
+    (suffix :
+      G.base.toArena.History middle finish) :
+    (G.ownDecisionHistory i ⟨middle, basePath⟩).length ≤
+      (G.ownDecisionHistory i
+        ⟨finish, basePath.append suffix⟩).length := by
+  induction suffix with
+  | nil =>
+      exact Nat.le_refl _
+  | @snoc state suffix action ih =>
+      rw [Arena.History.append_snoc]
+      by_cases hmover : G.base.mover state = some i
+      · rw [G.ownDecisionHistory_snoc_of_mover
+          i (basePath.append suffix) action hmover]
+        rw [List.length_append, List.length_singleton]
+        exact ih.trans (Nat.le_succ _)
+      · rw [G.ownDecisionHistory_snoc_of_not_mover
+          i (basePath.append suffix) action hmover]
+        exact ih
+
+/-- A continuation extends, rather than rewrites, every player's remembered
+personal-decision history. -/
+theorem ownDecisionHistory_prefix_append
+    [DecidableEq N]
+    (G : ControlledObservedGame N) (i : N)
+    {middle finish : G.base.State}
+    (basePath :
+      G.base.toArena.History G.base.init middle)
+    (suffix :
+      G.base.toArena.History middle finish) :
+    G.ownDecisionHistory i
+        ⟨middle, basePath⟩ <+:
+      G.ownDecisionHistory i
+        ⟨finish, basePath.append suffix⟩ := by
+  induction suffix with
+  | nil =>
+      exact List.prefix_refl _
+  | @snoc state suffix action ih =>
+      rw [Arena.History.append_snoc]
+      by_cases hmover : G.base.mover state = some i
+      · rw [G.ownDecisionHistory_snoc_of_mover
+          i (basePath.append suffix) action hmover]
+        exact ih.trans (List.prefix_append _ _)
+      · rw [G.ownDecisionHistory_snoc_of_not_mover
+          i (basePath.append suffix) action hmover]
+        exact ih
+
+/-- Classic perfect recall of one's own previous information and actions. -/
+def HasPerfectRecall [DecidableEq N]
+    (G : ControlledObservedGame N) (i : N) : Prop :=
+  ∀ (first second : G.base.History)
+    (hfirst : G.base.mover first.1 = some i)
+    (hsecond : G.base.mover second.1 = some i),
+    G.infoAt first i hfirst = G.infoAt second i hsecond →
+      G.ownDecisionHistory i first =
+        G.ownDecisionHistory i second
+
+/-- Every player has classic perfect recall. -/
+def PerfectRecall [DecidableEq N]
+    (G : ControlledObservedGame N) : Prop :=
+  ∀ i, G.HasPerfectRecall i
+
+/-- Equal information at decisions determines the complete history. -/
+def HasSingletonInformation
+    (G : ControlledObservedGame N) (i : N) : Prop :=
+  ∀ (first second : G.base.History)
+    (hfirst : G.base.mover first.1 = some i)
+    (hsecond : G.base.mover second.1 = some i),
+    G.infoAt first i hfirst = G.infoAt second i hsecond →
+      first = second
+
+/-- Every player has singleton decision information. -/
+def PerfectInformation
+    (G : ControlledObservedGame N) : Prop :=
+  ∀ i, G.HasSingletonInformation i
+
+/-- Singleton decision information implies classic perfect recall. -/
+theorem HasSingletonInformation.hasPerfectRecall [DecidableEq N]
+    {i : N} (h : G.HasSingletonInformation i) :
+    G.HasPerfectRecall i := by
+  intro first second hfirst hsecond hsame
+  exact congrArg (G.ownDecisionHistory i)
+    (h first second hfirst hsecond hsame)
+
+/-- A player never revisits the same decision information after acting. -/
+def HasNoAbsentMindedness
+    (G : ControlledObservedGame N) (i : N) : Prop :=
+  ∀ (first : G.base.History)
+    (hfirst : G.base.mover first.1 = some i)
+    (action : G.base.Action first.1)
+    (finish : G.base.State)
+    (suffix :
+      G.base.toArena.History
+        (G.base.next first.1 action) finish)
+    (hsecond : G.base.mover finish = some i),
+    G.infoAt first i hfirst ≠
+      G.infoAt
+        ⟨finish, (first.2.snoc action).append suffix⟩
+        i hsecond
+
+/-- Under no absent-mindedness, an earlier remembered information state
+differs from the current decision information state. -/
+theorem HasNoAbsentMindedness.info_ne_of_mem_ownDecisionHistory
+    [DecidableEq N]
+    {i : N}
+    (hnoAbsent : G.HasNoAbsentMindedness i)
+    (history : G.base.History)
+    (hmover : G.base.mover history.1 = some i)
+    (decision : G.PersonalDecision i)
+    (hmem : decision ∈ G.ownDecisionHistory i history) :
+    decision.1 ≠ G.infoAt history i hmover := by
+  obtain ⟨occurrence⟩ :=
+    G.exists_personalDecisionOccurrence_of_mem
+      i history decision hmem
+  have hdistinct :=
+    hnoAbsent
+      ⟨occurrence.state, occurrence.before⟩
+      occurrence.mover occurrence.action
+      history.1 occurrence.after hmover
+  rw [occurrence.path_eq] at hdistinct
+  have hfirst :
+      G.infoAt
+          ⟨occurrence.state, occurrence.before⟩
+          i occurrence.mover =
+        decision.1 :=
+    congrArg Sigma.fst occurrence.decision_eq
+  intro hequal
+  exact hdistinct (hfirst.trans hequal)
+
+/-- No player is absent-minded. -/
+def NoAbsentMindedness
+    (G : ControlledObservedGame N) : Prop :=
+  ∀ i, G.HasNoAbsentMindedness i
+
+/-- Classic perfect recall rules out absent-mindedness. -/
+theorem HasPerfectRecall.hasNoAbsentMindedness [DecidableEq N]
+    {i : N} (hrecall : G.HasPerfectRecall i) :
+    G.HasNoAbsentMindedness i := by
+  intro first hfirst action finish suffix hsecond hsame
+  let afterFirst : G.base.History :=
+    ⟨G.base.next first.1 action, first.2.snoc action⟩
+  let second : G.base.History :=
+    ⟨finish, (first.2.snoc action).append suffix⟩
+  have hstep :
+      G.ownDecisionHistory i afterFirst =
+        G.ownDecisionHistory i first ++
+          [G.personalDecisionAt i first hfirst action] :=
+    G.ownDecisionHistory_snoc_of_mover
+      i first.2 action hfirst
+  have htail :
+      (G.ownDecisionHistory i afterFirst).length ≤
+        (G.ownDecisionHistory i second).length :=
+    G.ownDecisionHistory_length_le_append
+      i (first.2.snoc action) suffix
+  have hstrict :
+      (G.ownDecisionHistory i first).length <
+        (G.ownDecisionHistory i second).length := by
+    rw [hstep] at htail
+    simpa using htail
+  have hequal :=
+    hrecall first second hfirst hsecond hsame
+  rw [hequal] at hstrict
+  exact Nat.lt_irrefl _ hstrict
+
+/-- Private observations along a complete history, including both endpoints. -/
+def signalHistoryPath
+    (G : ControlledObservedGame N) (i : N) :
+    {state : G.base.State} →
+      G.base.toArena.History G.base.init state →
+        List (G.Observation i)
+  | _, .nil =>
+      [G.observe i
+        (Arena.HistoryFrom.nil G.base.toArena G.base.init)]
+  | _, @Arena.History.snoc _ _ state path action =>
+      G.signalHistoryPath i path ++
+        [G.observe i
+          ⟨G.base.next state action, path.snoc action⟩]
+
+/-- Private-signal sequence of a complete history. -/
+def signalHistory
+    (G : ControlledObservedGame N) (i : N)
+    (history : G.base.History) :
+    List (G.Observation i) :=
+  G.signalHistoryPath i history.2
+
+@[simp]
+theorem signalHistory_nil
+    (G : ControlledObservedGame N) (i : N) :
+    G.signalHistory i
+        (Arena.HistoryFrom.nil G.base.toArena G.base.init) =
+      [G.observe i
+        (Arena.HistoryFrom.nil G.base.toArena G.base.init)] :=
+  rfl
+
+@[simp]
+theorem signalHistory_snoc
+    (G : ControlledObservedGame N) (i : N)
+    {state : G.base.State}
+    (path : G.base.toArena.History G.base.init state)
+    (action : G.base.Action state) :
+    G.signalHistory i
+        ⟨G.base.next state action, path.snoc action⟩ =
+      G.signalHistory i ⟨state, path⟩ ++
+        [G.observe i
+          ⟨G.base.next state action, path.snoc action⟩] :=
+  rfl
+
+/-- Public observations along a complete history. -/
+def publicSignalHistoryPath
+    (G : ControlledObservedGame N) :
+    {state : G.base.State} →
+      G.base.toArena.History G.base.init state →
+        List G.PublicObservation
+  | _, .nil =>
+      [G.publicObserve
+        (Arena.HistoryFrom.nil G.base.toArena G.base.init)]
+  | _, @Arena.History.snoc _ _ state path action =>
+      G.publicSignalHistoryPath path ++
+        [G.publicObserve
+          ⟨G.base.next state action, path.snoc action⟩]
+
+/-- Public-signal sequence of a complete history. -/
+def publicSignalHistory
+    (G : ControlledObservedGame N)
+    (history : G.base.History) :
+    List G.PublicObservation :=
+  G.publicSignalHistoryPath history.2
+
+@[simp]
+theorem publicSignalHistory_nil
+    (G : ControlledObservedGame N) :
+    G.publicSignalHistory
+        (Arena.HistoryFrom.nil G.base.toArena G.base.init) =
+      [G.publicObserve
+        (Arena.HistoryFrom.nil G.base.toArena G.base.init)] :=
+  rfl
+
+@[simp]
+theorem publicSignalHistory_snoc
+    (G : ControlledObservedGame N)
+    {state : G.base.State}
+    (path : G.base.toArena.History G.base.init state)
+    (action : G.base.Action state) :
+    G.publicSignalHistory
+        ⟨G.base.next state action, path.snoc action⟩ =
+      G.publicSignalHistory ⟨state, path⟩ ++
+        [G.publicObserve
+          ⟨G.base.next state action, path.snoc action⟩] :=
+  rfl
+
+/-- The private-signal sequence factors through current decision information. -/
+def HasSignalPerfectRecall
+    (G : ControlledObservedGame N) (i : N) : Prop :=
+  ∀ (first second : G.base.History)
+    (hfirst : G.base.mover first.1 = some i)
+    (hsecond : G.base.mover second.1 = some i),
+    G.infoAt first i hfirst = G.infoAt second i hsecond →
+      G.signalHistory i first =
+        G.signalHistory i second
+
+/-- Every player has private-signal recall. -/
+def SignalPerfectRecall
+    (G : ControlledObservedGame N) : Prop :=
+  ∀ i, G.HasSignalPerfectRecall i
+
+/-- Current public observation determines the complete public-signal
+sequence. -/
+def HasPublicPerfectRecall
+    (G : ControlledObservedGame N) : Prop :=
+  ∀ first second : G.base.History,
+    G.publicObserve first = G.publicObserve second →
+      G.publicSignalHistory first =
+        G.publicSignalHistory second
+
+/-- Singleton decision information implies private-signal recall. -/
+theorem HasSingletonInformation.hasSignalPerfectRecall
+    {i : N} (hinformation : G.HasSingletonInformation i) :
+    G.HasSignalPerfectRecall i := by
+  intro first second hfirst hsecond hsame
+  exact congrArg (G.signalHistory i)
+    (hinformation first second hfirst hsecond hsame)
+
+/-- Private signal histories have one more coordinate than action histories. -/
+theorem signalHistory_length
+    (G : ControlledObservedGame N) (i : N)
+    (history : G.base.History) :
+    (G.signalHistory i history).length =
+      history.2.length + 1 := by
+  rcases history with ⟨finish, path⟩
+  induction path with
+  | nil => rfl
+  | snoc path action ih =>
+      change
+        (G.signalHistoryPath i path).length =
+          path.length + 1 at ih
+      simp [signalHistory, signalHistoryPath, ih,
+        Nat.add_assoc]
+
+/-- A public signal history has one more coordinate than its action history. -/
+theorem publicSignalHistory_length
+    (G : ControlledObservedGame N)
+    (history : G.base.History) :
+    (G.publicSignalHistory history).length =
+      history.2.length + 1 := by
+  rcases history with ⟨finish, path⟩
+  induction path with
+  | nil => rfl
+  | snoc path action ih =>
+      change
+        (G.publicSignalHistoryPath path).length =
+          path.length + 1 at ih
+      simp [publicSignalHistory,
+        publicSignalHistoryPath, ih, Nat.add_assoc]
+
+/-- Signal recall rules out absent-mindedness because every action adds one
+signal coordinate. -/
+theorem HasSignalPerfectRecall.hasNoAbsentMindedness
+    {i : N} (hrecall : G.HasSignalPerfectRecall i) :
+    G.HasNoAbsentMindedness i := by
+  intro first hfirst action finish suffix hsecond hsame
+  let second : G.base.History :=
+    ⟨finish, (first.2.snoc action).append suffix⟩
+  have hsignals :=
+    hrecall first second hfirst hsecond hsame
+  have hfirstLength := G.signalHistory_length i first
+  have hsecondLength := G.signalHistory_length i second
+  have hpathLength :
+      second.2.length =
+        first.2.length + 1 + suffix.length := by
+    simp [second, Nat.add_assoc]
+  have hequalLength := congrArg List.length hsignals
+  rw [hfirstLength, hsecondLength, hpathLength] at hequalLength
+  omega
+
+/-- Perfect information implies private-signal recall for every player. -/
+theorem PerfectInformation.signalPerfectRecall
+    (hinformation : G.PerfectInformation) :
+    G.SignalPerfectRecall :=
+  fun i => (hinformation i).hasSignalPerfectRecall
+
+/-- Private-signal recall for every player implies global
+no-absent-mindedness. -/
+theorem SignalPerfectRecall.noAbsentMindedness
+    (hrecall : G.SignalPerfectRecall) :
+    G.NoAbsentMindedness :=
+  fun i => (hrecall i).hasNoAbsentMindedness
+
+/-- Factorization certificate for classic perfect recall. -/
