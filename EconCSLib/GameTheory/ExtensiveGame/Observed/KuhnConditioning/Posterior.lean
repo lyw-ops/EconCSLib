@@ -406,8 +406,13 @@ theorem actionLawsAfterDecisions_apply_of_ne
               hdistinct later (by simp [hlater]))
       unfold actionLawsAfterDecisions at htail
       rw [htail]
-      simp [Function.update,
-        (hdistinct decision (by simp)).symm]
+      unfold Function.update
+      split
+      · rename_i heq
+        exact
+          ((hdistinct decision (by simp))
+            heq.symm).elim
+      · rfl
 
 /-- The posterior independently sampled table retains the original action
 marginal at every information state not listed among the exposed prior
