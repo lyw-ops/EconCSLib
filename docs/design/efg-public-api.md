@@ -187,12 +187,12 @@ named record literal.
 
 ## Compatibility aggregates and implementation modules
 
-The flat `Observed/Controlled*.lean` family has an explicit four-role map:
-canonical carrier, canonical semantic owner, declaration-free legacy
-aggregate, or downstream payoff-aware adapter. See
-[`efg-controlled-api.md`](efg-controlled-api.md). These modules are not
-parallel versions of one declaration API, and governance prevents canonical
-controlled owners from depending on any `*Compat` adapter.
+The complete `Observed/Controlled/` hierarchy has an explicit role map:
+canonical carrier, semantic owner, responsibility owner, declaration-free
+aggregate facade, or downstream payoff-aware adapter. See
+[`efg-controlled-api.md`](efg-controlled-api.md). Governance rejects flat
+`Observed.ControlledFoo` siblings and prevents canonical controlled modules
+from depending on anything under `Controlled.Compat`.
 
 The following established imports remain compatibility-only aggregates:
 
@@ -202,8 +202,6 @@ The following established imports remain compatibility-only aggregates:
 - `Observed.BehaviorRefinement`
 - `Observed.DeferredSampling`
 - `Observed.KuhnConditioning`
-- `Observed.ControlledInfrastructure`
-- `Observed.ControlledMorphism`
 - `FOSG.FOSGSequentialization`
 - `Simulation.ObservedMeasurableKernelRestartCompatibility`
 
@@ -228,10 +226,10 @@ Observed/DeferredSampling/
 Observed/KuhnConditioning/
   Posterior → Core → Execution → Realization
 
-Observed/ControlledInfrastructure/
+Observed/Controlled/Infrastructure/
   Core    WellFormed    Subgame    Finite    Quasi    Recall
 
-Observed/ControlledMorphism/
+Observed/Controlled/Morphism/
   Core → Subgame
   Core → Recall
 
@@ -249,10 +247,10 @@ source-root predicate. The established root-parameterized
 `observedChanceGame` spelling is a definitionally equal compatibility
 wrapper.
 
-Downstream users should normally import a stable facade. The compatibility
-aggregates remain for existing clients. Split implementation paths exist to
-keep proofs reviewable and dependencies explicit; they may be reorganized
-without changing a stable facade or compatibility aggregate path.
+Downstream users should normally import a facade. The listed compatibility
+aggregates remain for existing clients. `Controlled.Infrastructure` and
+`Controlled.Morphism` are canonical aggregate facades over their narrow
+responsibility leaves.
 
 ## Visibility audit and enforceable boundaries
 
@@ -261,8 +259,8 @@ without changing a stable facade or compatibility aggregate path.
 | `EconCSLib` | The occurrence compiler previously pulled `Observed.SPE`, pure/behavioral refinement, perfect recall, and continuation transfer into the root aggregate. | Removed the compiler import. Add `Interface.Compilation` downstream. |
 | StructuralCore | Its exact EFG/local closure is `Basic`, `Reachability`, `History`, `CompletePlay`, and `Observed.Controlled`; no termination, execution, objective, probability, relation, equilibrium, simulation, or compiler module is reachable. | Enforced by exact source-graph comparison and `StructuralCoreImportBoundary`. |
 | Core | The Foundation Facade reaches structural/finite/recall/subgame leaves and bounded deterministic/PMF execution, but neither `Execution.Objective` nor `Winning.*` nor a payoff-aware observed game. | Enforced by source-graph governance and `CoreImportBoundary`. |
-| Controlled recall leaf | `ControlledInfrastructure.Recall` reaches general represented-information witnesses through `WellFormed`, but no finite hypothesis, length bound, or controlled executor. | Exact six-module closure plus `RecallImportBoundary`. |
-| Controlled morphism core | `ControlledMorphism.Core` exposes structural Hom/Iso, information refinement, strategy transport, and Iso algebra without subgame, recall, finite, or length declarations. | Exact 8 / 8 closure plus `ControlledMorphismCoreImportBoundary`; the old aggregate remains a compatibility regression. |
+| Controlled recall leaf | `Controlled.Infrastructure.Recall` reaches general represented-information witnesses through `WellFormed`, but no finite hypothesis, length bound, or controlled executor. | Exact six-module closure plus `RecallImportBoundary`. |
+| Controlled morphism core | `Controlled.Morphism.Core` exposes structural Hom/Iso, information refinement, strategy transport, and Iso algebra without subgame, recall, finite, or length declarations. | Exact 8 / 8 closure plus `ControlledMorphismCoreImportBoundary`; the aggregate facade has a separate import regression. |
 | Objective | Complete plays, structural termination certificates, and terminal/path outcomes are reachable, but chance execution, path probability laws, equilibrium, and analytic kernels are absent. | Enforced by `ObjectiveImportBoundary`. |
 | Finite execution | Structural `Arena` and observed isomorphism prerequisites are reachable through chance execution, but no `ProbabilityTheory.Kernel`, `MeasurableKernelArena`, or infinite `Arena.pathLaw` is available. | New shallow finite/PMF boundary, enforced by `FiniteExecutionImportBoundary`. |
 | Infinite discrete execution | `Execution.InfiniteTrajectory` necessarily exposes Mathlib kernels, measures, integration, and hitting-time declarations. | Intrinsic to infinite path laws and enforced separately from non-atomic kernels by `InfiniteExecutionImportBoundary`. |
