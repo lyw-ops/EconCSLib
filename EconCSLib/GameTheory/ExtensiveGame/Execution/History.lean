@@ -191,6 +191,53 @@ theorem History.reachableInUnfolding (A : Arena) (start : A.State)
 
 end Arena
 
+namespace ControlledGame
+
+variable {N : Type*}
+
+/-- Unroll a payoff-free controlled game into its complete-history tree.
+
+Missions and objectives remain external; movers are read from the endpoint
+world state while histories with a shared endpoint remain distinct states. -/
+def unfold (G : ControlledGame N) : ControlledGame N where
+  State := G.toArena.HistoryFrom G.init
+  Action := fun history => G.Action history.1
+  next := fun history action =>
+    ⟨G.next history.1 action, history.2.snoc action⟩
+  init := Arena.HistoryFrom.nil G.toArena G.init
+  mover := fun history => G.mover history.1
+
+@[simp]
+theorem unfold_init (G : ControlledGame N) :
+    G.unfold.init =
+      Arena.HistoryFrom.nil G.toArena G.init :=
+  rfl
+
+@[simp]
+theorem unfold_next (G : ControlledGame N)
+    (history : G.toArena.HistoryFrom G.init)
+    (action : G.Action history.1) :
+    G.unfold.next history action =
+      ⟨G.next history.1 action,
+        history.2.snoc action⟩ :=
+  rfl
+
+@[simp]
+theorem unfold_mover (G : ControlledGame N)
+    (history : G.toArena.HistoryFrom G.init) :
+    G.unfold.mover history = G.mover history.1 :=
+  rfl
+
+@[simp]
+theorem unfold_isTerminal_iff
+    (G : ControlledGame N)
+    (history : G.toArena.HistoryFrom G.init) :
+    G.unfold.isTerminal history ↔
+      G.isTerminal history.1 :=
+  Iff.rfl
+
+end ControlledGame
+
 namespace ExtensiveGame
 
 variable {N U : Type*}
