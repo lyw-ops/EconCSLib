@@ -8,8 +8,8 @@ import EconCSLib.GameTheory.ExtensiveGame.Compiler.GameTreeOccurrenceObserved
 /-!
 # EconCSLib.Examples.ExtensiveGame.OccurrenceNonIso
 
-Deterministic guarding example **N-1** from the living EFG correctness record
-(`docs/research/efg_strict_correctness_audit.md`).
+Regression for the endpoint-versus-occurrence compiler distinction documented
+in `docs/design/efg-representation-compilation.md`.
 
 The endpoint-sensitive compiler `GameTree.toObservedGame` and the
 occurrence-sensitive compiler `GameTree.toOccurrenceObservedGame` are connected
