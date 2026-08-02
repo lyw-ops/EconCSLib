@@ -13,7 +13,7 @@ Behavioral-to-mixed history, payoff, continuation, and Nash on presentation-desi
 
 namespace ExtensiveGame.ObservedChanceGame
 
-universe uN uU
+universe uN uU uAS uO uI uP
 
 variable {N : Type uN} {U : Type uU}
 
@@ -21,7 +21,7 @@ variable {N : Type uN} {U : Type uU}
 a complete pure plan from a behavioral profile gives exactly the same bounded
 complete-history law as sampling locally during play. -/
 theorem behavioralToMixed_stoppedHistoryLawFrom_of_noAbsentMindedness
-    (G : ObservedChanceGame N U)
+    (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
     [Fintype N] [DecidableEq N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
@@ -80,7 +80,7 @@ theorem behavioralToMixed_stoppedHistoryLawFrom_of_noAbsentMindedness
 /-- Compatibility wrapper under the stronger traditional finite Kuhn
 hypotheses. -/
 theorem behavioralToMixed_stoppedHistoryLawFrom
-    (G : ObservedChanceGame N U)
+    (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
     [Fintype N] [DecidableEq N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
@@ -111,7 +111,7 @@ theorem behavioralToMixed_stoppedHistoryLawFrom
 payoff law at every continuation root under finite information and no
 absent-mindedness. -/
 theorem behavioralToMixed_stoppedPayoffLawFrom_of_noAbsentMindedness
-    (G : ObservedChanceGame N U)
+    (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
     [Fintype N] [DecidableEq N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
@@ -150,7 +150,7 @@ theorem behavioralToMixed_stoppedPayoffLawFrom_of_noAbsentMindedness
 /-- Compatibility wrapper for payoff-law preservation under the stronger
 traditional finite Kuhn hypotheses. -/
 theorem behavioralToMixed_stoppedPayoffLawFrom
-    (G : ObservedChanceGame N U)
+    (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
     [Fintype N] [DecidableEq N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
@@ -180,14 +180,15 @@ theorem behavioralToMixed_stoppedPayoffLawFrom
 plans by one exact continuation-family morphism.  Perfect recall is not
 required for this direction. -/
 noncomputable def behavioralToMixedContinuationHom_of_noAbsentMindedness
-    (G : ObservedChanceGame N U)
+    (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
     [Fintype N] [DecidableEq N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteNoAbsentMindednessHypotheses)
+    (roots : G.observed.RootPresentation)
     (fuel : ℕ) :
-    (G.behavioralContinuationFamily fuel).Hom
-      (G.mixedContinuationFamily fuel) where
+    (G.behavioralContinuationFamilyOnRoots roots fuel).Hom
+      (G.mixedContinuationFamilyOnRoots roots fuel) where
   rootMap := id
   strategyMap :=
     h.behavioralToMixedStrategy
@@ -210,30 +211,32 @@ noncomputable def behavioralToMixedContinuationHom_of_noAbsentMindedness
 /-- The weak-hypothesis behavioral-to-mixed morphism covers every admissible
 root because its root map is the identity. -/
 theorem behavioralToMixedContinuationHom_of_noAbsentMindedness_declaredRootSurjective
-    (G : ObservedChanceGame N U)
+    (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
     [Fintype N] [DecidableEq N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteNoAbsentMindednessHypotheses)
+    (roots : G.observed.RootPresentation)
     (fuel : ℕ) :
     (G.behavioralToMixedContinuationHom_of_noAbsentMindedness
-      h fuel).DeclaredRootSurjective := by
+      h roots fuel).DeclaredRootSurjective := by
   intro targetRoot htargetRoot
   exact ⟨targetRoot, htargetRoot, rfl⟩
 
 /-- Identity outcome transport preserves every common law utility under the
 weak behavioral-sampling hypotheses. -/
 theorem behavioralToMixedContinuationHom_of_noAbsentMindedness_utilityCompatible
-    (G : ObservedChanceGame N U)
+    (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
     [Fintype N] [DecidableEq N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteNoAbsentMindednessHypotheses)
+    (roots : G.observed.RootPresentation)
     (fuel : ℕ)
     {V : Type*}
     (utility : PMF (Option (N → U)) → N → V) :
     (G.behavioralToMixedContinuationHom_of_noAbsentMindedness
-      h fuel).UtilityCompatible
+      h roots fuel).UtilityCompatible
         (fun _ => utility)
         (fun _ => utility) := by
   intro current outcome i
@@ -242,81 +245,85 @@ theorem behavioralToMixedContinuationHom_of_noAbsentMindedness_utilityCompatible
 /-- Mixed bounded Nash on presentation-designated continuations of the independently pre-sampled plan reflects to
 behavioral bounded Nash on presentation-designated continuations under finite information and no absent-mindedness.
 Perfect recall is not required for this one-way result. -/
-theorem isBehavioralNashOnDesignatedContinuationsAtFuel_of_behavioralToMixed_of_noAbsentMindedness
-    (G : ObservedChanceGame N U)
+theorem isBehavioralNashOnRootsAtFuel_of_behavioralToMixed_of_noAbsentMindedness
+    (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
     [Fintype N] [DecidableEq N]
     [Preorder V]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteNoAbsentMindednessHypotheses)
+    (roots : G.observed.RootPresentation)
     (utility :
       PMF (Option (N → U)) → N → V)
     (profile : G.observed.BehavioralProfile)
     (fuel : ℕ)
     (hmixed :
-      G.IsMixedNashOnDesignatedContinuationsAtFuel
-        utility
+      G.IsMixedNashOnRootsAtFuel
+        roots utility
         (h.behavioralToMixedProfile profile)
         fuel) :
-    G.IsBehavioralNashOnDesignatedContinuationsAtFuel
-      utility profile fuel := by
+    G.IsBehavioralNashOnRootsAtFuel
+      roots utility profile fuel := by
   change
-    (G.behavioralContinuationFamily
-      fuel).IsNashOnRoots
+    (G.behavioralContinuationFamilyOnRoots
+      roots fuel).IsNashOnRoots
         (fun _ => utility) profile
   have hmixed' :
-      (G.mixedContinuationFamily
-        fuel).IsNashOnRoots
+      (G.mixedContinuationFamilyOnRoots
+        roots fuel).IsNashOnRoots
           (fun _ => utility)
           (h.behavioralToMixedProfile profile) :=
     hmixed
   exact
     hmixed'.comap
       (G.behavioralToMixedContinuationHom_of_noAbsentMindedness
-        h fuel)
+        h roots fuel)
       (G.behavioralToMixedContinuationHom_of_noAbsentMindedness_utilityCompatible
-        h fuel utility)
+        h roots fuel utility)
 
 /-- Compatibility wrapper for the behavioral-to-mixed continuation morphism
 under the traditional finite perfect-recall hypotheses. -/
 noncomputable def behavioralToMixedContinuationHom
-    (G : ObservedChanceGame N U)
+    (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
     [Fintype N] [DecidableEq N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteKuhnHypotheses)
+    (roots : G.observed.RootPresentation)
     (fuel : ℕ) :
-    (G.behavioralContinuationFamily fuel).Hom
-      (G.mixedContinuationFamily fuel) :=
+    (G.behavioralContinuationFamilyOnRoots roots fuel).Hom
+      (G.mixedContinuationFamilyOnRoots roots fuel) :=
   G.behavioralToMixedContinuationHom_of_noAbsentMindedness
-    h.toFiniteNoAbsentMindednessHypotheses fuel
+    h.toFiniteNoAbsentMindednessHypotheses roots fuel
 
 /-- The behavioral-to-mixed continuation morphism covers every admissible
 root because its root map is the identity. -/
 theorem behavioralToMixedContinuationHom_declaredRootSurjective
-    (G : ObservedChanceGame N U)
+    (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
     [Fintype N] [DecidableEq N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteKuhnHypotheses)
+    (roots : G.observed.RootPresentation)
     (fuel : ℕ) :
     (G.behavioralToMixedContinuationHom
-      h fuel).DeclaredRootSurjective := by
+      h roots fuel).DeclaredRootSurjective := by
   intro targetRoot htargetRoot
   exact ⟨targetRoot, htargetRoot, rfl⟩
 
 /-- Identity outcome transport preserves every common law utility. -/
 theorem behavioralToMixedContinuationHom_utilityCompatible
-    (G : ObservedChanceGame N U)
+    (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
     [Fintype N] [DecidableEq N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteKuhnHypotheses)
+    (roots : G.observed.RootPresentation)
     (fuel : ℕ)
     {V : Type*}
     (utility : PMF (Option (N → U)) → N → V) :
     (G.behavioralToMixedContinuationHom
-      h fuel).UtilityCompatible
+      h roots fuel).UtilityCompatible
         (fun _ => utility)
         (fun _ => utility) := by
   intro current outcome i
@@ -327,74 +334,76 @@ source behavioral profile is bounded Nash on presentation-designated continuatio
 
 This reflection direction needs only exact realization.  The converse still
 requires semantic coverage of arbitrary mixed deviations. -/
-theorem isBehavioralNashOnDesignatedContinuationsAtFuel_of_behavioralToMixed
-    (G : ObservedChanceGame N U)
+theorem isBehavioralNashOnRootsAtFuel_of_behavioralToMixed
+    (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
     [Fintype N] [DecidableEq N]
     [Preorder V]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteKuhnHypotheses)
+    (roots : G.observed.RootPresentation)
     (utility :
       PMF (Option (N → U)) → N → V)
     (profile : G.observed.BehavioralProfile)
     (fuel : ℕ)
     (hmixed :
-      G.IsMixedNashOnDesignatedContinuationsAtFuel
-        utility
+      G.IsMixedNashOnRootsAtFuel
+        roots utility
         (h.behavioralToMixedProfile profile)
         fuel) :
-    G.IsBehavioralNashOnDesignatedContinuationsAtFuel
-      utility profile fuel := by
+    G.IsBehavioralNashOnRootsAtFuel
+      roots utility profile fuel := by
   change
-    (G.behavioralContinuationFamily
-      fuel).IsNashOnRoots
+    (G.behavioralContinuationFamilyOnRoots
+      roots fuel).IsNashOnRoots
         (fun _ => utility) profile
   have hmixed' :
-      (G.mixedContinuationFamily
-        fuel).IsNashOnRoots
+      (G.mixedContinuationFamilyOnRoots
+        roots fuel).IsNashOnRoots
           (fun _ => utility)
           (h.behavioralToMixedProfile profile) :=
     hmixed
   exact
     hmixed'.comap
       (G.behavioralToMixedContinuationHom
-        h fuel)
+        h roots fuel)
       (G.behavioralToMixedContinuationHom_utilityCompatible
-        h fuel utility)
+        h roots fuel utility)
 
 /-- Two-way bounded Nash on presentation-designated continuations transfer follows once arbitrary mixed deviations are
 semantically realized by behavioral deviations at the source profile.
 
 The premise is deliberately semantic and rootwise; no false literal
 surjectivity claim about the two strategy spaces is required. -/
-theorem isBehavioralNashOnDesignatedContinuationsAtFuel_iff_mixed_of_deviationComplete
-    (G : ObservedChanceGame N U)
+theorem isBehavioralNashOnRootsAtFuel_iff_mixed_of_deviationComplete
+    (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
     [Fintype N] [DecidableEq N]
     [Preorder V]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteKuhnHypotheses)
+    (roots : G.observed.RootPresentation)
     (utility :
       PMF (Option (N → U)) → N → V)
     (profile : G.observed.BehavioralProfile)
     (fuel : ℕ)
     (hdeviation :
       (G.behavioralToMixedContinuationHom
-        h fuel).OutcomeDeviationCompleteAt
+        h roots fuel).OutcomeDeviationCompleteAt
           profile) :
-    G.IsBehavioralNashOnDesignatedContinuationsAtFuel
-        utility profile fuel ↔
-      G.IsMixedNashOnDesignatedContinuationsAtFuel
-        utility
+    G.IsBehavioralNashOnRootsAtFuel
+        roots utility profile fuel ↔
+      G.IsMixedNashOnRootsAtFuel
+        roots utility
         (h.behavioralToMixedProfile profile)
         fuel := by
   exact
     (G.behavioralToMixedContinuationHom
-      h fuel).isNashOnRoots_iff_of_outcomeDeviationCompleteAt
+      h roots fuel).isNashOnRoots_iff_of_outcomeDeviationCompleteAt
         (G.behavioralToMixedContinuationHom_utilityCompatible
-          h fuel utility)
+          h roots fuel utility)
         (G.behavioralToMixedContinuationHom_declaredRootSurjective
-          h fuel)
+          h roots fuel)
         profile
         hdeviation
 
