@@ -228,29 +228,11 @@ abbrev OccurrenceInfo (root : StochasticGameTree N) (i : N) :=
 /-- Occurrence-sensitive observed presentation of a stochastic tree before its
 chance kernels are attached. -/
 def toObservedGame (root : StochasticGameTree N) :
-    ExtensiveGame.ObservedGame N ℝ where
-  base := toExtensiveGame root
-  Observation := fun _ =>
-    (toExtensiveGame root).toArena.HistoryFrom root
-  PublicObservation :=
-    (toExtensiveGame root).toArena.HistoryFrom root
-  observe := fun _ history => history
-  publicObserve := fun history => history
-  publicOf := fun _ observation => observation
-  observe_public := by
-    intro i history
-    rfl
-  InfoState := fun i => OccurrenceInfo root i
-  infoObserve := fun _ information => information.1
-  infoAt := fun history _ hmover => ⟨history, hmover⟩
-  infoAt_observe := by
-    intro history i hmover
-    rfl
-  InfoAction := fun _ information =>
-    (toExtensiveGame root).Action information.1.1
-  actionEquiv := fun _ _ _ => Equiv.refl _
-  IsDesignatedContinuationRoot := fun _ => True
-  init_isDesignatedContinuationRoot := trivial
+    ExtensiveGame.ObservedGame N ℝ :=
+  ExtensiveGame.ObservedGame.decisionHistoryInformation
+    (toExtensiveGame root)
+    (ExtensiveGame.ObservedGame.CompleteInformation.PublicObservationPresentation.trivial
+      (toExtensiveGame root))
 
 /-- Extract the constructor-provided chance law at a compiled chance state. -/
 noncomputable def chanceLawAt (root tree : StochasticGameTree N)
