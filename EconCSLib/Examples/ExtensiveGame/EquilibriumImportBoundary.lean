@@ -16,7 +16,7 @@ compilation guards prevent either branch from leaking back into ordinary
 equilibrium imports.
 -/
 
-#check ExtensiveGame.ObservedGame.Iso.isPureNashOnDesignatedContinuationsAtFuel_iff
+#check ExtensiveGame.ObservedGame.Iso.isPureNashOnRootsAtFuel_iff
 #check ExtensiveGame.ObservedChanceGame.finiteKuhn_isNash_iff
 #check ExtensiveGame.ObservedGame.MeasurableHistoryModel.PathUtility
 
