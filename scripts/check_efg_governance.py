@@ -63,14 +63,14 @@ EXPECTED_STRUCTURAL_CORE_EFG_CLOSURE = {
 }
 
 CONTROLLED_INFRASTRUCTURE_RECALL = (
-    f"{EFG_PREFIX}Observed.ControlledInfrastructure.Recall"
+    f"{EFG_PREFIX}Observed.Controlled.Infrastructure.Recall"
 )
 CONTROLLED_INFRASTRUCTURE_WELL_FORMED = (
-    f"{EFG_PREFIX}Observed.ControlledInfrastructure.WellFormed"
+    f"{EFG_PREFIX}Observed.Controlled.Infrastructure.WellFormed"
 )
-CONTROLLED_MORPHISM_CORE = f"{EFG_PREFIX}Observed.ControlledMorphism.Core"
-CONTROLLED_MORPHISM_SUBGAME = f"{EFG_PREFIX}Observed.ControlledMorphism.Subgame"
-CONTROLLED_MORPHISM_RECALL = f"{EFG_PREFIX}Observed.ControlledMorphism.Recall"
+CONTROLLED_MORPHISM_CORE = f"{EFG_PREFIX}Observed.Controlled.Morphism.Core"
+CONTROLLED_MORPHISM_SUBGAME = f"{EFG_PREFIX}Observed.Controlled.Morphism.Subgame"
+CONTROLLED_MORPHISM_RECALL = f"{EFG_PREFIX}Observed.Controlled.Morphism.Recall"
 
 EXPECTED_EXACT_EFG_CLOSURES = {
     CONTROLLED_INFRASTRUCTURE_RECALL: {
@@ -107,7 +107,7 @@ EXPECTED_EXACT_EFG_CLOSURES = {
         f"{EFG_PREFIX}Execution.DependentFiber",
         f"{EFG_PREFIX}Relations.Discrete.Morphism",
         f"{EFG_PREFIX}Observed.Controlled",
-        f"{EFG_PREFIX}Observed.ControlledInfrastructure.Subgame",
+        f"{EFG_PREFIX}Observed.Controlled.Infrastructure.Subgame",
         CONTROLLED_MORPHISM_CORE,
     },
     CONTROLLED_MORPHISM_RECALL: {
@@ -125,76 +125,87 @@ EXPECTED_EXACT_EFG_CLOSURES = {
     },
 }
 
-EXPECTED_COMPATIBILITY_AGGREGATE_IMPORTS = {
-    f"{EFG_PREFIX}Observed.ControlledInfrastructure": {
-        f"{EFG_PREFIX}Observed.ControlledInfrastructure.Core",
+EXPECTED_CONTROLLED_AGGREGATE_IMPORTS = {
+    f"{EFG_PREFIX}Observed.Controlled.Infrastructure": {
+        f"{EFG_PREFIX}Observed.Controlled.Infrastructure.Core",
         CONTROLLED_INFRASTRUCTURE_WELL_FORMED,
-        f"{EFG_PREFIX}Observed.ControlledInfrastructure.Subgame",
-        f"{EFG_PREFIX}Observed.ControlledInfrastructure.Finite",
-        f"{EFG_PREFIX}Observed.ControlledInfrastructure.Quasi",
-        f"{EFG_PREFIX}Observed.ControlledInfrastructure.Recall",
+        f"{EFG_PREFIX}Observed.Controlled.Infrastructure.Subgame",
+        f"{EFG_PREFIX}Observed.Controlled.Infrastructure.Finite",
+        f"{EFG_PREFIX}Observed.Controlled.Infrastructure.Quasi",
+        f"{EFG_PREFIX}Observed.Controlled.Infrastructure.Recall",
         f"{EFG_PREFIX}Winning.Basic",
     },
-    f"{EFG_PREFIX}Observed.ControlledMorphism": {
+    f"{EFG_PREFIX}Observed.Controlled.Morphism": {
         CONTROLLED_MORPHISM_CORE,
         CONTROLLED_MORPHISM_SUBGAME,
         CONTROLLED_MORPHISM_RECALL,
     },
 }
 
-CONTROLLED_FLAT_MODULE_ROLES = {
+CONTROLLED_MODULE_ROLES = {
     f"{EFG_PREFIX}Observed.Controlled": "carrier",
-    f"{EFG_PREFIX}Observed.ControlledAnalyticLaw": "canonical-semantic-owner",
-    f"{EFG_PREFIX}Observed.ControlledDiscreteLaw": "canonical-semantic-owner",
-    f"{EFG_PREFIX}Observed.ControlledDiscretePathLaw": "canonical-semantic-owner",
-    f"{EFG_PREFIX}Observed.ControlledLaw": "canonical-semantic-owner",
-    f"{EFG_PREFIX}Observed.ControlledSemantics": "canonical-semantic-owner",
-    f"{EFG_PREFIX}Observed.ControlledInfrastructure": "compatibility-aggregate",
-    f"{EFG_PREFIX}Observed.ControlledMorphism": "compatibility-aggregate",
-    f"{EFG_PREFIX}Observed.ControlledDiscreteLawCompat": "payoff-aware-adapter",
-    f"{EFG_PREFIX}Observed.ControlledInfrastructureCompat": "payoff-aware-adapter",
-    f"{EFG_PREFIX}Observed.ControlledMorphismCompat": "payoff-aware-adapter",
+    f"{EFG_PREFIX}Observed.Controlled.Semantics": "canonical-semantic-owner",
+    f"{EFG_PREFIX}Observed.Controlled.Law": "canonical-semantic-owner",
+    f"{EFG_PREFIX}Observed.Controlled.Law.Discrete": "canonical-semantic-owner",
+    f"{EFG_PREFIX}Observed.Controlled.Law.DiscretePath": "canonical-semantic-owner",
+    f"{EFG_PREFIX}Observed.Controlled.Law.Analytic": "canonical-semantic-owner",
+    f"{EFG_PREFIX}Observed.Controlled.Infrastructure": "aggregate-facade",
+    f"{EFG_PREFIX}Observed.Controlled.Infrastructure.Core":
+        "canonical-responsibility-owner",
+    f"{EFG_PREFIX}Observed.Controlled.Infrastructure.WellFormed":
+        "canonical-responsibility-owner",
+    f"{EFG_PREFIX}Observed.Controlled.Infrastructure.Subgame":
+        "canonical-responsibility-owner",
+    f"{EFG_PREFIX}Observed.Controlled.Infrastructure.Finite":
+        "canonical-responsibility-owner",
+    f"{EFG_PREFIX}Observed.Controlled.Infrastructure.Quasi":
+        "canonical-responsibility-owner",
+    f"{EFG_PREFIX}Observed.Controlled.Infrastructure.Recall":
+        "canonical-responsibility-owner",
+    f"{EFG_PREFIX}Observed.Controlled.Morphism": "aggregate-facade",
+    f"{EFG_PREFIX}Observed.Controlled.Morphism.Core":
+        "canonical-responsibility-owner",
+    f"{EFG_PREFIX}Observed.Controlled.Morphism.Subgame":
+        "canonical-responsibility-owner",
+    f"{EFG_PREFIX}Observed.Controlled.Morphism.Recall":
+        "canonical-responsibility-owner",
+    f"{EFG_PREFIX}Observed.Controlled.Compat.DiscreteLaw":
+        "payoff-aware-adapter",
+    f"{EFG_PREFIX}Observed.Controlled.Compat.Infrastructure":
+        "payoff-aware-adapter",
+    f"{EFG_PREFIX}Observed.Controlled.Compat.Morphism":
+        "payoff-aware-adapter",
 }
 
 EXPECTED_PAYOFF_AWARE_ADAPTER_IMPORTS = {
-    f"{EFG_PREFIX}Observed.ControlledDiscreteLawCompat": {
+    f"{EFG_PREFIX}Observed.Controlled.Compat.DiscreteLaw": {
         f"{EFG_PREFIX}Observed.Chance",
-        f"{EFG_PREFIX}Observed.ControlledDiscreteLaw",
+        f"{EFG_PREFIX}Observed.Controlled.Law.Discrete",
     },
-    f"{EFG_PREFIX}Observed.ControlledInfrastructureCompat": {
+    f"{EFG_PREFIX}Observed.Controlled.Compat.Infrastructure": {
         CONTROLLED_INFRASTRUCTURE_RECALL,
         f"{EFG_PREFIX}Observed.Quasi",
         f"{EFG_PREFIX}Observed.SignalRecall",
     },
-    f"{EFG_PREFIX}Observed.ControlledMorphismCompat": {
+    f"{EFG_PREFIX}Observed.Controlled.Compat.Morphism": {
         CONTROLLED_MORPHISM_CORE,
         f"{EFG_PREFIX}Observed.Morphism.Inverse",
     },
 }
 
 EXPECTED_PAYOFF_AWARE_ADAPTER_NAMESPACES = {
-    f"{EFG_PREFIX}Observed.ControlledDiscreteLawCompat":
+    f"{EFG_PREFIX}Observed.Controlled.Compat.DiscreteLaw":
         "ExtensiveGame.ObservedChanceGame",
-    f"{EFG_PREFIX}Observed.ControlledInfrastructureCompat":
+    f"{EFG_PREFIX}Observed.Controlled.Compat.Infrastructure":
         "ExtensiveGame.ObservedGame",
-    f"{EFG_PREFIX}Observed.ControlledMorphismCompat":
+    f"{EFG_PREFIX}Observed.Controlled.Compat.Morphism":
         "ExtensiveGame.ObservedGame",
 }
 
 CONTROLLED_CANONICAL_OWNERS = {
     module
-    for module, role in CONTROLLED_FLAT_MODULE_ROLES.items()
-    if role in {"carrier", "canonical-semantic-owner"}
-} | {
-    f"{EFG_PREFIX}Observed.ControlledInfrastructure.Core",
-    CONTROLLED_INFRASTRUCTURE_WELL_FORMED,
-    f"{EFG_PREFIX}Observed.ControlledInfrastructure.Subgame",
-    f"{EFG_PREFIX}Observed.ControlledInfrastructure.Finite",
-    f"{EFG_PREFIX}Observed.ControlledInfrastructure.Quasi",
-    CONTROLLED_INFRASTRUCTURE_RECALL,
-    CONTROLLED_MORPHISM_CORE,
-    CONTROLLED_MORPHISM_SUBGAME,
-    CONTROLLED_MORPHISM_RECALL,
+    for module, role in CONTROLLED_MODULE_ROLES.items()
+    if role != "payoff-aware-adapter"
 }
 
 CORE_FORBIDDEN_CLOSURE_MODULES = {
@@ -337,20 +348,20 @@ PAYOFF_FREE_CORE_BOUNDARIES = {
     f"{EFG_PREFIX}Execution.DependentFiber",
     f"{EFG_PREFIX}Execution.StochasticNaturality",
     f"{EFG_PREFIX}Observed.Controlled",
-    f"{EFG_PREFIX}Observed.ControlledInfrastructure",
-    f"{EFG_PREFIX}Observed.ControlledInfrastructure.Core",
+    f"{EFG_PREFIX}Observed.Controlled.Infrastructure",
+    f"{EFG_PREFIX}Observed.Controlled.Infrastructure.Core",
     CONTROLLED_INFRASTRUCTURE_WELL_FORMED,
-    f"{EFG_PREFIX}Observed.ControlledInfrastructure.Subgame",
-    f"{EFG_PREFIX}Observed.ControlledInfrastructure.Finite",
-    f"{EFG_PREFIX}Observed.ControlledInfrastructure.Quasi",
-    f"{EFG_PREFIX}Observed.ControlledInfrastructure.Recall",
-    f"{EFG_PREFIX}Observed.ControlledMorphism",
+    f"{EFG_PREFIX}Observed.Controlled.Infrastructure.Subgame",
+    f"{EFG_PREFIX}Observed.Controlled.Infrastructure.Finite",
+    f"{EFG_PREFIX}Observed.Controlled.Infrastructure.Quasi",
+    f"{EFG_PREFIX}Observed.Controlled.Infrastructure.Recall",
+    f"{EFG_PREFIX}Observed.Controlled.Morphism",
     CONTROLLED_MORPHISM_CORE,
     CONTROLLED_MORPHISM_SUBGAME,
     CONTROLLED_MORPHISM_RECALL,
-    f"{EFG_PREFIX}Observed.ControlledSemantics",
-    f"{EFG_PREFIX}Observed.ControlledDiscreteLaw",
-    f"{EFG_PREFIX}Observed.ControlledLaw",
+    f"{EFG_PREFIX}Observed.Controlled.Semantics",
+    f"{EFG_PREFIX}Observed.Controlled.Law.Discrete",
+    f"{EFG_PREFIX}Observed.Controlled.Law",
     f"{EFG_PREFIX}Winning.Basic",
     f"{EFG_PREFIX}Winning.Determinacy",
     STRUCTURAL_CORE,
@@ -367,9 +378,9 @@ FORBIDDEN_PAYOFF_FREE_CLOSURE_MODULES = {
     f"{EFG_PREFIX}Observed.Chance",
     f"{EFG_PREFIX}Observed.Behavior",
     f"{EFG_PREFIX}Observed.InfiniteExecution",
-    f"{EFG_PREFIX}Observed.ControlledInfrastructureCompat",
-    f"{EFG_PREFIX}Observed.ControlledMorphismCompat",
-    f"{EFG_PREFIX}Observed.ControlledDiscreteLawCompat",
+    f"{EFG_PREFIX}Observed.Controlled.Compat.Infrastructure",
+    f"{EFG_PREFIX}Observed.Controlled.Compat.Morphism",
+    f"{EFG_PREFIX}Observed.Controlled.Compat.DiscreteLaw",
     f"{EFG_PREFIX}Winning.BasicCompat",
     f"{EFG_PREFIX}Winning.DeterminacyCompat",
 }
@@ -381,7 +392,7 @@ FORBIDDEN_PAYOFF_FREE_CLOSURE_PREFIXES = (
     f"{EFG_PREFIX}Interface.Equilibrium",
 )
 
-MAXIMUM_PATH_LAW_MODULE = f"{EFG_PREFIX}Observed.ControlledLaw"
+MAXIMUM_PATH_LAW_MODULE = f"{EFG_PREFIX}Observed.Controlled.Law"
 MAXIMUM_PATH_LAW_FORBIDDEN_NAMES = {
     "PMF",
     "Countable",
@@ -764,44 +775,54 @@ def run(root: Path) -> list[str]:
                 f"missing={missing}, extra={extra}"
             )
 
-    for aggregate, expected_imports in EXPECTED_COMPATIBILITY_AGGREGATE_IMPORTS.items():
+    for aggregate, expected_imports in EXPECTED_CONTROLLED_AGGREGATE_IMPORTS.items():
         actual_imports = graph.get(aggregate)
         if actual_imports is None:
-            errors.append(f"missing controlled compatibility aggregate: {aggregate}")
+            errors.append(f"missing controlled aggregate facade: {aggregate}")
         elif actual_imports != expected_imports:
             errors.append(
                 f"{module_path(aggregate, root)}: direct imports differ from "
-                f"the compatibility contract; expected={sorted(expected_imports)}, "
+                f"the aggregate contract; expected={sorted(expected_imports)}, "
                 f"actual={sorted(actual_imports)}"
             )
 
-    controlled_flat_prefix = f"{EFG_PREFIX}Observed.Controlled"
-    actual_controlled_flat_modules = {
+    controlled_root = f"{EFG_PREFIX}Observed.Controlled"
+    actual_controlled_modules = {
         module
         for module in scoped
-        if module.startswith(controlled_flat_prefix)
-        and "." not in module[len(controlled_flat_prefix):]
+        if module == controlled_root or module.startswith(f"{controlled_root}.")
     }
-    expected_controlled_flat_modules = set(CONTROLLED_FLAT_MODULE_ROLES)
-    if actual_controlled_flat_modules != expected_controlled_flat_modules:
-        missing = sorted(
-            expected_controlled_flat_modules - actual_controlled_flat_modules
-        )
-        extra = sorted(
-            actual_controlled_flat_modules - expected_controlled_flat_modules
-        )
+    expected_controlled_modules = set(CONTROLLED_MODULE_ROLES)
+    if actual_controlled_modules != expected_controlled_modules:
+        missing = sorted(expected_controlled_modules - actual_controlled_modules)
+        extra = sorted(actual_controlled_modules - expected_controlled_modules)
         errors.append(
-            "flat Observed.Controlled* module family differs from its governed "
-            f"role map; missing={missing}, extra={extra}"
+            "Observed.Controlled hierarchy differs from its governed role map; "
+            f"missing={missing}, extra={extra}"
+        )
+
+    unexpected_flat_controlled_siblings = {
+        module
+        for module in scoped
+        if module.startswith(controlled_root)
+        and module != controlled_root
+        and not module.startswith(f"{controlled_root}.")
+    }
+    if unexpected_flat_controlled_siblings:
+        errors.append(
+            "legacy flat Observed.Controlled* sibling modules are forbidden; "
+            "move them under Observed.Controlled: "
+            + ", ".join(sorted(unexpected_flat_controlled_siblings))
         )
 
     expected_status_for_controlled_role = {
         "carrier": "Canonical",
         "canonical-semantic-owner": "Canonical",
-        "compatibility-aggregate": "Compatibility",
+        "canonical-responsibility-owner": "Canonical",
+        "aggregate-facade": "Canonical",
         "payoff-aware-adapter": "Internal",
     }
-    for module, role in sorted(CONTROLLED_FLAT_MODULE_ROLES.items()):
+    for module, role in sorted(CONTROLLED_MODULE_ROLES.items()):
         row = rows.get(module)
         expected_status = expected_status_for_controlled_role[role]
         if row is None:
@@ -1021,12 +1042,13 @@ def main() -> int:
     controlled_role_counts = {
         role: sum(
             registered_role == role
-            for registered_role in CONTROLLED_FLAT_MODULE_ROLES.values()
+            for registered_role in CONTROLLED_MODULE_ROLES.values()
         )
         for role in {
             "carrier",
             "canonical-semantic-owner",
-            "compatibility-aggregate",
+            "canonical-responsibility-owner",
+            "aggregate-facade",
             "payoff-aware-adapter",
         }
     }
@@ -1034,11 +1056,13 @@ def main() -> int:
         f"EFG governance checks passed: {len(rows)} registered modules, "
         f"{compatibility_count} import-only compatibility paths, "
         f"root {root_counts[0]}/{root_counts[1]}, "
-        f"Simulation {simulation_count}, controlled flat "
-        f"{len(CONTROLLED_FLAT_MODULE_ROLES)}="
+        f"Simulation {simulation_count}, Controlled hierarchy "
+        f"{len(CONTROLLED_MODULE_ROLES)}="
         f"{controlled_role_counts['carrier']} carrier/"
-        f"{controlled_role_counts['canonical-semantic-owner']} owners/"
-        f"{controlled_role_counts['compatibility-aggregate']} aggregates/"
+        f"{controlled_role_counts['canonical-semantic-owner']} semantic owners/"
+        f"{controlled_role_counts['canonical-responsibility-owner']} "
+        "responsibility owners/"
+        f"{controlled_role_counts['aggregate-facade']} facades/"
         f"{controlled_role_counts['payoff-aware-adapter']} adapters."
     )
     return 0
