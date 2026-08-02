@@ -31,18 +31,18 @@ that decision-information presentation:
 
 Both the finite presentation and the resulting `ObservedGame.PureStrategy`
 are genuinely information-indexed and cannot inspect the current compact
-state after receiving a shared label. Presentation-designated
-continuation roots remain explicit compiler data: an information label
-alone is insufficient to choose a universal lawful subgame convention.
+state after receiving a shared label. Continuation roots remain separate from
+the compiler certificate: an information label alone is insufficient to
+choose a universal lawful subgame convention.
 
 ## Main definitions
 
 * `FiniteImperfectGame.DecisionInfo` — labeled or singleton player decision
   information.
-* `FiniteImperfectGame.ObservedCompiler` — well-formedness and designated-root
+* `FiniteImperfectGame.ObservedCompiler` — information well-formedness
   certificate.
 * `FiniteImperfectGame.ObservedCompiler.toObservedGame`.
-* `FiniteImperfectGame.ObservedCompiler.initialRoot`.
+* `FiniteImperfectGame.ObservedCompiler.ofInfoWellFormed`.
 * `FiniteImperfectGame.ObservedChanceCompiler` — an observed compiler plus a
   normalized law at every represented chance state.
 * `FiniteImperfectGame.ObservedChanceCompiler.toObservedChanceGame`.
@@ -185,41 +185,23 @@ def decisionActionEquiv
 /-- Compiler certificate from a finite imperfect presentation to an observed
 EFG.
 
-Information-set well-formedness is explicit. Designated continuation roots are separate data
-because different applications may require different public-information or
-information-set closure conventions. -/
+Information-set well-formedness is explicit. Continuation roots are not stored
+here; callers pair the compiled observed game with an external root
+presentation or lawful subgame system. -/
 structure ObservedCompiler where
   /-- Local information labels have coherent movers and action types
   and are attached only to player nodes. -/
   infoWellFormed : G.InfoWellFormed
-  /-- Presentation-designated continuation roots in the complete-history
-  unfolding. -/
-  IsDesignatedContinuationRoot :
-    G.toExtensiveGame.toArena.HistoryFrom
-      G.toExtensiveGame.init → Prop
-  /-- The initial empty history is designated. -/
-  init_isDesignatedContinuationRoot :
-    IsDesignatedContinuationRoot
-      (Arena.HistoryFrom.nil
-        G.toExtensiveGame.toArena
-        G.toExtensiveGame.init)
 
 namespace ObservedCompiler
 
 variable {G : FiniteImperfectGame N U}
 
-/-- The conservative compiler certificate designating only the initial empty
-history as a continuation root. -/
-def initialRoot
+/-- Construct an observed compiler from information well-formedness. -/
+def ofInfoWellFormed
     (hinfo : G.InfoWellFormed) :
     G.ObservedCompiler where
   infoWellFormed := hinfo
-  IsDesignatedContinuationRoot := fun history =>
-    history =
-      Arena.HistoryFrom.nil
-        G.toExtensiveGame.toArena
-        G.toExtensiveGame.init
-  init_isDesignatedContinuationRoot := rfl
 
 /-- Acting-player observation in the compiled EFG.
 
@@ -273,10 +255,6 @@ noncomputable def toObservedGame
   actionEquiv := fun history i hmover =>
     G.decisionActionEquiv
       history.1 i hmover
-  IsDesignatedContinuationRoot :=
-    C.IsDesignatedContinuationRoot
-  init_isDesignatedContinuationRoot :=
-    C.init_isDesignatedContinuationRoot
 
 end ObservedCompiler
 
@@ -311,7 +289,7 @@ def initialRoot
         G.toExtensiveGame.isChanceState state →
         PMF (G.Action state)) :
     G.ObservedChanceCompiler where
-  toObservedCompiler := ObservedCompiler.initialRoot hinfo
+  toObservedCompiler := ObservedCompiler.ofInfoWellFormed hinfo
   chanceLaw := chanceLaw
 
 /-- Compile compact information and the separately supplied normalized chance
@@ -384,7 +362,7 @@ theorem tiny_infoWellFormed : tiny.InfoWellFormed :=
 
 /-- Conservative observed-EFG compiler certificate for the tiny game. -/
 def tinyObservedCompiler : tiny.ObservedCompiler :=
-  ObservedCompiler.initialRoot
+  ObservedCompiler.ofInfoWellFormed
     tiny_infoWellFormed
 
 /-- The tiny finite imperfect game compiled to the canonical observed-EFG
@@ -526,8 +504,9 @@ theorem tinyObserved_ownDecisionHistory_eq_nil
       | nil =>
           cases action <;> cases i <;>
             simp [ExtensiveGame.ObservedGame.ownDecisionHistory,
-              ExtensiveGame.ObservedGame.ownDecisionHistoryPath,
-              tinyObservedGame, tinyObservedCompiler,
+              ExtensiveGame.ControlledObservedGame.ownDecisionHistory,
+              ExtensiveGame.ControlledObservedGame.ownDecisionHistoryPath,
+              tinyObservedGame,
               FiniteImperfectGame.ObservedCompiler.toObservedGame,
               FiniteImperfectGame.toExtensiveGame, tiny] at hmover ⊢
       | @snoc earlier earlierPath earlierAction =>
