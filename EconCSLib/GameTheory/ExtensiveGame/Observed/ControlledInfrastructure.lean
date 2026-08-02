@@ -14,6 +14,9 @@ import EconCSLib.GameTheory.ExtensiveGame.Winning.Basic
 /-!
 # Controlled observed-game infrastructure compatibility aggregate
 
+API role: **legacy import aggregate**. It owns no declarations and must not be
+used as an implementation dependency.
+
 Compatibility import for the historical mixed-responsibility
 `Observed.ControlledInfrastructure` path. New implementation modules should
 import the defining `ControlledInfrastructure.*` leaf, and winning-dependent
