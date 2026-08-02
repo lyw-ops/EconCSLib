@@ -39,15 +39,15 @@ both surjectivities automatically.
 ## Public-entry policy
 
 Downstream strict-isomorphism clients should use the canonical relation-local
-theorems `ObservedGame.Iso.isPureNashOnDesignatedContinuationsAtFuel_iff` and
-`ObservedChanceGame.Iso.isBehavioralNashOnDesignatedContinuationsAtFuel_iff`.  The
+theorems `ObservedGame.Iso.isPureNashOnRootsAtFuel_iff` and
+`ObservedChanceGame.Iso.isBehavioralNashOnRootsAtFuel_iff`. The
 private route regressions in this module check that compilation to
 `ContinuationGameForm` recovers the canonical result, but they are not a
 second public entry point.
 
 ## Main definitions
 
-* `ObservedGame.pureContinuationFamily`.
+* `ObservedGame.pureContinuationFamilyOnRoots`.
 * `ObservedChanceGame.behavioralContinuationFamily`.
 * `ObservedGame.Iso.pureContinuationFamilyIso`.
 * `ObservedGame.InformationRefinement.pureContinuationFamilyHom`.
@@ -58,8 +58,8 @@ second public entry point.
 
 ## Main results
 
-* `isPureNashOnDesignatedContinuationsAtFuel_iff_continuationFamily`.
-* `isBehavioralNashOnDesignatedContinuationsAtFuel_iff_continuationFamily`.
+* `isPureNashOnRootsAtFuel_iff_continuationFamily`.
+* `isBehavioralNashOnRootsAtFuel_iff_continuationFamily`.
 * the strict-iso adapters inherit generic two-way Nash on presentation-designated continuations transfer;
 * the refinement adapters inherit generic Nash on presentation-designated continuations reflection and conditional
   two-way transfer;
@@ -77,55 +77,56 @@ namespace ObservedGame
 
 variable {N U : Type*}
 
-/-- The representation-neutral family of all bounded pure continuations of a
-no-chance observed game. -/
-def pureContinuationFamily
+/-- The bounded pure continuation family on a separately supplied root
+presentation. -/
+def pureContinuationFamilyOnRoots
     (G : ObservedGame N U)
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
+    (roots : G.RootPresentation)
     (hNoChance : G.base.NoChance)
     (fuel : ℕ) :
     ContinuationGameForm N where
   Strategy := G.PureStrategy
-  Root :=
-    G.base.toArena.HistoryFrom G.base.init
-  IsDeclaredRoot := G.IsDesignatedContinuationRoot
+  Root := G.base.toArena.HistoryFrom G.base.init
+  IsDeclaredRoot := roots.IsRoot
   Outcome := Option (N → U)
   outcome := fun current profile =>
-    G.stoppedPayoffFrom
-      profile hNoChance current fuel
+    G.stoppedPayoffFrom profile hNoChance current fuel
 
 /-- Fixing a root in the pure continuation family recovers the existing
 bounded continuation game form definitionally. -/
-theorem pureContinuationFamily_toGameForm
+theorem pureContinuationFamilyOnRoots_toGameForm
     (G : ObservedGame N U)
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
+    (roots : G.RootPresentation)
     (hNoChance : G.base.NoChance)
     (fuel : ℕ)
     (current :
       G.base.toArena.HistoryFrom G.base.init) :
-    (G.pureContinuationFamily
-      hNoChance fuel).toGameForm current =
+    (G.pureContinuationFamilyOnRoots
+      roots hNoChance fuel).toGameForm current =
       G.continuationGameForm
         hNoChance current fuel :=
   rfl
 
 /-- The existing bounded pure Nash on presentation-designated continuations predicate is exactly the
 representation-neutral continuation-family predicate. -/
-theorem isPureNashOnDesignatedContinuationsAtFuel_iff_continuationFamily
+theorem isPureNashOnRootsAtFuel_iff_continuationFamily
     {V : Type uV} [DecidableEq N] [Preorder V]
     (G : ObservedGame N U)
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
+    (roots : G.RootPresentation)
     (hNoChance : G.base.NoChance)
     (utility : Option (N → U) → N → V)
     (profile : G.PureProfile)
     (fuel : ℕ) :
-    G.IsPureNashOnDesignatedContinuationsAtFuel
-        hNoChance utility profile fuel ↔
-      (G.pureContinuationFamily
-        hNoChance fuel).IsNashOnRoots
+    G.IsPureNashOnRootsAtFuel
+        hNoChance roots utility profile fuel ↔
+      (G.pureContinuationFamilyOnRoots
+        roots hNoChance fuel).IsNashOnRoots
           (fun _ => utility) profile :=
   Iff.rfl
 
@@ -142,21 +143,24 @@ def pureContinuationFamilyIso
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (e : G.Iso H)
+    (sourceRoots : G.RootPresentation)
+    (targetRoots : H.RootPresentation)
+    (hroots :
+      e.PreservesRootPresentations sourceRoots targetRoots)
     (hNoChanceG : G.base.NoChance)
     (hNoChanceH : H.base.NoChance)
     (fuel : ℕ) :
-    (G.pureContinuationFamily
-      hNoChanceG fuel).Iso
-      (H.pureContinuationFamily
-        hNoChanceH fuel) where
+    (G.pureContinuationFamilyOnRoots
+      sourceRoots hNoChanceG fuel).Iso
+      (H.pureContinuationFamilyOnRoots
+        targetRoots hNoChanceH fuel) where
   rootEquiv :=
     e.historyIso.stateEquiv
   strategyEquiv :=
     e.strategyEquiv
   outcomeEquiv :=
     Equiv.refl _
-  map_declaredRoot :=
-    e.map_designatedContinuationRoot
+  map_declaredRoot := hroots
   map_outcome := by
     intro current profile
     exact
@@ -173,11 +177,16 @@ theorem pureContinuationFamilyIso_utilityCompatible
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (e : G.Iso H)
+    (sourceRoots : G.RootPresentation)
+    (targetRoots : H.RootPresentation)
+    (hroots :
+      e.PreservesRootPresentations sourceRoots targetRoots)
     (hNoChanceG : G.base.NoChance)
     (hNoChanceH : H.base.NoChance)
     (utility : Option (N → U) → N → V)
     (fuel : ℕ) :
     (e.pureContinuationFamilyIso
+      sourceRoots targetRoots hroots
       hNoChanceG hNoChanceH fuel
       ).toHom.UtilityCompatible
         (fun _ => utility)
@@ -189,40 +198,47 @@ theorem pureContinuationFamilyIso_utilityCompatible
 instance of the representation-neutral continuation-family theorem.
 
 Downstream code should use
-`ObservedGame.Iso.isPureNashOnDesignatedContinuationsAtFuel_iff`; this independently proved
+`ObservedGame.Iso.isPureNashOnRootsAtFuel_iff`; this independently proved
 variant is retained to test coherence of the continuation adapter. -/
-private theorem isPureNashOnDesignatedContinuationsAtFuel_iff_viaContinuationFamily
+private theorem isPureNashOnRootsAtFuel_iff_viaContinuationFamily
     {V : Type uV} [DecidableEq N] [Preorder V]
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (e : G.Iso H)
+    (sourceRoots : G.RootPresentation)
+    (targetRoots : H.RootPresentation)
+    (hroots :
+      e.PreservesRootPresentations sourceRoots targetRoots)
     (hNoChanceG : G.base.NoChance)
     (hNoChanceH : H.base.NoChance)
     (utility : Option (N → U) → N → V)
     (profile : G.PureProfile)
     (fuel : ℕ) :
-    G.IsPureNashOnDesignatedContinuationsAtFuel
-        hNoChanceG utility profile fuel ↔
-      H.IsPureNashOnDesignatedContinuationsAtFuel
-        hNoChanceH utility
+    G.IsPureNashOnRootsAtFuel
+        hNoChanceG sourceRoots utility profile fuel ↔
+      H.IsPureNashOnRootsAtFuel
+        hNoChanceH targetRoots utility
         (e.mapProfile profile) fuel := by
   change
-    (G.pureContinuationFamily
-      hNoChanceG fuel).IsNashOnRoots
+    (G.pureContinuationFamilyOnRoots
+      sourceRoots hNoChanceG fuel).IsNashOnRoots
         (fun _ => utility) profile ↔
-      (H.pureContinuationFamily
-        hNoChanceH fuel).IsNashOnRoots
+      (H.pureContinuationFamilyOnRoots
+        targetRoots hNoChanceH fuel).IsNashOnRoots
           (fun _ => utility)
           ((e.pureContinuationFamilyIso
+            sourceRoots targetRoots hroots
             hNoChanceG hNoChanceH fuel
             ).mapProfile profile)
   exact
     (e.pureContinuationFamilyIso
+      sourceRoots targetRoots hroots
       hNoChanceG hNoChanceH fuel
       ).isNashOnRoots_iff
         (e.pureContinuationFamilyIso_utilityCompatible
+          sourceRoots targetRoots hroots
           hNoChanceG hNoChanceH utility fuel)
         profile
 
@@ -240,23 +256,24 @@ def pureContinuationFamilyHom
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
+    (sourceRoots : G.RootPresentation)
+    (targetRoots : H.RootPresentation)
+    (hroots :
+      r.PreservesRootPresentations sourceRoots targetRoots)
     (hNoChanceG : G.base.NoChance)
     (hNoChanceH : H.base.NoChance)
     (fuel : ℕ) :
-    (G.pureContinuationFamily
-      hNoChanceG fuel).Hom
-      (H.pureContinuationFamily
-        hNoChanceH fuel) where
+    (G.pureContinuationFamilyOnRoots
+      sourceRoots hNoChanceG fuel).Hom
+      (H.pureContinuationFamilyOnRoots
+        targetRoots hNoChanceH fuel) where
   rootMap :=
     r.historyIso.stateEquiv
   strategyMap :=
     r.mapStrategy
   outcomeMap :=
     id
-  map_declaredRoot := by
-    intro current hroot
-    exact
-      (r.map_designatedContinuationRoot current).mp hroot
+  map_declaredRoot := fun current => (hroots current).mp
   map_outcome := by
     intro current profile
     exact
@@ -272,11 +289,16 @@ theorem pureContinuationFamilyHom_utilityCompatible
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
+    (sourceRoots : G.RootPresentation)
+    (targetRoots : H.RootPresentation)
+    (hroots :
+      r.PreservesRootPresentations sourceRoots targetRoots)
     (hNoChanceG : G.base.NoChance)
     (hNoChanceH : H.base.NoChance)
     (utility : Option (N → U) → N → V)
     (fuel : ℕ) :
     (r.pureContinuationFamilyHom
+      sourceRoots targetRoots hroots
       hNoChanceG hNoChanceH fuel
       ).UtilityCompatible
         (fun _ => utility)
@@ -292,10 +314,15 @@ theorem pureContinuationFamilyHom_declaredRootSurjective
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
+    (sourceRoots : G.RootPresentation)
+    (targetRoots : H.RootPresentation)
+    (hroots :
+      r.PreservesRootPresentations sourceRoots targetRoots)
     (hNoChanceG : G.base.NoChance)
     (hNoChanceH : H.base.NoChance)
     (fuel : ℕ) :
     (r.pureContinuationFamilyHom
+      sourceRoots targetRoots hroots
       hNoChanceG hNoChanceH fuel
       ).DeclaredRootSurjective := by
   intro targetRoot htargetRoot
@@ -305,7 +332,7 @@ theorem pureContinuationFamilyHom_declaredRootSurjective
   refine
     ⟨sourceRoot, ?_, ?_⟩
   · exact
-      (r.map_designatedContinuationRoot sourceRoot).mpr
+      (hroots sourceRoot).mpr
         (by
           simpa [sourceRoot] using
             htargetRoot)
@@ -321,15 +348,20 @@ theorem pureContinuationFamilyHom_declaredRootReflecting
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
+    (sourceRoots : G.RootPresentation)
+    (targetRoots : H.RootPresentation)
+    (hroots :
+      r.PreservesRootPresentations sourceRoots targetRoots)
     (hNoChanceG : G.base.NoChance)
     (hNoChanceH : H.base.NoChance)
     (fuel : ℕ) :
     (r.pureContinuationFamilyHom
+      sourceRoots targetRoots hroots
       hNoChanceG hNoChanceH fuel
       ).DeclaredRootReflecting := by
   intro sourceRoot htargetRoot
   exact
-    (r.map_designatedContinuationRoot sourceRoot).mpr
+    (hroots sourceRoot).mpr
       htargetRoot
 
 /-- The functional pure refinement adapter, regarded uniformly as a
@@ -342,17 +374,23 @@ def pureContinuationFamilySimulation
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
+    (sourceRoots : G.RootPresentation)
+    (targetRoots : H.RootPresentation)
+    (hroots :
+      r.PreservesRootPresentations sourceRoots targetRoots)
     (hNoChanceG : G.base.NoChance)
     (hNoChanceH : H.base.NoChance)
     (fuel : ℕ) :
-    (G.pureContinuationFamily
-      hNoChanceG fuel).Simulation
-      (H.pureContinuationFamily
-        hNoChanceH fuel) :=
+    (G.pureContinuationFamilyOnRoots
+      sourceRoots hNoChanceG fuel).Simulation
+      (H.pureContinuationFamilyOnRoots
+        targetRoots hNoChanceH fuel) :=
   (r.pureContinuationFamilyHom
+      sourceRoots targetRoots hroots
       hNoChanceG hNoChanceH fuel
     ).toSimulation
       (r.pureContinuationFamilyHom_declaredRootReflecting
+        sourceRoots targetRoots hroots
         hNoChanceG hNoChanceH fuel)
 
 /-- The pure refinement graph simulation covers all admissible source roots. -/
@@ -362,13 +400,19 @@ theorem pureContinuationFamilySimulation_sourceRootTotal
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
+    (sourceRoots : G.RootPresentation)
+    (targetRoots : H.RootPresentation)
+    (hroots :
+      r.PreservesRootPresentations sourceRoots targetRoots)
     (hNoChanceG : G.base.NoChance)
     (hNoChanceH : H.base.NoChance)
     (fuel : ℕ) :
     (r.pureContinuationFamilySimulation
+      sourceRoots targetRoots hroots
       hNoChanceG hNoChanceH fuel
       ).SourceRootTotal :=
   (r.pureContinuationFamilyHom
+      sourceRoots targetRoots hroots
       hNoChanceG hNoChanceH fuel
     ).toSimulation_sourceRootTotal _
 
@@ -379,58 +423,24 @@ theorem pureContinuationFamilySimulation_targetRootTotal
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
+    (sourceRoots : G.RootPresentation)
+    (targetRoots : H.RootPresentation)
+    (hroots :
+      r.PreservesRootPresentations sourceRoots targetRoots)
     (hNoChanceG : G.base.NoChance)
     (hNoChanceH : H.base.NoChance)
     (fuel : ℕ) :
     (r.pureContinuationFamilySimulation
+      sourceRoots targetRoots hroots
       hNoChanceG hNoChanceH fuel
       ).TargetRootTotal :=
   (r.pureContinuationFamilyHom
+      sourceRoots targetRoots hroots
       hNoChanceG hNoChanceH fuel
     ).toSimulation_targetRootTotal _
       (r.pureContinuationFamilyHom_declaredRootSurjective
+        sourceRoots targetRoots hroots
         hNoChanceG hNoChanceH fuel)
-
-/-- Regression theorem: pure Nash on presentation-designated continuations reflection along an information refinement
-also follows through the graph-simulation adapter.
-
-This path is composition-ready with genuinely relational compiler
-simulations. -/
-private theorem isPureNashOnDesignatedContinuationsAtFuel_of_map_viaContinuationSimulation
-    {V : Type uV} [DecidableEq N] [Preorder V]
-    [(state : G.base.State) →
-      Decidable (G.base.isTerminal state)]
-    [(state : H.base.State) →
-      Decidable (H.base.isTerminal state)]
-    (r : G.InformationRefinement H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
-    (utility : Option (N → U) → N → V)
-    (profile : G.PureProfile)
-    (fuel : ℕ)
-    (hSPE :
-      H.IsPureNashOnDesignatedContinuationsAtFuel
-        hNoChanceH utility
-        (r.mapProfile profile) fuel) :
-    G.IsPureNashOnDesignatedContinuationsAtFuel
-      hNoChanceG utility profile fuel := by
-  change
-    (G.pureContinuationFamily
-      hNoChanceG fuel).IsNashOnRoots
-        (fun _ => utility) profile
-  apply
-    ContinuationGameForm.IsNashOnRoots.comapSimulation
-      (r.pureContinuationFamilySimulation
-        hNoChanceG hNoChanceH fuel)
-      ((r.pureContinuationFamilyHom
-          hNoChanceG hNoChanceH fuel
-          ).toSimulation_utilityCompatible
-            _
-            (r.pureContinuationFamilyHom_utilityCompatible
-              hNoChanceG hNoChanceH utility fuel))
-      (r.pureContinuationFamilySimulation_sourceRootTotal
-        hNoChanceG hNoChanceH fuel)
-  exact hSPE
 
 /-- The pure continuation-family morphism is strategy-surjective precisely
 under the refinement's explicit deviation-lifting hypothesis. -/
@@ -440,91 +450,20 @@ theorem pureContinuationFamilyHom_strategySurjective
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
+    (sourceRoots : G.RootPresentation)
+    (targetRoots : H.RootPresentation)
+    (hroots :
+      r.PreservesRootPresentations sourceRoots targetRoots)
     (hNoChanceG : G.base.NoChance)
     (hNoChanceH : H.base.NoChance)
     (fuel : ℕ)
     (hsurjective : r.StrategySurjective) :
     (r.pureContinuationFamilyHom
+      sourceRoots targetRoots hroots
       hNoChanceG hNoChanceH fuel
       ).StrategySurjective := by
   intro i targetStrategy
   exact hsurjective i targetStrategy
-
-/-- Regression theorem: default fine-to-coarse pure Nash on presentation-designated continuations reflection is the
-generic `ContinuationGameForm.IsNashOnRoots.comap` theorem. -/
-private theorem isPureNashOnDesignatedContinuationsAtFuel_of_map_viaContinuationFamily
-    {V : Type uV} [DecidableEq N] [Preorder V]
-    [(state : G.base.State) →
-      Decidable (G.base.isTerminal state)]
-    [(state : H.base.State) →
-      Decidable (H.base.isTerminal state)]
-    (r : G.InformationRefinement H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
-    (utility : Option (N → U) → N → V)
-    (profile : G.PureProfile)
-    (fuel : ℕ)
-    (hSPE :
-      H.IsPureNashOnDesignatedContinuationsAtFuel
-        hNoChanceH utility
-        (r.mapProfile profile) fuel) :
-    G.IsPureNashOnDesignatedContinuationsAtFuel
-      hNoChanceG utility profile fuel := by
-  change
-    (G.pureContinuationFamily
-      hNoChanceG fuel).IsNashOnRoots
-        (fun _ => utility) profile
-  apply
-    ContinuationGameForm.IsNashOnRoots.comap
-      (r.pureContinuationFamilyHom
-        hNoChanceG hNoChanceH fuel)
-      (r.pureContinuationFamilyHom_utilityCompatible
-        hNoChanceG hNoChanceH utility fuel)
-  exact hSPE
-
-/-- Regression theorem: under pure deviation lifting, two-way refinement Nash on presentation-designated continuations
-transfer is the generic continuation-family surjectivity theorem. -/
-private theorem
-    isPureNashOnDesignatedContinuationsAtFuel_iff_of_strategySurjective_viaContinuationFamily
-    {V : Type uV} [DecidableEq N] [Preorder V]
-    [(state : G.base.State) →
-      Decidable (G.base.isTerminal state)]
-    [(state : H.base.State) →
-      Decidable (H.base.isTerminal state)]
-    (r : G.InformationRefinement H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
-    (hsurjective : r.StrategySurjective)
-    (utility : Option (N → U) → N → V)
-    (profile : G.PureProfile)
-    (fuel : ℕ) :
-    G.IsPureNashOnDesignatedContinuationsAtFuel
-        hNoChanceG utility profile fuel ↔
-      H.IsPureNashOnDesignatedContinuationsAtFuel
-        hNoChanceH utility
-        (r.mapProfile profile) fuel := by
-  change
-    (G.pureContinuationFamily
-      hNoChanceG fuel).IsNashOnRoots
-        (fun _ => utility) profile ↔
-      (H.pureContinuationFamily
-        hNoChanceH fuel).IsNashOnRoots
-          (fun _ => utility)
-          ((r.pureContinuationFamilyHom
-            hNoChanceG hNoChanceH fuel
-            ).mapProfile profile)
-  exact
-    (r.pureContinuationFamilyHom
-      hNoChanceG hNoChanceH fuel
-      ).isNashOnRoots_iff_of_surjective
-        (r.pureContinuationFamilyHom_utilityCompatible
-          hNoChanceG hNoChanceH utility fuel)
-        (r.pureContinuationFamilyHom_strategySurjective
-          hNoChanceG hNoChanceH fuel
-          hsurjective)
-        (r.pureContinuationFamilyHom_declaredRootSurjective
-          hNoChanceG hNoChanceH fuel)
-        profile
 
 end InformationRefinement
 
@@ -536,61 +475,59 @@ namespace ObservedChanceGame
 
 variable {N U : Type*}
 
-/-- The representation-neutral family of all bounded behavioral
-continuations of an observed chance game. -/
-noncomputable def behavioralContinuationFamily
+/-- The bounded behavioral continuation family on a separately supplied root
+presentation. -/
+noncomputable def behavioralContinuationFamilyOnRoots
     (G : ObservedChanceGame N U)
     [(state : G.observed.base.State) →
-      Decidable
-        (G.observed.base.isTerminal state)]
+      Decidable (G.observed.base.isTerminal state)]
+    (roots : G.observed.RootPresentation)
     (fuel : ℕ) :
     ContinuationGameForm N where
-  Strategy :=
-    G.observed.BehavioralStrategy
+  Strategy := G.observed.BehavioralStrategy
   Root :=
     G.observed.base.toArena.HistoryFrom
       G.observed.base.init
-  IsDeclaredRoot :=
-    G.observed.IsDesignatedContinuationRoot
-  Outcome :=
-    PMF (Option (N → U))
+  IsDeclaredRoot := roots.IsRoot
+  Outcome := PMF (Option (N → U))
   outcome := fun current profile =>
-    G.behavioralStoppedPayoffLawFrom
-      profile current fuel
+    G.behavioralStoppedPayoffLawFrom profile current fuel
 
 /-- Fixing a root in the behavioral continuation family recovers the existing
 bounded behavioral continuation game form definitionally. -/
-theorem behavioralContinuationFamily_toGameForm
+theorem behavioralContinuationFamilyOnRoots_toGameForm
     (G : ObservedChanceGame N U)
     [(state : G.observed.base.State) →
       Decidable
         (G.observed.base.isTerminal state)]
+    (roots : G.observed.RootPresentation)
     (fuel : ℕ)
     (current :
       G.observed.base.toArena.HistoryFrom
         G.observed.base.init) :
-    (G.behavioralContinuationFamily
-      fuel).toGameForm current =
+    (G.behavioralContinuationFamilyOnRoots
+      roots fuel).toGameForm current =
       G.behavioralContinuationGameForm
         current fuel :=
   rfl
 
 /-- The existing bounded behavioral Nash on presentation-designated continuations predicate is exactly the
 representation-neutral continuation-family predicate. -/
-theorem isBehavioralNashOnDesignatedContinuationsAtFuel_iff_continuationFamily
+theorem isBehavioralNashOnRootsAtFuel_iff_continuationFamily
     {V : Type uV} [DecidableEq N] [Preorder V]
     (G : ObservedChanceGame N U)
     [(state : G.observed.base.State) →
       Decidable
         (G.observed.base.isTerminal state)]
+    (roots : G.observed.RootPresentation)
     (utility :
       PMF (Option (N → U)) → N → V)
     (profile : G.observed.BehavioralProfile)
     (fuel : ℕ) :
-    G.IsBehavioralNashOnDesignatedContinuationsAtFuel
-        utility profile fuel ↔
-      (G.behavioralContinuationFamily
-        fuel).IsNashOnRoots
+    G.IsBehavioralNashOnRootsAtFuel
+        roots utility profile fuel ↔
+      (G.behavioralContinuationFamilyOnRoots
+        roots fuel).IsNashOnRoots
           (fun _ => utility) profile :=
   Iff.rfl
 
@@ -608,19 +545,23 @@ noncomputable def behavioralContinuationFamilyIso
       Decidable
         (H.observed.base.isTerminal state)]
     (e : G.Iso H)
+    (sourceRoots : G.observed.RootPresentation)
+    (targetRoots : H.observed.RootPresentation)
+    (hroots :
+      e.observedIso.PreservesRootPresentations
+        sourceRoots targetRoots)
     (fuel : ℕ) :
-    (G.behavioralContinuationFamily
-      fuel).Iso
-      (H.behavioralContinuationFamily
-        fuel) where
+    (G.behavioralContinuationFamilyOnRoots
+      sourceRoots fuel).Iso
+      (H.behavioralContinuationFamilyOnRoots
+        targetRoots fuel) where
   rootEquiv :=
     e.observedIso.historyIso.stateEquiv
   strategyEquiv :=
     e.observedIso.behavioralStrategyEquiv
   outcomeEquiv :=
     Equiv.refl _
-  map_declaredRoot :=
-    e.observedIso.map_designatedContinuationRoot
+  map_declaredRoot := hroots
   map_outcome := by
     intro current profile
     exact
@@ -638,58 +579,20 @@ theorem behavioralContinuationFamilyIso_utilityCompatible
       Decidable
         (H.observed.base.isTerminal state)]
     (e : G.Iso H)
+    (sourceRoots : G.observed.RootPresentation)
+    (targetRoots : H.observed.RootPresentation)
+    (hroots :
+      e.observedIso.PreservesRootPresentations
+        sourceRoots targetRoots)
     (utility :
       PMF (Option (N → U)) → N → V)
     (fuel : ℕ) :
     (e.behavioralContinuationFamilyIso
-      fuel).toHom.UtilityCompatible
+      sourceRoots targetRoots hroots fuel).toHom.UtilityCompatible
         (fun _ => utility)
         (fun _ => utility) := by
   intro root outcome i
   rfl
-
-/-- Route-regression theorem: strict behavioral Nash on presentation-designated continuations transfer follows from the
-generic continuation-family isomorphism theorem.
-
-Downstream code should use
-`ObservedChanceGame.Iso.isBehavioralNashOnDesignatedContinuationsAtFuel_iff`; this
-independently proved variant is retained to test coherence of the continuation
-adapter. -/
-private theorem isBehavioralNashOnDesignatedContinuationsAtFuel_iff_viaContinuationFamily
-    {V : Type uV} [DecidableEq N] [Preorder V]
-    [(state : G.observed.base.State) →
-      Decidable
-        (G.observed.base.isTerminal state)]
-    [(state : H.observed.base.State) →
-      Decidable
-        (H.observed.base.isTerminal state)]
-    (e : G.Iso H)
-    (utility :
-      PMF (Option (N → U)) → N → V)
-    (profile : G.observed.BehavioralProfile)
-    (fuel : ℕ) :
-    G.IsBehavioralNashOnDesignatedContinuationsAtFuel
-        utility profile fuel ↔
-      H.IsBehavioralNashOnDesignatedContinuationsAtFuel
-        utility
-        (e.observedIso.mapBehavioralProfile
-          profile)
-        fuel := by
-  change
-    (G.behavioralContinuationFamily
-      fuel).IsNashOnRoots
-        (fun _ => utility) profile ↔
-      (H.behavioralContinuationFamily
-        fuel).IsNashOnRoots
-          (fun _ => utility)
-          ((e.behavioralContinuationFamilyIso
-            fuel).mapProfile profile)
-  exact
-    (e.behavioralContinuationFamilyIso
-      fuel).isNashOnRoots_iff
-        (e.behavioralContinuationFamilyIso_utilityCompatible
-          utility fuel)
-        profile
 
 end Iso
 
@@ -707,22 +610,24 @@ noncomputable def behavioralContinuationFamilyHom
       Decidable
         (H.observed.base.isTerminal state)]
     (r : G.InformationRefinement H)
+    (sourceRoots : G.observed.RootPresentation)
+    (targetRoots : H.observed.RootPresentation)
+    (hroots :
+      r.observedRefinement.PreservesRootPresentations
+        sourceRoots targetRoots)
     (fuel : ℕ) :
-    (G.behavioralContinuationFamily
-      fuel).Hom
-      (H.behavioralContinuationFamily
-        fuel) where
+    (G.behavioralContinuationFamilyOnRoots
+      sourceRoots fuel).Hom
+      (H.behavioralContinuationFamilyOnRoots
+        targetRoots fuel) where
   rootMap :=
     r.observedRefinement.historyIso.stateEquiv
   strategyMap :=
     r.observedRefinement.mapBehavioralStrategy
   outcomeMap :=
     id
-  map_declaredRoot := by
-    intro current hroot
-    exact
-      (r.observedRefinement.map_designatedContinuationRoot
-        current).mp hroot
+  map_declaredRoot :=
+    fun current => (hroots current).mp
   map_outcome := by
     intro current profile
     exact
@@ -740,11 +645,16 @@ theorem behavioralContinuationFamilyHom_utilityCompatible
       Decidable
         (H.observed.base.isTerminal state)]
     (r : G.InformationRefinement H)
+    (sourceRoots : G.observed.RootPresentation)
+    (targetRoots : H.observed.RootPresentation)
+    (hroots :
+      r.observedRefinement.PreservesRootPresentations
+        sourceRoots targetRoots)
     (utility :
       PMF (Option (N → U)) → N → V)
     (fuel : ℕ) :
     (r.behavioralContinuationFamilyHom
-      fuel).UtilityCompatible
+      sourceRoots targetRoots hroots fuel).UtilityCompatible
         (fun _ => utility)
         (fun _ => utility) := by
   intro root outcome i
@@ -760,9 +670,14 @@ theorem behavioralContinuationFamilyHom_declaredRootSurjective
       Decidable
         (H.observed.base.isTerminal state)]
     (r : G.InformationRefinement H)
+    (sourceRoots : G.observed.RootPresentation)
+    (targetRoots : H.observed.RootPresentation)
+    (hroots :
+      r.observedRefinement.PreservesRootPresentations
+        sourceRoots targetRoots)
     (fuel : ℕ) :
     (r.behavioralContinuationFamilyHom
-      fuel).DeclaredRootSurjective := by
+      sourceRoots targetRoots hroots fuel).DeclaredRootSurjective := by
   intro targetRoot htargetRoot
   let sourceRoot :=
     r.observedRefinement.historyIso.stateEquiv.symm
@@ -770,8 +685,7 @@ theorem behavioralContinuationFamilyHom_declaredRootSurjective
   refine
     ⟨sourceRoot, ?_, ?_⟩
   · exact
-      (r.observedRefinement.map_designatedContinuationRoot
-        sourceRoot).mpr
+      (hroots sourceRoot).mpr
         (by
           simpa [sourceRoot] using
             htargetRoot)
@@ -789,13 +703,17 @@ theorem behavioralContinuationFamilyHom_declaredRootReflecting
       Decidable
         (H.observed.base.isTerminal state)]
     (r : G.InformationRefinement H)
+    (sourceRoots : G.observed.RootPresentation)
+    (targetRoots : H.observed.RootPresentation)
+    (hroots :
+      r.observedRefinement.PreservesRootPresentations
+        sourceRoots targetRoots)
     (fuel : ℕ) :
     (r.behavioralContinuationFamilyHom
-      fuel).DeclaredRootReflecting := by
+      sourceRoots targetRoots hroots fuel).DeclaredRootReflecting := by
   intro sourceRoot htargetRoot
   exact
-    (r.observedRefinement.map_designatedContinuationRoot
-      sourceRoot).mpr htargetRoot
+    (hroots sourceRoot).mpr htargetRoot
 
 /-- The functional behavioral refinement adapter, regarded uniformly as a
 relational-root continuation simulation.
@@ -810,15 +728,20 @@ noncomputable def behavioralContinuationFamilySimulation
       Decidable
         (H.observed.base.isTerminal state)]
     (r : G.InformationRefinement H)
+    (sourceRoots : G.observed.RootPresentation)
+    (targetRoots : H.observed.RootPresentation)
+    (hroots :
+      r.observedRefinement.PreservesRootPresentations
+        sourceRoots targetRoots)
     (fuel : ℕ) :
-    (G.behavioralContinuationFamily
-      fuel).Simulation
-      (H.behavioralContinuationFamily
-        fuel) :=
+    (G.behavioralContinuationFamilyOnRoots
+      sourceRoots fuel).Simulation
+      (H.behavioralContinuationFamilyOnRoots
+        targetRoots fuel) :=
   (r.behavioralContinuationFamilyHom
-      fuel).toSimulation
+      sourceRoots targetRoots hroots fuel).toSimulation
         (r.behavioralContinuationFamilyHom_declaredRootReflecting
-          fuel)
+          sourceRoots targetRoots hroots fuel)
 
 /-- The behavioral refinement graph simulation covers every admissible source
 root. -/
@@ -830,11 +753,16 @@ theorem behavioralContinuationFamilySimulation_sourceRootTotal
       Decidable
         (H.observed.base.isTerminal state)]
     (r : G.InformationRefinement H)
+    (sourceRoots : G.observed.RootPresentation)
+    (targetRoots : H.observed.RootPresentation)
+    (hroots :
+      r.observedRefinement.PreservesRootPresentations
+        sourceRoots targetRoots)
     (fuel : ℕ) :
     (r.behavioralContinuationFamilySimulation
-      fuel).SourceRootTotal :=
+      sourceRoots targetRoots hroots fuel).SourceRootTotal :=
   (r.behavioralContinuationFamilyHom
-      fuel).toSimulation_sourceRootTotal _
+      sourceRoots targetRoots hroots fuel).toSimulation_sourceRootTotal _
 
 /-- The behavioral refinement graph simulation covers every admissible target
 root. -/
@@ -846,53 +774,18 @@ theorem behavioralContinuationFamilySimulation_targetRootTotal
       Decidable
         (H.observed.base.isTerminal state)]
     (r : G.InformationRefinement H)
+    (sourceRoots : G.observed.RootPresentation)
+    (targetRoots : H.observed.RootPresentation)
+    (hroots :
+      r.observedRefinement.PreservesRootPresentations
+        sourceRoots targetRoots)
     (fuel : ℕ) :
     (r.behavioralContinuationFamilySimulation
-      fuel).TargetRootTotal :=
+      sourceRoots targetRoots hroots fuel).TargetRootTotal :=
   (r.behavioralContinuationFamilyHom
-      fuel).toSimulation_targetRootTotal _
+      sourceRoots targetRoots hroots fuel).toSimulation_targetRootTotal _
         (r.behavioralContinuationFamilyHom_declaredRootSurjective
-          fuel)
-
-/-- Regression theorem: behavioral Nash on presentation-designated continuations reflection along an information
-refinement also follows through the graph-simulation adapter. -/
-private theorem
-    isBehavioralNashOnDesignatedContinuationsAtFuel_of_map_viaContinuationSimulation
-    {V : Type uV} [DecidableEq N] [Preorder V]
-    [(state : G.observed.base.State) →
-      Decidable
-        (G.observed.base.isTerminal state)]
-    [(state : H.observed.base.State) →
-      Decidable
-        (H.observed.base.isTerminal state)]
-    (r : G.InformationRefinement H)
-    (utility :
-      PMF (Option (N → U)) → N → V)
-    (profile : G.observed.BehavioralProfile)
-    (fuel : ℕ)
-    (hSPE :
-      H.IsBehavioralNashOnDesignatedContinuationsAtFuel
-        utility
-        (r.observedRefinement.mapBehavioralProfile
-          profile)
-        fuel) :
-    G.IsBehavioralNashOnDesignatedContinuationsAtFuel
-      utility profile fuel := by
-  change
-    (G.behavioralContinuationFamily
-      fuel).IsNashOnRoots
-        (fun _ => utility) profile
-  apply
-    ContinuationGameForm.IsNashOnRoots.comapSimulation
-      (r.behavioralContinuationFamilySimulation fuel)
-      ((r.behavioralContinuationFamilyHom
-          fuel).toSimulation_utilityCompatible
-            _
-            (r.behavioralContinuationFamilyHom_utilityCompatible
-              utility fuel))
-      (r.behavioralContinuationFamilySimulation_sourceRootTotal
-        fuel)
-  exact hSPE
+          sourceRoots targetRoots hroots fuel)
 
 /-- Behavioral strategy lifting is surjective exactly under the explicit
 deviation-lifting hypothesis of the information refinement. -/
@@ -904,94 +797,18 @@ theorem behavioralContinuationFamilyHom_strategySurjective
       Decidable
         (H.observed.base.isTerminal state)]
     (r : G.InformationRefinement H)
+    (sourceRoots : G.observed.RootPresentation)
+    (targetRoots : H.observed.RootPresentation)
+    (hroots :
+      r.observedRefinement.PreservesRootPresentations
+        sourceRoots targetRoots)
     (fuel : ℕ)
     (hsurjective :
       r.observedRefinement.BehavioralStrategySurjective) :
     (r.behavioralContinuationFamilyHom
-      fuel).StrategySurjective := by
+      sourceRoots targetRoots hroots fuel).StrategySurjective := by
   intro i targetStrategy
   exact hsurjective i targetStrategy
-
-/-- Regression theorem: behavioral Nash on presentation-designated continuations reflection along an information
-refinement is the generic continuation-family comap theorem. -/
-private theorem isBehavioralNashOnDesignatedContinuationsAtFuel_of_map_viaContinuationFamily
-    {V : Type uV} [DecidableEq N] [Preorder V]
-    [(state : G.observed.base.State) →
-      Decidable
-        (G.observed.base.isTerminal state)]
-    [(state : H.observed.base.State) →
-      Decidable
-        (H.observed.base.isTerminal state)]
-    (r : G.InformationRefinement H)
-    (utility :
-      PMF (Option (N → U)) → N → V)
-    (profile : G.observed.BehavioralProfile)
-    (fuel : ℕ)
-    (hSPE :
-      H.IsBehavioralNashOnDesignatedContinuationsAtFuel
-        utility
-        (r.observedRefinement.mapBehavioralProfile
-          profile)
-        fuel) :
-    G.IsBehavioralNashOnDesignatedContinuationsAtFuel
-      utility profile fuel := by
-  change
-    (G.behavioralContinuationFamily
-      fuel).IsNashOnRoots
-        (fun _ => utility) profile
-  apply
-    ContinuationGameForm.IsNashOnRoots.comap
-      (r.behavioralContinuationFamilyHom
-        fuel)
-      (r.behavioralContinuationFamilyHom_utilityCompatible
-        utility fuel)
-  exact hSPE
-
-/-- Regression theorem: under behavioral deviation lifting, two-way
-refinement Nash on presentation-designated continuations transfer is the generic continuation-family surjectivity
-theorem. -/
-private theorem
-    isBehavioralNashOnDesignatedContinuationsAtFuel_iff_of_strategySurjective_viaContinuationFamily
-    {V : Type uV} [DecidableEq N] [Preorder V]
-    [(state : G.observed.base.State) →
-      Decidable
-        (G.observed.base.isTerminal state)]
-    [(state : H.observed.base.State) →
-      Decidable
-        (H.observed.base.isTerminal state)]
-    (r : G.InformationRefinement H)
-    (hsurjective :
-      r.observedRefinement.BehavioralStrategySurjective)
-    (utility :
-      PMF (Option (N → U)) → N → V)
-    (profile : G.observed.BehavioralProfile)
-    (fuel : ℕ) :
-    G.IsBehavioralNashOnDesignatedContinuationsAtFuel
-        utility profile fuel ↔
-      H.IsBehavioralNashOnDesignatedContinuationsAtFuel
-        utility
-        (r.observedRefinement.mapBehavioralProfile
-          profile)
-        fuel := by
-  change
-    (G.behavioralContinuationFamily
-      fuel).IsNashOnRoots
-        (fun _ => utility) profile ↔
-      (H.behavioralContinuationFamily
-        fuel).IsNashOnRoots
-          (fun _ => utility)
-          ((r.behavioralContinuationFamilyHom
-            fuel).mapProfile profile)
-  exact
-    (r.behavioralContinuationFamilyHom
-      fuel).isNashOnRoots_iff_of_surjective
-        (r.behavioralContinuationFamilyHom_utilityCompatible
-          utility fuel)
-        (r.behavioralContinuationFamilyHom_strategySurjective
-          fuel hsurjective)
-        (r.behavioralContinuationFamilyHom_declaredRootSurjective
-          fuel)
-        profile
 
 end InformationRefinement
 
