@@ -4,9 +4,9 @@ This directory retains selected public notes with durable mathematical or API
 value. It is not a task tracker. Actionable work belongs in GitHub Issues, and
 broader mathematical gaps belong in the knowledge blueprint.
 
-The single living correctness record for the current EFG implementation is
-`efg_strict_correctness_audit.md`. Current API navigation and lifecycle status
-are maintained under `../design/`, especially `efg-public-api.md`,
+Current EFG structure audits, API navigation, and lifecycle status are
+maintained under `../design/`, especially
+`efg-minimal-core-structure-audit.md`, `efg-public-api.md`,
 `efg-governance.md`, and `efg-module-status.md`. Historical cycle audits,
 completed execution plans, migration trackers, and private extraction reports
 are intentionally not retained.
@@ -24,9 +24,6 @@ are intentionally not retained.
   transfer.
 - `efg_simulation_framework_status.md`: verified theorem inventory and current
   boundary of the simulation-oriented EFG framework.
-- `efg_strict_correctness_audit.md`: living declaration-level correctness
-  matrix, regressions, verification evidence, axiom checks, residual risks,
-  and red-team readback for the current EFG implementation.
 - `lean_pitfalls.md`: reusable Lean and Mathlib implementation notes.
 - `minimax_comparison.md`: comparison of minimax proof routes.
 - `minimax_general_field.md`: ordered-field minimax design.
