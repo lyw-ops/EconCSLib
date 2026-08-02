@@ -477,7 +477,8 @@ bounded history and payoff-law realization from each chosen root, constructs
 root-scoped mixed-to-behavioral certificates, proves two-way Nash transfer,
 and discharges the semantic-deviation premise of the global
 behavioral-to-mixed continuation morphism. Consequently
-`isBehavioralNashOnDesignatedContinuationsAtFuel_iff_mixed` gives the full two-way bounded designated-continuation Nash
+`isBehavioralNashOnRootsAtFuel_iff_mixed` gives the full two-way bounded
+explicit-root Nash
 equivalence for a behavioral profile and its independently sampled complete
 plans. This remains a realization theorem, not a strict isomorphism of
 strategy spaces or a root-independent behavioralization of every arbitrary
@@ -485,7 +486,7 @@ mixed profile.
 `MorphismHierarchy.lean` proves that every strict observed-EFG
 isomorphism is a special information refinement. Its pure and behavioral
 strategy lifts agree with the strict transports and are automatically
-surjective, so strict designated-continuation Nash transfer factors through the same
+surjective, so strict explicit-root Nash transfer factors through the same
 refinement/continuation theorem path.
 `Relations/Discrete/KernelWeakSimulation.lean` supplies the deliberately weaker serialization
 layer: source and target endpoint laws must have an exact
@@ -688,7 +689,10 @@ irrelevant for every admitted profile. The countable constructor reuses this
 adapter definitionally. `ObservedNonAtomicKernelBoundary` pushes
 unit-interval volume into the legal real-action bundle at both a player root
 and a separate chance root, proves every singleton has zero mass, and proves
-neither compiled law is `PMF.toMeasure` of any PMF.
+neither compiled law is `PMF.toMeasure` of any PMF. On the actual generated
+state-path law it also defines the first-action lower-half cylinder, proves
+the event measurable, nonempty, and proper, and computes its probability as
+exactly one half.
 
 The representations coexist while the remaining preservation theorems described in
 [`../research/extensive_game_architecture.md`](../research/extensive_game_architecture.md)
