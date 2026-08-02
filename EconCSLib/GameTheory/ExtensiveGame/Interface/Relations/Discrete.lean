@@ -8,6 +8,9 @@ import EconCSLib.GameTheory.ExtensiveGame.Relations.Discrete.Morphism
 import EconCSLib.GameTheory.ExtensiveGame.Execution.Discrete.KernelTrajectory
 import EconCSLib.GameTheory.ExtensiveGame.Relations.Discrete.KernelWeakSimulation
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Morphism.Operational
+import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphism.Core
+import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphism.Subgame
+import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphism.Recall
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Chance
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Behavior
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Refinement.Structural
@@ -18,7 +21,11 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.BehaviorRefinement.Structural
 
 Stable public import for strict structural representation changes,
 information refinements, PMF-kernel trajectory couplings, and
-weak/stuttering simulations.
+weak/stuttering simulations. The strict structural tier includes the
+payoff-free `ControlledObservedGame.Hom`/`Iso` hierarchy and external root,
+recall, and lawful-subgame transport; payoff compatibility is a separate
+extension certificate.
+
 
 It extends `Interface.Execution.Finite` and deliberately excludes
 measure-valued infinite paths and the `MeasurableKernelArena` implementation
