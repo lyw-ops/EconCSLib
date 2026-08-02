@@ -186,3 +186,66 @@ def CompleteHistoryLawEquivalentAt
 
 The playerwise strategy map gives a source-deviation map. Reverse target
 deviation coverage remains a separate property. -/
+structure CompleteHistoryLawRealization
+    (S T : G.BoundedCompleteHistoryLawSemantics) where
+  /-- Map each player's source strategy into the target carrier. -/
+  mapStrategy :
+    (i : N) → S.Strategy i → T.Strategy i
+  /-- Preserve every bounded complete-history PMF exactly. -/
+  historyLaw_eq :
+    ∀ (profile : S.Profile)
+      (current : G.observed.base.History)
+      (fuel : ℕ),
+      S.historyLaw profile current fuel =
+        T.historyLaw
+          (fun i => mapStrategy i (profile i))
+          current fuel
+
+/-- Map a complete source profile player by player. -/
+def CompleteHistoryLawRealization.mapProfile
+    {S T : G.BoundedCompleteHistoryLawSemantics}
+    (R : S.CompleteHistoryLawRealization T)
+    (profile : S.Profile) : T.Profile :=
+  fun i => R.mapStrategy i (profile i)
+
+/-- Playerwise complete-history realization commutes with unilateral update. -/
+theorem CompleteHistoryLawRealization.mapProfile_update
+    [DecidableEq N]
+    {S T : G.BoundedCompleteHistoryLawSemantics}
+    (R : S.CompleteHistoryLawRealization T)
+    (profile : S.Profile) (who : N)
+    (deviation : S.Strategy who) :
+    R.mapProfile (Function.update profile who deviation) =
+      Function.update (R.mapProfile profile) who
+        (R.mapStrategy who deviation) := by
+  funext i
+  by_cases hi : i = who
+  · subst i
+    simp [CompleteHistoryLawRealization.mapProfile]
+  · simp [CompleteHistoryLawRealization.mapProfile, hi]
+
+/-- Reverse target-deviation coverage for one source profile.
+
+This condition is intentionally stronger than merely mapping every source
+deviation. -/
+def CompleteHistoryLawRealization.TargetDeviationsCoveredAt
+    [DecidableEq N]
+    {S T : G.BoundedCompleteHistoryLawSemantics}
+    (R : S.CompleteHistoryLawRealization T)
+    (profile : S.Profile)
+    (current : G.observed.base.History)
+    (fuel : ℕ) : Prop :=
+  ∀ (who : N) (targetDeviation : T.Strategy who),
+    ∃ sourceDeviation : S.Strategy who,
+      T.historyLaw
+          (Function.update (R.mapProfile profile)
+            who targetDeviation)
+          current fuel =
+        S.historyLaw
+          (Function.update profile who sourceDeviation)
+          current fuel
+
+/-- A strategy-space isomorphism preserving bounded complete-history laws.
+
+This is strictly stronger data than a one-way realization plus a particular
+target-deviation coverage proof. -/
