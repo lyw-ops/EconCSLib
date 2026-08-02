@@ -249,3 +249,46 @@ theorem SubgameSystem.initialOnly_isRoot_iff
 
 /-- A complete payoff-free standard-subgame system selects every
 structurally lawful root. -/
+structure CompleteSubgameSystem
+    (G : ControlledObservedGame N)
+    extends G.SubgameSystem where
+  /-- Converse coverage of every structurally lawful root. -/
+  complete :
+    ∀ root, G.IsLawfulSubgameRoot root →
+      toSubgameSystem.IsRoot root
+
+namespace CompleteSubgameSystem
+
+/-- A complete system selects exactly the structurally lawful roots. -/
+theorem isRoot_iff_isLawful
+    (system : G.CompleteSubgameSystem)
+    (root : G.base.History) :
+    system.toSubgameSystem.IsRoot root ↔
+      G.IsLawfulSubgameRoot root :=
+  ⟨system.toSubgameSystem.isLawful, system.complete root⟩
+
+/-- Transport a complete lawful system through a bijective player rename. -/
+def relabelPlayers
+    (system : G.CompleteSubgameSystem)
+    (e : M ≃ N) :
+    (G.relabelPlayers e).CompleteSubgameSystem where
+  toSubgameSystem :=
+    system.toSubgameSystem.relabelPlayers e
+  complete := by
+    intro root hroot
+    exact
+      system.complete root
+        ((isLawfulSubgameRoot_relabelPlayers_iff G e root).1 hroot)
+
+/-- Canonical complete payoff-free standard-subgame system. -/
+def canonical
+    (G : ControlledObservedGame N) :
+    G.CompleteSubgameSystem where
+  IsRoot := G.IsLawfulSubgameRoot
+  init_isRoot := G.init_isLawfulSubgameRoot
+  lawful := fun _root hroot => hroot
+  complete := fun _root hroot => hroot
+
+end CompleteSubgameSystem
+
+end ExtensiveGame.ControlledObservedGame
