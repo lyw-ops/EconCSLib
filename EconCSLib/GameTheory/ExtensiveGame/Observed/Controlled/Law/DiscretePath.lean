@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
 import EconCSLib.GameTheory.ExtensiveGame.Execution.InfiniteTrajectory
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledDiscreteLaw
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledLaw
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Law.Discrete
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Law
 
 /-!
 # Discrete implementation of controlled complete-path probability semantics
