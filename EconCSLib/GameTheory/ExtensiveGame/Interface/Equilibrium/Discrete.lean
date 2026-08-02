@@ -10,25 +10,35 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.Refinement.Termination
 import EconCSLib.GameTheory.ExtensiveGame.Observed.BehaviorRefinement.Execution
 import EconCSLib.GameTheory.ExtensiveGame.Observed.MorphismHierarchy
 import EconCSLib.GameTheory.ExtensiveGame.Observed.SPE
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Semantics
 import EconCSLib.GameTheory.ExtensiveGame.Observed.PerfectRecall
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Realization
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Mixed
+import EconCSLib.GameTheory.ExtensiveGame.Observed.General
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Continuation
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Kuhn
 import EconCSLib.GameTheory.ExtensiveGame.Observed.DeferredSampling.Realization
 import EconCSLib.GameTheory.ExtensiveGame.Observed.KuhnConditioning.Realization
+import EconCSLib.GameTheory.ExtensiveGame.Observed.LawEquivalence
 import EconCSLib.GameTheory.ExtensiveGame.Observed.StrategyBridge
 
 /-!
 # Discrete EFG equilibrium
 
-Stable public import for pure, behavioral, and mixed finite-fuel equilibrium
-semantics and their structural representation-transfer theorems.
+Stable public import for pure, behavioral, mixed, and discrete-general
+finite-fuel strategy semantics and the available structural
+representation-transfer theorems.
 
 It extends `Interface.Relations.Discrete` with bounded and
 termination-certified equilibrium predicates, subgame perfection on lawful
-systems, perfect recall, PMF realization, finite Kuhn bridges, conditioning,
+systems, payoff-free outcome-parametric continuation semantics and its
+state-payoff compatibility spelling, perfect recall, PMF realization, finite
+Kuhn bridges, conditioning, the countably supported general-strategy carrier,
 and the uniform strategy bridge. It does not import infinite path measures,
 non-atomic measurable kernels, measurable path utilities, continuation
 conditioning, fresh-clock restart, or concrete compilers.
+
+The complete-history-law layer records one-way realizations separately from
+strict isomorphisms and derives terminal/outcome/payoff and law-utility
+equality by pushforward.
 -/
