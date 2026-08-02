@@ -20,25 +20,24 @@ namespace CompleteInformationMeasurableInstanceBoundary
 
 open ExtensiveGame
 
-variable {N U : Type*} (base : ExtensiveGame N U)
-  (roots : ObservedGame.ContinuationRootPresentation base) (i : N)
+variable {N U : Type*} (base : ExtensiveGame N U) (i : N)
 
 abbrev observed :=
-  ObservedGame.completeInformationPresentation base roots
+  ObservedGame.completeInformation base
 
 /-- A caller-selected measurable space on complete histories is inherited by
 the generated observation and information carriers. -/
 example [MeasurableSpace (base.toArena.HistoryFrom base.init)] :
-    MeasurableSpace ((observed base roots).InfoState i) :=
+    MeasurableSpace ((observed base).InfoState i) :=
   inferInstance
 
 end CompleteInformationMeasurableInstanceBoundary
 
 /--
-error: Unknown constant `ExtensiveGame.ObservedGame.Iso.isPureNashOnDesignatedContinuationsAtFuel_iff`
+error: Unknown constant `ExtensiveGame.ObservedGame.Iso.isPureNashOnRootsAtFuel_iff`
 -/
 #guard_msgs in
-#check ExtensiveGame.ObservedGame.Iso.isPureNashOnDesignatedContinuationsAtFuel_iff
+#check ExtensiveGame.ObservedGame.Iso.isPureNashOnRootsAtFuel_iff
 
 /--
 error: Unknown constant `ExtensiveGame.ObservedGame.MeasurableKernelPresentation.KernelBehavioralProfile.IsFreshRestartStateCompatibleAt`
