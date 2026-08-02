@@ -189,3 +189,169 @@ finer presentation `H`.
 The complete-history dynamics are strictly isomorphic. Fine private, public,
 and decision information forgets to coarse information, while every coarse
 information action lifts to the corresponding fine fiber. -/
+structure InformationRefinement
+    (G H : ControlledObservedGame N) where
+  /-- Strict equivalence of complete-history dynamics. -/
+  historyIso : G.base.unfold.toArena.Iso H.base.unfold.toArena
+  /-- Empty histories correspond. -/
+  map_init :
+    historyIso.stateEquiv
+        (Arena.HistoryFrom.nil G.base.toArena G.base.init) =
+      Arena.HistoryFrom.nil H.base.toArena H.base.init
+  /-- Mover labels correspond. -/
+  map_mover :
+    ∀ history : G.base.History,
+      H.base.mover (historyIso.stateEquiv history).1 =
+        G.base.mover history.1
+  /-- Forget fine private observations. -/
+  forgetObservation :
+    (i : N) → H.Observation i → G.Observation i
+  /-- Private-observation forgetting commutes with history transport. -/
+  forget_observe :
+    ∀ (i : N) (history : G.base.History),
+      forgetObservation i
+          (H.observe i (historyIso.stateEquiv history)) =
+        G.observe i history
+  /-- Forget fine public observations. -/
+  forgetPublic : H.PublicObservation → G.PublicObservation
+  /-- Public-observation forgetting commutes with history transport. -/
+  forget_publicObserve :
+    ∀ history : G.base.History,
+      forgetPublic
+          (H.publicObserve (historyIso.stateEquiv history)) =
+        G.publicObserve history
+  /-- Private-to-public projection commutes with forgetting. -/
+  forget_publicOf :
+    ∀ (i : N) (observation : H.Observation i),
+      forgetPublic (H.publicOf i observation) =
+        G.publicOf i (forgetObservation i observation)
+  /-- Forget fine decision information. -/
+  forgetInfo :
+    (i : N) → H.InfoState i → G.InfoState i
+  /-- Information-to-observation projection commutes with forgetting. -/
+  forget_infoObserve :
+    ∀ (i : N) (information : H.InfoState i),
+      forgetObservation i (H.infoObserve i information) =
+        G.infoObserve i (forgetInfo i information)
+  /-- Lift coarse information actions to each fine information fiber. -/
+  infoActionEquiv :
+    ∀ (i : N) (information : H.InfoState i),
+      G.InfoAction i (forgetInfo i information) ≃
+        H.InfoAction i information
+  /-- Forgetting represented fine information recovers source information. -/
+  map_infoAt :
+    ∀ (history : G.base.History) (i : N)
+      (hsource : G.base.mover history.1 = some i)
+      (htarget :
+        H.base.mover (historyIso.stateEquiv history).1 = some i),
+      G.infoAt history i hsource =
+        forgetInfo i
+          (H.infoAt (historyIso.stateEquiv history) i htarget)
+  /-- Lifting and realizing a coarse action commutes with strict concrete
+  history-action transport. -/
+  map_infoActionAt :
+    ∀ (history : G.base.History) (i : N)
+      (hsource : G.base.mover history.1 = some i)
+      (htarget :
+        H.base.mover (historyIso.stateEquiv history).1 = some i)
+      (action : G.InfoAction i (G.infoAt history i hsource)),
+      H.actionEquiv (historyIso.stateEquiv history) i htarget
+          (infoActionEquiv i
+            (H.infoAt
+              (historyIso.stateEquiv history) i htarget)
+            (cast
+              (congrArg (G.InfoAction i)
+                (map_infoAt history i hsource htarget))
+              action)) =
+        historyIso.actionEquiv history
+          (G.actionEquiv history i hsource action)
+
+namespace InformationRefinement
+
+variable {G H : ControlledObservedGame N}
+
+/-- A refinement maps selected coarse roots into selected fine roots. -/
+def MapsRootPresentations
+    (r : G.InformationRefinement H)
+    (sourceRoots : G.ContinuationRootPresentation)
+    (targetRoots : H.ContinuationRootPresentation) : Prop :=
+  ∀ history : G.base.History,
+    sourceRoots.IsRoot history →
+      targetRoots.IsRoot (r.historyIso.stateEquiv history)
+
+/-- Exact external root correspondence along an information refinement. -/
+def PreservesRootPresentations
+    (r : G.InformationRefinement H)
+    (sourceRoots : G.ContinuationRootPresentation)
+    (targetRoots : H.ContinuationRootPresentation) : Prop :=
+  ∀ history : G.base.History,
+    sourceRoots.IsRoot history ↔
+      targetRoots.IsRoot (r.historyIso.stateEquiv history)
+
+/-- Lift a coarse payoff-free pure strategy to the finer information
+presentation. -/
+def mapStrategy
+    (r : G.InformationRefinement H) (i : N)
+    (strategy : G.PureStrategy i) :
+    H.PureStrategy i :=
+  fun information =>
+    r.infoActionEquiv i information
+      (strategy (r.forgetInfo i information))
+
+/-- Lift a payoff-free pure profile componentwise. -/
+def mapProfile
+    (r : G.InformationRefinement H)
+    (profile : G.PureProfile) :
+    H.PureProfile :=
+  fun i => r.mapStrategy i (profile i)
+
+/-- Coverage of all target strategies is an additional hypothesis, not part
+of a genuine information refinement. -/
+def StrategySurjective
+    (r : G.InformationRefinement H) : Prop :=
+  ∀ i : N, Function.Surjective (r.mapStrategy i)
+
+/-- Refinement strategy lifting commutes with unilateral update. -/
+theorem mapProfile_update [DecidableEq N]
+    (r : G.InformationRefinement H)
+    (profile : G.PureProfile)
+    (who : N) (deviation : G.PureStrategy who) :
+    r.mapProfile (Function.update profile who deviation) =
+      Function.update (r.mapProfile profile) who
+        (r.mapStrategy who deviation) := by
+  funext i
+  by_cases hi : i = who
+  · subst i
+    simp [mapProfile]
+  · simp [mapProfile, hi]
+
+/-- Identity payoff-free information refinement. -/
+def refl (G : ControlledObservedGame N) :
+    G.InformationRefinement G where
+  historyIso := Arena.Iso.refl G.base.unfold.toArena
+  map_init := rfl
+  map_mover := by intro history; rfl
+  forgetObservation := fun _ observation => observation
+  forget_observe := by intro i history; rfl
+  forgetPublic := id
+  forget_publicObserve := by intro history; rfl
+  forget_publicOf := by intro i observation; rfl
+  forgetInfo := fun _ information => information
+  forget_infoObserve := by intro i information; rfl
+  infoActionEquiv := fun _ _ => Equiv.refl _
+  map_infoAt := by
+    intro history i hsource htarget
+    congr
+  map_infoActionAt := by
+    intro history i hsource htarget action
+    rfl
+
+end InformationRefinement
+
+/-! ## Strict structural isomorphisms -/
+
+/-- A strict payoff-free observed-game isomorphism.
+
+Besides equivalences of all carriers, the final square states that mapping an
+abstract information action and then realizing it is exactly the strict
+history-action map. No payoff compatibility is present. -/
