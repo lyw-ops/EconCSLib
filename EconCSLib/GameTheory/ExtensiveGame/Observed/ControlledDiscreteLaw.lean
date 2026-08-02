@@ -155,3 +155,34 @@ variable {N : Type*}
 
 The semantic object is the full occurrence-sensitive history, not merely its
 endpoint state. The structure stores no payoff, objective, or root set. -/
+structure BoundedCompleteHistoryLawSemantics
+    (G : DiscreteControlledObservedChanceGame N) where
+  /-- One strategy carrier per player. -/
+  Strategy : N → Type uStrategy
+  /-- Complete-history law from every current history and fuel bound. -/
+  historyLaw :
+    (profile : ∀ i, Strategy i) →
+      G.observed.base.History → ℕ →
+        PMF G.observed.base.History
+
+namespace BoundedCompleteHistoryLawSemantics
+
+variable {G : DiscreteControlledObservedChanceGame N}
+
+/-- Profiles for one bounded complete-history semantic model. -/
+abbrev Profile (S : G.BoundedCompleteHistoryLawSemantics) :=
+  ∀ i, S.Strategy i
+
+/-- Equality of bounded occurrence-sensitive complete-history laws. -/
+def CompleteHistoryLawEquivalentAt
+    (S T : G.BoundedCompleteHistoryLawSemantics)
+    (source : S.Profile) (target : T.Profile)
+    (current : G.observed.base.History)
+    (fuel : ℕ) : Prop :=
+  S.historyLaw source current fuel =
+    T.historyLaw target current fuel
+
+/-- One-way realization of every bounded complete-history law.
+
+The playerwise strategy map gives a source-deviation map. Reverse target
+deviation coverage remains a separate property. -/
