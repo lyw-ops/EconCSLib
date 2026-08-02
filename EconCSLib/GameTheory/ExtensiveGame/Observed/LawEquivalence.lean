@@ -300,3 +300,184 @@ variable {G : ObservedChanceGame N U}
 Because profiles are dependent products, `mapStrategy` acts componentwise and
 therefore maps every source unilateral deviation while holding the opponents'
 mapped strategies fixed. -/
+structure CompleteHistoryLawRealization
+    (S T : G.BoundedCompleteHistorySemantics) where
+  /-- Componentwise strategy realization map. -/
+  mapStrategy : ∀ i, S.Strategy i → T.Strategy i
+  /-- Exact complete-history law for every profile, continuation, and fuel. -/
+  historyLaw_eq :
+    ∀ (profile : S.Profile)
+      (current :
+        G.observed.base.toArena.HistoryFrom G.observed.base.init)
+      (fuel : ℕ),
+      S.CompleteHistoryLawEquivalentAt T profile
+        (fun i => mapStrategy i (profile i)) current fuel
+
+namespace CompleteHistoryLawRealization
+
+variable {S T : G.BoundedCompleteHistorySemantics}
+
+/-- Map a complete source profile componentwise. -/
+def mapProfile (R : S.CompleteHistoryLawRealization T)
+    (profile : S.Profile) : T.Profile :=
+  fun i => R.mapStrategy i (profile i)
+
+/-- Componentwise realization commutes with unilateral strategy replacement.
+-/
+theorem mapProfile_update
+    [DecidableEq N]
+    (R : S.CompleteHistoryLawRealization T)
+    (profile : S.Profile) (i : N)
+    (deviation : S.Strategy i) :
+    R.mapProfile (Function.update profile i deviation) =
+      Function.update (R.mapProfile profile) i
+        (R.mapStrategy i deviation) := by
+  funext j
+  by_cases hji : j = i
+  · subst j
+    simp [mapProfile]
+  · simp [mapProfile, hji]
+
+/-- Exact law preservation for every mapped unilateral deviation.
+
+The quantification over `profile` includes every source opponent profile.
+This is source-deviation preservation, not reverse coverage of arbitrary
+target deviations. -/
+theorem unilateralHistoryLaw_eq
+    [DecidableEq N]
+    (R : S.CompleteHistoryLawRealization T)
+    (profile : S.Profile) (i : N)
+    (deviation : S.Strategy i)
+    (current :
+      G.observed.base.toArena.HistoryFrom G.observed.base.init)
+    (fuel : ℕ) :
+    S.historyLaw
+        (Function.update profile i deviation) current fuel =
+      T.historyLaw
+        (Function.update (R.mapProfile profile) i
+          (R.mapStrategy i deviation))
+        current fuel := by
+  rw [← R.mapProfile_update profile i deviation]
+  exact R.historyLaw_eq
+    (Function.update profile i deviation) current fuel
+
+/-- Reverse semantic coverage of arbitrary target unilateral deviations.
+
+This extra condition, rather than a false strategy-space isomorphism claim,
+is what two-way Nash transfer must consume. -/
+def TargetDeviationsCoveredAt
+    [DecidableEq N]
+    (R : S.CompleteHistoryLawRealization T)
+    (profile : S.Profile)
+    (current :
+      G.observed.base.toArena.HistoryFrom G.observed.base.init)
+    (fuel : ℕ) : Prop :=
+  ∀ (i : N) (targetDeviation : T.Strategy i),
+    ∃ sourceDeviation : S.Strategy i,
+      T.historyLaw
+          (Function.update (R.mapProfile profile)
+            i targetDeviation)
+          current fuel =
+        T.historyLaw
+          (R.mapProfile
+            (Function.update profile i sourceDeviation))
+          current fuel
+
+end CompleteHistoryLawRealization
+
+end BoundedCompleteHistorySemantics
+
+/-- Under finite information and no absent-mindedness, independent
+pre-sampling is a complete-history-law realization of every behavioral
+profile and every source unilateral deviation.
+
+The equal action/state universe is the existing `FreshQueryTree` execution
+boundary; it is not a restriction on the general observed-game carrier. -/
+noncomputable def behavioralToMixedCompleteHistoryRealization
+    (G :
+      ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
+    [Fintype N] [DecidableEq N]
+    [(state : G.observed.base.State) →
+      Decidable (G.observed.base.isTerminal state)]
+    (h : G.observed.FiniteNoAbsentMindednessHypotheses) :
+    BoundedCompleteHistorySemantics.CompleteHistoryLawRealization
+      G.behavioralCompleteHistorySemantics
+      G.mixedCompleteHistorySemantics := by
+  letI (i : N) : Finite (G.observed.InfoState i) :=
+    h.finiteInfoState i
+  letI (i : N) : Fintype (G.observed.InfoState i) :=
+    Fintype.ofFinite (G.observed.InfoState i)
+  refine
+    { mapStrategy :=
+        fun i strategy =>
+          h.behavioralToMixedStrategy i strategy
+      historyLaw_eq := ?_ }
+  intro profile current fuel
+  exact
+    (G.behavioralToMixed_stoppedHistoryLawFrom_of_noAbsentMindedness
+      h profile current fuel).symm
+
+/-- Perfect-recall conditional behavioralization gives root-scoped complete
+history-law equivalence for every arbitrary mixed profile. -/
+theorem mixedToBehavioral_completeHistoryLawEquivalentAt
+    (G : ObservedChanceGame N U)
+    [Fintype N] [DecidableEq N]
+    [(state : G.observed.base.State) →
+      Decidable (G.observed.base.isTerminal state)]
+    (certificate : G.observed.RecallCertificate)
+    (profile : G.observed.MixedProfile)
+    (current :
+      G.observed.base.toArena.HistoryFrom G.observed.base.init)
+    (fuel : ℕ) :
+    G.mixedCompleteHistorySemantics.CompleteHistoryLawEquivalentAt
+      G.behavioralCompleteHistorySemantics
+      profile
+      (certificate.behavioralizeMixedProfileFrom
+        G.observed current profile)
+      current fuel :=
+  G.mixedToBehavioral_stoppedHistoryLawFrom
+    certificate profile current fuel
+
+/-- The mixed-to-behavioral perfect-recall realization preserves optional
+terminal-history laws. -/
+theorem mixedToBehavioral_terminalHistoryLawEquivalentAt
+    (G : ObservedChanceGame N U)
+    [Fintype N] [DecidableEq N]
+    [(state : G.observed.base.State) →
+      Decidable (G.observed.base.isTerminal state)]
+    (certificate : G.observed.RecallCertificate)
+    (profile : G.observed.MixedProfile)
+    (current :
+      G.observed.base.toArena.HistoryFrom G.observed.base.init)
+    (fuel : ℕ) :
+    G.mixedCompleteHistorySemantics.TerminalHistoryLawEquivalentAt
+      G.behavioralCompleteHistorySemantics
+      profile
+      (certificate.behavioralizeMixedProfileFrom
+        G.observed current profile)
+      current fuel :=
+  (G.mixedToBehavioral_completeHistoryLawEquivalentAt
+    certificate profile current fuel).terminalHistory
+
+/-- The mixed-to-behavioral perfect-recall realization preserves optional
+terminal-payoff laws as a consequence of complete-history-law equality. -/
+theorem mixedToBehavioral_payoffLawEquivalentAt
+    (G : ObservedChanceGame N U)
+    [Fintype N] [DecidableEq N]
+    [(state : G.observed.base.State) →
+      Decidable (G.observed.base.isTerminal state)]
+    (certificate : G.observed.RecallCertificate)
+    (profile : G.observed.MixedProfile)
+    (current :
+      G.observed.base.toArena.HistoryFrom G.observed.base.init)
+    (fuel : ℕ) :
+    G.mixedCompleteHistorySemantics.PayoffLawEquivalentAt
+      G.behavioralCompleteHistorySemantics
+      profile
+      (certificate.behavioralizeMixedProfileFrom
+        G.observed current profile)
+      current fuel :=
+  (G.mixedToBehavioral_completeHistoryLawEquivalentAt
+    certificate profile current fuel).payoff
+
+end ExtensiveGame.ObservedChanceGame
