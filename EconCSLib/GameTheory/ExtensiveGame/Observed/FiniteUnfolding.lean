@@ -5,10 +5,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 
 import EconCSLib.GameTheory.ExtensiveGame.Execution.Objective
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Behavior
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.Finite
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledDiscreteLaw
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphism.Subgame
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphism.Recall
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Finite
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Law.Discrete
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism.Subgame
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism.Recall
 import EconCSLib.GameTheory.ExtensiveGame.Observed.WellFormed
 import EconCSLib.GameTheory.ExtensiveGame.Winning.Basic
 import Mathlib.Tactic
