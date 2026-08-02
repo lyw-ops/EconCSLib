@@ -1,6 +1,6 @@
 # EFG Simulation Framework: Formalization Status
 
-Date: 2026-07-28
+Date: 2026-08-02
 
 ## Objective
 
@@ -30,6 +30,12 @@ step becomes several player and chance micro steps, so the two history arenas
 cannot be in one-step bijection. Exactness is retained at macro boundaries by
 PMF couplings and weak/stuttering simulation; this is not an approximation.
 
+`ObservedGame.Iso` compares games after fixing one player carrier. Bijective
+changes of player labels are normalized first by
+`ControlledObservedGame.relabelPlayers` (or its payoff-aware `ObservedGame`
+adapter), which also transports dependent pure profiles and complete lawful
+subgame systems. Non-bijective player changes remain compiler-specific.
+
 ## Implemented semantic transfer
 
 The current modules provide:
@@ -54,9 +60,10 @@ The current modules provide:
 - `IndexedContinuationGameForm`, whose horizon and outcome types are arbitrary,
   so total, distinguished-index, or measure-valued evaluators reuse the same equilibrium
   transfer layer rather than introducing a new EFG core;
-- `ObservedGame.ContinuationSemantics`, which attaches such an evaluator to
-  the existing complete-history roots and subgame predicate without rebuilding
-  either structure;
+- `ControlledObservedGame.ContinuationSemantics`, which attaches such an
+  evaluator to payoff-free complete-history roots and lawful-subgame systems
+  without rebuilding either structure; the `ObservedGame` spelling is a
+  compatibility abbreviation that does not inspect state payoffs;
 - one `BoundedDesignatedNashBridge` consumer interface with pure, behavioral, mixed, and
   finite-Kuhn constructors;
 - coupling-based kernel simulations, finite-trajectory transfer, and
