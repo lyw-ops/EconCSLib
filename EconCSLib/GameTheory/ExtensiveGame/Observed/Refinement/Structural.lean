@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Morphism.Fiber
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Game
+import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphism.Core
 
 /-!
 # EconCSLib.GameTheory.ExtensiveGame.Observed.Refinement.Structural
@@ -124,16 +125,59 @@ structure InformationRefinement
               action)) =
         historyIso.actionEquiv history
           (G.actionEquiv history i hsource action)
-  /-- Presentation-designated continuation roots correspond along the strict
-  history map. -/
-  map_designatedContinuationRoot :
-    ∀ history : G.base.toArena.HistoryFrom G.base.init,
-      G.IsDesignatedContinuationRoot history ↔
-        H.IsDesignatedContinuationRoot (historyIso.stateEquiv history)
-
 namespace InformationRefinement
 
 variable {G H : ObservedGame N U}
+
+/-- Forget only payoff compatibility from a legacy information refinement.
+
+The resulting certificate lives entirely on the payoff-free projections and
+retains the strict history, observation, information, action, and root
+comparison data. -/
+def toControlled
+    (r : G.InformationRefinement H) :
+    G.toControlledObservedGame.InformationRefinement
+      H.toControlledObservedGame where
+  historyIso := r.historyIso
+  map_init := r.map_init
+  map_mover := r.map_mover
+  forgetObservation := r.forgetObservation
+  forget_observe := r.forget_observe
+  forgetPublic := r.forgetPublic
+  forget_publicObserve := r.forget_publicObserve
+  forget_publicOf := r.forget_publicOf
+  forgetInfo := r.forgetInfo
+  forget_infoObserve := r.forget_infoObserve
+  infoActionEquiv := r.infoActionEquiv
+  map_infoAt := r.map_infoAt
+  map_infoActionAt := r.map_infoActionAt
+
+/-- Directional compatibility of separately supplied continuation-root
+presentations with an information refinement.
+
+The property is external because root selection is analysis metadata, not
+part of the refinement's dynamics/information comparison. -/
+def MapsRootPresentations
+    (r : G.InformationRefinement H)
+    (sourceRoots : G.RootPresentation)
+    (targetRoots : H.RootPresentation) : Prop :=
+  ∀ history : G.base.toArena.HistoryFrom G.base.init,
+    sourceRoots.IsRoot history →
+      targetRoots.IsRoot (r.historyIso.stateEquiv history)
+
+/-- Exact correspondence of two external root presentations along an
+information refinement.
+
+This stronger certificate is needed only for results that cover every target
+root as well as every source root. One-way Nash reflection uses
+`MapsRootPresentations`; two-way transfer additionally needs this iff. -/
+def PreservesRootPresentations
+    (r : G.InformationRefinement H)
+    (sourceRoots : G.RootPresentation)
+    (targetRoots : H.RootPresentation) : Prop :=
+  ∀ history : G.base.toArena.HistoryFrom G.base.init,
+    sourceRoots.IsRoot history ↔
+      targetRoots.IsRoot (r.historyIso.stateEquiv history)
 
 /-- Information refinements are determined by their structural maps and
 dependent action equivalences; all coherence fields are propositions. -/
@@ -250,9 +294,6 @@ def refl (G : ObservedGame N U) :
     congr
   map_infoActionAt := by
     intro history i hsource htarget action
-    rfl
-  map_designatedContinuationRoot := by
-    intro history
     rfl
 
 /-- Identity refinements leave local information actions unchanged. -/
@@ -498,12 +539,6 @@ def trans {K : ObservedGame N U}
                     middleHistory)
                   (r.map_infoActionAt
                     history i hsource hmiddle action)
-  map_designatedContinuationRoot := by
-    intro history
-    exact
-      (r.map_designatedContinuationRoot history).trans
-        (s.map_designatedContinuationRoot
-          (r.historyIso.stateEquiv history))
 
 /-- The cast-stable refinement action equivalence is functorial under
 composition. -/
