@@ -67,25 +67,25 @@ Discrete PMF and analytic-kernel execution enter through downstream adapters.
 
 The matrix rows above are backed by the following Lean owners:
 
-- `Observed/ControlledMorphism/Core.lean`: payoff-free `Hom`, strict `Iso`,
+- `Observed/Controlled/Morphism/Core.lean`: payoff-free `Hom`, strict `Iso`,
   `InformationRefinement`, root-presentation correspondence, structural
   strategy transport, and Iso algebra.
-- `Observed/ControlledMorphism/Subgame.lean` and
-  `Observed/ControlledMorphism/Recall.lean`: lawful-subgame transport and
-  recall equivalences respectively. `Observed/ControlledMorphism.lean` is the
-  import-only compatibility aggregate for all three leaves.
-- `Observed/ControlledMorphismCompat.lean`: the orthogonal
+- `Observed/Controlled/Morphism/Subgame.lean` and
+  `Observed/Controlled/Morphism/Recall.lean`: lawful-subgame transport and
+  recall equivalences respectively. `Observed/Controlled/Morphism.lean` is the
+  declaration-free canonical facade for all three leaves.
+- `Observed/Controlled/Compat/Morphism.lean`: the orthogonal
   `ObservedGame.PayoffCompatibleIso` and legacy payoff-aware adapters.
-- `Observed/ControlledDiscreteLaw.lean`: discrete chance presentation,
+- `Observed/Controlled/Law/Discrete.lean`: discrete chance presentation,
   payoff-free bounded complete-history semantic realizations, behavioral PMFs,
   and strict stochastic naturality.
-- `Observed/ControlledLaw.lean`: the normalized, almost-surely lawful common
+- `Observed/Controlled/Law.lean`: the normalized, almost-surely lawful common
   path carrier; measurable history/outcome/payoff interpretations; distinct
   arbitrary-integral and expected-utility theorems; execution coherence;
   same-game and cross-game realizations; identity/strict-Iso bridges; target
   deviation coverage; and strategy-space isomorphisms.
-- `Observed/ControlledDiscretePathLaw.lean` and
-  `Observed/ControlledAnalyticLaw.lean`: the actual discrete behavioral and
+- `Observed/Controlled/Law/DiscretePath.lean` and
+  `Observed/Controlled/Law/Analytic.lean`: the actual discrete behavioral and
   analytic-kernel adapters into that common carrier.
 - `Observed/FiniteUnfolding.lean`: compiler-specific occurrence-unfolding
   certificates, including `boundedHistoryLawPreservation`, a concrete
