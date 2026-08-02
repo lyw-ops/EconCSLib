@@ -274,7 +274,7 @@ theorem macroPolicy_chanceConsistent
       apply hnonterminal
       exact ⟨fun action => nomatch action⟩
   | player macroHistory hmacroNonterminal count hcount collected =>
-      simp [observedChanceGame, game, mover] at hmover
+      simp [observedChanceGameCore, game, mover] at hmover
   | chance macroHistory hmacroNonterminal action =>
       rfl
 
