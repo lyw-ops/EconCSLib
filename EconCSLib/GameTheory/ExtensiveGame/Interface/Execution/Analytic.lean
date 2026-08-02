@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
 import EconCSLib.GameTheory.ExtensiveGame.Interface.Execution.Infinite
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledAnalyticLaw
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Law.Analytic
 import EconCSLib.GameTheory.ExtensiveGame.Simulation.Kernel.Arena
 import EconCSLib.GameTheory.ExtensiveGame.Simulation.Kernel.Execution
 import EconCSLib.GameTheory.ExtensiveGame.Simulation.Kernel.Endpoint
@@ -31,7 +31,7 @@ terminal-aware execution, finite endpoint and infinite event-time path laws,
 state/history/event/information-dependent action policies, abstract-action
 realization, and observed profile assembly.
 
-`ControlledAnalyticLaw` packages a measurable-kernel profile assembly into
+`Controlled.Law.Analytic` packages a measurable-kernel profile assembly into
 the same lawful `ControlledObservedGame.CompletePathLawSemantics` used by the
 discrete behavioral constructor; canonical deterministic-history legality is
 an explicit adapter premise.
