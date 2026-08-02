@@ -55,21 +55,21 @@ honestly.
 | `Interface/Objective.lean` | Canonical, implemented | stable measure-free objective facade | explicit opt-in |
 | `Observed/WellFormed.lean` | Canonical, implemented | represented-information and finite-EFG hypothesis packages | `Interface.Core` |
 | `Observed/Controlled.lean` | Canonical, implemented | payoff-free observations/information, bijective player/profile reindexing, and external root presentation | `Interface.Core` |
-| `Observed/ControlledInfrastructure.lean` | Compatibility aggregate, implemented | import-only access to the focused infrastructure leaves | existing direct imports |
-| `Observed/ControlledInfrastructure/{Core,WellFormed,Subgame,Finite,Quasi,Recall}.lean` | Canonical, implemented | payoff-free controlled execution, general represented-information/mover coherence, lawful subgames, finite-EFG hypotheses, quasistrategies, and recall in separate owners | `Interface.Core` |
-| `Observed/ControlledMorphism.lean` | Compatibility aggregate, implemented | import-only access to structural, lawful-subgame, and recall transport | existing direct imports |
-| `Observed/ControlledMorphism/Core.lean` | Canonical, implemented | payoff-free Hom/Iso, information refinement, strategy transport, root-presentation comparison, and Iso algebra | `Interface.Relations.Discrete` |
-| `Observed/ControlledMorphism/{Subgame,Recall}.lean` | Canonical, implemented | lawful-subgame transport and recall preservation/reflection | `Interface.Relations.Discrete` |
-| `Observed/ControlledMorphismCompat.lean` | Internal adapter, implemented | payoff commuting square and legacy `ObservedGame.Iso` projection | compatibility consumers |
-| `Observed/ControlledDiscreteLaw.lean` | Canonical, implemented | payoff-free discrete chance and bounded complete-history PMFs | `Interface.Execution.Finite` |
-| `Observed/ControlledDiscretePathLaw.lean` | Canonical adapter, implemented | actual PMF behavioral executor packaged as the common lawful path probability | `Interface.Execution.Infinite` |
-| `Observed/ControlledLaw.lean` | Canonical, implemented | payoff-free normalized/lawful path carrier, measurable interpretation hierarchy, execution coherence, and same/cross-game realizations | `Interface.Relations` |
-| `Observed/ControlledAnalyticLaw.lean` | Canonical adapter, implemented | actual measurable-kernel state/history path law packaged in the common carrier under explicit legality | `Interface.Execution.Analytic` |
+| `Observed/Controlled/Infrastructure.lean` | Canonical facade, implemented | declaration-free access to the focused infrastructure leaves | broad controlled infrastructure clients |
+| `Observed/Controlled/Infrastructure/{Core,WellFormed,Subgame,Finite,Quasi,Recall}.lean` | Canonical, implemented | payoff-free controlled execution, general represented-information/mover coherence, lawful subgames, finite-EFG hypotheses, quasistrategies, and recall in separate owners | `Interface.Core` |
+| `Observed/Controlled/Morphism.lean` | Canonical facade, implemented | declaration-free access to structural, lawful-subgame, and recall transport | broad relation clients |
+| `Observed/Controlled/Morphism/Core.lean` | Canonical, implemented | payoff-free Hom/Iso, information refinement, strategy transport, root-presentation comparison, and Iso algebra | `Interface.Relations.Discrete` |
+| `Observed/Controlled/Morphism/{Subgame,Recall}.lean` | Canonical, implemented | lawful-subgame transport and recall preservation/reflection | `Interface.Relations.Discrete` |
+| `Observed/Controlled/Compat/Morphism.lean` | Internal adapter, implemented | payoff commuting square and legacy `ObservedGame.Iso` projection | compatibility consumers |
+| `Observed/Controlled/Law/Discrete.lean` | Canonical, implemented | payoff-free discrete chance and bounded complete-history PMFs | `Interface.Execution.Finite` |
+| `Observed/Controlled/Law/DiscretePath.lean` | Canonical adapter, implemented | actual PMF behavioral executor packaged as the common lawful path probability | `Interface.Execution.Infinite` |
+| `Observed/Controlled/Law.lean` | Canonical, implemented | payoff-free normalized/lawful path carrier, measurable interpretation hierarchy, execution coherence, and same/cross-game realizations | `Interface.Relations` |
+| `Observed/Controlled/Law/Analytic.lean` | Canonical adapter, implemented | actual measurable-kernel state/history path law packaged in the common carrier under explicit legality | `Interface.Execution.Analytic` |
 | `Observed/FiniteUnfolding.lean` | Canonical, implemented | finite occurrence-sensitive carrier with strict structural, recall, root/subgame, chance, deviation, and bounded-law preservation | `Interface.Execution.Finite` |
-| `Observed/SignalRecall.lean` | Internal adapter, implemented | legacy payoff-aware private/public recall names projected from `ControlledInfrastructure` | downstream compatibility |
+| `Observed/SignalRecall.lean` | Internal adapter, implemented | legacy payoff-aware private/public recall names projected from `Controlled.Infrastructure` | downstream compatibility |
 | `Observed/LawEquivalence.lean` | Canonical, implemented | bounded history/terminal/payoff-law hierarchy and concrete Kuhn realizations | `Interface.Equilibrium.Discrete` |
 | `Observed/PathLawEquivalence.lean` | Internal adapter, implemented | payoff-aware names projected from the unique controlled path-law carrier | `Interface.Relations` |
-| `Observed/Quasi.lean` | Internal adapter, implemented | legacy payoff-aware quasistrategy names projected from `ControlledInfrastructure` | downstream compatibility |
+| `Observed/Quasi.lean` | Internal adapter, implemented | legacy payoff-aware quasistrategy names projected from `Controlled.Infrastructure` | downstream compatibility |
 | `Observed/General.lean` | Canonical, implemented | discrete general-strategy carriers and embeddings | discrete equilibrium facade |
 | `Simulation/Equilibrium/General.lean` | Internal | measurable mixed/general strategy laws and expected utility | analytic equilibrium facade |
 | `Winning/Basic.lean` | Canonical, implemented | winning conditions, totality, exclusivity, prefix decisions, and strategy compatibility | `Interface.Objective` |
