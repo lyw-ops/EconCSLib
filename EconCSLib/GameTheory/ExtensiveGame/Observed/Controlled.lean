@@ -150,3 +150,128 @@ theorem relabelPlayers_observe
 This presentation carries no standard-subgame lawfulness claim. It is
 deliberately separate from the observed-game record so changing analysis roots
 does not change the identity of the dynamics or information structure. -/
+structure ContinuationRootPresentation
+    (G : ControlledObservedGame N) where
+  /-- Histories exposed to a root-scoped analysis. -/
+  IsRoot : G.base.toArena.HistoryFrom G.base.init → Prop
+  /-- The initial empty history is always exposed. -/
+  init_isRoot :
+    IsRoot (Arena.HistoryFrom.nil G.base.toArena G.base.init)
+
+namespace ContinuationRootPresentation
+
+variable {G : ControlledObservedGame N}
+
+/-- Reuse a root presentation after bijective player relabeling.
+
+The Arena and complete-history carrier are definitionally unchanged. -/
+def relabelPlayers
+    (roots : G.ContinuationRootPresentation)
+    (e : M ≃ N) :
+    (G.relabelPlayers e).ContinuationRootPresentation where
+  IsRoot := roots.IsRoot
+  init_isRoot := roots.init_isRoot
+
+@[simp]
+theorem relabelPlayers_isRoot
+    (roots : G.ContinuationRootPresentation)
+    (e : M ≃ N)
+    (history : G.base.toArena.HistoryFrom G.base.init) :
+    (roots.relabelPlayers e).IsRoot history ↔
+      roots.IsRoot history :=
+  Iff.rfl
+
+/-- Expose only the initial history. -/
+def initialOnly (G : ControlledObservedGame N) :
+    G.ContinuationRootPresentation where
+  IsRoot := fun history =>
+    history = Arena.HistoryFrom.nil G.base.toArena G.base.init
+  init_isRoot := rfl
+
+/-- Expose every legal complete history, without claiming that every history
+is a lawful standard-subgame root. -/
+def allHistories (G : ControlledObservedGame N) :
+    G.ContinuationRootPresentation where
+  IsRoot := fun _history => True
+  init_isRoot := trivial
+
+@[simp]
+theorem initialOnly_isRoot_iff
+    (history : G.base.toArena.HistoryFrom G.base.init) :
+    (initialOnly G).IsRoot history ↔
+      history = Arena.HistoryFrom.nil G.base.toArena G.base.init :=
+  Iff.rfl
+
+@[simp]
+theorem allHistories_isRoot
+    (history : G.base.toArena.HistoryFrom G.base.init) :
+    (allHistories G).IsRoot history :=
+  trivial
+
+end ContinuationRootPresentation
+
+/-- A deterministic contingent plan indexed only by decision information. -/
+def PureStrategy (i : N) : Type _ :=
+  (information : G.InfoState i) → G.InfoAction i information
+
+/-- A profile of payoff-free pure contingent plans. -/
+def PureProfile : Type _ :=
+  (i : N) → G.PureStrategy i
+
+/-- Pure profiles are invariant under bijective player renaming, up to the
+corresponding dependent-function reindexing. -/
+def relabelPureProfileEquiv (e : M ≃ N) :
+    (G.relabelPlayers e).PureProfile ≃ G.PureProfile :=
+  e.piCongrLeft G.PureStrategy
+
+namespace PureStrategy
+
+/-- Realize an abstract pure action at one represented concrete history. -/
+def actionAt {i : N} (strategy : G.PureStrategy i)
+    (history : G.base.toArena.HistoryFrom G.base.init)
+    (hmover : G.base.mover history.1 = some i) :
+    G.base.Action history.1 :=
+  G.actionEquiv history i hmover
+    (strategy (G.infoAt history i hmover))
+
+end PureStrategy
+
+namespace CompleteInformation
+
+/-- A complete history whose endpoint is controlled by player `i`. -/
+abbrev DecisionHistory (base : ControlledGame N) (i : N) :=
+  {history : base.toArena.HistoryFrom base.init //
+    base.mover history.1 = some i}
+
+/-- Legal actions at a payoff-free complete-information decision history. -/
+abbrev DecisionAction (base : ControlledGame N) (i : N)
+    (information : DecisionHistory base i) :=
+  base.Action information.1.1
+
+end CompleteInformation
+
+/-- Canonical payoff-free complete-information presentation.
+
+Private and public observations retain the complete history. Player `i`'s
+information states contain exactly histories whose endpoint mover is `i`, so
+chance, other-player, and normalized terminal histories create no spurious
+strategy coordinates. -/
+abbrev completeInformation (base : ControlledGame N) :
+    ControlledObservedGame N where
+  base := base
+  Observation := fun _i => base.toArena.HistoryFrom base.init
+  PublicObservation := base.toArena.HistoryFrom base.init
+  observe := fun _i history => history
+  publicObserve := fun history => history
+  publicOf := fun _i observation => observation
+  observe_public := fun _i _history => rfl
+  InfoState := CompleteInformation.DecisionHistory base
+  infoObserve := fun _i information => information.1
+  infoAt := fun history _i hmover => ⟨history, hmover⟩
+  infoAt_observe := fun _history _i _hmover => rfl
+  InfoAction := CompleteInformation.DecisionAction base
+  actionEquiv := fun _history _i _hmover => Equiv.refl _
+
+end ControlledObservedGame
+
+end ExtensiveGame
