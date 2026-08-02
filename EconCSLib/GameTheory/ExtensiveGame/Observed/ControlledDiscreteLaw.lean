@@ -263,3 +263,67 @@ end BoundedCompleteHistoryLawSemantics
 
 /-- Functional bounded complete-history-law realization across two different
 payoff-free discrete EFG representations. -/
+structure CrossGameBoundedCompleteHistoryLawRealization
+    {G H : DiscreteControlledObservedChanceGame N}
+    (S : G.BoundedCompleteHistoryLawSemantics)
+    (T : H.BoundedCompleteHistoryLawSemantics) where
+  /-- Playerwise strategy map. -/
+  mapStrategy :
+    (i : N) → S.Strategy i → T.Strategy i
+  /-- Occurrence-sensitive complete-history map. -/
+  mapHistory :
+    G.observed.base.History →
+      H.observed.base.History
+  /-- Exact bounded PMF pushforward at every profile, history, and fuel. -/
+  historyLaw_map_eq :
+    ∀ (profile : S.Profile)
+      (current : G.observed.base.History)
+      (fuel : ℕ),
+      (S.historyLaw profile current fuel).map mapHistory =
+        T.historyLaw
+          (fun i => mapStrategy i (profile i))
+          (mapHistory current) fuel
+
+namespace CrossGameBoundedCompleteHistoryLawRealization
+
+variable {G H : DiscreteControlledObservedChanceGame N}
+  {S : G.BoundedCompleteHistoryLawSemantics}
+  {T : H.BoundedCompleteHistoryLawSemantics}
+
+/-- Map a bounded-law profile player by player. -/
+def mapProfile
+    (R : CrossGameBoundedCompleteHistoryLawRealization S T)
+    (profile : S.Profile) : T.Profile :=
+  fun i => R.mapStrategy i (profile i)
+
+/-- Cross-game bounded-law strategy mapping commutes with unilateral update. -/
+theorem mapProfile_update
+    [DecidableEq N]
+    (R : CrossGameBoundedCompleteHistoryLawRealization S T)
+    (profile : S.Profile) (who : N)
+    (deviation : S.Strategy who) :
+    R.mapProfile (Function.update profile who deviation) =
+      Function.update (R.mapProfile profile) who
+        (R.mapStrategy who deviation) := by
+  funext i
+  by_cases hi : i = who
+  · subst i
+    simp [mapProfile]
+  · simp [mapProfile, hi]
+
+end CrossGameBoundedCompleteHistoryLawRealization
+
+/-- Concrete payoff-free bounded complete-history semantics for behavioral
+strategies and discrete chance. -/
+noncomputable def behavioralBoundedCompleteHistoryLawSemantics
+    (G : DiscreteControlledObservedChanceGame N)
+    [(state : G.observed.base.State) →
+      Decidable (G.observed.base.isTerminal state)] :
+    G.BoundedCompleteHistoryLawSemantics where
+  Strategy := G.BehavioralStrategy
+  historyLaw := fun profile current fuel =>
+    G.behavioralHistoryLaw profile current fuel
+
+end DiscreteControlledObservedChanceGame
+
+end ExtensiveGame
