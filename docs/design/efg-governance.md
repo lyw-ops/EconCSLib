@@ -16,23 +16,30 @@ from HEAD alone and did not alter the index.
 The current architecture is logically sound.  Its canonical semantic line is:
 
 ```text
-Foundation / Math.Probability.PMF
+ Foundation / Math.Probability.PMF
                │
                ▼
  Arena + Reachability + typed History       representation-neutral GameForm
                │                              │
+              ▼                              │
+           CompletePlay                       │
+               │                              │
                └──────────────┬───────────────┘
                               ▼
-             ObservedGame / ObservedChanceGame
+           ControlledGame / ControlledObservedGame
                               │
-              ┌───────────────┼────────────────┐
-              ▼               ▼                ▼
-       Execution.Finite  Execution.Infinite  Execution.Analytic
-              └───────────────┬────────────────┘
+                 ┌────────────┼──────────────┐
+                 ▼            ▼              ▼
+          Objective/Winning  structural   lawful path
+                             relations    probability
+                                            │
+                                 ┌──────────┴──────────┐
+                                 ▼                     ▼
+                         discrete PMF adapter   analytic adapter
+                                 └──────────┬──────────┘
+                                            ▼
+                         payoff/equilibrium compatibility
                               ▼
-                         Relations
-                              ▼
-                         Equilibrium
                           ┌────┴─────┐
                           ▼          ▼
                        Restart   Compilation
@@ -41,9 +48,17 @@ Foundation / Math.Probability.PMF
 This is a logical ownership diagram, not a claim that every source file forms
 one literal import chain.  In particular:
 
-- `Arena`, typed histories, and `GameForm` are the minimum reusable core.
-- `ObservedGame` and `ObservedChanceGame` are the canonical carriers of
-  information, chance, and game-bound sequential semantics.
+- `Arena`, reachability, typed histories, measure-free complete plays, and
+  payoff-free observed control form the exact five-module StructuralCore.
+- structural termination, finite/subgame/recall certificates, and bounded
+  deterministic/PMF execution are the broader `Interface.Core` Foundation
+  Facade.
+- history-sensitive terminal and path outcomes are exposed by the opt-in
+  `Interface.Objective` facade without probability or equilibrium.
+- `ControlledObservedGame` is the minimal payoff-free carrier of controlled
+  dynamics and information. `ObservedGame` and `ObservedChanceGame` are
+  payoff-aware/discrete compatibility extensions, not dependencies of the
+  payoff-free spine.
 - finite PMF execution, infinite discrete path execution, and non-atomic
   analytic execution are distinct layers.
 - Restart extends analytic equilibrium.  Discrete Compilation extends discrete
@@ -90,6 +105,22 @@ The source does not perfectly mirror the diagram:
 5. Several implementation modules exceed 800 lines.  Their audit below shows
    that most large proof chains are highly coupled and are not made safer by a
    mechanical split.
+6. The former mixed-responsibility
+   `Observed.ControlledInfrastructure` path is now an import-only compatibility
+   aggregate. Its declarations are physically owned by `Core`, `WellFormed`,
+   `Subgame`, `Finite`, `Quasi`, and `Recall` leaves; winning-dependent
+   quasistrategy predicates live in `Winning.Basic`. `Recall` has an exact
+   six-module closure and reaches neither `Finite` nor `Execution.Length`.
+7. The former monolithic `Observed.ControlledMorphism` path is also an
+   import-only compatibility aggregate. Structural transport is owned by
+   `ControlledMorphism.Core`, lawful-subgame transport by `.Subgame`, and
+   recall transport by `.Recall`; their exact EFG/local closures are 8 / 8,
+   10 / 10, and 11 / 11.
+8. FOSG sequentialization keeps its observed chance-game value independent of
+   continuation-root selection. `observedChanceGameCore` is root-free,
+   `rootPresentation` owns the source-root predicate, and the established
+   root-parameterized `observedChanceGame` name is a definitionally equal
+   compatibility wrapper.
 
 These deviations are governed below. Physical path changes are limited to
 Internal modules whose importers are inside this worktree. Public clients use
@@ -185,7 +216,9 @@ Place a new declaration at the lowest layer that can state it honestly:
 | raw state-dependent dynamics | `ExtensiveGame/Basic` |
 | finite transition reachability | `Execution/Reachability` |
 | typed action occurrences | `Execution/History` |
-| observations, information, chance, or lawful roots | `Observed/` |
+| measure-free complete plays or structural termination | `Execution/CompletePlay` or `Execution/Length` |
+| terminal-history or complete-path objectives | `Execution/Objective`, exposed by `Interface.Objective` |
+| observations, information, chance, or lawful roots | `Observed/`; controlled execution/well-formedness/subgame/finite/quasi/recall infrastructure and structural/subgame/recall morphisms use the matching focused leaf |
 | finite/infinite/analytic execution | the corresponding execution implementation, exposed by its facade |
 | strict/refinement/coupling/weak representation relation | relation implementation, exposed by `Relations.Discrete` |
 | general pure/behavioral/mixed Nash, SPE, recall, or realization | observed/game-form equilibrium layer |
@@ -257,6 +290,8 @@ EFG theorem.
 | `ExtensiveGame.Probability.*` | Keep as import-only wrappers | `Math.Probability.PMF.*` |
 | broad Interface aggregates | Keep through the current major version | smallest granular facade |
 | split implementation aggregates | Keep import-only; implementation modules now import defining leaves directly | corresponding subdirectory leaves; downstream users prefer facades |
+| `Observed.ControlledInfrastructure` | Keep as import-only compatibility aggregate | defining `ControlledInfrastructure.*` leaf; winning predicates are in `Winning.Basic` |
+| `Observed.ControlledMorphism` | Keep as import-only compatibility aggregate | `ControlledMorphism.Core`, `.Subgame`, or `.Recall` according to the declarations used |
 | endpoint `GameTree` NE/SPE/strategic form | Historical, retained, stopped from general expansion | occurrence compiler for canonical standard SPE; no false deprecation |
 | `GameTree.toObservedGame` | Historical endpoint compiler, retained for old policy semantics | occurrence compiler when paths must be distinguished |
 | state-based `Strategy` | Historical but semantically valid | observed pure strategy is information-indexed and not definitionally equivalent |
@@ -280,9 +315,11 @@ bridge and the endpoint-policy results used by `FiniteArenaExtraction` and
 
 ## Root aggregate lifecycle
 
-The root was narrowed on 2026-07-30. Its current closure is 19 EFG modules and
-147 local `EconCSLib` modules. It exposes finite/PMF execution, finite
-`GameTree` syntax and backward-induction values, but no infinite path law,
+The root was narrowed on 2026-07-30 and re-audited on 2026-08-01. Its current
+closure is 37 EFG modules and 165 local `EconCSLib` modules. It exposes
+measure-free complete plays, structural termination, reusable finite-EFG
+certificates, finite/PMF execution, finite `GameTree` syntax and
+backward-induction values, but no infinite path law,
 historical endpoint-policy equilibrium, Arena extraction, Zermelo theorem,
 analytic execution, Restart, FOSG, compiler, Historical, or Compatibility
 module.
@@ -292,20 +329,25 @@ source graph:
 
 | Entry | EFG modules / all local modules |
 |---|---:|
-| `EconCSLib` | 19 / 147 |
-| `Interface.Core` | 7 / 18 |
-| `Interface.Execution.Finite` | 15 / 28 |
-| `Interface.Execution.Infinite` | 18 / 31 |
-| `Interface.Execution.Analytic` | 37 / 51 |
-| `Interface.Relations.Discrete` | 21 / 34 |
-| `Interface.Equilibrium.Discrete` | 42 / 59 |
-| `Interface.Equilibrium.Analytic` | 69 / 87 |
-| `Interface.Restart` | 77 / 95 |
-| `Interface.Compilation.Discrete` | 63 / 82 |
+| `EconCSLib` | 37 / 165 |
+| `Interface.StructuralCore` | 5 / 5 |
+| `Interface.Core` | 14 / 14 |
+| `Interface.Objective` | 32 / 37 |
+| `Interface.Winning` | 35 / 40 |
+| `Interface.Winning.Stochastic` | 50 / 57 |
+| `Interface.Execution.Finite` | 33 / 40 |
+| `Interface.Execution.Infinite` | 38 / 45 |
+| `Interface.Execution.Analytic` | 58 / 66 |
+| `Interface.Relations.Discrete` | 39 / 46 |
+| `Interface.Equilibrium.Discrete` | 66 / 82 |
+| `Interface.Equilibrium.Analytic` | 96 / 113 |
+| `Interface.Restart` | 104 / 121 |
+| `Interface.Compilation.Discrete` | 87 / 105 |
 
 | Path | Class | Root decision | Explicit import for opt-in use |
 |---|---|---|---|
 | `Interface.Execution.Finite` | stable finite/PMF execution | retained as the root EFG facade | same path |
+| `Interface.Objective` | stable measure-free objective semantics | opt-in; terminal/path objectives are not required by every root client | same path |
 | `GameTree` | stable specialized frontend | retained | same path |
 | `BackwardInduction` | stable specialized frontend algorithm | retained | same path |
 | `ZeroSumGameTreeWithChance` | stable specialized exact solver | retained | same path |
@@ -395,6 +437,7 @@ maintenance triage, not API cardinalities.
 | `Observed.Continuation` | 1001 / 36 | pure and behavioral continuation adapters | pure + behavioral equilibrium adapters | Medium-high; two parallel halves | Moderate casts | continuation morphism/simulation/iso bundles | pure / behavioral leaves plus aggregate | Medium; useful only if clients need one half independently | Queue on measured import demand |
 | `Observed.Kuhn` | 866 / 41 | finite hypotheses, behavioral-to-mixed, realization | finite probability → strategy → equilibrium | High proof progression | Moderate table/index transport | hypothesis structures and realization records | hypotheses / plan sampling / realization | Medium-high; wrappers share theorem names | Keep |
 | `Observed.PerfectRecall` | 934 / 33 | personal-decision recall and iso transfer | information structure → relation transfer | High | High dependent-list transport | `RecallCertificate` | structure / iso transfer | Medium-high; certificate equivalence links halves | Keep |
+| `Observed.ControlledMorphism` (former monolith) | 1883 / layered declaration families | payoff-free structural, lawful-subgame, and recall transport | controlled structure → subgames/recall | Three separable layers | High dependent casts in the structural base | `Hom`, `InformationRefinement`, and `Iso` | `Core` / `Subgame` / `Recall` leaves plus aggregate | Low after preserving names and old import path | **Split implemented**; exact closures 8 / 8, 10 / 10, and 11 / 11 |
 | `Observed.SPE` | 923 / 34 | total pure semantics and lawful/complete SPE | termination → root systems → equilibrium transfer | High | High history/root transport | terminating-on and complete-system packages | termination / equilibrium / iso transfer | High; cyclic import risk with morphism/refinement | Keep |
 | `Kernel.EventPath` | 1119 / 60 | event paths, policies, state projection | analytic execution + projection bridge | High | High coordinate/index arithmetic | `EventHistoryActionPolicy` and path measures | event core / policy path / projections | High; Ionescu–Tulcea proof chain | Keep |
 | `Presentation.Chance.Countable` | 1347 / 59 | reachable countability and automatic analytic presentation | types/instances → realization → profile compiler | High | High dependent tags and casts | `presentation`, `measurablePresentation`, kernel adapter | carriers / realization / profile adapters | High; scoped instances cross every section | Keep |
@@ -404,12 +447,14 @@ maintenance triage, not API cardinalities.
 | `Restart.Assembly` | 818 / 56 | lift every raw certificate to all deviations | restart certificates → semantic compatibility | High theorem matrix | Low casts, high repeated route plumbing | deviation-compatible predicates | split by certificate family | Medium; would worsen route navigation | Keep |
 | `Restart.Certificates` | 1168 / 30 | prove equivalence/implication chain among raw certificates | step kernels → finite prefixes → full paths | Very high | Very high splice/index arithmetic | named certificate propositions | implication families | High; one induction chain | Keep |
 
-The current worktree already contains the high-value, dependency-ordered splits
-for continuation game forms, observed morphisms/refinements, deferred sampling,
-Kuhn conditioning, FOSG sequentialization, and Restart.  No additional
-low-risk/high-benefit split was identified.  Mechanical line-count splits would
-either cut a single induction/transport chain or add wrappers without reducing
-facade closure, so no large file was moved in this closeout.
+The current worktree contains the high-value, dependency-ordered splits for
+controlled morphisms, continuation game forms, observed
+morphisms/refinements, deferred sampling, Kuhn conditioning, FOSG
+sequentialization, and Restart. The controlled-morphism split was driven by
+three independently useful dependency closures, not line count alone. No
+additional low-risk/high-benefit split was identified; the remaining
+mechanical line-count splits would either cut a single induction/transport
+chain or add wrappers without reducing facade closure.
 
 ## Maintenance queue and stop conditions
 
@@ -446,8 +491,20 @@ must update its boundary regression and the audited count in this policy,
 rather than remaining an invisible transitive import. Review and CI maintain:
 
 - canonical implementation modules do not import compatibility wrappers;
+- `Interface.StructuralCore` has exactly the five structural EFG dependencies
+  and `Interface.Core` cannot regain Objective/Winning;
+- every payoff-free `ControlledInfrastructure.*` leaf obeys the existing
+  reverse-dependency prohibition;
+- `ControlledInfrastructure.Recall` has its exact six-module closure and
+  cannot regain `Finite` or `Execution.Length`;
+- `ControlledMorphism.{Core,Subgame,Recall}` retain their exact 8 / 8,
+  10 / 10, and 11 / 11 closures without cross-layer leakage;
+- `Observed.ControlledInfrastructure` and `Observed.ControlledMorphism`
+  remain import-only with exact direct leaf imports, while internal consumers
+  import defining leaves;
 - compatibility aggregates are imported only by other compatibility paths or
   intentional compatibility-boundary regressions;
+- the governed EFG/GameForm/PMF source graph is acyclic;
 - Canonical, Frontend, and Internal modules do not directly import Historical
   modules except for exact, reasoned importer/imported allowlist pairs;
 - `Execution.History` cannot import `Subgame`, and `StochasticGameTree` cannot
