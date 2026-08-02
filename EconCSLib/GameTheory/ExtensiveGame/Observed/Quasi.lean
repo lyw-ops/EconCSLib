@@ -3,7 +3,7 @@ Copyright (c) 2026 EconCSLib contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.Quasi
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Quasi
 import EconCSLib.GameTheory.ExtensiveGame.Observed.WellFormed
 import EconCSLib.GameTheory.ExtensiveGame.Winning.BasicCompat
 
@@ -11,7 +11,7 @@ import EconCSLib.GameTheory.ExtensiveGame.Winning.BasicCompat
 # Payoff-aware quasistrategy compatibility
 
 The quasistrategy theory is implemented once, on
-`ControlledObservedGame`, in `ControlledInfrastructure.Quasi`, with winning
+`ControlledObservedGame`, in `Controlled.Infrastructure.Quasi`, with winning
 predicates in `Winning.Basic`. This
 module preserves the historical `ObservedGame` names as payoff-forgetting
 adapters.  No independent quasistrategy carrier or compatibility predicate is
