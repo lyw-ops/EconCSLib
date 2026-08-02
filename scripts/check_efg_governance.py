@@ -37,17 +37,119 @@ DEPRECATED_RE = re.compile(
 EFG_PREFIX = "EconCSLib.GameTheory.ExtensiveGame."
 
 EXPECTED_CLOSURES = {
-    "EconCSLib": (19, 147),
-    f"{EFG_PREFIX}Interface.Core": (7, 18),
-    f"{EFG_PREFIX}Interface.Execution.Finite": (15, 28),
-    f"{EFG_PREFIX}Interface.Execution.Infinite": (18, 31),
-    f"{EFG_PREFIX}Interface.Execution.Analytic": (37, 51),
-    f"{EFG_PREFIX}Interface.Relations.Discrete": (21, 34),
-    f"{EFG_PREFIX}Interface.Equilibrium.Discrete": (42, 59),
-    f"{EFG_PREFIX}Interface.Equilibrium.Analytic": (69, 87),
-    f"{EFG_PREFIX}Interface.Restart": (77, 95),
-    f"{EFG_PREFIX}Interface.Compilation.Discrete": (63, 82),
+    "EconCSLib": (37, 165),
+    f"{EFG_PREFIX}Interface.StructuralCore": (5, 5),
+    f"{EFG_PREFIX}Interface.Core": (14, 14),
+    f"{EFG_PREFIX}Interface.Objective": (32, 37),
+    f"{EFG_PREFIX}Interface.Winning": (35, 40),
+    f"{EFG_PREFIX}Interface.Winning.Stochastic": (50, 57),
+    f"{EFG_PREFIX}Interface.Execution.Finite": (33, 40),
+    f"{EFG_PREFIX}Interface.Execution.Infinite": (38, 45),
+    f"{EFG_PREFIX}Interface.Execution.Analytic": (58, 66),
+    f"{EFG_PREFIX}Interface.Relations.Discrete": (39, 46),
+    f"{EFG_PREFIX}Interface.Equilibrium.Discrete": (66, 82),
+    f"{EFG_PREFIX}Interface.Equilibrium.Analytic": (96, 113),
+    f"{EFG_PREFIX}Interface.Restart": (104, 121),
+    f"{EFG_PREFIX}Interface.Compilation.Discrete": (87, 105),
 }
+
+STRUCTURAL_CORE = f"{EFG_PREFIX}Interface.StructuralCore"
+EXPECTED_STRUCTURAL_CORE_EFG_CLOSURE = {
+    f"{EFG_PREFIX}Basic",
+    f"{EFG_PREFIX}Execution.Reachability",
+    f"{EFG_PREFIX}Execution.History",
+    f"{EFG_PREFIX}Execution.CompletePlay",
+    f"{EFG_PREFIX}Observed.Controlled",
+}
+
+CONTROLLED_INFRASTRUCTURE_RECALL = (
+    f"{EFG_PREFIX}Observed.ControlledInfrastructure.Recall"
+)
+CONTROLLED_INFRASTRUCTURE_WELL_FORMED = (
+    f"{EFG_PREFIX}Observed.ControlledInfrastructure.WellFormed"
+)
+CONTROLLED_MORPHISM_CORE = f"{EFG_PREFIX}Observed.ControlledMorphism.Core"
+CONTROLLED_MORPHISM_SUBGAME = f"{EFG_PREFIX}Observed.ControlledMorphism.Subgame"
+CONTROLLED_MORPHISM_RECALL = f"{EFG_PREFIX}Observed.ControlledMorphism.Recall"
+
+EXPECTED_EXACT_EFG_CLOSURES = {
+    CONTROLLED_INFRASTRUCTURE_RECALL: {
+        f"{EFG_PREFIX}Basic",
+        f"{EFG_PREFIX}Execution.Reachability",
+        f"{EFG_PREFIX}Execution.History",
+        f"{EFG_PREFIX}Execution.CompletePlay",
+        f"{EFG_PREFIX}Observed.Controlled",
+        CONTROLLED_INFRASTRUCTURE_WELL_FORMED,
+    },
+    CONTROLLED_INFRASTRUCTURE_WELL_FORMED: {
+        f"{EFG_PREFIX}Basic",
+        f"{EFG_PREFIX}Execution.Reachability",
+        f"{EFG_PREFIX}Execution.History",
+        f"{EFG_PREFIX}Execution.CompletePlay",
+        f"{EFG_PREFIX}Observed.Controlled",
+    },
+    CONTROLLED_MORPHISM_CORE: {
+        f"{EFG_PREFIX}Basic",
+        f"{EFG_PREFIX}Execution.Reachability",
+        f"{EFG_PREFIX}Execution.History",
+        f"{EFG_PREFIX}Execution.CompletePlay",
+        f"{EFG_PREFIX}Execution.StoppedExecution",
+        f"{EFG_PREFIX}Execution.DependentFiber",
+        f"{EFG_PREFIX}Relations.Discrete.Morphism",
+        f"{EFG_PREFIX}Observed.Controlled",
+    },
+    CONTROLLED_MORPHISM_SUBGAME: {
+        f"{EFG_PREFIX}Basic",
+        f"{EFG_PREFIX}Execution.Reachability",
+        f"{EFG_PREFIX}Execution.History",
+        f"{EFG_PREFIX}Execution.CompletePlay",
+        f"{EFG_PREFIX}Execution.StoppedExecution",
+        f"{EFG_PREFIX}Execution.DependentFiber",
+        f"{EFG_PREFIX}Relations.Discrete.Morphism",
+        f"{EFG_PREFIX}Observed.Controlled",
+        f"{EFG_PREFIX}Observed.ControlledInfrastructure.Subgame",
+        CONTROLLED_MORPHISM_CORE,
+    },
+    CONTROLLED_MORPHISM_RECALL: {
+        f"{EFG_PREFIX}Basic",
+        f"{EFG_PREFIX}Execution.Reachability",
+        f"{EFG_PREFIX}Execution.History",
+        f"{EFG_PREFIX}Execution.CompletePlay",
+        f"{EFG_PREFIX}Execution.StoppedExecution",
+        f"{EFG_PREFIX}Execution.DependentFiber",
+        f"{EFG_PREFIX}Relations.Discrete.Morphism",
+        f"{EFG_PREFIX}Observed.Controlled",
+        CONTROLLED_INFRASTRUCTURE_WELL_FORMED,
+        CONTROLLED_INFRASTRUCTURE_RECALL,
+        CONTROLLED_MORPHISM_CORE,
+    },
+}
+
+EXPECTED_COMPATIBILITY_AGGREGATE_IMPORTS = {
+    f"{EFG_PREFIX}Observed.ControlledInfrastructure": {
+        f"{EFG_PREFIX}Observed.ControlledInfrastructure.Core",
+        CONTROLLED_INFRASTRUCTURE_WELL_FORMED,
+        f"{EFG_PREFIX}Observed.ControlledInfrastructure.Subgame",
+        f"{EFG_PREFIX}Observed.ControlledInfrastructure.Finite",
+        f"{EFG_PREFIX}Observed.ControlledInfrastructure.Quasi",
+        f"{EFG_PREFIX}Observed.ControlledInfrastructure.Recall",
+        f"{EFG_PREFIX}Winning.Basic",
+    },
+    f"{EFG_PREFIX}Observed.ControlledMorphism": {
+        CONTROLLED_MORPHISM_CORE,
+        CONTROLLED_MORPHISM_SUBGAME,
+        CONTROLLED_MORPHISM_RECALL,
+    },
+}
+
+CORE_FORBIDDEN_CLOSURE_MODULES = {
+    f"{EFG_PREFIX}Execution.Objective",
+    f"{EFG_PREFIX}Winning.Basic",
+}
+
+CORE_FORBIDDEN_CLOSURE_PREFIXES = (
+    f"{EFG_PREFIX}Winning.",
+)
 
 EXPECTED_ROOT_EFG_IMPORTS = {
     f"{EFG_PREFIX}Interface.Execution.Finite",
@@ -170,6 +272,71 @@ FORBIDDEN_DIRECT_IMPORTS = {
         f"{EFG_PREFIX}StochasticGameTree",
         f"{EFG_PREFIX}GameTreeSPE",
     ): "stochastic tree syntax needs only the structural GameTree module",
+}
+
+# These modules form the payoff-free dependency spine.  Their complete local
+# import closures must not reach legacy payoff-aware observed games,
+# compatibility adapters, equilibrium/simulation implementations, or the
+# payoff-aware winning layer.
+PAYOFF_FREE_CORE_BOUNDARIES = {
+    f"{EFG_PREFIX}Execution.DependentFiber",
+    f"{EFG_PREFIX}Execution.StochasticNaturality",
+    f"{EFG_PREFIX}Observed.Controlled",
+    f"{EFG_PREFIX}Observed.ControlledInfrastructure",
+    f"{EFG_PREFIX}Observed.ControlledInfrastructure.Core",
+    CONTROLLED_INFRASTRUCTURE_WELL_FORMED,
+    f"{EFG_PREFIX}Observed.ControlledInfrastructure.Subgame",
+    f"{EFG_PREFIX}Observed.ControlledInfrastructure.Finite",
+    f"{EFG_PREFIX}Observed.ControlledInfrastructure.Quasi",
+    f"{EFG_PREFIX}Observed.ControlledInfrastructure.Recall",
+    f"{EFG_PREFIX}Observed.ControlledMorphism",
+    CONTROLLED_MORPHISM_CORE,
+    CONTROLLED_MORPHISM_SUBGAME,
+    CONTROLLED_MORPHISM_RECALL,
+    f"{EFG_PREFIX}Observed.ControlledSemantics",
+    f"{EFG_PREFIX}Observed.ControlledDiscreteLaw",
+    f"{EFG_PREFIX}Observed.ControlledLaw",
+    f"{EFG_PREFIX}Winning.Basic",
+    f"{EFG_PREFIX}Winning.Determinacy",
+    STRUCTURAL_CORE,
+    f"{EFG_PREFIX}Interface.Core",
+}
+
+FORBIDDEN_PAYOFF_FREE_CLOSURE_MODULES = {
+    f"{EFG_PREFIX}Observed.Game",
+    f"{EFG_PREFIX}Observed.Semantics",
+    f"{EFG_PREFIX}Observed.WellFormed",
+    f"{EFG_PREFIX}Observed.Quasi",
+    f"{EFG_PREFIX}Observed.PerfectRecall",
+    f"{EFG_PREFIX}Observed.SignalRecall",
+    f"{EFG_PREFIX}Observed.Chance",
+    f"{EFG_PREFIX}Observed.Behavior",
+    f"{EFG_PREFIX}Observed.InfiniteExecution",
+    f"{EFG_PREFIX}Observed.ControlledInfrastructureCompat",
+    f"{EFG_PREFIX}Observed.ControlledMorphismCompat",
+    f"{EFG_PREFIX}Observed.ControlledDiscreteLawCompat",
+    f"{EFG_PREFIX}Winning.BasicCompat",
+    f"{EFG_PREFIX}Winning.DeterminacyCompat",
+}
+
+FORBIDDEN_PAYOFF_FREE_CLOSURE_PREFIXES = (
+    f"{EFG_PREFIX}Observed.Morphism.",
+    f"{EFG_PREFIX}Observed.Equilibrium",
+    f"{EFG_PREFIX}Simulation.",
+    f"{EFG_PREFIX}Interface.Equilibrium",
+)
+
+MAXIMUM_PATH_LAW_MODULE = f"{EFG_PREFIX}Observed.ControlledLaw"
+MAXIMUM_PATH_LAW_FORBIDDEN_NAMES = {
+    "PMF",
+    "Countable",
+    "DiscreteControlledObservedChanceGame",
+    "ObservedGame",
+}
+
+FORBIDDEN_LEGACY_ROOT_NAMES = {
+    "IsDesignatedContinuationRoot",
+    "legacyContinuationRootPresentation",
 }
 
 
@@ -331,6 +498,39 @@ def closure(graph: dict[str, set[str]], entry: str) -> set[str]:
     return visited
 
 
+def import_cycle(
+    graph: dict[str, set[str]], modules: set[str]
+) -> list[str] | None:
+    """Return one in-scope import cycle, including the repeated endpoint."""
+
+    state: dict[str, int] = {}
+    path: list[str] = []
+
+    def visit(module: str) -> list[str] | None:
+        state[module] = 1
+        path.append(module)
+        for imported in sorted(graph.get(module, set())):
+            if imported not in modules:
+                continue
+            if state.get(imported, 0) == 1:
+                start = path.index(imported)
+                return path[start:] + [imported]
+            if state.get(imported, 0) == 0:
+                found = visit(imported)
+                if found is not None:
+                    return found
+        path.pop()
+        state[module] = 2
+        return None
+
+    for module in sorted(modules):
+        if state.get(module, 0) == 0:
+            found = visit(module)
+            if found is not None:
+                return found
+    return None
+
+
 def compatibility_import_allowed(importer: str, rows: dict[str, StatusRow]) -> bool:
     if (
         rows.get(importer, StatusRow("", "", "", "", "", "", "", "")).status
@@ -359,6 +559,9 @@ def run(root: Path) -> list[str]:
 
     graph, graph_errors = local_import_graph(root)
     errors.extend(graph_errors)
+    cycle = import_cycle(graph, scoped)
+    if cycle is not None:
+        errors.append("local import graph contains a cycle: " + " -> ".join(cycle))
 
     for pair, reason in HISTORICAL_IMPORT_ALLOWLIST.items():
         importer, imported = pair
@@ -403,6 +606,50 @@ def run(root: Path) -> list[str]:
                 f"{imported} ({reason})"
             )
 
+    for entry in sorted(PAYOFF_FREE_CORE_BOUNDARIES):
+        if entry not in graph:
+            errors.append(f"missing payoff-free boundary module: {entry}")
+            continue
+        imported = closure(graph, entry)
+        for module in sorted(imported):
+            if (
+                module in FORBIDDEN_PAYOFF_FREE_CLOSURE_MODULES
+                or module.startswith(FORBIDDEN_PAYOFF_FREE_CLOSURE_PREFIXES)
+            ):
+                errors.append(
+                    f"{module_path(entry, root)}: payoff-free closure reaches "
+                    f"forbidden downstream module {module}"
+                )
+
+    maximum_law_path = module_path(MAXIMUM_PATH_LAW_MODULE, root)
+    maximum_law_source = strip_lean_comments_and_strings(
+        maximum_law_path.read_text(encoding="utf-8")
+    )
+    for name in sorted(MAXIMUM_PATH_LAW_FORBIDDEN_NAMES):
+        if re.search(rf"\b{re.escape(name)}\b", maximum_law_source):
+            errors.append(
+                f"{maximum_law_path}: maximum path-law interface contains "
+                f"forbidden discrete/payoff-aware name {name}"
+            )
+    for required in ("pathLaw_isProbability", "pathLaw_ae_legal"):
+        if not re.search(rf"\b{required}\b", maximum_law_source):
+            errors.append(
+                f"{maximum_law_path}: lawful probability carrier is missing "
+                f"required field {required}"
+            )
+
+    for module in sorted(scoped):
+        path = module_path(module, root)
+        stripped = strip_lean_comments_and_strings(
+            path.read_text(encoding="utf-8")
+        )
+        for name in sorted(FORBIDDEN_LEGACY_ROOT_NAMES):
+            if re.search(rf"\b{re.escape(name)}\b", stripped):
+                errors.append(
+                    f"{path}: forbidden legacy continuation-root API {name}; "
+                    "pass RootPresentation or a lawful subgame system explicitly"
+                )
+
     compatibility = {
         module for module, row in rows.items() if row.status == "Compatibility"
     }
@@ -443,6 +690,65 @@ def run(root: Path) -> list[str]:
             errors.append(
                 f"{module_path(entry, root)}: closure is {actual[0]} EFG / "
                 f"{actual[1]} local; expected {expected[0]} / {expected[1]}"
+            )
+
+    for entry, expected in EXPECTED_EXACT_EFG_CLOSURES.items():
+        if entry not in graph:
+            errors.append(f"missing exact-closure boundary module: {entry}")
+            continue
+        actual = {
+            module
+            for module in closure(graph, entry)
+            if module.startswith(EFG_PREFIX)
+        }
+        if actual != expected:
+            missing = sorted(expected - actual)
+            extra = sorted(actual - expected)
+            errors.append(
+                f"{module_path(entry, root)}: exact EFG closure differs; "
+                f"missing={missing}, extra={extra}"
+            )
+
+    for aggregate, expected_imports in EXPECTED_COMPATIBILITY_AGGREGATE_IMPORTS.items():
+        actual_imports = graph.get(aggregate)
+        if actual_imports is None:
+            errors.append(f"missing controlled compatibility aggregate: {aggregate}")
+        elif actual_imports != expected_imports:
+            errors.append(
+                f"{module_path(aggregate, root)}: direct imports differ from "
+                f"the compatibility contract; expected={sorted(expected_imports)}, "
+                f"actual={sorted(actual_imports)}"
+            )
+
+    structural_core_closure = closure(graph, STRUCTURAL_CORE)
+    structural_core_efg_closure = {
+        module
+        for module in structural_core_closure
+        if module.startswith(EFG_PREFIX)
+    }
+    if structural_core_efg_closure != EXPECTED_STRUCTURAL_CORE_EFG_CLOSURE:
+        missing = sorted(
+            EXPECTED_STRUCTURAL_CORE_EFG_CLOSURE - structural_core_efg_closure
+        )
+        extra = sorted(
+            structural_core_efg_closure - EXPECTED_STRUCTURAL_CORE_EFG_CLOSURE
+        )
+        errors.append(
+            f"{module_path(STRUCTURAL_CORE, root)}: structural EFG closure "
+            f"differs from the exact five-module boundary; missing={missing}, "
+            f"extra={extra}"
+        )
+
+    core_module = f"{EFG_PREFIX}Interface.Core"
+    core_closure = closure(graph, core_module)
+    for module in sorted(core_closure):
+        if (
+            module in CORE_FORBIDDEN_CLOSURE_MODULES
+            or module.startswith(CORE_FORBIDDEN_CLOSURE_PREFIXES)
+        ):
+            errors.append(
+                f"{module_path(core_module, root)}: Foundation Facade closure "
+                f"reaches forbidden objective/winning module {module}"
             )
 
     root_imports = graph.get("EconCSLib", set())
