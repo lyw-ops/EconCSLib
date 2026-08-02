@@ -89,6 +89,10 @@ adapter; state payoffs are not an input to the generic evaluator or theorem.
 `ObservedGame.ofControlledObservedGame` attaches any caller-supplied state
 payoff without rebuilding the observation carrier, and projecting the result
 back is definitional.
+The similarly prefixed controlled modules are classified by role—not version—
+in [`design/efg-controlled-api.md`](design/efg-controlled-api.md); governance
+prevents legacy aggregates or payoff-aware adapters from becoming canonical
+implementation dependencies.
 
 ## Design Choices
 
