@@ -66,6 +66,10 @@ subgame or recall transport transitively. Callers that intentionally relied
 on the former broad visibility can keep importing the compatibility
 aggregate.
 
+The similarly named flat modules and the distinction between an import-only
+aggregate and a payoff-aware `*Compat` adapter are catalogued in
+[`efg-controlled-api.md`](efg-controlled-api.md).
+
 ### FOSG root-free compiler value
 
 The serialized observed chance-game value does not depend on a continuation
