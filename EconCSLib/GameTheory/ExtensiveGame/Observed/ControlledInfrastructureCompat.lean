@@ -10,6 +10,10 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.SignalRecall
 /-!
 # Payoff-aware adapters for controlled observed-game infrastructure
 
+API role: **downstream payoff-aware adapter**. Despite the shared
+`Controlled*` filename prefix, this is not a payoff-free declaration owner
+and canonical controlled modules must never import it.
+
 This module is the one-way compatibility boundary from `ObservedGame` to the
 payoff-free `ControlledObservedGame`.  Core recall and quasistrategy ownership
 remains in the defining `ControlledInfrastructure.Recall` and
