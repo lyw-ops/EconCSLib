@@ -183,8 +183,8 @@ def IsSerializedDeclaredMacroRoot
     sourceDeclaredRoot source ∧
       Rel G source target
 
-/-- Related declared macro roots are exactly the designated serialized
-observed-EFG continuation roots other than the synthetic
+/-- Related declared macro roots are exactly the roots in the serialized
+EFG's explicit external presentation other than the synthetic
 random-initialization root. -/
 theorem isSerializedDeclaredMacroRoot_iff
     [(world : G.WorldState) →
@@ -197,9 +197,8 @@ theorem isSerializedDeclaredMacroRoot_iff
         (game G rootPayoff).init) :
     IsSerializedDeclaredMacroRoot
         G rootPayoff sourceDeclaredRoot target ↔
-      (observedChanceGame G D rootPayoff
-        sourceDeclaredRoot).observed.IsDesignatedContinuationRoot
-          target ∧
+      (rootPresentation G D rootPayoff
+        sourceDeclaredRoot).IsRoot target ∧
         target.1 ≠ State.root := by
   constructor
   · rintro ⟨source, hsourceRoot, hrelated⟩
