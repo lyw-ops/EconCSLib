@@ -138,7 +138,9 @@ theorem posteriorAfterDecisions_relative_snoc_of_mover
         i hmover abstractAction)
       i hmover]
     rw [MixedStrategy.posteriorAfterDecisions_append_singleton]
-    simp [personalDecisionAt]
+    rw [G.personalDecisionAt_actionEquiv
+      i ⟨state, root.2.append suffix⟩
+      hmover abstractAction]
   · simp only [Function.update, hji]
     change
       (profile j).posteriorAfterDecisions
@@ -467,8 +469,8 @@ theorem behavioralize_behavioralToMixed_at_append
         i hmover)
   intro decision hmem
   exact
-    (h.noAbsentMindedness i).info_ne_of_mem_relativeOwnDecisionHistories
-      G root
+    HasNoAbsentMindedness.info_ne_of_mem_relativeOwnDecisionHistories
+      (G := G) (h.noAbsentMindedness i) root
       ⟨finish, root.2.append suffix⟩
       hmover decision hmem
 
