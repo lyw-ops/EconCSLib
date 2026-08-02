@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
 import EconCSLib.GameTheory.ExtensiveGame.Execution.Length
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.WellFormed
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.WellFormed
 
 /-!
 # Payoff-free finite EFG certificates
