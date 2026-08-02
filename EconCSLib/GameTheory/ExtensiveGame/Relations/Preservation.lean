@@ -116,3 +116,18 @@ structure PathLawCoupling
 
 /-- Compiler package for a genuinely strict payoff-free representation
 change, including exact correspondence of its separately chosen roots. -/
+structure StrictCompilerPreservation
+    {N : Type uN}
+    (G H :
+      ControlledObservedGame.{uN, uA, uS, uO, uI, uP} N)
+    (sourceRoots : G.ContinuationRootPresentation)
+    (targetRoots : H.ContinuationRootPresentation) where
+  /-- Strict structural representation equivalence. -/
+  structural : G.Iso H
+  /-- Exact correspondence of externally chosen roots. -/
+  roots :
+    structural.PreservesRootPresentations
+      sourceRoots targetRoots
+
+/-- Compiler package for a serialization or abstraction whose visible source
+step may require a nonempty finite target trace. -/
