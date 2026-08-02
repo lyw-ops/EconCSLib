@@ -616,3 +616,27 @@ theorem recallCertificate_nonempty_iff_perfectRecall
     exact ⟨hrecall.toRecallCertificate⟩
 
 /-- Factorization certificate for payoff-free private-signal recall. -/
+structure SignalRecallCertificate
+    (G : ControlledObservedGame N) where
+  /-- Signal sequence assigned to every decision information state. -/
+  rememberedSignals :
+    (i : N) → G.InfoState i →
+      List (G.Observation i)
+  /-- The assigned sequence agrees with every represented decision history. -/
+  rememberedSignals_infoAt :
+    ∀ (i : N) (history : G.base.History)
+      (hmover : G.base.mover history.1 = some i),
+      rememberedSignals i (G.infoAt history i hmover) =
+        G.signalHistory i history
+
+/-- A payoff-free private-signal factorization certificate proves signal
+recall. -/
+theorem SignalRecallCertificate.signalPerfectRecall
+    (certificate : G.SignalRecallCertificate) :
+    G.SignalPerfectRecall := by
+  intro i first second hfirst hsecond hsame
+  rw [← certificate.rememberedSignals_infoAt i first hfirst]
+  rw [← certificate.rememberedSignals_infoAt i second hsecond]
+  rw [hsame]
+
+/-- Factorization certificate for payoff-free public recall. -/
