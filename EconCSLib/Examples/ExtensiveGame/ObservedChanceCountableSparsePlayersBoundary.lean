@@ -134,8 +134,6 @@ def observed : ObservedGame Player Unit where
   infoAt_observe := fun _ _ _ => rfl
   InfoAction := sparseInfoAction
   actionEquiv := sparseActionEquiv
-  IsDesignatedContinuationRoot := fun _ => True
-  init_isDesignatedContinuationRoot := trivial
 
 /-- The one-decision game has no chance nodes. -/
 theorem noChance :
