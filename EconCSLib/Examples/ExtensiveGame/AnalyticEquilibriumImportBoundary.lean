@@ -15,7 +15,7 @@ and Compilation remain independent branches.
 
 #check ExtensiveGame.ObservedChanceGame.finiteKuhn_isNash_iff
 #check ExtensiveGame.ObservedGame.MeasurableHistoryModel.PathUtility
-#check ExtensiveGame.ObservedGame.MeasurableHistoryModel.BoundedPathUtility.IsNashOnDesignatedContinuations
+#check ExtensiveGame.ObservedGame.MeasurableHistoryModel.BoundedPathUtility.IsNashOnPresentation
 
 /--
 error: Unknown constant `ExtensiveGame.ObservedGame.MeasurableKernelPresentation.KernelBehavioralProfile.IsFreshRestartStateCompatibleAt`
