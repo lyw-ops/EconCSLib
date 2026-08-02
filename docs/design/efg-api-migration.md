@@ -36,38 +36,44 @@ ownership changes below are the separate intentional source migration.
 
 ### Controlled infrastructure and morphism import paths
 
-The old paths
+Before EFG API stability, the flat paths
 
 ```lean
 import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure
 import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphism
 ```
 
-remain source-compatible import-only aggregates. Every moved declaration
-keeps its namespace, parameters, and full declaration name. New internal code
-should import the narrow owner:
+were removed. Their canonical aggregate replacements are:
+
+```lean
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism
+```
+
+No forwarding stubs remain at the flat paths. Every declaration keeps its
+namespace, parameters, and full declaration name; only imports change. New
+internal code should import the narrow owner:
 
 | Need | Narrow defining import |
 |---|---|
-| represented information or mover coherence | `Observed.ControlledInfrastructure.WellFormed` |
-| pure controlled execution | `Observed.ControlledInfrastructure.Core` |
-| lawful roots and subgame systems | `Observed.ControlledInfrastructure.Subgame` |
-| finite EFG hypotheses | `Observed.ControlledInfrastructure.Finite` |
-| quasistrategies | `Observed.ControlledInfrastructure.Quasi` |
-| classic/private/public recall | `Observed.ControlledInfrastructure.Recall` |
-| structural Hom/Iso, information refinement, or strategy transport | `Observed.ControlledMorphism.Core` |
-| lawful-subgame transport | `Observed.ControlledMorphism.Subgame` |
-| recall transport | `Observed.ControlledMorphism.Recall` |
+| represented information or mover coherence | `Observed.Controlled.Infrastructure.WellFormed` |
+| pure controlled execution | `Observed.Controlled.Infrastructure.Core` |
+| lawful roots and subgame systems | `Observed.Controlled.Infrastructure.Subgame` |
+| finite EFG hypotheses | `Observed.Controlled.Infrastructure.Finite` |
+| quasistrategies | `Observed.Controlled.Infrastructure.Quasi` |
+| classic/private/public recall | `Observed.Controlled.Infrastructure.Recall` |
+| structural Hom/Iso, information refinement, or strategy transport | `Observed.Controlled.Morphism.Core` |
+| lawful-subgame transport | `Observed.Controlled.Morphism.Subgame` |
+| recall transport | `Observed.Controlled.Morphism.Recall` |
 
 This is an import-ownership migration, not a declaration rename.
-`ControlledInfrastructure.Recall` no longer exposes finite or length
-declarations transitively, and `ControlledMorphism.Core` no longer exposes
+`Controlled.Infrastructure.Recall` no longer exposes finite or length
+declarations transitively, and `Controlled.Morphism.Core` no longer exposes
 subgame or recall transport transitively. Callers that intentionally relied
-on the former broad visibility can keep importing the compatibility
-aggregate.
+on broad visibility can import the corresponding canonical aggregate facade.
 
-The similarly named flat modules and the distinction between an import-only
-aggregate and a payoff-aware `*Compat` adapter are catalogued in
+The complete hierarchy and the distinction between a declaration-free
+aggregate facade and a payoff-aware module under `.Compat` are catalogued in
 [`efg-controlled-api.md`](efg-controlled-api.md).
 
 ### FOSG root-free compiler value
@@ -107,16 +113,17 @@ or stored in the maximum carrier; prove `RealizesExecution` or
 this controlled carrier through `Observed/PathLawEquivalence.lean`.
 
 The maximum carrier has no PMF/countability/chance tag. Use
-`ControlledDiscretePathLaw` for discrete behavioral execution and
-`ControlledAnalyticLaw` for an assembled measurable-kernel execution. The
+`Controlled.Law.DiscretePath` for discrete behavioral execution and
+`Controlled.Law.Analytic` for an assembled measurable-kernel execution. The
 latter requires an explicit almost-sure canonical-legality proof.
 
-Payoff-free declarations now live in `ControlledInfrastructure`,
-`ControlledMorphism`, `ControlledDiscreteLaw`, `ControlledLaw`,
+Payoff-free declarations now live in `Controlled.Infrastructure`,
+`Controlled.Morphism`, `Controlled.Law.Discrete`, `Controlled.Law`,
 `Winning.Basic`, and `Winning.Determinacy`. Existing payoff-aware projection
-lemmas are available from the corresponding `*Compat` modules. Clients that
-imported an implementation file directly may need to add that explicit
-adapter import; the public compatibility facades already do so.
+lemmas are available from the corresponding `Controlled.Compat.*` modules.
+Clients that imported an implementation file directly may need to add that
+explicit adapter import; public `Interface.*` facades provide their documented
+surface.
 
 ## Record-field migration
 
