@@ -168,15 +168,19 @@ theorem eq_secondHistory_of_endpoint_second
 /-- Perfect-information observation layer retaining the complete base
 history. Every complete history is declared a subgame root. -/
 def observed : ObservedGame Unit ℝ :=
-  ObservedGame.historyInformationPresentation base
+  ObservedGame.historyInformation base
     (ObservedGame.CompleteInformation.PublicObservationPresentation.trivial
       base)
-    (ObservedGame.ContinuationRootPresentation.allHistories base)
 
-/-- The constructor exposes exactly the former all-history root predicate. -/
+/-- Explicit all-history continuation-root presentation for this analysis. -/
+def observedRoots : observed.RootPresentation where
+  IsRoot := fun _history => True
+  init_isRoot := trivial
+
+/-- The external presentation exposes every history as a root. -/
 example (history : BaseHistory) :
-    observed.IsDesignatedContinuationRoot history := by
-  simp [observed]
+    observedRoots.IsRoot history :=
+  trivial
 
 abbrev History := ObservedGame.CompleteHistory observed
 
@@ -1159,9 +1163,9 @@ theorem baseline_not_isNashAtContinuation_second :
   norm_num at himprovement
 
 /-- Initial-root Nash does not imply measurable-kernel subgame perfection. -/
-theorem baseline_not_isNashOnDesignatedContinuations :
-    ¬ evaluation.IsNashOnDesignatedContinuations
-        assembly baselineProfile := by
+theorem baseline_not_isNashOnAllContinuations :
+    ¬ evaluation.IsNashOnPresentation
+        assembly observedRoots baselineProfile := by
   intro hspe
   exact
     baseline_not_isNashAtContinuation_second
@@ -1172,9 +1176,9 @@ fails absolute-prefix measurable-kernel subgame perfection. -/
 theorem root_nash_and_not_subgamePerfect :
     evaluation.IsNashAtContinuation
         assembly rootHistory baselineProfile ∧
-      ¬ evaluation.IsNashOnDesignatedContinuations
-        assembly baselineProfile :=
+      ¬ evaluation.IsNashOnPresentation
+        assembly observedRoots baselineProfile :=
   ⟨baseline_isNashAtContinuation_root,
-   baseline_not_isNashOnDesignatedContinuations⟩
+   baseline_not_isNashOnAllContinuations⟩
 
 end Examples.MeasurableKernelContinuationNashBoundary
