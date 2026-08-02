@@ -15,7 +15,7 @@ It stores no payoff, root selection, finiteness, recall, or objective.
 
 The maximal semantic object in this finite import tier is the bounded PMF on
 complete occurrence-sensitive histories. Full measure-valued path laws and
-their downstream interpretation hierarchy live in `ControlledLaw`, so finite
+their downstream interpretation hierarchy live in `Controlled.Law`, so finite
 clients do not acquire the infinite execution stack.
 -/
 
