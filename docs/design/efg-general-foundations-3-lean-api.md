@@ -223,3 +223,86 @@ abbrev ObservedGame.DiscreteGeneralStrategy
     (G : ObservedGame N U) (i : N) :=
   PMF (G.BehavioralStrategy i)
 
+structure NonemptyActionSet (Action : Type*) where
+  allowed : Set Action
+  nonempty : allowed.Nonempty
+
+def ObservedGame.QuasiStrategy (G : ObservedGame N U) (i : N) :=
+  (I : G.InfoState i) -> NonemptyActionSet (G.InfoAction i I)
+```
+
+Analytic mixed/general strategies use probability measures only after the pure
+or behavioral strategy spaces receive explicit measurable structures and the
+evaluation map is proved measurable.
+
+## 15. Core proof obligations
+
+### 15.1 Complete-play bridge
+
+For every existing executor:
+
+1. the initial coordinate is the supplied current history;
+2. every successor coordinate is a legal extension or terminal stutter;
+3. terminal absorption is pointwise or almost everywhere as appropriate;
+4. coordinate marginals agree with existing finite execution;
+5. terminal time agrees with the existing first-terminal stopping time;
+6. path objectives agree after the new subtype/pushforward.
+
+This bridge prevents a second infinite-execution implementation.
+
+### 15.2 Terminal-objective bridge
+
+Prove:
+
+- the base endpoint payoff induces a terminal outcome;
+- stopped terminal evaluation agrees with that outcome on termination;
+- a uniform length bound removes `Option` from bounded outcome laws at a
+  sufficiently large fuel;
+- `AETerminates` plus the existing boundedness/integrability assumptions
+  recovers the current terminal-payoff convergence results;
+- absolute-prefix restriction commutes with terminal and path evaluation.
+
+### 15.3 Finite extraction
+
+From finite branching plus `HasLengthBoundFrom bound`, construct a finite
+reachable-history frontend and prove:
+
+- every extracted node is one original complete history;
+- every original history of length at most `bound` is represented;
+- actions, mover, information, chance, and terminal outcome commute;
+- pure and behavioral deviations are covered;
+- lawful roots are preserved in the stated direction;
+- extraction is not called an isomorphism if it discards ghost information or
+  unreachable ambient states.
+
+Implemented now: finiteness of exact/bounded history carriers, the
+occurrence-sensitive finite carrier, `Fintype` state/action instances, a
+strict payoff-free observed isomorphism, legal action/mover/observation/
+information equalities, discrete chance pullback, pure and behavioral
+strategy equivalences, unilateral-update commutation, external root and
+lawful-subgame transport, terminal/path objective pullback, classic/private/
+public recall equivalences, merge distinction, the structural length bound,
+and exact bounded complete-history PMF pushforward for every behavioral
+profile. Full infinite path-law transfer remains a separate theorem track.
+
+### 15.4 Recall and strategy support
+
+Prove:
+
+- `AllDecisionInfoRepresented` plus finite reachable histories implies finite
+  `InfoState`;
+- full representation plus decision-mover coherence rules out empty action
+  fibers because `actionEquiv` transports a legal decision action;
+- signal perfect recall implies the intended current-observation no-forgetting
+  law;
+- existing perfect recall remains exactly the own-information/own-action
+  condition;
+- restriction to represented information, if added, preserves all executed
+  laws and is deviation-complete.
+
+Implemented now: payoff-free classic, private-signal, and public-signal
+factorization certificates; classic and signal no-absent-mindedness theorems;
+and executable non-implication regressions separating public recall from both
+private-signal and classic recall. The signal-to-no-absent-mindedness proof
+uses the proved one-coordinate-per-action length law rather than an implicit
+time convention.
