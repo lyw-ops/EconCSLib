@@ -517,9 +517,9 @@ theorem behavioralContinuationIsNash_iff_of_strategySurjective
           current fuel hsurjective)
         profile
 
-/-- Bounded behavioral Nash on presentation-designated continuations of a lifted fine profile reflects to bounded
-behavioral Nash on presentation-designated continuations of its coarse source profile. -/
-theorem isBehavioralNashOnDesignatedContinuationsAtFuel_of_map
+/-- Bounded behavioral Nash on explicitly mapped target roots of a lifted
+fine profile reflects to the selected coarse source roots. -/
+theorem isBehavioralNashOnRootsAtFuel_of_map
     {V : Type uV} [DecidableEq N] [Preorder V]
     [(state : G.observed.base.State) →
       Decidable
@@ -528,25 +528,28 @@ theorem isBehavioralNashOnDesignatedContinuationsAtFuel_of_map
       Decidable
         (H.observed.base.isTerminal state)]
     (r : G.InformationRefinement H)
+    (sourceRoots : G.observed.RootPresentation)
+    (targetRoots : H.observed.RootPresentation)
+    (hroots :
+      r.observedRefinement.MapsRootPresentations
+        sourceRoots targetRoots)
     (utility :
       PMF (Option (N → U)) → N → V)
     (profile : G.observed.BehavioralProfile)
     (fuel : ℕ)
     (hSPE :
-      H.IsBehavioralNashOnDesignatedContinuationsAtFuel
-        utility
+      H.IsBehavioralNashOnRootsAtFuel
+        targetRoots utility
         (r.observedRefinement.mapBehavioralProfile
           profile)
         fuel) :
-    G.IsBehavioralNashOnDesignatedContinuationsAtFuel
-      utility profile fuel := by
+    G.IsBehavioralNashOnRootsAtFuel
+      sourceRoots utility profile fuel := by
   intro sourceRoot hsourceRoot
   have htargetRoot :
-      H.observed.IsDesignatedContinuationRoot
-        (r.observedRefinement.historyIso.stateEquiv
-          sourceRoot) :=
-    (r.observedRefinement.map_designatedContinuationRoot
-      sourceRoot).mp hsourceRoot
+      targetRoots.IsRoot
+        (r.observedRefinement.historyIso.stateEquiv sourceRoot) :=
+    hroots sourceRoot hsourceRoot
   exact
     r.behavioralContinuationIsNash_of_map
       utility profile sourceRoot fuel
@@ -555,9 +558,9 @@ theorem isBehavioralNashOnDesignatedContinuationsAtFuel_of_map
           sourceRoot)
         htargetRoot)
 
-/-- With behavioral-strategy-surjective lifting, bounded behavioral Nash on presentation-designated continuations
-transfers in both directions. -/
-theorem isBehavioralNashOnDesignatedContinuationsAtFuel_iff_of_strategySurjective
+/-- With behavioral-strategy-surjective lifting and exact root
+correspondence, bounded behavioral Nash transfers in both directions. -/
+theorem isBehavioralNashOnRootsAtFuel_iff_of_strategySurjective
     {V : Type uV} [DecidableEq N] [Preorder V]
     [(state : G.observed.base.State) →
       Decidable
@@ -568,14 +571,19 @@ theorem isBehavioralNashOnDesignatedContinuationsAtFuel_iff_of_strategySurjectiv
     (r : G.InformationRefinement H)
     (hsurjective :
       r.observedRefinement.BehavioralStrategySurjective)
+    (sourceRoots : G.observed.RootPresentation)
+    (targetRoots : H.observed.RootPresentation)
+    (hroots :
+      r.observedRefinement.PreservesRootPresentations
+        sourceRoots targetRoots)
     (utility :
       PMF (Option (N → U)) → N → V)
     (profile : G.observed.BehavioralProfile)
     (fuel : ℕ) :
-    G.IsBehavioralNashOnDesignatedContinuationsAtFuel
-        utility profile fuel ↔
-      H.IsBehavioralNashOnDesignatedContinuationsAtFuel
-        utility
+    G.IsBehavioralNashOnRootsAtFuel
+        sourceRoots utility profile fuel ↔
+      H.IsBehavioralNashOnRootsAtFuel
+        targetRoots utility
         (r.observedRefinement.mapBehavioralProfile
           profile)
         fuel := by
@@ -585,10 +593,8 @@ theorem isBehavioralNashOnDesignatedContinuationsAtFuel_iff_of_strategySurjectiv
       r.observedRefinement.historyIso.stateEquiv.surjective
         targetRoot
     have hsourceRoot :
-        G.observed.IsDesignatedContinuationRoot sourceRoot := by
-      exact
-        (r.observedRefinement.map_designatedContinuationRoot
-          sourceRoot).mpr htargetRoot
+        sourceRoots.IsRoot sourceRoot :=
+      (hroots sourceRoot).mpr htargetRoot
     have hsourceNash :=
       hSPE sourceRoot hsourceRoot
     exact
@@ -596,7 +602,9 @@ theorem isBehavioralNashOnDesignatedContinuationsAtFuel_iff_of_strategySurjectiv
         hsurjective utility profile sourceRoot fuel).mp
         hsourceNash
   · exact fun hSPE =>
-      r.isBehavioralNashOnDesignatedContinuationsAtFuel_of_map
+      r.isBehavioralNashOnRootsAtFuel_of_map
+        sourceRoots targetRoots
+        (fun history => (hroots history).mp)
         utility profile fuel hSPE
 
 end ExtensiveGame.ObservedChanceGame.InformationRefinement
