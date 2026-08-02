@@ -144,3 +144,108 @@ theorem isLawfulSubgameRoot_relabelPlayers_iff
       simpa using hinfo
 
 /-- An explicit selection of payoff-free lawful subgame roots. -/
+structure SubgameSystem (G : ControlledObservedGame N) where
+  /-- Selected roots. -/
+  IsRoot : G.base.History → Prop
+  /-- The whole-game root is selected. -/
+  init_isRoot :
+    IsRoot (Arena.HistoryFrom.nil G.base.toArena G.base.init)
+  /-- Every selected root is structurally lawful. -/
+  lawful :
+    ∀ root, IsRoot root → G.IsLawfulSubgameRoot root
+
+namespace SubgameSystem
+
+/-- Extract structural lawfulness of a selected root. -/
+def isLawful (system : G.SubgameSystem)
+    {root : G.base.History}
+    (hroot : system.IsRoot root) :
+    G.IsLawfulSubgameRoot root :=
+  system.lawful root hroot
+
+/-- Transport a selected lawful system through a bijective player rename. -/
+def relabelPlayers
+    (system : G.SubgameSystem)
+    (e : M ≃ N) :
+    (G.relabelPlayers e).SubgameSystem where
+  IsRoot := system.IsRoot
+  init_isRoot := system.init_isRoot
+  lawful := by
+    intro root hroot
+    exact
+      (isLawfulSubgameRoot_relabelPlayers_iff G e root).2
+        (system.isLawful hroot)
+
+/-- Visibility of every lawful-system root in an external root
+presentation. -/
+def IsVisibleIn (system : G.SubgameSystem)
+    (roots : G.ContinuationRootPresentation) : Prop :=
+  ∀ root, system.IsRoot root → roots.IsRoot root
+
+/-- Derived accessor for the proper-root singleton condition. -/
+theorem root_information_singleton
+    (system : G.SubgameSystem)
+    (root : G.base.History)
+    (hroot : system.IsRoot root)
+    (hproper :
+      root ≠ Arena.HistoryFrom.nil G.base.toArena G.base.init) :
+    ∀ (i : N) (hmover : G.base.mover root.1 = some i)
+      (other : G.base.History)
+      (hother : G.base.mover other.1 = some i),
+      G.infoAt root i hmover =
+          G.infoAt other i hother →
+        other = root :=
+  (system.isLawful hroot).root_information_singleton hproper
+
+/-- Derived accessor for continuation information-set closure. -/
+theorem information_closed
+    (system : G.SubgameSystem)
+    (root : G.base.History)
+    (hroot : system.IsRoot root) :
+    ∀ current, G.IsContinuationOf root current →
+      ∀ (i : N) (hmover : G.base.mover current.1 = some i)
+        (other : G.base.History)
+        (hother : G.base.mover other.1 = some i),
+        G.infoAt current i hmover =
+            G.infoAt other i hother →
+          G.IsContinuationOf root other :=
+  (system.isLawful hroot).information_closed
+
+end SubgameSystem
+
+/-- The initial complete history is always a lawful payoff-free subgame
+root. -/
+theorem init_isLawfulSubgameRoot
+    (G : ControlledObservedGame N) :
+    G.IsLawfulSubgameRoot
+      (Arena.HistoryFrom.nil G.base.toArena G.base.init) where
+  root_information_singleton := by
+    intro hproper
+    exact (hproper rfl).elim
+  information_closed := by
+    intro _current _hcurrent i _hmover other _hother _hsame
+    exact other.2.reachableInUnfolding G.base.toArena G.base.init
+
+/-- The smallest payoff-free lawful subgame system selects only the initial
+history. -/
+def SubgameSystem.initialOnly
+    (G : ControlledObservedGame N) :
+    G.SubgameSystem where
+  IsRoot := fun root =>
+    root = Arena.HistoryFrom.nil G.base.toArena G.base.init
+  init_isRoot := rfl
+  lawful := by
+    intro root hroot
+    subst root
+    exact G.init_isLawfulSubgameRoot
+
+@[simp]
+theorem SubgameSystem.initialOnly_isRoot_iff
+    (G : ControlledObservedGame N)
+    (root : G.base.History) :
+    (SubgameSystem.initialOnly G).IsRoot root ↔
+      root = Arena.HistoryFrom.nil G.base.toArena G.base.init :=
+  Iff.rfl
+
+/-- A complete payoff-free standard-subgame system selects every
+structurally lawful root. -/
