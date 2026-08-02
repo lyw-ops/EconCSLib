@@ -187,6 +187,13 @@ named record literal.
 
 ## Compatibility aggregates and implementation modules
 
+The flat `Observed/Controlled*.lean` family has an explicit four-role map:
+canonical carrier, canonical semantic owner, declaration-free legacy
+aggregate, or downstream payoff-aware adapter. See
+[`efg-controlled-api.md`](efg-controlled-api.md). These modules are not
+parallel versions of one declaration API, and governance prevents canonical
+controlled owners from depending on any `*Compat` adapter.
+
 The following established imports remain compatibility-only aggregates:
 
 - `GameForm.Continuation`
