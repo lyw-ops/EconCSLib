@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Morphism.Operational
+import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphism.Subgame
+import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphismCompat
 
 /-!
 # EconCSLib.GameTheory.ExtensiveGame.Observed.SPE
@@ -42,7 +44,7 @@ directions.
   presentation-designated continuation root.
 * `ObservedGame.terminalContinuationGameForm` — total `N → U` continuation
   outcome semantics.
-* `ObservedGame.IsPureNashOnDesignatedContinuations` — Nash equilibrium at
+* `ObservedGame.IsPureNashOnRoots` — Nash equilibrium at
   every presentation-designated continuation root.
 * `ObservedGame.IsPureSubgamePerfectOn` — pure subgame perfection on an
   explicit, possibly conservative lawful `SubgameSystem`.
@@ -89,12 +91,13 @@ def PureTerminatingAt
 
 /-- Every pure profile terminates from every presentation-designated
 continuation root. -/
-def PureTerminating
+def PureTerminatingOnRoots
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
-    (hNoChance : G.base.NoChance) : Prop :=
+    (hNoChance : G.base.NoChance)
+    (roots : G.RootPresentation) : Prop :=
   ∀ current : G.base.toArena.HistoryFrom G.base.init,
-    G.IsDesignatedContinuationRoot current →
+    roots.IsRoot current →
       G.PureTerminatingAt hNoChance current
 
 /-- Every pure profile terminates from each root of one explicit lawful
@@ -111,13 +114,14 @@ def PureTerminatingOn
 /-- Termination on all presentation-designated continuations implies
 termination on a lawful subgame system when that system is separately proved
 presentation-visible. -/
-theorem PureTerminating.onSubgameSystem
+theorem PureTerminatingOnRoots.onSubgameSystem
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     (hNoChance : G.base.NoChance)
-    (hterminates : G.PureTerminating hNoChance)
+    (roots : G.RootPresentation)
+    (hterminates : G.PureTerminatingOnRoots hNoChance roots)
     (system : G.SubgameSystem)
-    (hvisible : system.IsPresentationVisible) :
+    (hvisible : system.IsVisibleIn roots) :
     G.PureTerminatingOn hNoChance system :=
   fun current hroot =>
     hterminates current (hvisible current hroot)
@@ -219,61 +223,8 @@ def mapLawfulSubgameRoot
     (hlawful :
       G.IsLawfulSubgameRoot
         (e.historyIso.stateEquiv.symm root)) :
-    H.IsLawfulSubgameRoot root where
-  root_information_singleton := by
-    intro hproper i hmover other hother hinfo
-    let f := e.symm
-    have hsourceProper :
-        f.historyIso.stateEquiv root ≠
-          Arena.HistoryFrom.nil G.base.toArena G.base.init := by
-      intro hsourceInit
-      apply hproper
-      apply f.historyIso.stateEquiv.injective
-      exact hsourceInit.trans f.map_init.symm
-    have hrootMover :
-        G.base.mover (f.historyIso.stateEquiv root).1 = some i := by
-      rw [f.map_mover root, hmover]
-    have hotherMover :
-        G.base.mover (f.historyIso.stateEquiv other).1 = some i := by
-      rw [f.map_mover other, hother]
-    have hsourceInfo :
-        G.infoAt (f.historyIso.stateEquiv root) i hrootMover =
-          G.infoAt (f.historyIso.stateEquiv other) i hotherMover := by
-      rw [← f.map_infoAt root i hmover hrootMover,
-        ← f.map_infoAt other i hother hotherMover, hinfo]
-    have hsourceEq :=
-      hlawful.root_information_singleton
-        hsourceProper
-        i hrootMover
-        (f.historyIso.stateEquiv other) hotherMover
-        hsourceInfo
-    exact f.historyIso.stateEquiv.injective hsourceEq
-  information_closed := by
-    intro current hcurrent i hmover other hother hinfo
-    let f := e.symm
-    have hcurrentSource :
-        G.IsContinuationOf
-          (f.historyIso.stateEquiv root)
-          (f.historyIso.stateEquiv current) :=
-      (f.map_isContinuationOf root current).mp hcurrent
-    have hcurrentMover :
-        G.base.mover (f.historyIso.stateEquiv current).1 = some i := by
-      rw [f.map_mover current, hmover]
-    have hotherMover :
-        G.base.mover (f.historyIso.stateEquiv other).1 = some i := by
-      rw [f.map_mover other, hother]
-    have hsourceInfo :
-        G.infoAt (f.historyIso.stateEquiv current) i hcurrentMover =
-          G.infoAt (f.historyIso.stateEquiv other) i hotherMover := by
-      rw [← f.map_infoAt current i hmover hcurrentMover,
-        ← f.map_infoAt other i hother hotherMover, hinfo]
-    have hotherSource :=
-      hlawful.information_closed
-        (f.historyIso.stateEquiv current) hcurrentSource
-        i hcurrentMover
-        (f.historyIso.stateEquiv other) hotherMover
-        hsourceInfo
-    exact (f.map_isContinuationOf root other).mpr hotherSource
+    H.IsLawfulSubgameRoot root :=
+  e.toControlledIso.mapLawfulSubgameRoot root hlawful
 
 /-- Transport a lawful standard-subgame system through a strict observed-EFG
 isomorphism.  Roots are pulled back along the history equivalence, while the
@@ -281,37 +232,16 @@ singleton and information-set closure laws are transported through the
 information-state and continuation equivalences. -/
 def mapSubgameSystem
     (e : G.Iso H) (system : G.SubgameSystem) :
-    H.SubgameSystem where
-  IsRoot target :=
-    system.IsRoot (e.historyIso.stateEquiv.symm target)
-  init_isRoot := by
-    rw [← e.map_init, Equiv.symm_apply_apply]
-    exact system.init_isRoot
-  lawful := by
-    intro target hroot
-    exact e.mapLawfulSubgameRoot target (system.isLawful hroot)
+    H.SubgameSystem :=
+  e.toControlledIso.mapSubgameSystem system
 
 /-- Transport a complete standard-subgame system through a strict
 observed-EFG isomorphism. Completeness is preserved because structural
 lawfulness is reflected by the inverse isomorphism. -/
 def mapCompleteSubgameSystem
     (e : G.Iso H) (system : G.CompleteSubgameSystem) :
-    H.CompleteSubgameSystem where
-  toSubgameSystem :=
-    e.mapSubgameSystem system.toSubgameSystem
-  complete := by
-    intro target htarget
-    let source :=
-      e.historyIso.stateEquiv.symm target
-    have hsource : G.IsLawfulSubgameRoot source := by
-      apply e.symm.mapLawfulSubgameRoot source
-      change
-        H.IsLawfulSubgameRoot
-          (e.historyIso.stateEquiv source)
-      rw [show e.historyIso.stateEquiv source = target by
-        exact e.historyIso.stateEquiv.apply_symm_apply target]
-      exact htarget
-    exact system.complete source hsource
+    H.CompleteSubgameSystem :=
+  e.toControlledIso.mapCompleteSubgameSystem system
 
 /-- Eventual pure termination at corresponding histories is invariant under a
 strict observed-EFG isomorphism. -/
@@ -349,24 +279,29 @@ theorem pureTerminatesFrom_iff
         (G.stoppedHistoryFrom profile hNoChanceG current fuel)).mpr
         hmapped
 
-/-- Map a global pure-termination certificate through a strict observed-EFG
-isomorphism. -/
-theorem map_pureTerminating
+/-- Map a root-scoped pure-termination certificate through a strict
+observed-EFG isomorphism and an explicit root correspondence. -/
+theorem map_pureTerminatingOnRoots
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     [(t : H.base.State) → Decidable (H.base.isTerminal t)]
     (e : G.Iso H)
     (hNoChanceG : G.base.NoChance)
     (hNoChanceH : H.base.NoChance)
-    (hterminates : G.PureTerminating hNoChanceG) :
-    H.PureTerminating hNoChanceH := by
+    (sourceRoots : G.RootPresentation)
+    (targetRoots : H.RootPresentation)
+    (hroots :
+      e.PreservesRootPresentations sourceRoots targetRoots)
+    (hterminates :
+      G.PureTerminatingOnRoots hNoChanceG sourceRoots) :
+    H.PureTerminatingOnRoots hNoChanceH targetRoots := by
   intro targetRoot htargetRoot targetProfile
   let sourceRoot := e.historyIso.stateEquiv.symm targetRoot
   let sourceProfile := e.unmapProfile targetProfile
   have hmapRoot :
       e.historyIso.stateEquiv sourceRoot = targetRoot :=
     e.historyIso.stateEquiv.apply_symm_apply targetRoot
-  have hsourceRoot : G.IsDesignatedContinuationRoot sourceRoot := by
-    apply (e.map_designatedContinuationRoot sourceRoot).mpr
+  have hsourceRoot : sourceRoots.IsRoot sourceRoot := by
+    apply (hroots sourceRoot).mpr
     simpa [hmapRoot] using htargetRoot
   have hsourceTerminates :=
     hterminates sourceRoot hsourceRoot sourceProfile
@@ -399,22 +334,28 @@ theorem map_pureTerminatingOn
       hNoChanceG hNoChanceH sourceRoot).mp hsourceTerminates
   simpa [sourceProfile, hmapRoot] using hmapped
 
-/-- Pure termination at every admissible root is invariant under strict
-observed-EFG isomorphism. -/
-theorem pureTerminating_iff
+/-- Pure termination on explicitly corresponding roots is invariant under a
+strict observed-EFG isomorphism. -/
+theorem pureTerminatingOnRoots_iff
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     [(t : H.base.State) → Decidable (H.base.isTerminal t)]
     (e : G.Iso H)
     (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance) :
-    G.PureTerminating hNoChanceG ↔
-      H.PureTerminating hNoChanceH := by
+    (hNoChanceH : H.base.NoChance)
+    (sourceRoots : G.RootPresentation)
+    (targetRoots : H.RootPresentation)
+    (hroots :
+      e.PreservesRootPresentations sourceRoots targetRoots) :
+    G.PureTerminatingOnRoots hNoChanceG sourceRoots ↔
+      H.PureTerminatingOnRoots hNoChanceH targetRoots := by
   constructor
-  · exact e.map_pureTerminating hNoChanceG hNoChanceH
+  · exact
+      e.map_pureTerminatingOnRoots hNoChanceG hNoChanceH
+        sourceRoots targetRoots hroots
   · intro hterminates sourceRoot hsourceRoot sourceProfile
     have htargetRoot :
-        H.IsDesignatedContinuationRoot (e.historyIso.stateEquiv sourceRoot) :=
-      (e.map_designatedContinuationRoot sourceRoot).mp hsourceRoot
+        targetRoots.IsRoot (e.historyIso.stateEquiv sourceRoot) :=
+      (hroots sourceRoot).mp hsourceRoot
     have htargetTerminates :=
       hterminates (e.historyIso.stateEquiv sourceRoot) htargetRoot
         (e.mapProfile sourceProfile)
@@ -523,18 +464,19 @@ noncomputable def terminalContinuationGameForm
 total terminal-outcome semantics.
 
 This is the accurate name for the historical predicate that quantified
-`ObservedGame.IsDesignatedContinuationRoot` directly.  It is useful for conservative
+an explicit `RootPresentation` directly. It is useful for conservative
 continuation systems, but is not by itself standard subgame perfection. -/
-noncomputable def IsPureNashOnDesignatedContinuations
+noncomputable def IsPureNashOnRoots
     {V : Type uV} [DecidableEq N] [Preorder V]
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     (hNoChance : G.base.NoChance)
-    (hterminates : G.PureTerminating hNoChance)
+    (roots : G.RootPresentation)
+    (hterminates : G.PureTerminatingOnRoots hNoChance roots)
     (utility : (N → U) → N → V)
     (profile : G.PureProfile) : Prop :=
   ∀ current : G.base.toArena.HistoryFrom G.base.init,
-    ∀ hroot : G.IsDesignatedContinuationRoot current,
+    ∀ hroot : roots.IsRoot current,
       (G.terminalContinuationGameForm hNoChance current
         (hterminates current hroot)).IsNash utility profile
 
@@ -739,31 +681,38 @@ theorem terminalContinuationGameFormIso_utilityCompatible
   rfl
 
 /-- Strict structural observed-EFG isomorphism preserves total pure-strategy
-Nash equilibrium on every presentation-designated continuation in both
+Nash equilibrium on explicitly corresponding root presentations in both
 directions. -/
-theorem isPureNashOnDesignatedContinuations_iff
+theorem isPureNashOnRoots_iff
     {V : Type uV} [DecidableEq N] [Preorder V]
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     [(t : H.base.State) → Decidable (H.base.isTerminal t)]
     (e : G.Iso H)
     (hNoChanceG : G.base.NoChance)
     (hNoChanceH : H.base.NoChance)
-    (hterminatesG : G.PureTerminating hNoChanceG)
+    (sourceRoots : G.RootPresentation)
+    (targetRoots : H.RootPresentation)
+    (hroots :
+      e.PreservesRootPresentations sourceRoots targetRoots)
+    (hterminatesG :
+      G.PureTerminatingOnRoots hNoChanceG sourceRoots)
     (utility : (N → U) → N → V)
     (profile : G.PureProfile) :
-    G.IsPureNashOnDesignatedContinuations
-        hNoChanceG hterminatesG utility profile ↔
-      H.IsPureNashOnDesignatedContinuations hNoChanceH
-        (e.map_pureTerminating hNoChanceG hNoChanceH hterminatesG)
+    G.IsPureNashOnRoots hNoChanceG sourceRoots
+        hterminatesG utility profile ↔
+      H.IsPureNashOnRoots hNoChanceH targetRoots
+        (e.map_pureTerminatingOnRoots hNoChanceG hNoChanceH
+          sourceRoots targetRoots hroots hterminatesG)
         utility (e.mapProfile profile) := by
   let hterminatesH :=
-    e.map_pureTerminating hNoChanceG hNoChanceH hterminatesG
+    e.map_pureTerminatingOnRoots hNoChanceG hNoChanceH
+      sourceRoots targetRoots hroots hterminatesG
   constructor
   · intro hspe targetRoot htargetRoot
     obtain ⟨sourceRoot, rfl⟩ :=
       e.historyIso.stateEquiv.surjective targetRoot
-    have hsourceRoot : G.IsDesignatedContinuationRoot sourceRoot :=
-      (e.map_designatedContinuationRoot sourceRoot).mpr htargetRoot
+    have hsourceRoot : sourceRoots.IsRoot sourceRoot :=
+      (hroots sourceRoot).mpr htargetRoot
     have hsourceNash := hspe sourceRoot hsourceRoot
     have hmapped :=
       GameForm.Iso.isNash_iff
@@ -772,26 +721,26 @@ theorem isPureNashOnDesignatedContinuations_iff
           (hterminatesG sourceRoot hsourceRoot)
           (hterminatesH
             (e.historyIso.stateEquiv sourceRoot)
-            ((e.map_designatedContinuationRoot sourceRoot).mp hsourceRoot)))
+            ((hroots sourceRoot).mp hsourceRoot)))
         (e.terminalContinuationGameFormIso_utilityCompatible
           hNoChanceG hNoChanceH utility sourceRoot
           (hterminatesG sourceRoot hsourceRoot)
           (hterminatesH
             (e.historyIso.stateEquiv sourceRoot)
-            ((e.map_designatedContinuationRoot sourceRoot).mp hsourceRoot)))
+            ((hroots sourceRoot).mp hsourceRoot)))
         profile |>.mp hsourceNash
     change
       (H.terminalContinuationGameForm hNoChanceH
         (e.historyIso.stateEquiv sourceRoot)
         (hterminatesH
           (e.historyIso.stateEquiv sourceRoot)
-          ((e.map_designatedContinuationRoot sourceRoot).mp hsourceRoot))).IsNash
+          ((hroots sourceRoot).mp hsourceRoot))).IsNash
         utility (e.mapProfile profile) at hmapped
     exact hmapped
   · intro hspe sourceRoot hsourceRoot
     have htargetRoot :
-        H.IsDesignatedContinuationRoot (e.historyIso.stateEquiv sourceRoot) :=
-      (e.map_designatedContinuationRoot sourceRoot).mp hsourceRoot
+        targetRoots.IsRoot (e.historyIso.stateEquiv sourceRoot) :=
+      (hroots sourceRoot).mp hsourceRoot
     have htargetNash :=
       hspe (e.historyIso.stateEquiv sourceRoot) htargetRoot
     exact
