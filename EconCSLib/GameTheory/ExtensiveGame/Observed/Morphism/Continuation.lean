@@ -49,16 +49,17 @@ assert that those roots form the standard subgames. The outcome utility is
 explicit so callers decide how a fuel-exhausted `none` result is interpreted.
 For finite games, choose a fuel bound known to reach a terminal node for every
 profile and deviation. -/
-def IsPureNashOnDesignatedContinuationsAtFuel
+def IsPureNashOnRootsAtFuel
     {V : Type uV} [DecidableEq N] [Preorder V]
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     (hNoChance : G.base.NoChance)
+    (roots : G.RootPresentation)
     (utility : Option (N → U) → N → V)
     (profile : G.PureProfile)
     (fuel : ℕ) : Prop :=
   ∀ current : G.base.toArena.HistoryFrom G.base.init,
-    G.IsDesignatedContinuationRoot current →
+    roots.IsRoot current →
       (G.continuationGameForm hNoChance current fuel).IsNash
         utility profile
 
@@ -136,23 +137,27 @@ theorem continuationGameFormIso_utilityCompatible
   rfl
 
 /-- A strict structural observed-EFG isomorphism preserves bounded pure Nash
-on presentation-designated continuations in both directions.
+on explicitly corresponding root presentations in both directions.
 
 This theorem uses all three pieces that plain strategic equivalence lacks:
 profile/deviation equivalence, exact payoff preservation at every
 continuation, and an iff correspondence of presentation-designated roots. -/
-theorem isPureNashOnDesignatedContinuationsAtFuel_iff
+theorem isPureNashOnRootsAtFuel_iff
     {V : Type uV} [DecidableEq N] [Preorder V]
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     [(t : H.base.State) → Decidable (H.base.isTerminal t)]
     (e : G.Iso H)
     (hNoChanceG : G.base.NoChance)
     (hNoChanceH : H.base.NoChance)
+    (sourceRoots : G.RootPresentation)
+    (targetRoots : H.RootPresentation)
+    (hroots :
+      e.PreservesRootPresentations sourceRoots targetRoots)
     (utility : Option (N → U) → N → V)
     (profile : G.PureProfile)
     (fuel : ℕ) :
-    G.IsPureNashOnDesignatedContinuationsAtFuel hNoChanceG utility profile fuel ↔
-      H.IsPureNashOnDesignatedContinuationsAtFuel hNoChanceH utility
+    G.IsPureNashOnRootsAtFuel hNoChanceG sourceRoots utility profile fuel ↔
+      H.IsPureNashOnRootsAtFuel hNoChanceH targetRoots utility
         (e.mapProfile profile) fuel := by
   constructor
   · intro hspe targetRoot htargetRoot
@@ -161,8 +166,8 @@ theorem isPureNashOnDesignatedContinuationsAtFuel_iff
     have hmap :
         e.historyIso.stateEquiv sourceRoot = targetRoot :=
       e.historyIso.stateEquiv.apply_symm_apply targetRoot
-    have hsourceRoot : G.IsDesignatedContinuationRoot sourceRoot := by
-      apply (e.map_designatedContinuationRoot sourceRoot).mpr
+    have hsourceRoot : sourceRoots.IsRoot sourceRoot := by
+      apply (hroots sourceRoot).mpr
       simpa [hmap] using htargetRoot
     have hsourceNash := hspe sourceRoot hsourceRoot
     have hmapped :=
@@ -179,8 +184,8 @@ theorem isPureNashOnDesignatedContinuationsAtFuel_iff
     exact hmapped
   · intro hspe sourceRoot hsourceRoot
     have htargetRoot :
-        H.IsDesignatedContinuationRoot (e.historyIso.stateEquiv sourceRoot) :=
-      (e.map_designatedContinuationRoot sourceRoot).mp hsourceRoot
+        targetRoots.IsRoot (e.historyIso.stateEquiv sourceRoot) :=
+      (hroots sourceRoot).mp hsourceRoot
     have htargetNash :=
       hspe (e.historyIso.stateEquiv sourceRoot) htargetRoot
     exact
