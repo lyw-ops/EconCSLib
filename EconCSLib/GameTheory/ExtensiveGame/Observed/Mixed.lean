@@ -36,14 +36,14 @@ standard mixed SPE requires a `CompleteSubgameSystem`.
 * `ObservedGame.MixedProfile.pureProfileLaw`.
 * `ObservedChanceGame.mixedStoppedPayoffLawFrom`.
 * `ObservedChanceGame.mixedLawGameForm`.
-* `ObservedChanceGame.IsMixedNashOnDesignatedContinuationsAtFuel`.
+* `ObservedChanceGame.IsMixedNashOnRootsAtFuel`.
 
 ## Main results
 
 * `ObservedGame.PureProfile.toMixed_pureProfileLaw`.
 * `ObservedChanceGame.toMixed_mixedStoppedPayoffLawFrom`.
 * `ObservedChanceGame.Iso.map_mixedStoppedPayoffLawFrom`.
-* `ObservedChanceGame.Iso.isMixedNashOnDesignatedContinuationsAtFuel_iff`.
+* `ObservedChanceGame.Iso.isMixedNashOnRootsAtFuel_iff`.
 -/
 
 namespace PMF
@@ -182,17 +182,18 @@ continuations.
 
 The same ex-ante mixed contingent-plan profile must be Nash in the bounded
 continuation at every declared root. -/
-def IsMixedNashOnDesignatedContinuationsAtFuel [Fintype N]
+def IsMixedNashOnRootsAtFuel [Fintype N]
     [DecidableEq N] [Preorder V]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
+    (roots : G.observed.RootPresentation)
     (utility : PMF (Option (N → U)) → N → V)
     (profile : G.observed.MixedProfile)
     (fuel : ℕ) : Prop :=
   ∀ current :
       G.observed.base.toArena.HistoryFrom
         G.observed.base.init,
-    G.observed.IsDesignatedContinuationRoot current →
+    roots.IsRoot current →
       (G.mixedLawGameForm current fuel).IsNash
         utility profile
 
@@ -483,19 +484,24 @@ theorem mixedLawIsNash_iff [Fintype N]
   rw [PMF.map_id]
 
 /-- Strict observed chance-EFG isomorphisms preserve bounded mixed Nash on
-presentation-designated continuations in both directions. -/
-theorem isMixedNashOnDesignatedContinuationsAtFuel_iff [Fintype N]
+explicitly corresponding root presentations in both directions. -/
+theorem isMixedNashOnRootsAtFuel_iff [Fintype N]
     [DecidableEq N] [Preorder V]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     [(state : H.observed.base.State) →
       Decidable (H.observed.base.isTerminal state)]
     (e : G.Iso H)
+    (sourceRoots : G.observed.RootPresentation)
+    (targetRoots : H.observed.RootPresentation)
+    (hroots :
+      e.observedIso.PreservesRootPresentations
+        sourceRoots targetRoots)
     (utility : PMF (Option (N → U)) → N → V)
     (profile : G.observed.MixedProfile)
     (fuel : ℕ) :
-    G.IsMixedNashOnDesignatedContinuationsAtFuel utility profile fuel ↔
-      H.IsMixedNashOnDesignatedContinuationsAtFuel utility
+    G.IsMixedNashOnRootsAtFuel sourceRoots utility profile fuel ↔
+      H.IsMixedNashOnRootsAtFuel targetRoots utility
         (e.observedIso.mapMixedProfile profile) fuel := by
   constructor
   · intro hspe targetRoot htargetRoot
@@ -507,10 +513,8 @@ theorem isMixedNashOnDesignatedContinuationsAtFuel_iff [Fintype N]
           targetRoot :=
       e.observedIso.historyIso.stateEquiv.apply_symm_apply
         targetRoot
-    have hsourceRoot :
-        G.observed.IsDesignatedContinuationRoot sourceRoot := by
-      apply
-        (e.observedIso.map_designatedContinuationRoot sourceRoot).mpr
+    have hsourceRoot : sourceRoots.IsRoot sourceRoot := by
+      apply (hroots sourceRoot).mpr
       simpa [hmap] using htargetRoot
     have hmapped :=
       (e.mixedLawIsNash_iff
@@ -525,11 +529,10 @@ theorem isMixedNashOnDesignatedContinuationsAtFuel_iff [Fintype N]
     exact hmapped
   · intro hspe sourceRoot hsourceRoot
     have htargetRoot :
-        H.observed.IsDesignatedContinuationRoot
+        targetRoots.IsRoot
           (e.observedIso.historyIso.stateEquiv
             sourceRoot) :=
-      (e.observedIso.map_designatedContinuationRoot sourceRoot).mp
-        hsourceRoot
+      (hroots sourceRoot).mp hsourceRoot
     exact
       (e.mixedLawIsNash_iff
         utility profile sourceRoot fuel).mpr
