@@ -30,8 +30,89 @@ No source edit is required merely because a caller already imports
 `Interface.Execution.Discrete`, `Interface.Relations`,
 `Interface.Equilibrium`, or `Interface.Compilation`: those paths retain their
 former declaration closures as supported compatibility aggregates. Switching
-to a new granular path is an opt-in dependency reduction. The facade split
-moved no declaration and changed no theorem name, namespace, or record field.
+to a new granular path is an opt-in dependency reduction. That earlier facade
+split moved no declaration; the stricter path-law record and payoff-free
+ownership changes below are the separate intentional source migration.
+
+### Controlled infrastructure and morphism import paths
+
+The old paths
+
+```lean
+import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure
+import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphism
+```
+
+remain source-compatible import-only aggregates. Every moved declaration
+keeps its namespace, parameters, and full declaration name. New internal code
+should import the narrow owner:
+
+| Need | Narrow defining import |
+|---|---|
+| represented information or mover coherence | `Observed.ControlledInfrastructure.WellFormed` |
+| pure controlled execution | `Observed.ControlledInfrastructure.Core` |
+| lawful roots and subgame systems | `Observed.ControlledInfrastructure.Subgame` |
+| finite EFG hypotheses | `Observed.ControlledInfrastructure.Finite` |
+| quasistrategies | `Observed.ControlledInfrastructure.Quasi` |
+| classic/private/public recall | `Observed.ControlledInfrastructure.Recall` |
+| structural Hom/Iso, information refinement, or strategy transport | `Observed.ControlledMorphism.Core` |
+| lawful-subgame transport | `Observed.ControlledMorphism.Subgame` |
+| recall transport | `Observed.ControlledMorphism.Recall` |
+
+This is an import-ownership migration, not a declaration rename.
+`ControlledInfrastructure.Recall` no longer exposes finite or length
+declarations transitively, and `ControlledMorphism.Core` no longer exposes
+subgame or recall transport transitively. Callers that intentionally relied
+on the former broad visibility can keep importing the compatibility
+aggregate.
+
+### FOSG root-free compiler value
+
+The serialized observed chance-game value does not depend on a continuation
+root predicate. New code that needs only the compiled game should use:
+
+```lean
+FOSG.Sequentialization.observedChanceGameCore G D rootPayoff
+```
+
+Attach caller-selected roots separately with
+`FOSG.Sequentialization.rootPresentation G D rootPayoff sourceDeclaredRoot`.
+The established
+`observedChanceGame G D rootPayoff sourceDeclaredRoot` spelling remains a
+definitionally equal compatibility wrapper, so existing calls and
+dependent types continue to elaborate unchanged.
+
+## Law-semantics migration
+
+The pre-release `CompletePathLawSemantics` record is intentionally stricter.
+Direct record literals must now provide:
+
+```lean
+{ Strategy := ...
+  pathLaw := ...
+  pathLaw_isProbability := ...
+  pathLaw_ae_legal := ... }
+```
+
+`pathLaw_isProbability` rules out the zero measure and
+`pathLaw_ae_legal` uses the canonical initial-coordinate, legal-step, and
+terminal-absorption predicate. Local-kernel agreement is no longer inferred
+or stored in the maximum carrier; prove `RealizesExecution` or
+`ExecutionCoherent` separately. Any former downstream
+`ObservedChanceGame.CompletePathLawSemantics` spelling is an abbreviation to
+this controlled carrier through `Observed/PathLawEquivalence.lean`.
+
+The maximum carrier has no PMF/countability/chance tag. Use
+`ControlledDiscretePathLaw` for discrete behavioral execution and
+`ControlledAnalyticLaw` for an assembled measurable-kernel execution. The
+latter requires an explicit almost-sure canonical-legality proof.
+
+Payoff-free declarations now live in `ControlledInfrastructure`,
+`ControlledMorphism`, `ControlledDiscreteLaw`, `ControlledLaw`,
+`Winning.Basic`, and `Winning.Determinacy`. Existing payoff-aware projection
+lemmas are available from the corresponding `*Compat` modules. Clients that
+imported an implementation file directly may need to add that explicit
+adapter import; the public compatibility facades already do so.
 
 ## Record-field migration
 
@@ -43,8 +124,9 @@ named record literals as follows:
 | `ContinuationGameForm`, `IndexedContinuationGameForm` | `IsSubgameRoot` | `IsDeclaredRoot` |
 | their `Hom`, `Iso`, and relation structures | `map_subgameRoot` | `map_declaredRoot` |
 | their root-coverage predicates | `SubgameRootSurjective`, `SubgameRootReflecting` | `DeclaredRootSurjective`, `DeclaredRootReflecting` |
-| `ObservedGame` | `IsSubgameRoot` | `IsDesignatedContinuationRoot` |
-| observed isomorphism/refinement structures | `map_subgameRoot` | `map_designatedContinuationRoot` |
+| former `ObservedGame` root fields | `IsDesignatedContinuationRoot`, `init_isDesignatedContinuationRoot` | external `RootPresentation.IsRoot`, `RootPresentation.init_isRoot` |
+| observed isomorphism/refinement structures | embedded `map_designatedContinuationRoot` metadata | external root-presentation correspondence predicates |
+| `FOSG.WeakSerialization` | target `ObservedGame.IsDesignatedContinuationRoot` | explicit `targetRoots : RootPresentation` and `targetRoots.IsRoot` |
 
 For example:
 
@@ -64,20 +146,24 @@ For example:
   outcome := outcome }
 ```
 
-and an observed presentation now uses:
+An observed presentation and its analysis roots now use separate values:
 
 ```lean
-{ base := base
-  -- observation and information fields omitted
-  IsDesignatedContinuationRoot := roots
-  init_isDesignatedContinuationRoot := init_mem }
+def observed : ObservedGame N U :=
+  { base := base
+    -- observation and information fields omitted
+  }
+
+def roots : observed.RootPresentation :=
+  { IsRoot := selected
+    init_isRoot := init_mem }
 ```
 
-The field types and positional constructor argument order did not change for
-these label-only renames. Named record literals must still be edited. Lean can
-alias an ordinary declaration or projection, but an alias cannot make an old
-field label legal inside a record literal, so a source-compatible deprecation
-alias is not possible.
+Changing `roots` no longer changes observed-game identity. The former embedded
+designated-root declaration and its all-history compatibility adapter were
+removed: no value can recover arbitrary root metadata formerly stored in a
+record value, and widening it would be unsound. Root-aware Nash, continuation,
+and realization APIs accept a `RootPresentation` explicitly.
 
 ## `SubgameSystem` literals
 
@@ -100,7 +186,7 @@ Construct it with exactly:
 
 `root_information_singleton` and `information_closed` remain derived
 accessors on a completed `SubgameSystem`. Presentation designation is not a
-field; prove `SubgameSystem.IsPresentationVisible` separately when needed.
+field; prove `SubgameSystem.IsVisibleIn roots` separately when needed.
 Use `CompleteSubgameSystem` only when the selected roots cover every
 `IsLawfulSubgameRoot`.
 
@@ -109,15 +195,15 @@ Use `CompleteSubgameSystem` only when the selected roots cover every
 The old `IsSPEForPayoff` and unqualified `Is...SubgamePerfect` spellings were
 not retained. Choose the name that states the actual root scope:
 
-- `IsNashOnDesignatedContinuations...` for presentation-selected roots;
+- `IsNashOnRoots...` or `IsNashOnPresentationAt ... roots` for explicitly
+  selected presentation roots;
 - `Is...SubgamePerfectOn ... system` for one explicit lawful system; or
 - `Is...StandardSubgamePerfect ... completeSystem` for coverage of every
   structurally lawful root.
 
 A caller-declared or presentation-designated root predicate is not, by itself,
-a standard-subgame certificate. Compatibility aliases with the former names
-would preserve the misleading claim, so this migration is intentionally
-explicit rather than a bulk rename or silent alias.
+a standard-subgame certificate. Compatibility aliases with former designated
+names use the broad all-history view only; new code must pass roots explicitly.
 
 ## Declaration deprecations
 
@@ -126,6 +212,37 @@ The finite imperfect-information frontend has one exact declaration alias:
 | Deprecated declaration | Replacement | Since | Semantics |
 |---|---|---|---|
 | `FiniteImperfectGame.actionAt_same_info_label` | `FiniteImperfectGame.actionAt_same_info` | 2026-07-29 | Identical transport-aware information-consistency statement |
+| `PathOutcomeFromHistory.continueAt` | `PathOutcomeFromHistory.rebaseTailAt` | 2026-07-31 | Same absolute-tail rebasing operation; root objectives now use `PathOutcome.afterHistory` |
+| `WinningConditionFrom.continueAt` | `WinningConditionFrom.rebaseTailAt` | 2026-07-31 | Same absolute-tail rebasing operation; root objectives now use `WinningCondition.afterHistory` |
+| `WinningConditionFrom.mem_continueAt_iff` | `WinningConditionFrom.mem_rebaseTailAt_iff` | 2026-07-31 | Same membership equivalence |
+| `ObservedGame.HasWinningStrategy` | `ObservedGame.HasPathwiseWinningStrategy` | 2026-07-31 | Same pathwise robust predicate; profile-based winning is now separately named |
+| `ObservedGame.WinningStrategies` | `ObservedGame.PathwiseWinningStrategies` | 2026-07-31 | Same bundled pathwise strategies |
+| `ObservedGame.IsDetermined` | `ObservedGame.HasSomePathwiseWinningStrategy` | 2026-07-31 | Same generic existential; standard determinacy naming is reserved for the two-player disjunction |
+| `ObservedGame.isDetermined_of_hasWinningStrategy` | `ObservedGame.hasSomePathwiseWinningStrategy_of_hasPathwiseWinningStrategy` | 2026-07-31 | Same existential packaging result |
+| `ObservedGame.isDetermined_iff_isTwoPlayerDetermined` | `ObservedGame.hasSomePathwiseWinningStrategy_iff_isTwoPlayerDetermined` | 2026-07-31 | Same two-player equivalence |
+| `ObservedGame.not_both_haveWinningStrategy` | `ObservedGame.not_both_havePathwiseWinningStrategy` | 2026-07-31 | Same exclusivity theorem with explicit pathwise semantics |
+| `ObservedGame.GeneralStrategy` | `ObservedGame.DiscreteGeneralStrategy` | 2026-07-31 | Same countably supported `PMF` carrier; the new name does not imply analytic generality |
+| `ObservedGame.GeneralProfile` | `ObservedGame.DiscreteGeneralProfile` | 2026-07-31 | Same playerwise discrete carrier |
+| `BehavioralStrategy.toGeneral` | `BehavioralStrategy.toDiscreteGeneral` | 2026-07-31 | Same Dirac embedding |
+| `BehavioralProfile.toGeneral` | `BehavioralProfile.toDiscreteGeneral` | 2026-07-31 | Same componentwise Dirac embedding |
+| former embedded designated-root predicate | `roots.IsRoot` | 2026-08-01 | Removed rather than widened; callers must supply the original root set explicitly |
+| former zero-argument root-presentation adapter | explicit `ObservedGame.RootPresentation` value | 2026-08-01 | Removed because no lossless default can recover the former embedded metadata |
+| `ObservedGame.IsPresentationVisible` | `ObservedGame.SubgameSystem.IsVisibleIn roots` | 2026-07-31 | Presentation visibility now names the explicit external root presentation |
+| `ContinuationSemantics.toIndexedGameForm` | `ContinuationSemantics.toIndexedGameFormOnPresentation roots` | 2026-07-31 | Explicit external root presentation |
+| `ContinuationSemantics.toIndexedGameForm_outcome` | `ContinuationSemantics.toIndexedGameFormOnPresentation_outcome roots` | 2026-07-31 | Same outcome computation on an explicit root presentation |
+| `ContinuationSemantics.IsNashOnDesignatedContinuationsAt` | `ContinuationSemantics.IsNashOnPresentationAt roots` | 2026-07-31 | Explicit external root presentation |
+| `ContinuationSemantics.isNashOnDesignatedContinuationsAt_iff` | `ContinuationSemantics.isNashOnPresentationAt_iff roots` | 2026-07-31 | Same Nash characterization on an explicit root presentation |
+| `IsPureNashOnDesignatedContinuationsAtFuel` | `IsPureNashOnRootsAtFuel roots` | 2026-07-31 | Bounded continuation Nash now receives its root scope explicitly |
+| `IsBehavioralNashOnDesignatedContinuationsAtFuel` | `IsBehavioralNashOnRootsAtFuel roots` | 2026-07-31 | Bounded behavioral continuation Nash now receives its root scope explicitly |
+| `IsMixedNashOnDesignatedContinuationsAtFuel` | `IsMixedNashOnRootsAtFuel roots` | 2026-07-31 | Bounded mixed continuation Nash now receives its root scope explicitly |
+| `PureTerminating` | `PureTerminatingOnRoots roots` | 2026-07-31 | Termination is stated on an explicit family of continuation roots |
+| `IsPureNashOnDesignatedContinuations` | `IsPureNashOnRoots roots` | 2026-07-31 | Unbounded continuation Nash now receives its root scope explicitly |
+| `PureStrategy.toGeneral` | `PureStrategy.toDiscreteGeneral` | 2026-07-31 | Same pure-to-behavioral Dirac embedding |
+| `PureProfile.toGeneral` | `PureProfile.toDiscreteGeneral` | 2026-07-31 | Same componentwise embedding |
+| `GeneralProfile.behavioralProfileLaw` | `DiscreteGeneralProfile.behavioralProfileLaw` | 2026-07-31 | Same independent PMF product |
+| `GeneralProfile.deviate` | `DiscreteGeneralProfile.deviate` | 2026-07-31 | Same component update |
+| `GeneralProfile.deviate_same` | `DiscreteGeneralProfile.deviate_same` | 2026-07-31 | Same update-at-player theorem |
+| `GeneralProfile.deviate_of_ne` | `DiscreteGeneralProfile.deviate_of_ne` | 2026-07-31 | Same update-away-from-player theorem |
 
 This alias is eligible for `@[deprecated replacement]` because its theorem
 statement is unchanged.  Endpoint versus occurrence strategies, state
