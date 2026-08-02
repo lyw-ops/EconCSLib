@@ -101,7 +101,7 @@ not by every name that becomes transitively visible.
 
 | Surface | Class | Defining modules and representative declarations |
 |---|---|---|
-| Relations | pure structural | `Relations.Discrete.Morphism`: `Arena.Hom`, `Arena.Iso`, `Arena.Simulation`, `Arena.Bisimulation`, `Arena.WeakSimulation`; `Observed.ControlledMorphism.{Core,Subgame,Recall}`: payoff-free `Hom`, `Iso`, information refinement, and separately layered subgame/recall transport; `Observed.Morphism.{Fiber,Structural,Inverse,Operational}`: `ObservedGame.Iso` and exact history/payoff transport; `Observed.Refinement.Structural`: `ObservedGame.InformationRefinement` |
+| Relations | pure structural | `Relations.Discrete.Morphism`: `Arena.Hom`, `Arena.Iso`, `Arena.Simulation`, `Arena.Bisimulation`, `Arena.WeakSimulation`; `Observed.Controlled.Morphism.{Core,Subgame,Recall}`: payoff-free `Hom`, `Iso`, information refinement, and separately layered subgame/recall transport; `Observed.Morphism.{Fiber,Structural,Inverse,Operational}`: `ObservedGame.Iso` and exact history/payoff transport; `Observed.Refinement.Structural`: `ObservedGame.InformationRefinement` |
 | Relations | PMF/discrete | `KernelArena`: `KernelArena.Hom`, `KernelArena.Simulation`; `KernelTrajectory`: `Policy`, `stateLawFrom`, `traceLawFrom`, `Simulation.PolicyMatch`; `KernelWeakSimulation`: `ProbabilisticWeakSimulation`, `supportArena`, `executionKernelArena`; `Observed.Chance`, `Observed.Behavior`, and `BehaviorRefinement.Structural`: chance kernels, behavioral PMFs, and chance-aware information refinement |
 | Relations | Kernel/Measure | no relation declaration; the old facade exposed this class only by inheriting `Execution.Analytic` |
 | Equilibrium | pure deterministic/structural | `Observed.SPE`, `Observed.Morphism.Continuation`, `Observed.Refinement.{Core,Termination}`, `Observed.MorphismHierarchy`, and `Observed.PerfectRecall`: pure Nash/SPE, lawful-root transport, termination-certified transfer, and recall structure |
@@ -137,13 +137,13 @@ The compatibility wrappers add only facade modules to the old closures:
 | `Compilation` | 123 / 142 |
 | `SimulationFramework` | 132 / 152 |
 
-The current counts include the minimal `ControlledInfrastructure.WellFormed`
-owner and three `ControlledMorphism` declaration leaves. This changes
+The current counts include the minimal `Controlled.Infrastructure.WellFormed`
+owner and three `Controlled.Morphism` declaration leaves. This changes
 physical module counting, not mathematical ownership cardinality: every
 declaration has one definition. In return, Recall no longer inherits
 finite/length execution, and clients needing only structural controlled
-morphisms can use an 8 / 8 closure rather than the 14 / 14 compatibility
-aggregate. The earlier infrastructure split also removed the former
+morphisms can use an 8 / 8 closure rather than the 14 / 14 aggregate facade.
+The earlier infrastructure split also removed the former
 Core-to-Winning/Objective import edge.
 
 The two foundation entries are now measured separately:
