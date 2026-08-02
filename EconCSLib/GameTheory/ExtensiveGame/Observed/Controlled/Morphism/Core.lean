@@ -20,8 +20,8 @@ correspondence is supplied independently through
 `MapsRootPresentations`/`PreservesRootPresentations`.
 
 Payoff compatibility and conversion from the legacy `ObservedGame.Iso` live
-in `ControlledMorphismCompat`. Lawful-subgame and recall transport live in
-their respective `ControlledMorphism` leaves, so this structural core has no
+in `Controlled.Compat.Morphism`. Lawful-subgame and recall transport live in
+their respective `Controlled.Morphism` leaves, so this structural core has no
 subgame, recall, finite-EFG, structural-length, or payoff-aware observed-game
 dependency.
 -/
