@@ -4,12 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
 import EconCSLib.GameTheory.ExtensiveGame.Observed.DeferredSampling.Realization
+import EconCSLib.GameTheory.ExtensiveGame.Observed.SignalRecall
 
 /-!
 # EconCSLib.Examples.ExtensiveGame.AbsentMinded
 
-Deterministic guarding example **N-3** from the living EFG correctness record
-(`docs/research/efg_strict_correctness_audit.md`).
+Regression for the no-absent-mindedness boundary documented in
+`docs/design/efg-general-foundations-2-strategy.md`.
 
 `ObservedGame.HasNoAbsentMindedness` is the hypothesis that a player never
 revisits one of their decision information states along a single complete
@@ -38,6 +39,8 @@ at `s0` and again at `s1`, on one history.
   information set crosses the continuation boundary.
 * `Examples.AbsentMinded.not_hasNoAbsentMindedness` and
   `not_noAbsentMindedness` — `HasNoAbsentMindedness`/`NoAbsentMindedness` fail.
+* `not_signalPerfectRecall` — signal recall fails as a consequence, without
+  conflating it with classic perfect recall.
 * `Examples.AbsentMinded.futureDecisionKeysAvailable_firstDecision` — the
   non-freshness premises are genuinely satisfied before the first move.
 * `Examples.AbsentMinded.afterPlayerConclusionFails` — the conclusion that
@@ -114,8 +117,6 @@ def absentMindedGame : ObservedGame (Fin 1) ℤ where
   infoAt_observe := fun _ _ _ => rfl
   InfoAction := fun _ _ => Unit
   actionEquiv := fun history i hmover => rungActionEquiv i history.1 hmover
-  IsDesignatedContinuationRoot := fun _ => True
-  init_isDesignatedContinuationRoot := trivial
 
 /-- The complete history ending at player `0`'s first decision (`s0`). -/
 def firstDecision :
@@ -213,6 +214,14 @@ generalizing the theorem after deleting that premise. -/
 theorem not_noAbsentMindedness :
     ¬ absentMindedGame.NoAbsentMindedness :=
   fun h => not_hasNoAbsentMindedness (h 0)
+
+/-- The absent-minded presentation cannot satisfy signal perfect recall,
+because signal recall would rule out recurrence of the same decision
+information state along one play. -/
+theorem not_signalPerfectRecall :
+    ¬ absentMindedGame.SignalPerfectRecall :=
+  fun h =>
+    not_noAbsentMindedness h.noAbsentMindedness
 
 /-- The freshness premise of `FutureDecisionKeysAvailable.afterPlayer` is
 unavailable here.  Starting from the current player decision at `s0` with only
