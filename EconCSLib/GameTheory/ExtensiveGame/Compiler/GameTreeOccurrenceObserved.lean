@@ -56,7 +56,7 @@ outcome.
   `Kuhn_exists_occurrencePureSPE` — canonical root-bound standard SPE against
   all occurrence-dependent unilateral deviations.
 * `behavioralStoppedPayoffLawFrom_liftEndpoint` and
-  `isEndpointBehavioralNashOnDesignatedContinuationsAtFuel_of_occurrenceLift`.
+  `isEndpointBehavioralNashOnAllContinuationsAtFuel_of_occurrenceLift`.
 -/
 
 namespace GameTree
@@ -104,8 +104,6 @@ def toOccurrenceObservedGame (root : GameTree N U) :
     rfl
   InfoAction := fun _ information => information.Action
   actionEquiv := fun _ _ _ => Equiv.refl _
-  IsDesignatedContinuationRoot := fun _ => True
-  init_isDesignatedContinuationRoot := trivial
 
 instance toOccurrenceObservedGame.instTerminalDecidable
     (root : GameTree N U) :
@@ -206,10 +204,12 @@ theorem stoppedHistoryFrom_policy_reaches_leaf
 
 /-- The occurrence-sensitive compiler terminates under every pure profile,
 including profiles that condition on the complete path. -/
-theorem toOccurrenceObservedGame_pureTerminating
+theorem toOccurrenceObservedGame_pureTerminatingOnAllContinuations
     (root : GameTree N U) :
-    (toOccurrenceObservedGame root).PureTerminating
-      (toExtensiveGame_noChance root) := by
+    (toOccurrenceObservedGame root).PureTerminatingOnRoots
+      (toExtensiveGame_noChance root)
+      (ExtensiveGame.ObservedGame.ContinuationRootPresentation.allHistories
+        (toOccurrenceObservedGame root).base) := by
   intro current _hroot profile
   refine ⟨root.size, ?_⟩
   obtain ⟨payoff, hendpoint⟩ :=
@@ -265,9 +265,12 @@ theorem toOccurrenceObservedGame_pureTerminatingOn
     (toOccurrenceObservedGame root).PureTerminatingOn
       (toExtensiveGame_noChance root)
       (occurrenceSubgameSystem root) :=
-  (toOccurrenceObservedGame_pureTerminating root).onSubgameSystem
+  (toOccurrenceObservedGame_pureTerminatingOnAllContinuations
+    root).onSubgameSystem
     (toOccurrenceObservedGame root)
     (toExtensiveGame_noChance root)
+    (ExtensiveGame.ObservedGame.ContinuationRootPresentation.allHistories
+      (toOccurrenceObservedGame root).base)
     (occurrenceSubgameSystem root)
     (fun _root _hroot => trivial)
 
@@ -679,9 +682,30 @@ def endpointInformationRefinement
   map_infoActionAt := by
     intro history i hsource htarget action
     rfl
-  map_designatedContinuationRoot := by
-    intro history
-    rfl
+
+/-- The endpoint compiler's explicit all-continuations analysis roots. -/
+def endpointAllContinuationRoots
+    (root : GameTree N U) :
+    (toObservedGame root).RootPresentation :=
+  ExtensiveGame.ObservedGame.ContinuationRootPresentation.allHistories
+    (toObservedGame root).base
+
+/-- The occurrence compiler's explicit all-continuations analysis roots. -/
+def occurrenceAllContinuationRoots
+    (root : GameTree N U) :
+    (toOccurrenceObservedGame root).RootPresentation :=
+  ExtensiveGame.ObservedGame.ContinuationRootPresentation.allHistories
+    (toOccurrenceObservedGame root).base
+
+/-- The endpoint-to-occurrence refinement preserves the explicitly selected
+all-continuations root presentations exactly. -/
+theorem endpointInformationRefinement_preservesAllContinuationRoots
+    (root : GameTree N U) :
+    (endpointInformationRefinement root).PreservesRootPresentations
+      (endpointAllContinuationRoots root)
+      (occurrenceAllContinuationRoots root) := by
+  intro _history
+  exact iff_of_true trivial trivial
 
 /-! ### Behavioral/chance-aware refinement -/
 
@@ -766,11 +790,11 @@ theorem behavioralStoppedPayoffLawFrom_liftEndpoint
       ).map_behavioralStoppedPayoffLawFrom
         profile current fuel
 
-/-- Behavioral Nash on every presentation-designated continuation of the
+/-- Behavioral Nash on every explicit all-continuations root of the
 lifted occurrence-sensitive profile reflects to the endpoint profile.  The
 reverse direction is intentionally not claimed: occurrence-dependent
 deviations need not descend to endpoint-indexed strategies. -/
-theorem isEndpointBehavioralNashOnDesignatedContinuationsAtFuel_of_occurrenceLift
+theorem isEndpointBehavioralNashOnAllContinuationsAtFuel_of_occurrenceLift
     {V : Type*} [DecidableEq N] [Preorder V]
     (root : GameTree N U)
     (utility :
@@ -780,17 +804,22 @@ theorem isEndpointBehavioralNashOnDesignatedContinuationsAtFuel_of_occurrenceLif
     (fuel : ℕ)
     (hSPE :
       (toOccurrenceObservedChanceGame root
-        ).IsBehavioralNashOnDesignatedContinuationsAtFuel
-          utility
+        ).IsBehavioralNashOnRootsAtFuel
+          (occurrenceAllContinuationRoots root) utility
           ((endpointInformationRefinement root
             ).mapBehavioralProfile profile)
           fuel) :
     (toObservedChanceGame root
-      ).IsBehavioralNashOnDesignatedContinuationsAtFuel
-        utility profile fuel := by
+      ).IsBehavioralNashOnRootsAtFuel
+        (endpointAllContinuationRoots root) utility profile fuel := by
   exact
     (endpointBehavioralInformationRefinement root
-      ).isBehavioralNashOnDesignatedContinuationsAtFuel_of_map
+      ).isBehavioralNashOnRootsAtFuel_of_map
+        (endpointAllContinuationRoots root)
+        (occurrenceAllContinuationRoots root)
+        (fun history =>
+          (endpointInformationRefinement_preservesAllContinuationRoots
+            root history).mp)
         utility profile fuel hSPE
 
 /-! ### Strategy lifting and exact operational semantics -/
@@ -1159,56 +1188,71 @@ theorem stoppedPayoffFrom_liftEndpointPureProfile
   rw [stoppedHistoryFrom_liftEndpointPureProfile]
   rfl
 
-/-- If the lifted occurrence profile is bounded pure Nash on every designated
+/-- If the lifted occurrence profile is bounded pure Nash on every explicit
+all-continuations root
 continuation against the finer path-contingent deviation space, then its
 endpoint source profile has the corresponding designated-continuation
 property. -/
-theorem endpoint_isPureNashOnDesignatedContinuationsAtFuel_of_occurrence_lift
+theorem endpoint_isPureNashOnAllContinuationsAtFuel_of_occurrence_lift
     {V : Type*} [DecidableEq N] [Preorder V]
     (root : GameTree N U)
     (utility : Option (N → U) → N → V)
     (profile : (toObservedGame root).PureProfile)
     (fuel : ℕ)
     (hSPE :
-      (toOccurrenceObservedGame root).IsPureNashOnDesignatedContinuationsAtFuel
+      (toOccurrenceObservedGame root).IsPureNashOnRootsAtFuel
         (toExtensiveGame_noChance root)
+        (occurrenceAllContinuationRoots root)
         utility
         (liftEndpointPureProfile root profile)
         fuel) :
-    (toObservedGame root).IsPureNashOnDesignatedContinuationsAtFuel
+    (toObservedGame root).IsPureNashOnRootsAtFuel
       (toExtensiveGame_noChance root)
+      (endpointAllContinuationRoots root)
       utility profile fuel := by
   exact
-    (endpointInformationRefinement root).isPureNashOnDesignatedContinuationsAtFuel_of_map
+    (endpointInformationRefinement root).isPureNashOnRootsAtFuel_of_map
         (toExtensiveGame_noChance root)
         (toExtensiveGame_noChance root)
+        (endpointAllContinuationRoots root)
+        (occurrenceAllContinuationRoots root)
+        (fun history =>
+          (endpointInformationRefinement_preservesAllContinuationRoots
+            root history).mp)
         utility profile fuel hSPE
 
 /-- If the lifted occurrence profile is Nash on every designated
 continuation against every path-contingent fine deviation, then the endpoint
 source profile has the corresponding designated-continuation property. -/
-theorem endpoint_isPureNashOnDesignatedContinuations_of_occurrence_lift
+theorem endpoint_isPureNashOnAllContinuations_of_occurrence_lift
     {V : Type*} [DecidableEq N] [Preorder V]
     (root : GameTree N U)
     (utility : (N → U) → N → V)
     (profile : (toObservedGame root).PureProfile)
     (hSPE :
-      (toOccurrenceObservedGame root).IsPureNashOnDesignatedContinuations
+      (toOccurrenceObservedGame root).IsPureNashOnRoots
         (toExtensiveGame_noChance root)
-        (toOccurrenceObservedGame_pureTerminating root)
+        (occurrenceAllContinuationRoots root)
+        (toOccurrenceObservedGame_pureTerminatingOnAllContinuations root)
         utility
         (liftEndpointPureProfile root profile)) :
-    (toObservedGame root).IsPureNashOnDesignatedContinuations
+    (toObservedGame root).IsPureNashOnRoots
       (toExtensiveGame_noChance root)
-      (toObservedGame_pureTerminating root)
+      (endpointAllContinuationRoots root)
+      (toObservedGame_pureTerminatingOnAllContinuations root)
       utility profile := by
   simpa only [
     endpointInformationRefinement_mapProfile] using
       (endpointInformationRefinement root
-        ).isPureNashOnDesignatedContinuations_of_map
+        ).isPureNashOnRoots_of_map
           (toExtensiveGame_noChance root)
           (toExtensiveGame_noChance root)
-          (toOccurrenceObservedGame_pureTerminating root)
+          (endpointAllContinuationRoots root)
+          (occurrenceAllContinuationRoots root)
+          (fun history =>
+            (endpointInformationRefinement_preservesAllContinuationRoots
+              root history).mp)
+          (toOccurrenceObservedGame_pureTerminatingOnAllContinuations root)
           utility profile hSPE
 
 end GameTree
