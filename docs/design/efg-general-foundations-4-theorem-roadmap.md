@@ -193,7 +193,7 @@ deviation coverage has been proved.
 
 Progress: payoff-free classic/private/public recall certificates and their
 strict-isomorphism and finite-unfolding preservation theorems are implemented
-in `ControlledInfrastructure`/`ControlledMorphism`; the legacy
+in `Controlled.Infrastructure`/`Controlled.Morphism`; the legacy
 `PerfectRecall`, `SignalRecall`, and `Quasi` modules are projections rather
 than independent theories.
 The public/private/classic non-implication boundaries have executable
