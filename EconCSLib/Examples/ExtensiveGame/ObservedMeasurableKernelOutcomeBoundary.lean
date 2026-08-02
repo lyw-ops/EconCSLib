@@ -97,8 +97,6 @@ def observed : ObservedGame Unit ℝ where
         change nodeMover history.1 = some () at hmover
         rw [hstate] at hmover
         contradiction
-  IsDesignatedContinuationRoot := fun _ => True
-  init_isDesignatedContinuationRoot := trivial
 
 abbrev History := ObservedGame.CompleteHistory observed
 
