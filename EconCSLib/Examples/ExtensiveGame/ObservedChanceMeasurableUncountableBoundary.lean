@@ -110,8 +110,6 @@ def observed : ObservedGame Unit Unit where
   infoAt_observe := fun _ _ _ => rfl
   InfoAction := fun _ _ => ℝ
   actionEquiv := actionEquiv
-  IsDesignatedContinuationRoot := fun _ => True
-  init_isDesignatedContinuationRoot := trivial
 
 /-- The example has no chance-controlled node. -/
 def game : ObservedChanceGame Unit Unit where
