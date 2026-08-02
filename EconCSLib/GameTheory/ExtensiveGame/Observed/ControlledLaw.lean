@@ -462,3 +462,85 @@ representations.
 
 The measurable history/path maps and pushforward law are explicit.  The target
 current history is exactly the image of the source current history. -/
+structure CrossGameCompletePathLawRealization
+    {G H : ControlledObservedGame N}
+    [MeasurableSpace G.base.History]
+    [MeasurableSpace H.base.History]
+    (S : G.CompletePathLawSemantics)
+    (T : H.CompletePathLawSemantics) where
+  /-- Playerwise strategy map. -/
+  mapStrategy :
+    (i : N) → S.Strategy i → T.Strategy i
+  /-- Map source complete histories to target complete histories. -/
+  mapHistory : G.base.History → H.base.History
+  /-- The history map is measurable. -/
+  mapHistory_measurable : Measurable mapHistory
+  /-- Map complete source paths to complete target paths. -/
+  mapPath :
+    (ℕ → G.base.History) → (ℕ → H.base.History)
+  /-- The complete-path map is measurable. -/
+  mapPath_measurable : Measurable mapPath
+  /-- The path map is the coordinatewise history map. -/
+  mapPath_apply :
+    ∀ path time,
+      mapPath path time = mapHistory (path time)
+  /-- Source law pushforward is the target law at the corresponding current
+  history. -/
+  pathLaw_map_eq :
+    ∀ (profile : S.Profile)
+      (current : G.base.History),
+      (S.pathLaw profile current).map mapPath =
+        T.pathLaw
+          (fun i => mapStrategy i (profile i))
+          (mapHistory current)
+
+namespace CrossGameCompletePathLawRealization
+
+variable {G H : ControlledObservedGame N}
+  [MeasurableSpace G.base.History]
+  [MeasurableSpace H.base.History]
+  {S : G.CompletePathLawSemantics}
+  {T : H.CompletePathLawSemantics}
+
+/-- Map a complete source profile player by player. -/
+def mapProfile
+    (R : CrossGameCompletePathLawRealization S T)
+    (profile : S.Profile) : T.Profile :=
+  fun i => R.mapStrategy i (profile i)
+
+/-- Cross-game playerwise strategy mapping commutes with unilateral update. -/
+theorem mapProfile_update
+    [DecidableEq N]
+    (R : CrossGameCompletePathLawRealization S T)
+    (profile : S.Profile) (who : N)
+    (deviation : S.Strategy who) :
+    R.mapProfile (Function.update profile who deviation) =
+      Function.update (R.mapProfile profile) who
+        (R.mapStrategy who deviation) := by
+  funext i
+  by_cases hi : i = who
+  · subst i
+    simp [mapProfile]
+  · simp [mapProfile, hi]
+
+/-- Reverse target-deviation coverage is an additional cross-game property,
+not a consequence of mapping source deviations. -/
+def TargetDeviationsCoveredAt
+    [DecidableEq N]
+    (R : CrossGameCompletePathLawRealization S T)
+    (profile : S.Profile)
+    (current : G.base.History) : Prop :=
+  ∀ (who : N) (targetDeviation : T.Strategy who),
+    ∃ sourceDeviation : S.Strategy who,
+      T.pathLaw
+          (Function.update (R.mapProfile profile)
+            who targetDeviation)
+          (R.mapHistory current) =
+        (S.pathLaw
+          (Function.update profile who sourceDeviation)
+          current).map R.mapPath
+
+end CrossGameCompletePathLawRealization
+
+/-- Cross-game strategy-space isomorphism is stronger than a functional
+realization and reverse deviation coverage. -/
