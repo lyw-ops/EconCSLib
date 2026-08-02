@@ -428,16 +428,16 @@ def chanceKernel
   | chance source hnonterminal action =>
       exact G.transition source.1 action
 
-/-- Compile a finite nonempty-player FOSG into a turn-taking observed chance
-EFG.
+/-- Compile a finite nonempty-player FOSG into a root-free turn-taking
+observed chance EFG.
 
 All player and public observations remain constant throughout the hidden
-individual-action collection phase. -/
-def observedChanceGame
+individual-action collection phase. Continuation roots are attached
+separately by `rootPresentation`. -/
+def observedChanceGameCore
     [(world : G.WorldState) → Decidable (G.isTerminal world)]
     (D : G.DecisionModel)
-    (rootPayoff : Fin (n + 1) → U)
-    (sourceDeclaredRoot : G.HistoryState → Prop) :
+    (rootPayoff : Fin (n + 1) → U) :
     ObservedChanceGame (Fin (n + 1)) U where
   observed :=
     { base := game G rootPayoff
@@ -459,11 +459,52 @@ def observedChanceGame
         exact infoAt_observe G D history.1 i hmover
       InfoAction := D.InfoAction
       actionEquiv := fun history i hmover =>
-        infoActionEquiv G D history.1 i hmover
-      IsDesignatedContinuationRoot := fun history =>
-        isDesignatedContinuationRoot G sourceDeclaredRoot history.1
-      init_isDesignatedContinuationRoot := trivial }
+        infoActionEquiv G D history.1 i hmover }
   chanceKernel := chanceKernel G rootPayoff
+
+/-- Compatibility constructor retaining the established root-parameterized
+signature.
+
+The root predicate is intentionally not part of the compiled game value.
+New code that only needs the serialized game should use
+`observedChanceGameCore`; use `rootPresentation` when continuation roots are
+also required. -/
+def observedChanceGame
+    [(world : G.WorldState) → Decidable (G.isTerminal world)]
+    (D : G.DecisionModel)
+    (rootPayoff : Fin (n + 1) → U)
+    (_sourceDeclaredRoot : G.HistoryState → Prop) :
+    ObservedChanceGame (Fin (n + 1)) U :=
+  observedChanceGameCore G D rootPayoff
+
+/-- The established root-parameterized constructor is definitionally the
+root-free compiled game. -/
+@[simp]
+theorem observedChanceGame_eq_core
+    [(world : G.WorldState) → Decidable (G.isTerminal world)]
+    (D : G.DecisionModel)
+    (rootPayoff : Fin (n + 1) → U)
+    (sourceDeclaredRoot : G.HistoryState → Prop) :
+    observedChanceGame G D rootPayoff sourceDeclaredRoot =
+      observedChanceGameCore G D rootPayoff :=
+  rfl
+
+/-- External continuation roots for the serialized EFG.
+
+Macro boundaries inherit the caller's source-root predicate and the synthetic
+initial root is included. The presentation is kept separate from the
+root-free observed chance-game value. -/
+def rootPresentation
+    [(world : G.WorldState) → Decidable (G.isTerminal world)]
+    (D : G.DecisionModel)
+    (rootPayoff : Fin (n + 1) → U)
+    (sourceDeclaredRoot : G.HistoryState → Prop) :
+    (observedChanceGameCore G D rootPayoff).observed.RootPresentation where
+  IsRoot := fun history =>
+    isDesignatedContinuationRoot G sourceDeclaredRoot history.1
+  init_isRoot := by
+    change True
+    trivial
 
 /-! ### Information-indexed behavioral-profile compilation -/
 
