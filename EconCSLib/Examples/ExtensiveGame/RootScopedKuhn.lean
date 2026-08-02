@@ -136,8 +136,6 @@ def observed : ObservedGame Unit (Bool × Bool) where
   InfoAction := fun _ _ => Bool
   actionEquiv := fun history _ hmover =>
     actionEquiv history.1 hmover
-  IsDesignatedContinuationRoot := fun _ => True
-  init_isDesignatedContinuationRoot := trivial
 
 private theorem ownDecisionHistory_at_mover
     (history :
@@ -178,6 +176,9 @@ theorem observed_perfectRecall :
   intro i
   cases i
   intro first second hfirst hsecond hsame
+  change
+    observed.ownDecisionHistory () first =
+      observed.ownDecisionHistory () second
   rw [ownDecisionHistory_at_mover first hfirst,
     ownDecisionHistory_at_mover second hsecond]
   rcases first with ⟨firstState, firstPath⟩
@@ -187,21 +188,27 @@ theorem observed_perfectRecall :
       cases secondState with
       | start => rfl
       | after action =>
-          simp [observed, infoAtState] at hsame
+          simp [ObservedGame.toControlledObservedGame,
+            observed, infoAtState] at hsame
       | done _ _ =>
           simp [observed, base, stageMover] at hsecond
   | after firstAction =>
       cases secondState with
       | start =>
-          simp [observed, infoAtState] at hsame
+          simp [ObservedGame.toControlledObservedGame,
+            observed, infoAtState] at hsame
       | after secondAction =>
-          simpa [observed, infoAtState] using
-            congrArg
-              (fun information =>
-                match information with
-                | DecisionInfo.first => false
-                | DecisionInfo.second action => action)
-              hsame
+          have haction : firstAction = secondAction := by
+            simpa [ObservedGame.toControlledObservedGame,
+              observed, infoAtState] using
+              congrArg
+                (fun information =>
+                  match information with
+                  | DecisionInfo.first => false
+                  | DecisionInfo.second action => action)
+                hsame
+          subst secondAction
+          rfl
       | done _ _ =>
           simp [observed, base, stageMover] at hsecond
   | done _ _ =>
