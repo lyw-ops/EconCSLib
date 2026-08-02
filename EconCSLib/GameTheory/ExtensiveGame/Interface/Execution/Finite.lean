@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 
 import EconCSLib.GameTheory.ExtensiveGame.Interface.Core
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Behavior
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledDiscreteLaw
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Law.Discrete
 import EconCSLib.GameTheory.ExtensiveGame.Observed.FiniteUnfolding
 import EconCSLib.GameTheory.ExtensiveGame.Execution.Discrete.KernelArena
 
