@@ -3,14 +3,14 @@ Copyright (c) 2026 EconCSLib contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructureCompat
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphism
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphismCompat
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledDiscreteLawCompat
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledDiscretePathLaw
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledAnalyticLaw
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledSemantics
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Compat.Infrastructure
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Compat.Morphism
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Compat.DiscreteLaw
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Law.DiscretePath
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Law.Analytic
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Semantics
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Semantics
 
 /-!
