@@ -547,3 +547,72 @@ theorem SignalPerfectRecall.noAbsentMindedness
   fun i => (hrecall i).hasNoAbsentMindedness
 
 /-- Factorization certificate for classic perfect recall. -/
+structure RecallCertificate [DecidableEq N]
+    (G : ControlledObservedGame N) where
+  /-- Remembered own-decision trace for every information state. -/
+  remembered :
+    (i : N) → G.InfoState i →
+      List (G.PersonalDecision i)
+  /-- The assigned trace agrees at every represented decision. -/
+  remembered_infoAt :
+    ∀ (i : N) (history : G.base.History)
+      (hmover : G.base.mover history.1 = some i),
+      remembered i (G.infoAt history i hmover) =
+        G.ownDecisionHistory i history
+
+/-- A recall factorization certificate proves perfect recall. -/
+theorem RecallCertificate.perfectRecall [DecidableEq N]
+    (certificate : G.RecallCertificate) :
+    G.PerfectRecall := by
+  intro i first second hfirst hsecond hsame
+  rw [← certificate.remembered_infoAt i first hfirst]
+  rw [← certificate.remembered_infoAt i second hsecond]
+  rw [hsame]
+
+/-- Perfect recall canonically yields a factorization certificate by choosing
+one represented history for every reachable information state. -/
+noncomputable def PerfectRecall.toRecallCertificate
+    [DecidableEq N]
+    (hrecall : G.PerfectRecall) :
+    G.RecallCertificate where
+  remembered := by
+    classical
+    exact fun i information =>
+      if hexists :
+          Nonempty (G.DecisionInfoWitness i information) then
+        G.ownDecisionHistory i
+          (Classical.choice hexists).history
+      else
+        []
+  remembered_infoAt := by
+    intro i history hmover
+    classical
+    let witness :
+        G.DecisionInfoWitness i
+          (G.infoAt history i hmover) :=
+      ⟨history, hmover, rfl⟩
+    have hexists :
+        Nonempty
+          (G.DecisionInfoWitness i
+            (G.infoAt history i hmover)) :=
+      ⟨witness⟩
+    rw [dif_pos hexists]
+    exact
+      hrecall i
+        (Classical.choice hexists).history history
+        (Classical.choice hexists).mover hmover
+        (Classical.choice hexists).infoAt_eq
+
+/-- Perfect recall is equivalent to the existence of a factorization
+certificate. -/
+theorem recallCertificate_nonempty_iff_perfectRecall
+    [DecidableEq N]
+    (G : ControlledObservedGame N) :
+    Nonempty G.RecallCertificate ↔ G.PerfectRecall := by
+  constructor
+  · rintro ⟨certificate⟩
+    exact certificate.perfectRecall
+  · intro hrecall
+    exact ⟨hrecall.toRecallCertificate⟩
+
+/-- Factorization certificate for payoff-free private-signal recall. -/
