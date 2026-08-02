@@ -48,7 +48,7 @@ exactly where every constraint enters.
 | Module | Source | Design notes | Status |
 |--------|--------|-------------|--------|
 | Strategic games | `GameTheory/StrategicGame/` | [`strategic_game.md`](strategic_game.md) | Available |
-| Extensive games | `GameTheory/ExtensiveGame/` | [`extensive_game.md`](extensive_game.md), [`efg-general-foundations.md`](efg-general-foundations.md), [`efg-general-foundations-2-strategy.md`](efg-general-foundations-2-strategy.md), [`efg-general-foundations-3-lean-api.md`](efg-general-foundations-3-lean-api.md), [`efg-general-foundations-4-theorem-roadmap.md`](efg-general-foundations-4-theorem-roadmap.md), [`efg-minimal-core-structure-audit.md`](efg-minimal-core-structure-audit.md), [`efg-preservation-matrix.md`](efg-preservation-matrix.md), [`efg-governance.md`](efg-governance.md), [`efg-module-status.md`](efg-module-status.md), [`efg-public-api.md`](efg-public-api.md), [`efg-import-granularity.md`](efg-import-granularity.md), [`efg-api-migration.md`](efg-api-migration.md), [`efg-representation-compilation.md`](efg-representation-compilation.md), [`observed-game-constructors.md`](observed-game-constructors.md) | Available |
+| Extensive games | `GameTheory/ExtensiveGame/` | [`extensive_game.md`](extensive_game.md), [`efg-general-foundations.md`](efg-general-foundations.md), [`efg-general-foundations-2-strategy.md`](efg-general-foundations-2-strategy.md), [`efg-general-foundations-3-lean-api.md`](efg-general-foundations-3-lean-api.md), [`efg-general-foundations-4-theorem-roadmap.md`](efg-general-foundations-4-theorem-roadmap.md), [`efg-minimal-core-structure-audit.md`](efg-minimal-core-structure-audit.md), [`efg-controlled-api.md`](efg-controlled-api.md), [`efg-preservation-matrix.md`](efg-preservation-matrix.md), [`efg-governance.md`](efg-governance.md), [`efg-module-status.md`](efg-module-status.md), [`efg-public-api.md`](efg-public-api.md), [`efg-import-granularity.md`](efg-import-granularity.md), [`efg-api-migration.md`](efg-api-migration.md), [`efg-representation-compilation.md`](efg-representation-compilation.md), [`observed-game-constructors.md`](observed-game-constructors.md) | Available |
 | Coalitional games | `GameTheory/CoalitionalGame/` | — | Planned |
 | Social choice (voting, fair division) | `SocialChoice/` | — | Planned |
 | Matching | `MarketDesign/Matching/` | — | Planned |
@@ -65,6 +65,9 @@ For the EFG foundation boundary, start with
 `Interface.Core` is the broader stable Foundation Facade. The source-graph
 rules and measured closure counts live in
 [`efg-governance.md`](efg-governance.md).
+The flat `Observed/Controlled*.lean` files are classified as canonical owners,
+declaration-free aggregates, or payoff-aware adapters in
+[`efg-controlled-api.md`](efg-controlled-api.md).
 
 ## What a module note set should contain
 
