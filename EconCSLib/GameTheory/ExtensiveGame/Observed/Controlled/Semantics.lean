@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
 import EconCSLib.GameTheory.GameForm.IndexedContinuation
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.Subgame
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Subgame
 
 /-!
 # Payoff-free observed continuation semantics
