@@ -173,8 +173,6 @@ def chanceObserved : ObservedGame Unit Unit where
   actionEquiv := by
     intro history i hmover
     simp [chanceBase] at hmover
-  IsDesignatedContinuationRoot := fun _ => True
-  init_isDesignatedContinuationRoot := trivial
 
 /-- The initial complete history of the one-state chance arena. -/
 def chanceInitial :
