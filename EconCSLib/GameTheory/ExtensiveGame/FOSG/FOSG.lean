@@ -428,6 +428,9 @@ structure WeakSerialization
       H.observed.base.toArena
       H.observed.base.init
       H.ChanceConsistent
+  /-- External target continuation roots used by this serialization
+  certificate. This presentation is analysis metadata, not part of `H`. -/
+  targetRoots : H.observed.RootPresentation
   /-- The initial FOSG history law is matched by a finite,
   chance-consistent target initialization execution. -/
   match_init :
@@ -500,7 +503,7 @@ structure WeakSerialization
         H.observed.base.toArena.HistoryFrom H.observed.base.init),
       simulation.Rel source target →
         (IsDeclaredMacroRoot source ↔
-          H.observed.IsDesignatedContinuationRoot target)
+          targetRoots.IsRoot target)
 
 namespace WeakSerialization
 
@@ -542,7 +545,7 @@ theorem declaredMacroRoot_iff (S : G.WeakSerialization H)
       H.observed.base.toArena.HistoryFrom H.observed.base.init)
     (hrelated : S.simulation.Rel source target) :
     S.IsDeclaredMacroRoot source ↔
-      H.observed.IsDesignatedContinuationRoot target :=
+      S.targetRoots.IsRoot target :=
   S.map_declaredMacroRoot source target hrelated
 
 end WeakSerialization
