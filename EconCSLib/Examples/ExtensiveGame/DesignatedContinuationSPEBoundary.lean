@@ -18,7 +18,7 @@ but not Nash in the off-path continuation.
 
 `rootOnlyObserved` deliberately designates only the initial history.  The
 baseline therefore satisfies
-`IsPureNashOnDesignatedContinuations`. A lawful `SubgameSystem`, however, is
+`IsPureNashOnRoots`. A lawful `SubgameSystem`, however, is
 structural and may include the off-path root independently of that presentation
 metadata. The same endpoint plan lifted to the canonical occurrence compiler
 is proved not to satisfy its complete all-history
@@ -211,9 +211,46 @@ theorem history_eq_initial_of_endpoint_eq
 /-- An endpoint-observed presentation which designates only the whole-game
 root as a continuation root. -/
 def rootOnlyObserved : ExtensiveGame.ObservedGame Player ℤ :=
-  { toObservedGame root with
-    IsDesignatedContinuationRoot := fun current => current = initial
-    init_isDesignatedContinuationRoot := rfl }
+  toObservedGame root
+
+/-- Initial-only analysis roots, external to the observed-game identity. -/
+def rootOnlyRoots : rootOnlyObserved.RootPresentation :=
+  ExtensiveGame.ObservedGame.ContinuationRootPresentation.initialOnly
+    rootOnlyObserved.base
+
+/-- The contrasting external presentation that exposes every complete
+history without changing the observed-game carrier. -/
+def allHistoryRoots : rootOnlyObserved.RootPresentation :=
+  ExtensiveGame.ObservedGame.ContinuationRootPresentation.allHistories
+    rootOnlyObserved.base
+
+/-- The off-path continuation is absent from the initial-only domain. -/
+theorem offPath_not_rootOnlyRoot :
+    ¬ rootOnlyRoots.IsRoot offPath := by
+  intro hroot
+  have heq :
+      offPath =
+        Arena.HistoryFrom.nil
+          rootOnlyObserved.base.toArena
+          rootOnlyObserved.base.init := by
+    simpa [rootOnlyRoots] using hroot
+  have hendpoint :=
+    congrArg (fun history => history.1) heq
+  change continuation = root at hendpoint
+  simp [continuation, root] at hendpoint
+
+/-- The same off-path continuation belongs to the all-history domain. -/
+theorem offPath_allHistoryRoot :
+    allHistoryRoots.IsRoot offPath :=
+  trivial
+
+/-- `initialOnly` and `allHistories` have observably different continuation
+domains on the same observed game. -/
+theorem initialOnly_and_allHistories_differ :
+    ∃ history,
+      ¬ rootOnlyRoots.IsRoot history ∧
+        allHistoryRoots.IsRoot history :=
+  ⟨offPath, offPath_not_rootOnlyRoot, offPath_allHistoryRoot⟩
 
 instance :
     (state : rootOnlyObserved.base.State) →
@@ -225,13 +262,15 @@ theorem rootOnly_noChance :
   simpa [rootOnlyObserved] using toExtensiveGame_noChance root
 
 theorem rootOnly_pureTerminating :
-    rootOnlyObserved.PureTerminating rootOnly_noChance := by
+    rootOnlyObserved.PureTerminatingOnRoots
+      rootOnly_noChance rootOnlyRoots := by
   intro current hroot profile
   have hcurrent : current = initial := by
     simpa [rootOnlyObserved] using hroot
   subst current
   simpa [rootOnlyObserved, rootOnly_noChance] using
-    (toObservedGame_pureTerminating root initial trivial profile)
+    (toObservedGame_pureTerminatingOnAllContinuations
+      root initial trivial profile)
 
 /-- The initial-only presentation still admits a nonempty lawful subgame
 system. It is deliberately conservative: its only root is the whole game. -/
@@ -261,9 +300,9 @@ def occurrenceThreatProfile :
 
 /-- The incredible-threat profile passes the deliberately weak
 designated-continuation predicate because only the initial root is checked. -/
-theorem threat_isNashOnDesignatedContinuations :
-    rootOnlyObserved.IsPureNashOnDesignatedContinuations
-      rootOnly_noChance rootOnly_pureTerminating
+theorem threat_isNashOnInitialRoot :
+    rootOnlyObserved.IsPureNashOnRoots
+      rootOnly_noChance rootOnlyRoots rootOnly_pureTerminating
       (fun payoff => payoff) threatProfile := by
   intro current hroot
   have hcurrent : current = initial := by
@@ -283,22 +322,21 @@ visible and makes no complete standard-SPE claim. -/
 theorem threat_isPureSubgamePerfectOn_rootOnly :
     rootOnlyObserved.IsPureSubgamePerfectOn
       rootOnly_noChance rootOnlySubgameSystem
-      (rootOnly_pureTerminating.onSubgameSystem
-        rootOnlyObserved rootOnly_noChance rootOnlySubgameSystem
-        (fun current hroot => by
-          simpa [rootOnlyObserved] using hroot))
+      (fun current hroot =>
+        rootOnly_pureTerminating current
+          (by simpa [rootOnlyRoots, rootOnlySubgameSystem] using hroot))
       (fun payoff => payoff) threatProfile := by
   intro current hroot
   exact
-    threat_isNashOnDesignatedContinuations current
-      (by simpa [rootOnlyObserved] using hroot)
+    threat_isNashOnInitialRoot current
+      (by simpa [rootOnlyRoots, rootOnlySubgameSystem] using hroot)
 
 /-- The off-path continuation fails the corresponding local Nash test in the
 ordinary all-history endpoint compiler. -/
 theorem threat_fails_offPath_continuation :
     ¬ ((toObservedGame root).terminalContinuationGameForm
         (toExtensiveGame_noChance root) offPath
-        ((toObservedGame_pureTerminating root)
+        ((toObservedGame_pureTerminatingOnAllContinuations root)
           offPath trivial)).IsNash
       (fun payoff : Player → ℤ => payoff)
       (playerProfileToObservedProfile root
@@ -324,35 +362,40 @@ theorem occurrenceThreat_not_isPureStandardSubgamePerfect :
       (fun payoff : Player → ℤ => payoff)
       occurrenceThreatProfile := by
   intro hspe
-  have hOccurrenceDesignated :
-      (toOccurrenceObservedGame root
-        ).IsPureNashOnDesignatedContinuations
+  have hOccurrenceAllContinuations :
+      (toOccurrenceObservedGame root).IsPureNashOnRoots
           (toExtensiveGame_noChance root)
-          (toOccurrenceObservedGame_pureTerminating root)
+          (occurrenceAllContinuationRoots root)
+          (toOccurrenceObservedGame_pureTerminatingOnAllContinuations root)
           (fun payoff : Player → ℤ => payoff)
           occurrenceThreatProfile := by
-    intro current _hdesignated
+    intro current _hroot
     exact hspe current trivial
-  have hEndpointDesignated :
-      (toObservedGame root).IsPureNashOnDesignatedContinuations
+  have hEndpointAllContinuations :
+      (toObservedGame root).IsPureNashOnRoots
         (toExtensiveGame_noChance root)
-        (toObservedGame_pureTerminating root)
+        (endpointAllContinuationRoots root)
+        (toObservedGame_pureTerminatingOnAllContinuations root)
         (fun payoff : Player → ℤ => payoff)
         endpointThreatProfile :=
-    endpoint_isPureNashOnDesignatedContinuations_of_occurrence_lift
+    endpoint_isPureNashOnAllContinuations_of_occurrence_lift
       root (fun payoff : Player → ℤ => payoff)
-      endpointThreatProfile hOccurrenceDesignated
+      endpointThreatProfile hOccurrenceAllContinuations
   exact
     threat_fails_offPath_continuation
-      (hEndpointDesignated offPath trivial)
+      (hEndpointAllContinuations offPath trivial)
 
 /-- The occurrence presentation with the same dynamics and information but
 only the initial designated root. This isolates root-coverage metadata from
 the endpoint/occurrence strategy distinction. -/
 def rootOnlyOccurrenceObserved : ExtensiveGame.ObservedGame Player ℤ :=
-  { toOccurrenceObservedGame root with
-    IsDesignatedContinuationRoot := fun current => current = initial
-    init_isDesignatedContinuationRoot := rfl }
+  toOccurrenceObservedGame root
+
+/-- Initial-only analysis roots for the occurrence presentation. -/
+def rootOnlyOccurrenceRoots :
+    rootOnlyOccurrenceObserved.RootPresentation :=
+  ExtensiveGame.ObservedGame.ContinuationRootPresentation.initialOnly
+    rootOnlyOccurrenceObserved.base
 
 /-- The off-path history is structurally lawful independently of whether the
 presentation chose to designate it. -/
@@ -385,13 +428,14 @@ system for the initial-only presentation is not presentation-visible. -/
 theorem rootOnlyOccurrence_canonical_not_presentationVisible :
     ¬ (ExtensiveGame.ObservedGame.CompleteSubgameSystem.canonical
         rootOnlyOccurrenceObserved
-      ).toSubgameSystem.IsPresentationVisible := by
+      ).toSubgameSystem.IsVisibleIn rootOnlyOccurrenceRoots := by
   intro hvisible
   have hdesignated :=
     hvisible offPath
       rootOnlyOccurrence_canonical_admits_offPath
   have heq : offPath = initial := by
-    simpa [rootOnlyOccurrenceObserved] using hdesignated
+    simpa [rootOnlyOccurrenceRoots, rootOnlyOccurrenceObserved] using
+      hdesignated
   have hlength :
       offPath.2.length = initial.2.length :=
     congrArg (fun history => history.2.length) heq
