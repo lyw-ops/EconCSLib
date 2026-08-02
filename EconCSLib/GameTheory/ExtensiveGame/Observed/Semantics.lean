@@ -3,7 +3,7 @@ Copyright (c) 2026 EconCSLib contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledSemantics
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Semantics
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Game
 
 /-!
@@ -13,7 +13,7 @@ State-payoff observed-game compatibility for payoff-free continuation
 semantics.
 
 The canonical carrier and theorem layer live in
-`Observed.ControlledSemantics` and depend only on `ControlledObservedGame`.
+`Observed.Controlled.Semantics` and depend only on `ControlledObservedGame`.
 This module preserves the established `ObservedGame.ContinuationSemantics`
 spelling by projecting through `toControlledObservedGame`. It does not inspect
 or store state payoffs. Its cross-game standard-SPE wrapper permits different
