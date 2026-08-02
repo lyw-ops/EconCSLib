@@ -14,7 +14,10 @@ Root-scoped law morphisms, deviation coverage, and finite Kuhn transfer.
 
 namespace ExtensiveGame.ObservedChanceGame
 
-variable {N U : Type*} (G : ObservedChanceGame N U)
+universe uN uU uAS uO uI uP
+
+variable {N : Type uN} {U : Type uU}
+  (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
 
 /-- Exact root-scoped conditional behavioralization as a law-game morphism.
 
@@ -562,10 +565,11 @@ theorem behavioralToMixedContinuationHom_outcomeDeviationCompleteAt
       Decidable
         (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteKuhnHypotheses)
+    (roots : G.observed.RootPresentation)
     (profile : G.observed.BehavioralProfile)
     (fuel : ℕ) :
     (G.behavioralToMixedContinuationHom
-      h fuel).OutcomeDeviationCompleteAt
+      h roots fuel).OutcomeDeviationCompleteAt
         profile := by
   intro current _ i targetMixed
   let sourceBehavior :
@@ -578,8 +582,8 @@ theorem behavioralToMixedContinuationHom_outcomeDeviationCompleteAt
     GameForm.Hom.mapProfile,
     ContinuationGameForm.toGameForm,
     behavioralToMixedContinuationHom,
-    behavioralContinuationFamily,
-    mixedContinuationFamily,
+    behavioralContinuationFamilyOnRoots,
+    mixedContinuationFamilyOnRoots,
     ObservedGame.FiniteKuhnHypotheses.behavioralToMixedProfile]
   change
     G.mixedStoppedPayoffLawFrom
@@ -651,28 +655,29 @@ profile has the corresponding mixed-strategy property.
 This discharges the semantic-deviation premise of the earlier conditional Nash on presentation-designated continuations
 bridge; it does not claim a false root-independent strategy-space
 isomorphism. -/
-theorem isBehavioralNashOnDesignatedContinuationsAtFuel_iff_mixed
+theorem isBehavioralNashOnRootsAtFuel_iff_mixed
     [Fintype N] [DecidableEq N]
     [Preorder V]
     [(state : G.observed.base.State) →
       Decidable
         (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteKuhnHypotheses)
+    (roots : G.observed.RootPresentation)
     (utility :
       PMF (Option (N → U)) → N → V)
     (profile : G.observed.BehavioralProfile)
     (fuel : ℕ) :
-    G.IsBehavioralNashOnDesignatedContinuationsAtFuel
-        utility profile fuel ↔
-      G.IsMixedNashOnDesignatedContinuationsAtFuel
-        utility
+    G.IsBehavioralNashOnRootsAtFuel
+        roots utility profile fuel ↔
+      G.IsMixedNashOnRootsAtFuel
+        roots utility
         (h.behavioralToMixedProfile profile)
         fuel := by
   exact
-    G.isBehavioralNashOnDesignatedContinuationsAtFuel_iff_mixed_of_deviationComplete
-      h utility profile fuel
+    G.isBehavioralNashOnRootsAtFuel_iff_mixed_of_deviationComplete
+      h roots utility profile fuel
       (G.behavioralToMixedContinuationHom_outcomeDeviationCompleteAt
-        h profile fuel)
+        h roots profile fuel)
 
 /-- Constructive root-scoped Kuhn realization gives two-way Nash transfer for
 every utility functional on the complete bounded payoff law. -/
