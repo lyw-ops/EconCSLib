@@ -35,7 +35,8 @@ accuracy, not the mathematical carrier.
 | Assumption generality | Pass | Finiteness, decidability, recall, termination, and measurability remain external. |
 | Player-label compatibility | Pass for bijections | `relabelPlayers` reindexes mover, observation, information, actions, presentations, profiles, and lawful/complete subgame systems without changing Arena histories. |
 | Representation compatibility | Pass with explicit preservation claims | Compilers and relations retain their existing preservation packages; absence from a package is not inferred. |
-| Current validation health | Source, mathematical, and local branch-history gates pass | Clean aggregate/example builds and semantic/governance checks pass; 174 scoped commits reconstruct the pre-audit source snapshot, and the subsequent single-file audit commit also passes the repository's commit-scope checker. |
+| Controlled module-family clarity | Pass, F12 resolved | The flat family has one carrier, five semantic owners, two declaration-free aggregates, and three payoff-aware adapters; governance fixes the set and dependency direction. |
+| Current validation health | Source, mathematical, and local branch-history gates pass | Clean aggregate/example builds and semantic/governance checks pass; the rewritten branch and all subsequent changes pass the repository's commit-scope checker. |
 
 There remains no architectural reason to replace `Arena`.
 
@@ -582,6 +583,32 @@ Acceptance evidence:
   available without pulling in payoff, probability, or higher solution
   layers.
 
+### F12 — Classify the flat `Controlled*` module family
+
+**Priority:** medium · **Status:** resolved
+
+There is no duplicate declaration owner or old/new namespace collision. The
+visible flat files have four different roles:
+
+- `Controlled` is the canonical carrier;
+- five law/semantics modules are canonical semantic owners;
+- `ControlledInfrastructure` and `ControlledMorphism` are declaration-free
+  legacy import aggregates; and
+- the three `*Compat` modules are downstream payoff-aware adapters declaring
+  only under `ObservedGame` or `ObservedChanceGame`.
+
+The complete map and import selection guide live in
+[`efg-controlled-api.md`](efg-controlled-api.md). Governance now rejects an
+unclassified new flat `Controlled*` file, a role/lifecycle mismatch, any
+change to an adapter's exact import contract, an adapter reopening a
+payoff-free controlled namespace, or a canonical owner reaching an adapter.
+`ControlledCompatibilityImportBoundary` jointly imports the family and checks
+that canonical and payoff-aware declarations coexist under their intended
+namespaces.
+Physically renaming the established paths would require leaving compatibility
+stubs and would increase the file count, so the safe resolution is one
+canonical owner per concept plus mechanically enforced one-way compatibility.
+
 ## 12. Validation and environment health
 
 The final source snapshot was checked from the repository root. The build
@@ -593,7 +620,7 @@ does not depend on the formerly duplicated numbered artifacts.
 | Stable library | Pass | Clean `lake build`: 8,641 jobs; repeated after the facade fix with the same successful aggregate. |
 | Opt-in examples and regressions | Pass | Clean `lake build EconCSLib.Examples`: 8,820 jobs; repeated after the facade fix. |
 | Discrete equilibrium facade | Pass | The controlled and compatibility continuation-semantics names elaborate through `Interface.Equilibrium.Discrete`. |
-| EFG governance | Pass | 183 registered modules, 21 import-only compatibility paths, root closure 37 / 165, Simulation 30. |
+| EFG governance | Pass | 183 registered modules, 21 import-only compatibility paths, root closure 37 / 165, Simulation 30, and controlled flat family 11 = 1 carrier / 5 owners / 2 aggregates / 3 adapters. |
 | Lean placeholders | Pass | `check_lean_placeholders.py EconCSLib` reports no forbidden placeholder. |
 | Knowledge checks | Pass | Reference unit tests, reference scan, and `mdblueprint-check` all pass with 0 errors and 0 warnings. |
 | Declaration lifecycle report | Pass, triage remains | 1,682 theorems/lemmas across 183 modules; 478 conservative zero-source-indegree candidates, not an automatic deletion list. |
@@ -601,7 +628,7 @@ does not depend on the formerly duplicated numbered artifacts.
 | Git/source integrity | Pass | `git diff --check` and `git fsck --full --no-dangling` pass. |
 | Generated cache hygiene | Pass | Numbered duplicate artifacts are 0; `.lake/build` was regenerated and is about 512 MiB after the library and example builds. |
 | `leanchecker` over the complete dependency cache | Inconclusive, not counted as a pass | The tool produced no output for several minutes while scanning the approximately 7.5 GiB package cache and was terminated; clean elaboration, the placeholder gate, and targeted axiom printing are the reproducible proof checks used here. |
-| Commit-scope CI | Pass | The authorized history rebuild produced 174 non-merge commits from baseline `49f671ad7cfb` to reconstruct the pre-audit snapshot, followed by this single-file audit commit. Every commit changes exactly one file and every Lean commit adds at most one `structure` or `class`; the rebuilt pre-audit tree exactly matches backup snapshot tree `666598cfb500`. |
+| Commit-scope CI | Pass | The authorized history was rebuilt from baseline `49f671ad7cfb`; every current commit changes exactly one file and every Lean commit adds at most one `structure` or `class`. The preserved pre-rebuild worktree remains available from backup snapshot tree `666598cfb500`. |
 
 The full build replays **150 warnings in 40 non-EFG source files**. No warning
 originates under `GameTheory/ExtensiveGame` in this run. Those warnings are
