@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import subprocess
 import sys
+from dataclasses import dataclass
 
 
 def git(*args: str) -> str:
@@ -16,16 +17,46 @@ def is_merge_commit(commit: str) -> bool:
     return len(git("rev-list", "--parents", "-n", "1", commit).split()) > 2
 
 
-def changed_paths(commit: str) -> list[str]:
-    return [
-        path
-        for path in git("diff-tree", "--root", "--no-commit-id", "--name-only", "-r", commit).splitlines()
-        if path
-    ]
+@dataclass(frozen=True)
+class ChangedFile:
+    """One logical file operation, including a detected rename."""
+
+    status: str
+    paths: tuple[str, ...]
+
+    @property
+    def current_path(self) -> str:
+        return self.paths[-1]
 
 
-def added_structure_or_class_count(commit: str, path: str) -> int:
-    diff = git("diff", "--unified=0", f"{commit}^!", "--", path)
+def changed_files(commit: str) -> list[ChangedFile]:
+    entries: list[ChangedFile] = []
+    output = git(
+        "diff-tree",
+        "--root",
+        "--no-commit-id",
+        "--name-status",
+        "--find-renames",
+        "-r",
+        commit,
+    )
+    for line in output.splitlines():
+        fields = line.split("\t")
+        if len(fields) < 2:
+            continue
+        entries.append(ChangedFile(fields[0], tuple(fields[1:])))
+    return entries
+
+
+def added_structure_or_class_count(commit: str, paths: tuple[str, ...]) -> int:
+    diff = git(
+        "diff",
+        "--find-renames",
+        "--unified=0",
+        f"{commit}^!",
+        "--",
+        *paths,
+    )
     count = 0
     for line in diff.splitlines():
         if not line.startswith("+") or line.startswith("+++"):
@@ -49,15 +80,17 @@ def main() -> int:
     for commit in commits:
         if is_merge_commit(commit):
             continue
-        paths = changed_paths(commit)
-        if len(paths) != 1:
+        files = changed_files(commit)
+        if len(files) != 1:
             errors.append(
-                f"{commit[:12]} changes {len(paths)} files; each non-merge commit must change exactly one file"
+                f"{commit[:12]} changes {len(files)} logical files; each "
+                "non-merge commit must change exactly one logical file"
             )
             continue
-        path = paths[0]
+        changed = files[0]
+        path = changed.current_path
         if path.endswith(".lean"):
-            declarations = added_structure_or_class_count(commit, path)
+            declarations = added_structure_or_class_count(commit, changed.paths)
             if declarations > 1:
                 errors.append(
                     f"{commit[:12]} adds {declarations} structures/classes in {path}; at most one is allowed"
