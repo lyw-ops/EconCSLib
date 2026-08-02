@@ -8,9 +8,9 @@ import EconCSLib.GameTheory.ExtensiveGame.Relations.Discrete.Morphism
 import EconCSLib.GameTheory.ExtensiveGame.Execution.Discrete.KernelTrajectory
 import EconCSLib.GameTheory.ExtensiveGame.Relations.Discrete.KernelWeakSimulation
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Morphism.Operational
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphism.Core
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphism.Subgame
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphism.Recall
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism.Core
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism.Subgame
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism.Recall
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Chance
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Behavior
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Refinement.Structural
