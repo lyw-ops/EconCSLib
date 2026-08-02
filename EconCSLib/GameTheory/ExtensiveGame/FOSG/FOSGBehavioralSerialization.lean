@@ -227,16 +227,16 @@ def IsTargetDeclaredMacroRoot
     S.IsDeclaredMacroRoot source ∧
       S.simulation.Rel source target
 
-/-- The bridge target-root predicate is always a subpredicate of the target
-observed-EFG designated-continuation-root predicate. -/
-theorem targetDeclaredMacroRoot_isDesignatedContinuationRoot
+/-- The bridge target-root predicate is always a subpredicate of the
+serialization's explicit target-root presentation. -/
+theorem targetDeclaredMacroRoot_isTargetRoot
     (B : S.BehavioralBridge D)
     {target :
       H.observed.base.toArena.HistoryFrom
         H.observed.base.init}
     (htarget :
       B.IsTargetDeclaredMacroRoot target) :
-    H.observed.IsDesignatedContinuationRoot target := by
+    S.targetRoots.IsRoot target := by
   obtain
       ⟨source, hsourceRoot, hrelated⟩ :=
     htarget
@@ -294,8 +294,8 @@ noncomputable def continuationSimulation
         ⟨source, hsourceRoot, hrelated⟩
     · intro htargetRoot
       have htargetObserved :
-          H.observed.IsDesignatedContinuationRoot target :=
-        B.targetDeclaredMacroRoot_isDesignatedContinuationRoot
+          S.targetRoots.IsRoot target :=
+        B.targetDeclaredMacroRoot_isTargetRoot
           htargetRoot
       exact
         (S.declaredMacroRoot_iff
