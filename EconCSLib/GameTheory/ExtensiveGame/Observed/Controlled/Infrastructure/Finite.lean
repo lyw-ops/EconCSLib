@@ -11,7 +11,7 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Wel
 
 Structural finite-EFG hypotheses for `ControlledObservedGame`. General
 represented-information and mover-coherence certificates live in
-`ControlledInfrastructure.WellFormed`; this leaf adds only the assumptions and
+`Controlled.Infrastructure.WellFormed`; this leaf adds only the assumptions and
 consequences that genuinely require a finite reachable unfolding or a
 structural history-length bound.
 -/
