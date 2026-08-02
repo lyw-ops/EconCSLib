@@ -3,9 +3,9 @@ Copyright (c) 2026 EconCSLib contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphism.Core
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphism.Subgame
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphism.Recall
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism.Core
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism.Subgame
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism.Recall
 
 /-!
 # Controlled observed-game morphisms (compatibility aggregate)
