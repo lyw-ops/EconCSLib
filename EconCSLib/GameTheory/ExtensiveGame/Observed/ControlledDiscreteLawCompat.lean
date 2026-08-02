@@ -9,6 +9,10 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledDiscreteLaw
 /-!
 # Payoff-aware adapter for discrete controlled chance
 
+API role: **downstream payoff-aware adapter**. Despite the shared
+`Controlled*` filename prefix, this is not a payoff-free declaration owner
+and canonical controlled modules must never import it.
+
 This module forgets only the payoff interpretation of an
 `ObservedChanceGame`.  Discrete chance and bounded execution remain owned by
 the payoff-free `ControlledDiscreteLaw` module.
