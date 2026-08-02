@@ -8,9 +8,11 @@ import EconCSLib.GameTheory.ExtensiveGame.Execution.CompletePlay
 /-!
 # Payoff-free observed controlled games
 
-API role: **canonical carrier**. This is the only flat `Controlled*` module
-that owns the base observation/information record. Semantic owners, legacy
-import aggregates, and payoff-aware adapters are separate modules.
+API role: **canonical carrier**. This is the root of the
+`Observed.Controlled` module hierarchy and owns only the base
+observation/information record. Semantic and responsibility owners live below
+`Observed.Controlled`; payoff-aware adapters are isolated below
+`Observed.Controlled.Compat`.
 
 This module is the objective-free information layer for extensive games.
 `ControlledObservedGame` combines a `ControlledGame` with private/public
@@ -20,7 +22,7 @@ It stores neither payoff nor continuation-root selection.
 Continuation roots are supplied by the separate
 `ContinuationRootPresentation`; lawful standard subgames remain a stronger,
 independent payoff-free certificate in
-`ControlledInfrastructure.Subgame`.
+`Controlled.Infrastructure.Subgame`.
 
 ## Main definitions
 
