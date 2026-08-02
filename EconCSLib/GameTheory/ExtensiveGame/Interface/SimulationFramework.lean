@@ -58,9 +58,9 @@ macro-boundary laws through weak/stuttering simulations.
 For strict observed-EFG isomorphisms, downstream code should use exactly these
 relation-local theorems:
 
-* `ObservedGame.Iso.isPureNashOnDesignatedContinuationsAtFuel_iff`;
-* `ObservedChanceGame.Iso.isBehavioralNashOnDesignatedContinuationsAtFuel_iff`;
-* `ObservedChanceGame.Iso.isMixedNashOnDesignatedContinuationsAtFuel_iff`.
+* `ObservedGame.Iso.isPureNashOnRootsAtFuel_iff`;
+* `ObservedChanceGame.Iso.isBehavioralNashOnRootsAtFuel_iff`;
+* `ObservedChanceGame.Iso.isMixedNashOnRootsAtFuel_iff`.
 
 Private route regressions in the implementation independently check agreement
 of the continuation and refinement layers. They do not add declarations to
