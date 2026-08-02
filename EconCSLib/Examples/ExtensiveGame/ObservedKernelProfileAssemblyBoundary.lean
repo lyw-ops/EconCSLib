@@ -136,10 +136,9 @@ theorem eq_secondHistory_of_endpoint_second
 
 /-- Perfect-information observation layer retaining the complete history. -/
 def observed : ObservedGame Bool Unit :=
-  ObservedGame.historyInformationPresentation base
+  ObservedGame.historyInformation base
     (ObservedGame.CompleteInformation.PublicObservationPresentation.trivial
       base)
-    (ObservedGame.ContinuationRootPresentation.allHistories base)
 
 /-- The smart-constructor migration preserves the former history-valued
 private information, trivial public observation, and direct base-action
