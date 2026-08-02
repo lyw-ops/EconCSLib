@@ -33,7 +33,7 @@ a `CompleteSubgameSystem`.
   `behavioralProfileEquiv` — exact transport of behavioral plans.
 * `ObservedChanceGame.behavioralContinuationGameForm` — the bounded
   continuation game form whose outcome is an optional-terminal-payoff PMF.
-* `ObservedChanceGame.IsBehavioralNashOnDesignatedContinuationsAtFuel` —
+* `ObservedChanceGame.IsBehavioralNashOnRootsAtFuel` —
   behavioral Nash at every presentation-designated continuation root under
   bounded stochastic execution.
 
@@ -45,7 +45,7 @@ a `CompleteSubgameSystem`.
   `map_behavioralStoppedPayoffLawFrom` — exact bounded stochastic semantics.
 * `ObservedChanceGame.Iso.behavioralContinuationGameFormIso` — continuation
   game-form isomorphism.
-* `ObservedChanceGame.Iso.isBehavioralNashOnDesignatedContinuationsAtFuel_iff`
+* `ObservedChanceGame.Iso.isBehavioralNashOnRootsAtFuel_iff`
   — canonical public entry point for two-way bounded Nash transfer on
   presentation-designated continuations.
 -/
@@ -601,17 +601,18 @@ The same complete contingent behavioral profile must be Nash in the stochastic
 continuation game at every designated root. The predicate makes no claim that
 the root predicate is a lawful standard-subgame system. The caller controls how a
 probability law with possible fuel-exhaustion mass (`none`) is evaluated. -/
-def IsBehavioralNashOnDesignatedContinuationsAtFuel
+def IsBehavioralNashOnRootsAtFuel
     (G : ObservedChanceGame N U)
     [DecidableEq N] [Preorder V]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
+    (roots : G.observed.RootPresentation)
     (utility : PMF (Option (N → U)) → N → V)
     (profile : G.observed.BehavioralProfile)
     (fuel : ℕ) : Prop :=
   ∀ current :
       G.observed.base.toArena.HistoryFrom G.observed.base.init,
-    G.observed.IsDesignatedContinuationRoot current →
+    roots.IsRoot current →
       (G.behavioralContinuationGameForm current fuel).IsNash
         utility profile
 
@@ -787,20 +788,25 @@ theorem behavioralContinuationIsNash_iff
       profile
 
 /-- A strict observed chance-EFG isomorphism preserves bounded behavioral
-Nash equilibrium on presentation-designated continuations in both
+Nash equilibrium on explicitly corresponding root presentations in both
 directions. -/
-theorem isBehavioralNashOnDesignatedContinuationsAtFuel_iff
+theorem isBehavioralNashOnRootsAtFuel_iff
     [DecidableEq N] [Preorder V]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     [(state : H.observed.base.State) →
       Decidable (H.observed.base.isTerminal state)]
     (e : G.Iso H)
+    (sourceRoots : G.observed.RootPresentation)
+    (targetRoots : H.observed.RootPresentation)
+    (hroots :
+      e.observedIso.PreservesRootPresentations
+        sourceRoots targetRoots)
     (utility : PMF (Option (N → U)) → N → V)
     (profile : G.observed.BehavioralProfile)
     (fuel : ℕ) :
-    G.IsBehavioralNashOnDesignatedContinuationsAtFuel utility profile fuel ↔
-      H.IsBehavioralNashOnDesignatedContinuationsAtFuel utility
+    G.IsBehavioralNashOnRootsAtFuel sourceRoots utility profile fuel ↔
+      H.IsBehavioralNashOnRootsAtFuel targetRoots utility
         (e.observedIso.mapBehavioralProfile profile) fuel := by
   constructor
   · intro hspe targetRoot htargetRoot
@@ -811,10 +817,8 @@ theorem isBehavioralNashOnDesignatedContinuationsAtFuel_iff
           targetRoot :=
       e.observedIso.historyIso.stateEquiv.apply_symm_apply
         targetRoot
-    have hsourceRoot :
-        G.observed.IsDesignatedContinuationRoot sourceRoot := by
-      apply
-        (e.observedIso.map_designatedContinuationRoot sourceRoot).mpr
+    have hsourceRoot : sourceRoots.IsRoot sourceRoot := by
+      apply (hroots sourceRoot).mpr
       simpa [hmap] using htargetRoot
     have hsourceNash := hspe sourceRoot hsourceRoot
     have hmapped :=
@@ -830,10 +834,9 @@ theorem isBehavioralNashOnDesignatedContinuationsAtFuel_iff
     exact hmapped
   · intro hspe sourceRoot hsourceRoot
     have htargetRoot :
-        H.observed.IsDesignatedContinuationRoot
+        targetRoots.IsRoot
           (e.observedIso.historyIso.stateEquiv sourceRoot) :=
-      (e.observedIso.map_designatedContinuationRoot sourceRoot).mp
-        hsourceRoot
+      (hroots sourceRoot).mp hsourceRoot
     have htargetNash :=
       hspe
         (e.observedIso.historyIso.stateEquiv sourceRoot)
