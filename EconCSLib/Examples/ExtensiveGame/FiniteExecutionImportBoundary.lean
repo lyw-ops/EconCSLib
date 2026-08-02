@@ -15,8 +15,14 @@ kernel layers.
 
 #check Arena.stochasticHistoryPMFFrom
 #check ExtensiveGame.ObservedChanceGame.withChanceKernel
-#check ExtensiveGame.ObservedChanceGame.completeInformationPresentation
+#check ExtensiveGame.DiscreteObservedChanceGame
+#check ExtensiveGame.ObservedChanceGame.completeInformation
 #check ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryPolicy
+#check ExtensiveGame.ObservedGame.FiniteEFGHypotheses.toFiniteHistoryGame
+#check ExtensiveGame.ObservedGame.FiniteEFGHypotheses.toFiniteObservedGame
+#check ExtensiveGame.ObservedGame.FiniteEFGHypotheses.toFiniteObservedChanceGame
+#check ExtensiveGame.DiscreteControlledObservedChanceGame.BoundedCompleteHistoryLawSemantics
+#check ExtensiveGame.DiscreteControlledObservedChanceGame.BoundedCompleteHistoryLawSemantics.CompleteHistoryLawRealization
 #check KernelArena
 
 /--
