@@ -18,7 +18,10 @@ The design follows the Bourbaki principle — separate concerns into independent
 
 * **Arena** — pure dynamics: states, actions, transitions. No players, no payoffs.
   Terminal states are those where `Action s` is empty (no separate `isTerminal` Prop).
-* **ExtensiveGame** — adds player assignment, initial state, and payoffs on top of Arena.
+* **ControlledGame** — adds an initial state and player assignment to an Arena,
+  but no outcome or payoff.
+* **ExtensiveGame** — the compatibility layer that adds a state payoff to a
+  ControlledGame.
 
 This state-space approach supports both finite and infinite games.
 Inductive game trees compile as a special case (see
@@ -29,7 +32,8 @@ companion).
 
 * `Arena` — states + actions + transitions
 * `Arena.IsTerminal` — a state with no available actions
-* `ExtensiveGame` — arena + players + payoffs
+* `ControlledGame` — arena + initial state + players
+* `ExtensiveGame` — controlled game + state payoff
 * Helper notation for building concrete games
 
 ## References
@@ -68,101 +72,89 @@ theorem isTerminal_iff_not_isDecision (s : A.State) :
 
 end Arena
 
-/-! ### Extensive-form game -/
+/-! ### Payoff-free controlled games -/
 
-/-- An extensive-form game: an arena with player assignment and payoffs.
+/-- A payoff-free controlled extensive-game skeleton.
 
-    * `mover s` = who controls state `s` (`none` = chance or nature)
-    * `payoff s i` = payoff for player `i` at state `s` (meaningful at terminal states)
+`ControlledGame` adds only a distinguished initial state and a mover label to
+the pure `Arena` dynamics. It deliberately stores no objective, payoff,
+probability law, finiteness, decidability, or information data. Logical games
+can therefore use this carrier without inventing a utility type.
 
-    No `isTerminal` field — terminal states are detected by `IsEmpty (Action s)`.
-    No proof terms to carry around. -/
-structure ExtensiveGame (N : Type*) (U : Type*) extends Arena where
-  /-- The initial state (root of the game tree). -/
+`mover s = none` denotes nature at a nonterminal state. As for
+`ExtensiveGame`, the mover label at a terminal state is semantically ignored
+unless a separate well-formedness certificate normalizes it. -/
+structure ControlledGame (N : Type*) extends Arena where
+  /-- The initial state (root of the controlled game). -/
   init : State
   /-- Who controls each state. `none` = chance or nature. -/
   mover : State → Option N
-  /-- Payoff at each state for each player.
-      Meaningful at terminal states; may be arbitrary elsewhere. -/
-  payoff : State → N → U
 
-namespace ExtensiveGame
+namespace ControlledGame
 
-variable {N : Type*} {U : Type*}
+variable {N : Type*}
 
-/-- Add an initial state, mover assignment, and payoff function to an ordinary
-arena.
-
-All game-semantic data are explicit arguments; in particular this constructor
-does not infer chance nodes or terminal payoffs from the arena. It composes
-with observed-game presentation constructors without duplicating the arena's
-state, action, or transition fields. -/
+/-- Add an initial state and mover assignment to an ordinary arena. -/
 abbrev ofArena (arena : Arena) (init : arena.State)
-    (mover : arena.State → Option N)
-    (payoff : arena.State → N → U) :
-    ExtensiveGame N U where
+    (mover : arena.State → Option N) :
+    ControlledGame N where
   toArena := arena
   init := init
   mover := mover
-  payoff := payoff
 
 @[simp]
 theorem ofArena_toArena (arena : Arena) (init : arena.State)
-    (mover : arena.State → Option N)
-    (payoff : arena.State → N → U) :
-    (ofArena arena init mover payoff).toArena = arena :=
+    (mover : arena.State → Option N) :
+    (ofArena arena init mover).toArena = arena :=
   rfl
 
 @[simp]
 theorem ofArena_init (arena : Arena) (init : arena.State)
-    (mover : arena.State → Option N)
-    (payoff : arena.State → N → U) :
-    (ofArena arena init mover payoff).init = init :=
+    (mover : arena.State → Option N) :
+    (ofArena arena init mover).init = init :=
   rfl
 
 @[simp]
 theorem ofArena_mover (arena : Arena) (init : arena.State)
-    (mover : arena.State → Option N)
-    (payoff : arena.State → N → U) (state : arena.State) :
-    (ofArena arena init mover payoff).mover state = mover state :=
+    (mover : arena.State → Option N) (state : arena.State) :
+    (ofArena arena init mover).mover state = mover state :=
   rfl
 
-@[simp]
-theorem ofArena_payoff (arena : Arena) (init : arena.State)
-    (mover : arena.State → Option N)
-    (payoff : arena.State → N → U) (state : arena.State) (i : N) :
-    (ofArena arena init mover payoff).payoff state i = payoff state i :=
-  rfl
-
-/-- The arena of a game. -/
-abbrev arena (G : ExtensiveGame N U) : Arena := G.toArena
+/-- The arena of a payoff-free controlled game. -/
+abbrev arena (G : ControlledGame N) : Arena := G.toArena
 
 /-- Available actions at a state. -/
-abbrev actions (G : ExtensiveGame N U) (s : G.State) := G.Action s
+abbrev actions (G : ControlledGame N) (s : G.State) := G.Action s
 
 /-- A state is terminal. -/
-abbrev isTerminal (G : ExtensiveGame N U) (s : G.State) := G.toArena.IsTerminal s
+abbrev isTerminal (G : ControlledGame N) (s : G.State) :=
+  G.toArena.IsTerminal s
 
 /-- A state is controlled by player `i`. -/
-def isPlayerState (G : ExtensiveGame N U) (s : G.State) (i : N) : Prop :=
+def isPlayerState (G : ControlledGame N) (s : G.State) (i : N) : Prop :=
   G.mover s = some i
 
-/-- A state is a chance node. -/
-def isChanceState (G : ExtensiveGame N U) (s : G.State) : Prop :=
+/-- A nonterminal state controlled by nature. -/
+def isChanceState (G : ControlledGame N) (s : G.State) : Prop :=
   G.mover s = none ∧ ¬ G.toArena.IsTerminal s
 
 /-- No chance nodes: every nonterminal state has a strategic mover. -/
-def NoChance (G : ExtensiveGame N U) : Prop :=
+def NoChance (G : ControlledGame N) : Prop :=
   ∀ s : G.State, ¬ G.isTerminal s → ∃ i : N, G.mover s = some i
 
-end ExtensiveGame
+end ControlledGame
 
-/-! ### Building arenas from explicit data -/
+/-! ### Extensive-form game -/
 
-/-- Build an arena from a `Fin`-indexed state space with decidable actions.
-    Terminal states have `nActions s = 0`. -/
-def Arena.ofFin (n : ℕ) (nActions : Fin n → ℕ)
-    (next : (s : Fin n) → Fin (nActions s) → Fin n) : Arena where
-  State := Fin n
-  Action := fun s => Fin (nActions s)
-  next := next
+/-- A state-payoff extensive game: a payoff-free controlled game together
+with a convenient endpoint-state payoff.
+
+    * `mover s` = who controls state `s` (`none` = chance or nature)
+    * `payoff s i` = payoff for player `i` at state `s` (meaningful at terminal states)
+
+    General terminal-history, complete-path, and winning-condition semantics
+    are separate objective layers; this field is not their authoritative
+    definition.
+
+    No `isTerminal` field — terminal states are detected by `IsEmpty (Action s)`.
+    No proof terms to carry around. -/
