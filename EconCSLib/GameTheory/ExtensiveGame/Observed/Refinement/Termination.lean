@@ -57,11 +57,12 @@ theorem pureTerminatesFrom_of_map
       (G.stoppedHistoryFrom
         profile hNoChanceG current fuel)).mpr hmapped
 
-/-- Global pure termination of the finer game reflects to the coarser game.
+/-- Root-scoped pure termination of the finer game reflects to the coarser
+game along an explicit root map.
 
 Only lifted coarse profiles are needed for this conclusion; the fine
 termination certificate may cover additional path-contingent profiles. -/
-theorem reflect_pureTerminating
+theorem reflect_pureTerminatingOnRoots
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
     [(state : H.base.State) →
@@ -69,13 +70,17 @@ theorem reflect_pureTerminating
     (r : G.InformationRefinement H)
     (hNoChanceG : G.base.NoChance)
     (hNoChanceH : H.base.NoChance)
-    (hterminatesH : H.PureTerminating hNoChanceH) :
-    G.PureTerminating hNoChanceG := by
+    (sourceRoots : G.RootPresentation)
+    (targetRoots : H.RootPresentation)
+    (hroots :
+      r.MapsRootPresentations sourceRoots targetRoots)
+    (hterminatesH :
+      H.PureTerminatingOnRoots hNoChanceH targetRoots) :
+    G.PureTerminatingOnRoots hNoChanceG sourceRoots := by
   intro sourceRoot hsourceRoot profile
   have htargetRoot :
-      H.IsDesignatedContinuationRoot
-        (r.historyIso.stateEquiv sourceRoot) :=
-    (r.map_designatedContinuationRoot sourceRoot).mp hsourceRoot
+      targetRoots.IsRoot (r.historyIso.stateEquiv sourceRoot) :=
+    hroots sourceRoot hsourceRoot
   exact
     r.pureTerminatesFrom_of_map
       profile hNoChanceG hNoChanceH sourceRoot
@@ -354,9 +359,9 @@ theorem terminalContinuationIsNash_iff_of_strategySurjective
           hsurjective)
         profile
 
-/-- Standard termination-certified Nash on presentation-designated continuations of a lifted fine profile reflects to
-Nash on presentation-designated continuations of its coarse source profile. -/
-theorem isPureNashOnDesignatedContinuations_of_map
+/-- Total Nash on explicitly mapped roots of a lifted fine profile reflects
+to total Nash on the selected coarse roots. -/
+theorem isPureNashOnRoots_of_map
     {V : Type uV} [DecidableEq N] [Preorder V]
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
@@ -365,29 +370,35 @@ theorem isPureNashOnDesignatedContinuations_of_map
     (r : G.InformationRefinement H)
     (hNoChanceG : G.base.NoChance)
     (hNoChanceH : H.base.NoChance)
-    (hterminatesH : H.PureTerminating hNoChanceH)
+    (sourceRoots : G.RootPresentation)
+    (targetRoots : H.RootPresentation)
+    (hroots :
+      r.MapsRootPresentations sourceRoots targetRoots)
+    (hterminatesH :
+      H.PureTerminatingOnRoots hNoChanceH targetRoots)
     (utility : (N → U) → N → V)
     (profile : G.PureProfile)
     (hSPE :
-      H.IsPureNashOnDesignatedContinuations
-        hNoChanceH hterminatesH utility
+      H.IsPureNashOnRoots
+        hNoChanceH targetRoots hterminatesH utility
         (r.mapProfile profile)) :
-    G.IsPureNashOnDesignatedContinuations
-      hNoChanceG
-      (r.reflect_pureTerminating
-        hNoChanceG hNoChanceH hterminatesH)
+    G.IsPureNashOnRoots
+      hNoChanceG sourceRoots
+      (r.reflect_pureTerminatingOnRoots
+        hNoChanceG hNoChanceH sourceRoots targetRoots
+        hroots hterminatesH)
       utility profile := by
   intro sourceRoot hsourceRoot
   have htargetRoot :
-      H.IsDesignatedContinuationRoot
-        (r.historyIso.stateEquiv sourceRoot) :=
-    (r.map_designatedContinuationRoot sourceRoot).mp hsourceRoot
+      targetRoots.IsRoot (r.historyIso.stateEquiv sourceRoot) :=
+    hroots sourceRoot hsourceRoot
   exact
     r.terminalContinuationIsNash_of_map
       hNoChanceG hNoChanceH utility profile
       sourceRoot
-      ((r.reflect_pureTerminating
-        hNoChanceG hNoChanceH hterminatesH)
+      ((r.reflect_pureTerminatingOnRoots
+        hNoChanceG hNoChanceH sourceRoots targetRoots
+        hroots hterminatesH)
         sourceRoot hsourceRoot)
       (hterminatesH
         (r.historyIso.stateEquiv sourceRoot)
@@ -396,9 +407,10 @@ theorem isPureNashOnDesignatedContinuations_of_map
         (r.historyIso.stateEquiv sourceRoot)
         htargetRoot)
 
-/-- With strategy-surjective lifting and termination certificates on both
-games, pure Nash on presentation-designated continuations transfers in both directions. -/
-theorem isPureNashOnDesignatedContinuations_iff_of_strategySurjective
+/-- With strategy-surjective lifting, exact root correspondence, and
+root-scoped termination certificates, total pure Nash transfers in both
+directions. -/
+theorem isPureNashOnRoots_iff_of_strategySurjective
     {V : Type uV} [DecidableEq N] [Preorder V]
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
@@ -407,15 +419,21 @@ theorem isPureNashOnDesignatedContinuations_iff_of_strategySurjective
     (r : G.InformationRefinement H)
     (hNoChanceG : G.base.NoChance)
     (hNoChanceH : H.base.NoChance)
-    (hterminatesG : G.PureTerminating hNoChanceG)
-    (hterminatesH : H.PureTerminating hNoChanceH)
+    (sourceRoots : G.RootPresentation)
+    (targetRoots : H.RootPresentation)
+    (hroots :
+      r.PreservesRootPresentations sourceRoots targetRoots)
+    (hterminatesG :
+      G.PureTerminatingOnRoots hNoChanceG sourceRoots)
+    (hterminatesH :
+      H.PureTerminatingOnRoots hNoChanceH targetRoots)
     (hsurjective : r.StrategySurjective)
     (utility : (N → U) → N → V)
     (profile : G.PureProfile) :
-    G.IsPureNashOnDesignatedContinuations
-        hNoChanceG hterminatesG utility profile ↔
-      H.IsPureNashOnDesignatedContinuations
-        hNoChanceH hterminatesH utility
+    G.IsPureNashOnRoots
+        hNoChanceG sourceRoots hterminatesG utility profile ↔
+      H.IsPureNashOnRoots
+        hNoChanceH targetRoots hterminatesH utility
         (r.mapProfile profile) := by
   constructor
   · intro hSPE targetRoot htargetRoot
@@ -423,10 +441,8 @@ theorem isPureNashOnDesignatedContinuations_iff_of_strategySurjective
       r.historyIso.stateEquiv.surjective
         targetRoot
     have hsourceRoot :
-        G.IsDesignatedContinuationRoot sourceRoot := by
-      exact
-        (r.map_designatedContinuationRoot sourceRoot).mpr
-          htargetRoot
+        sourceRoots.IsRoot sourceRoot :=
+      (hroots sourceRoot).mpr htargetRoot
     have hsourceNash :=
       hSPE sourceRoot hsourceRoot
     have hmapped :=
@@ -436,15 +452,13 @@ theorem isPureNashOnDesignatedContinuations_iff_of_strategySurjective
         (hterminatesG sourceRoot hsourceRoot)
         (hterminatesH
           (r.historyIso.stateEquiv sourceRoot)
-          ((r.map_designatedContinuationRoot sourceRoot).mp
-            hsourceRoot))).mp hsourceNash
+          ((hroots sourceRoot).mp hsourceRoot))).mp hsourceNash
     exact hmapped
   · intro hSPE sourceRoot hsourceRoot
     have htargetRoot :
-        H.IsDesignatedContinuationRoot
+        targetRoots.IsRoot
           (r.historyIso.stateEquiv sourceRoot) :=
-      (r.map_designatedContinuationRoot sourceRoot).mp
-        hsourceRoot
+      (hroots sourceRoot).mp hsourceRoot
     exact
       (r.terminalContinuationIsNash_iff_of_strategySurjective
         hNoChanceG hNoChanceH hsurjective
