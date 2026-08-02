@@ -65,9 +65,10 @@ For the EFG foundation boundary, start with
 `Interface.Core` is the broader stable Foundation Facade. The source-graph
 rules and measured closure counts live in
 [`efg-governance.md`](efg-governance.md).
-The flat `Observed/Controlled*.lean` files are classified as canonical owners,
-declaration-free aggregates, or payoff-aware adapters in
-[`efg-controlled-api.md`](efg-controlled-api.md).
+The consolidated `Observed/Controlled/` hierarchy and its canonical owners,
+declaration-free facades, and payoff-aware adapters are mapped in
+[`efg-controlled-api.md`](efg-controlled-api.md); flat
+`Observed.ControlledFoo` siblings are forbidden.
 
 ## What a module note set should contain
 
