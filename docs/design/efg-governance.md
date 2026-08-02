@@ -105,32 +105,32 @@ The source does not perfectly mirror the diagram:
 5. Several implementation modules exceed 800 lines.  Their audit below shows
    that most large proof chains are highly coupled and are not made safer by a
    mechanical split.
-6. The former mixed-responsibility
-   `Observed.ControlledInfrastructure` path is now an import-only compatibility
-   aggregate. Its declarations are physically owned by `Core`, `WellFormed`,
-   `Subgame`, `Finite`, `Quasi`, and `Recall` leaves; winning-dependent
-   quasistrategy predicates live in `Winning.Basic`. `Recall` has an exact
-   six-module closure and reaches neither `Finite` nor `Execution.Length`.
-7. The former monolithic `Observed.ControlledMorphism` path is also an
-   import-only compatibility aggregate. Structural transport is owned by
-   `ControlledMorphism.Core`, lawful-subgame transport by `.Subgame`, and
-   recall transport by `.Recall`; their exact EFG/local closures are 8 / 8,
-   10 / 10, and 11 / 11.
-8. The eleven flat `Observed.Controlled*` modules have the fixed four-role
-   taxonomy documented in
-   [`efg-controlled-api.md`](efg-controlled-api.md): one carrier, five
-   canonical semantic owners, two declaration-free compatibility aggregates,
-   and three downstream payoff-aware adapters. Canonical owners cannot reach
-   an adapter, and each adapter has an exact import and namespace contract.
+6. `Observed.Controlled.Infrastructure` is a declaration-free canonical
+   aggregate facade. Its declarations are physically owned by `Core`,
+   `WellFormed`, `Subgame`, `Finite`, `Quasi`, and `Recall` leaves;
+   winning-dependent quasistrategy predicates live in `Winning.Basic`.
+   `Recall` has an exact six-module closure and reaches neither `Finite` nor
+   `Execution.Length`.
+7. `Observed.Controlled.Morphism` is likewise a declaration-free canonical
+   facade. Structural transport is owned by `Controlled.Morphism.Core`,
+   lawful-subgame transport by `.Subgame`, and recall transport by `.Recall`;
+   their exact EFG/local closures are 8 / 8, 10 / 10, and 11 / 11.
+8. The complete `Observed.Controlled` hierarchy has the fixed role taxonomy
+   documented in [`efg-controlled-api.md`](efg-controlled-api.md): one carrier,
+   five semantic owners, nine responsibility owners, two declaration-free
+   facades, and three downstream payoff-aware adapters under `.Compat`.
+   Canonical modules cannot reach an adapter, and a new flat sibling such as
+   `Observed.ControlledFoo` is rejected.
 9. FOSG sequentialization keeps its observed chance-game value independent of
    continuation-root selection. `observedChanceGameCore` is root-free,
    `rootPresentation` owns the source-root predicate, and the established
    root-parameterized `observedChanceGame` name is a definitionally equal
    compatibility wrapper.
 
-These deviations are governed below. Physical path changes are limited to
-Internal modules whose importers are inside this worktree. Public clients use
-facades, while the one established restart compatibility path is retained.
+These deviations are governed below. The `Observed.Controlled` hierarchy was
+hard-migrated before any stable external EFG API commitment; no forwarding
+stubs remain at its former flat paths. Other established compatibility paths
+retain their documented policies.
 
 ## Lifecycle classes
 
@@ -296,8 +296,9 @@ EFG theorem.
 | `ExtensiveGame.Probability.*` | Keep as import-only wrappers | `Math.Probability.PMF.*` |
 | broad Interface aggregates | Keep through the current major version | smallest granular facade |
 | split implementation aggregates | Keep import-only; implementation modules now import defining leaves directly | corresponding subdirectory leaves; downstream users prefer facades |
-| `Observed.ControlledInfrastructure` | Keep as import-only compatibility aggregate | defining `ControlledInfrastructure.*` leaf; winning predicates are in `Winning.Basic` |
-| `Observed.ControlledMorphism` | Keep as import-only compatibility aggregate | `ControlledMorphism.Core`, `.Subgame`, or `.Recall` according to the declarations used |
+| `Observed.Controlled.Infrastructure` | Canonical declaration-free aggregate facade | defining `Controlled.Infrastructure.*` leaf; winning predicates are in `Winning.Basic` |
+| `Observed.Controlled.Morphism` | Canonical declaration-free aggregate facade | `Controlled.Morphism.Core`, `.Subgame`, or `.Recall` according to the declarations used |
+| former flat `Observed.ControlledFoo` paths | Removed before API stability | corresponding module below `Observed.Controlled`; no forwarding stubs |
 | endpoint `GameTree` NE/SPE/strategic form | Historical, retained, stopped from general expansion | occurrence compiler for canonical standard SPE; no false deprecation |
 | `GameTree.toObservedGame` | Historical endpoint compiler, retained for old policy semantics | occurrence compiler when paths must be distinguished |
 | state-based `Strategy` | Historical but semantically valid | observed pure strategy is information-indexed and not definitionally equivalent |
@@ -443,7 +444,7 @@ maintenance triage, not API cardinalities.
 | `Observed.Continuation` | 1001 / 36 | pure and behavioral continuation adapters | pure + behavioral equilibrium adapters | Medium-high; two parallel halves | Moderate casts | continuation morphism/simulation/iso bundles | pure / behavioral leaves plus aggregate | Medium; useful only if clients need one half independently | Queue on measured import demand |
 | `Observed.Kuhn` | 866 / 41 | finite hypotheses, behavioral-to-mixed, realization | finite probability → strategy → equilibrium | High proof progression | Moderate table/index transport | hypothesis structures and realization records | hypotheses / plan sampling / realization | Medium-high; wrappers share theorem names | Keep |
 | `Observed.PerfectRecall` | 934 / 33 | personal-decision recall and iso transfer | information structure → relation transfer | High | High dependent-list transport | `RecallCertificate` | structure / iso transfer | Medium-high; certificate equivalence links halves | Keep |
-| `Observed.ControlledMorphism` (former monolith) | 1883 / layered declaration families | payoff-free structural, lawful-subgame, and recall transport | controlled structure → subgames/recall | Three separable layers | High dependent casts in the structural base | `Hom`, `InformationRefinement`, and `Iso` | `Core` / `Subgame` / `Recall` leaves plus aggregate | Low after preserving names and old import path | **Split implemented**; exact closures 8 / 8, 10 / 10, and 11 / 11 |
+| `Observed.Controlled.Morphism` (former monolith) | 1883 / layered declaration families | payoff-free structural, lawful-subgame, and recall transport | controlled structure → subgames/recall | Three separable layers | High dependent casts in the structural base | `Hom`, `InformationRefinement`, and `Iso` | `Core` / `Subgame` / `Recall` leaves plus facade | Low after preserving declaration names | **Split and hierarchy migration implemented**; exact closures 8 / 8, 10 / 10, and 11 / 11 |
 | `Observed.SPE` | 923 / 34 | total pure semantics and lawful/complete SPE | termination → root systems → equilibrium transfer | High | High history/root transport | terminating-on and complete-system packages | termination / equilibrium / iso transfer | High; cyclic import risk with morphism/refinement | Keep |
 | `Kernel.EventPath` | 1119 / 60 | event paths, policies, state projection | analytic execution + projection bridge | High | High coordinate/index arithmetic | `EventHistoryActionPolicy` and path measures | event core / policy path / projections | High; Ionescu–Tulcea proof chain | Keep |
 | `Presentation.Chance.Countable` | 1347 / 59 | reachable countability and automatic analytic presentation | types/instances → realization → profile compiler | High | High dependent tags and casts | `presentation`, `measurablePresentation`, kernel adapter | carriers / realization / profile adapters | High; scoped instances cross every section | Keep |
@@ -499,18 +500,19 @@ rather than remaining an invisible transitive import. Review and CI maintain:
 - canonical implementation modules do not import compatibility wrappers;
 - `Interface.StructuralCore` has exactly the five structural EFG dependencies
   and `Interface.Core` cannot regain Objective/Winning;
-- every payoff-free `ControlledInfrastructure.*` leaf obeys the existing
+- every payoff-free `Controlled.Infrastructure.*` leaf obeys the existing
   reverse-dependency prohibition;
-- `ControlledInfrastructure.Recall` has its exact six-module closure and
+- `Controlled.Infrastructure.Recall` has its exact six-module closure and
   cannot regain `Finite` or `Execution.Length`;
-- `ControlledMorphism.{Core,Subgame,Recall}` retain their exact 8 / 8,
+- `Controlled.Morphism.{Core,Subgame,Recall}` retain their exact 8 / 8,
   10 / 10, and 11 / 11 closures without cross-layer leakage;
-- `Observed.ControlledInfrastructure` and `Observed.ControlledMorphism`
-  remain import-only with exact direct leaf imports, while internal consumers
-  import defining leaves;
-- the flat `Observed.Controlled*` family cannot grow without a registered role;
-  canonical controlled owners cannot reach the three payoff-aware adapters,
-  whose exact imports and namespaces are fixed;
+- `Observed.Controlled.Infrastructure` and `Observed.Controlled.Morphism`
+  remain declaration-free canonical facades with exact direct leaf imports,
+  while internal consumers import defining leaves;
+- the complete `Observed.Controlled` hierarchy is fixed by a registered role
+  map, and flat `Observed.ControlledFoo` siblings are forbidden;
+- canonical controlled modules cannot reach the three `.Compat` payoff-aware
+  adapters, whose exact imports and namespaces are fixed;
 - compatibility aggregates are imported only by other compatibility paths or
   intentional compatibility-boundary regressions;
 - the governed EFG/GameForm/PMF source graph is acyclic;
