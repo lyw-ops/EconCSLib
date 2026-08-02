@@ -38,25 +38,6 @@ open MeasureTheory ProbabilityTheory
 
 namespace MeasurableKernelArena
 
-namespace EventHistoryActionPolicy
-
-variable {A : MeasurableKernelArena}
-
-/-- The state-path pushforward of an admissible event policy is a probability
-measure. -/
-instance statePathMeasure_isProbability
-    (policy : A.EventHistoryActionPolicy)
-    (hterminal : MeasurableSet A.terminalSet)
-    (initialState : A.State) :
-    IsProbabilityMeasure
-      (policy.statePathMeasure hterminal initialState) := by
-  rw [statePathMeasure]
-  exact
-    Measure.isProbabilityMeasure_map
-      measurable_eventPathStates.aemeasurable
-
-end EventHistoryActionPolicy
-
 end MeasurableKernelArena
 
 namespace ExtensiveGame.ObservedGame
