@@ -10,6 +10,9 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphism.Recall
 /-!
 # Controlled observed-game morphisms (compatibility aggregate)
 
+API role: **legacy import aggregate**. It owns no declarations and must not be
+used as an implementation dependency.
+
 This established import path re-exports the structural, lawful-subgame, and
 recall leaves. New internal code should import the narrowest
 `Observed.ControlledMorphism.*` leaf that provides the declarations it uses.
