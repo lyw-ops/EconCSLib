@@ -3,9 +3,9 @@ Copyright (c) 2026 EconCSLib contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledLaw
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledDiscreteLaw
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphismCompat
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Law
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Law.Discrete
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Compat.Morphism
 import EconCSLib.GameTheory.ExtensiveGame.Relations.Discrete.Morphism
 
 /-!
