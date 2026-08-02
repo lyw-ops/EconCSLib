@@ -5,7 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Morphism.Fiber
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Game
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphism.Core
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism.Core
 
 /-!
 # EconCSLib.GameTheory.ExtensiveGame.Observed.Refinement.Structural
