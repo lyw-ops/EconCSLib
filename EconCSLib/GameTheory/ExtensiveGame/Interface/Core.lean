@@ -8,12 +8,12 @@ import EconCSLib.GameTheory.ExtensiveGame.Execution.History
 import EconCSLib.GameTheory.ExtensiveGame.Execution.Length
 import EconCSLib.GameTheory.ExtensiveGame.Execution.StoppedExecution
 import EconCSLib.GameTheory.ExtensiveGame.Execution.StochasticExecution
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.Core
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.WellFormed
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.Subgame
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.Finite
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.Quasi
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.Recall
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Core
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.WellFormed
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Subgame
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Finite
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Quasi
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Recall
 
 /-!
 # EconCSLib.GameTheory.ExtensiveGame.Interface.Core
