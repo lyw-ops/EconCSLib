@@ -403,3 +403,62 @@ def CompletePathLawRealization.TargetDeviationsCoveredAt
 
 /-- Strategy-space isomorphism is stronger than one-way realization and
 target-deviation coverage. -/
+structure CompletePathLawStrategyIso
+    (S T : G.CompletePathLawSemantics)
+    extends S.CompletePathLawRealization T where
+  /-- Each player's strategy map is an equivalence. -/
+  strategyEquiv : (i : N) → S.Strategy i ≃ T.Strategy i
+  /-- The realization map is the forward strategy equivalence. -/
+  mapStrategy_eq :
+    ∀ (i : N), toCompletePathLawRealization.mapStrategy i =
+      strategyEquiv i
+
+end CompletePathLawSemantics
+
+/-! ## Canonical history/path maps of a strict structural isomorphism -/
+
+namespace Iso
+
+variable {G H : ControlledObservedGame N}
+
+/-- Strict structural isomorphism induces an equivalence of complete
+occurrence-sensitive histories. -/
+abbrev completeHistoryEquiv (e : G.Iso H) :
+    G.base.History ≃ H.base.History :=
+  e.historyIso.stateEquiv
+
+/-- Strict structural isomorphism induces the pointwise equivalence of full
+history paths.  This is structural data only; probability-law preservation
+still requires an explicit semantic certificate. -/
+def completePathEquiv (e : G.Iso H) :
+    (ℕ → G.base.History) ≃ (ℕ → H.base.History) where
+  toFun := fun path time =>
+    e.completeHistoryEquiv (path time)
+  invFun := fun path time =>
+    e.completeHistoryEquiv.symm (path time)
+  left_inv := by
+    intro path
+    funext time
+    exact e.completeHistoryEquiv.symm_apply_apply (path time)
+  right_inv := by
+    intro path
+    funext time
+    exact e.completeHistoryEquiv.apply_symm_apply (path time)
+
+@[simp]
+theorem completePathEquiv_apply
+    (e : G.Iso H) (path : ℕ → G.base.History)
+    (time : ℕ) :
+    e.completePathEquiv path time =
+      e.completeHistoryEquiv (path time) :=
+  rfl
+
+end Iso
+
+/-! ## Cross-game functional realization -/
+
+/-- Functional realization of complete path laws across two different EFG
+representations.
+
+The measurable history/path maps and pushforward law are explicit.  The target
+current history is exactly the image of the source current history. -/
