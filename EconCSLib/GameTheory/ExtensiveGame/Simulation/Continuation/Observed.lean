@@ -25,7 +25,7 @@ The main definitions are:
 
 * `KernelBehavioralProfile.continuationStatePathMeasure`, the absolute-clock,
   full-prefix continuation law;
-* `BoundedPathUtility.IsNashOnDesignatedContinuations`, constructive Nash
+* `BoundedPathUtility.IsNashOnPresentation`, constructive Nash
   optimality at every presentation-designated continuation root under that
   absolute-prefix semantics;
 * `ProfileAssembly.EventuallyTerminatesUnderContinuationDeviationsAt`, the
@@ -527,15 +527,16 @@ theorem IsNashOnContinuations.mono
   intro root hroot
   exact hnash root (hroots root hroot)
 
-/-- Measurable-kernel Nash optimality on presentation-designated roots under
+/-- Measurable-kernel Nash optimality on an explicit root presentation under
 canonical absolute-prefix continuation semantics. -/
-def IsNashOnDesignatedContinuations
+def IsNashOnPresentation
     {presentation : G.MeasurableKernelPresentation model}
     (assembly : presentation.ProfileAssembly)
+    (roots : G.RootPresentation)
     (profile : assembly.PlayerKernelProfile) :
     Prop :=
   evaluation.IsNashOnContinuations
-    assembly G.IsDesignatedContinuationRoot profile
+    assembly roots.IsRoot profile
 
 /-- Measurable-kernel subgame perfection under absolute-prefix continuation
 semantics on an explicit, possibly conservative, lawful subgame system. -/
@@ -561,27 +562,29 @@ def IsStandardSubgamePerfect
 
 /-- Absolute-prefix designated-root Nash is exactly constructive continuation
 Nash optimality at every presentation-designated root. -/
-theorem isNashOnDesignatedContinuations_iff
+theorem isNashOnPresentation_iff
     {presentation : G.MeasurableKernelPresentation model}
     (assembly : presentation.ProfileAssembly)
+    (roots : G.RootPresentation)
     (profile : assembly.PlayerKernelProfile) :
-    evaluation.IsNashOnDesignatedContinuations assembly profile ↔
-      ∀ root, G.IsDesignatedContinuationRoot root →
+    evaluation.IsNashOnPresentation assembly roots profile ↔
+      ∀ root, roots.IsRoot root →
         evaluation.IsNashAtContinuation
           assembly root profile :=
   Iff.rfl
 
 /-- Absolute-prefix Nash on all presentation-designated continuations implies
 continuation Nash optimality at the initial empty history. -/
-theorem IsNashOnDesignatedContinuations.isNashAtContinuation_init
+theorem IsNashOnPresentation.isNashAtContinuation_init
     {presentation : G.MeasurableKernelPresentation model}
     {assembly : presentation.ProfileAssembly}
+    {roots : G.RootPresentation}
     {profile : assembly.PlayerKernelProfile}
-    (hspe : evaluation.IsNashOnDesignatedContinuations assembly profile) :
+    (hspe : evaluation.IsNashOnPresentation assembly roots profile) :
     evaluation.IsNashAtContinuation assembly
       (Arena.HistoryFrom.nil G.base.toArena G.base.init)
       profile :=
-  hspe _ G.init_isDesignatedContinuationRoot
+  hspe _ roots.init_isRoot
 
 /-- At the empty root, absolute-prefix continuation expected utility is the
 existing time-zero expected utility. -/
@@ -649,19 +652,20 @@ theorem IsNashOnFreshRestarts.mono
   intro root hroot
   exact hnash root (hroots root hroot)
 
-/-- Measurable-kernel optimality on presentation-designated roots under
+/-- Measurable-kernel optimality on an explicit root presentation under
 constructive fresh-clock restart semantics.
 
 One jointly measurable complete profile must be Nash after restarting at
 every designated root exposed by the observed game. Deviations use the
 existing measurable single-player replacement kernels. -/
-def IsNashOnDesignatedFreshRestarts
+def IsNashOnFreshRestartPresentation
     {presentation : G.MeasurableKernelPresentation model}
     (assembly : presentation.ProfileAssembly)
+    (roots : G.RootPresentation)
     (profile : assembly.PlayerKernelProfile) :
     Prop :=
   evaluation.IsNashOnFreshRestarts
-    assembly G.IsDesignatedContinuationRoot profile
+    assembly roots.IsRoot profile
 
 /-- Measurable-kernel subgame perfection under fresh-clock restart semantics
 on an explicit, possibly conservative, lawful subgame system. -/
@@ -687,27 +691,29 @@ def IsFreshRestartStandardSubgamePerfect
 
 /-- Fresh-restart designated-root Nash is exactly rootwise constructive Nash
 optimality at the observed game's designated roots. -/
-theorem isNashOnDesignatedFreshRestarts_iff
+theorem isNashOnFreshRestartPresentation_iff
     {presentation : G.MeasurableKernelPresentation model}
     (assembly : presentation.ProfileAssembly)
+    (roots : G.RootPresentation)
     (profile : assembly.PlayerKernelProfile) :
-    evaluation.IsNashOnDesignatedFreshRestarts assembly profile ↔
-      ∀ root, G.IsDesignatedContinuationRoot root →
+    evaluation.IsNashOnFreshRestartPresentation assembly roots profile ↔
+      ∀ root, roots.IsRoot root →
         evaluation.IsNashAt assembly root profile :=
   Iff.rfl
 
 /-- Fresh-restart Nash on all presentation-designated roots implies Nash
 optimality at the initial empty history. -/
-theorem IsNashOnDesignatedFreshRestarts.isNashAt_init
+theorem IsNashOnFreshRestartPresentation.isNashAt_init
     {presentation : G.MeasurableKernelPresentation model}
     {assembly : presentation.ProfileAssembly}
+    {roots : G.RootPresentation}
     {profile : assembly.PlayerKernelProfile}
     (hspe :
-      evaluation.IsNashOnDesignatedFreshRestarts assembly profile) :
+      evaluation.IsNashOnFreshRestartPresentation assembly roots profile) :
     evaluation.IsNashAt assembly
       (Arena.HistoryFrom.nil G.base.toArena G.base.init)
       profile :=
-  hspe _ G.init_isDesignatedContinuationRoot
+  hspe _ roots.init_isRoot
 
 end MeasurableHistoryModel.BoundedPathUtility
 
@@ -925,16 +931,17 @@ theorem isNashAtContinuation_proof_irrel
 
 /-- Nash optimality on presentation-designated continuations for expected
 eventual terminal payoff under canonical absolute-prefix semantics. -/
-noncomputable def IsNashOnDesignatedContinuations
+noncomputable def IsNashOnPresentation
     {presentation : G.MeasurableKernelPresentation model}
     (assembly : presentation.ProfileAssembly)
+    (roots : G.RootPresentation)
     (profile : assembly.PlayerKernelProfile)
     (hterminates :
-      ∀ root, G.IsDesignatedContinuationRoot root →
+      ∀ root, roots.IsRoot root →
         assembly.EventuallyTerminatesUnderContinuationDeviationsAt
           profile root) :
     Prop :=
-  ∀ root, ∀ hroot : G.IsDesignatedContinuationRoot root,
+  ∀ root, ∀ hroot : roots.IsRoot root,
     terminalPayoff.IsNashAtContinuation
       assembly root profile
       (hterminates root hroot)
@@ -973,24 +980,25 @@ noncomputable def IsStandardSubgamePerfect
 
 /-- Absolute-prefix designated-root terminal-payoff Nash implies continuation
 Nash optimality at the initial history. -/
-theorem IsNashOnDesignatedContinuations.isNashAtContinuation_init
+theorem IsNashOnPresentation.isNashAtContinuation_init
     {presentation : G.MeasurableKernelPresentation model}
     {assembly : presentation.ProfileAssembly}
+    {roots : G.RootPresentation}
     {profile : assembly.PlayerKernelProfile}
     {hterminates :
-      ∀ root, G.IsDesignatedContinuationRoot root →
+      ∀ root, roots.IsRoot root →
         assembly.EventuallyTerminatesUnderContinuationDeviationsAt
           profile root}
     (hspe :
-      terminalPayoff.IsNashOnDesignatedContinuations
-        assembly profile hterminates) :
+      terminalPayoff.IsNashOnPresentation
+        assembly roots profile hterminates) :
     terminalPayoff.IsNashAtContinuation assembly
       (Arena.HistoryFrom.nil G.base.toArena G.base.init)
       profile
       (hterminates
         (Arena.HistoryFrom.nil G.base.toArena G.base.init)
-        G.init_isDesignatedContinuationRoot) :=
-  hspe _ G.init_isDesignatedContinuationRoot
+        roots.init_isRoot) :=
+  hspe _ roots.init_isRoot
 
 /-- Constructive Nash optimality for expected eventual terminal payoff after
 restarting at one root.
@@ -1038,16 +1046,17 @@ theorem isNashAtFreshRestart_proof_irrel
 
 /-- Nash optimality on presentation-designated fresh restarts for expected
 eventual terminal payoff. -/
-noncomputable def IsNashOnDesignatedFreshRestarts
+noncomputable def IsNashOnFreshRestartPresentation
     {presentation : G.MeasurableKernelPresentation model}
     (assembly : presentation.ProfileAssembly)
+    (roots : G.RootPresentation)
     (profile : assembly.PlayerKernelProfile)
     (hterminates :
-      ∀ root, G.IsDesignatedContinuationRoot root →
+      ∀ root, roots.IsRoot root →
         assembly.EventuallyTerminatesUnderFreshRestartDeviationsAt
           profile root) :
     Prop :=
-  ∀ root, ∀ hroot : G.IsDesignatedContinuationRoot root,
+  ∀ root, ∀ hroot : roots.IsRoot root,
       terminalPayoff.IsNashAtFreshRestart assembly root profile
       (hterminates root hroot)
 
@@ -1084,24 +1093,25 @@ noncomputable def IsFreshRestartStandardSubgamePerfect
 
 /-- Eventual-terminal-payoff designated-root Nash implies the corresponding
 initial-history Nash property. -/
-theorem IsNashOnDesignatedFreshRestarts.isNashAt_init
+theorem IsNashOnFreshRestartPresentation.isNashAt_init
     {presentation : G.MeasurableKernelPresentation model}
     {assembly : presentation.ProfileAssembly}
+    {roots : G.RootPresentation}
     {profile : assembly.PlayerKernelProfile}
     {hterminates :
-      ∀ root, G.IsDesignatedContinuationRoot root →
+      ∀ root, roots.IsRoot root →
         assembly.EventuallyTerminatesUnderFreshRestartDeviationsAt
           profile root}
     (hspe :
-      terminalPayoff.IsNashOnDesignatedFreshRestarts
-        assembly profile hterminates) :
+      terminalPayoff.IsNashOnFreshRestartPresentation
+        assembly roots profile hterminates) :
     terminalPayoff.IsNashAtFreshRestart assembly
       (Arena.HistoryFrom.nil G.base.toArena G.base.init)
       profile
       (hterminates
         (Arena.HistoryFrom.nil G.base.toArena G.base.init)
-        G.init_isDesignatedContinuationRoot) :=
-  hspe _ G.init_isDesignatedContinuationRoot
+        roots.init_isRoot) :=
+  hspe _ roots.init_isRoot
 
 end MeasurableHistoryModel.BoundedTerminalPayoffExtension
 
