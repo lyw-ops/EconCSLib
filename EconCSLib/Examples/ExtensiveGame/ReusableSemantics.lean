@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
 import EconCSLib.GameTheory.ExtensiveGame.Interface.Equilibrium.Discrete
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Semantics
 import Mathlib.MeasureTheory.Constructions.BorelSpace.Basic
 import Mathlib.MeasureTheory.Measure.Dirac
 
@@ -80,23 +81,61 @@ theorem measureOutcome_atTop_interface_smoke
           exact ⟨targetRoot, hroot, rfl⟩)
         distinguishedTopIndex profile
 
-/-- The same arbitrary-index, measure-valued interface can attach directly to
-any observed EFG without rebuilding its complete-history root structure. -/
-noncomputable def observedMeasureSemantics
-    {N U : Type*} (G : ExtensiveGame.ObservedGame N U) :
+/-- The same arbitrary-index, measure-valued interface attaches directly to
+the payoff-free controlled observed carrier. -/
+noncomputable def controlledMeasureSemantics
+    {N : Type*} (G : ExtensiveGame.ControlledObservedGame N) :
     G.ContinuationSemantics where
   Strategy := fun _ => Unit
   Horizon := WithTop ℕ
   Outcome := Measure ℝ
   evaluate := fun _ _ _ => Measure.dirac 0
 
+/-- The state-payoff observed-game spelling is only a compatibility adapter:
+changing or removing its state-payoff type does not change the semantics. -/
+noncomputable def observedMeasureSemantics
+    {N U : Type*} (G : ExtensiveGame.ObservedGame N U) :
+    G.ContinuationSemantics :=
+  controlledMeasureSemantics G.toControlledObservedGame
+
+/-- Reattaching state payoffs of unrelated codomain types does not change the
+generic continuation semantics.
+
+This is a definitional regression for the two-way compatibility boundary:
+`ofControlledObservedGame` adds only the supplied state payoff, while
+`ContinuationSemantics` immediately projects back to the same controlled
+observed carrier. -/
+theorem observedMeasureSemantics_payoffIndependent
+    {N U W : Type*}
+    (G : ExtensiveGame.ControlledObservedGame N)
+    (payoffU : G.base.State → N → U)
+    (payoffW : G.base.State → N → W) :
+    observedMeasureSemantics
+        (ExtensiveGame.ObservedGame.ofControlledObservedGame G payoffU) =
+      observedMeasureSemantics
+        (ExtensiveGame.ObservedGame.ofControlledObservedGame G payoffW) :=
+  rfl
+
+/-- A payoff-free root presentation is used definitionally by the generic
+continuation adapter. -/
+theorem controlledMeasureSemantics_subgameRoot
+    {N : Type*} (G : ExtensiveGame.ControlledObservedGame N)
+    (roots : G.ContinuationRootPresentation)
+    (root : G.base.toArena.HistoryFrom G.base.init) :
+    ((controlledMeasureSemantics G).toIndexedGameFormOnPresentation
+        roots).IsDeclaredRoot root ↔
+      roots.IsRoot root :=
+  Iff.rfl
+
 /-- The observed-semantics adapter reuses the game's admissible-subgame
 predicate definitionally. -/
 theorem observedMeasureSemantics_subgameRoot
     {N U : Type*} (G : ExtensiveGame.ObservedGame N U)
+    (roots : G.RootPresentation)
     (root : G.base.toArena.HistoryFrom G.base.init) :
-    (observedMeasureSemantics G).toIndexedGameForm.IsDeclaredRoot root ↔
-      G.IsDesignatedContinuationRoot root :=
+    ((observedMeasureSemantics G).toIndexedGameFormOnPresentation
+        roots).IsDeclaredRoot root ↔
+      roots.IsRoot root :=
   Iff.rfl
 
 /-- Downstream code consumes every strategy-mode bridge through one operation,
