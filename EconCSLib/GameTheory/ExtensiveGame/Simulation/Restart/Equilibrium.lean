@@ -121,21 +121,22 @@ theorem isNashOnFreshRestarts_iff_isNashOnContinuations_of_compatible
         (hcompatible root hroot)).mpr
           (hnash root hroot)
 
-/-- Under compatibility at every presentation-designated root and for every
-unilateral deviation, fresh-restart designated-root Nash is exactly
-absolute-prefix designated-root Nash. -/
-theorem isNashOnDesignatedFreshRestarts_iff_isNashOnDesignatedContinuations_of_compatible
+/-- Under compatibility at every root of an explicit presentation and for
+every unilateral deviation, fresh-restart Nash is exactly absolute-prefix
+continuation Nash on that presentation. -/
+theorem isNashOnFreshRestartPresentation_iff_isNashOnPresentation_of_compatible
     {presentation : G.MeasurableKernelPresentation model}
     (assembly : presentation.ProfileAssembly)
+    (roots : G.RootPresentation)
     (profile : assembly.PlayerKernelProfile)
     (hcompatible :
       assembly.FreshRestartDeviationCompatibleOn
-        G.IsDesignatedContinuationRoot profile) :
-    evaluation.IsNashOnDesignatedFreshRestarts
-        assembly profile ↔
-      evaluation.IsNashOnDesignatedContinuations assembly profile :=
+        roots.IsRoot profile) :
+    evaluation.IsNashOnFreshRestartPresentation
+        assembly roots profile ↔
+      evaluation.IsNashOnPresentation assembly roots profile :=
   evaluation.isNashOnFreshRestarts_iff_isNashOnContinuations_of_compatible
-    assembly G.IsDesignatedContinuationRoot profile hcompatible
+    assembly roots.IsRoot profile hcompatible
 
 /-- Under compatibility on an explicit lawful subgame system, fresh-restart
 subgame perfection on that system is exactly absolute-prefix subgame
@@ -205,22 +206,6 @@ private theorem isNashOnFreshRestarts_iff_isNashOnContinuations_of_partialStepCo
   evaluation.isNashOnFreshRestarts_iff_isNashOnContinuations_of_compatible
     assembly roots profile hcompatible.state
 
-/-- Distributional local step compatibility at every designated root for the
-baseline and every deviation suffices for fresh/absolute designated-root Nash
-equivalence. -/
-private theorem isNashOnDesignatedFreshRestarts_iff_isNashOnDesignatedContinuations_of_partialStepCompatible
-    {presentation : G.MeasurableKernelPresentation model}
-    (assembly : presentation.ProfileAssembly)
-    (profile : assembly.PlayerKernelProfile)
-    (hcompatible :
-      assembly.FreshRestartDeviationPartialStepCompatibleOn
-        G.IsDesignatedContinuationRoot profile) :
-    evaluation.IsNashOnDesignatedFreshRestarts
-        assembly profile ↔
-      evaluation.IsNashOnDesignatedContinuations assembly profile :=
-  evaluation.isNashOnDesignatedFreshRestarts_iff_isNashOnDesignatedContinuations_of_compatible
-    assembly profile hcompatible.state
-
 /-- Generated-law almost-everywhere one-step kernel compatibility suffices
 for rootwise fresh/absolute Nash equivalence. -/
 private theorem isNashAt_iff_isNashAtContinuation_of_stepKernelCompatible
@@ -253,21 +238,6 @@ private theorem isNashOnFreshRestarts_iff_isNashOnContinuations_of_stepKernelCom
         assembly roots profile :=
   evaluation.isNashOnFreshRestarts_iff_isNashOnContinuations_of_partialStepCompatible
     assembly roots profile hcompatible.partialStep
-
-/-- Generated-law almost-everywhere one-step compatibility at every subgame
-root suffices for fresh/absolute designated-continuation Nash equivalence. -/
-private theorem isNashOnDesignatedFreshRestarts_iff_isNashOnDesignatedContinuations_of_stepKernelCompatible
-    {presentation : G.MeasurableKernelPresentation model}
-    (assembly : presentation.ProfileAssembly)
-    (profile : assembly.PlayerKernelProfile)
-    (hcompatible :
-      assembly.FreshRestartDeviationStepKernelCompatibleOn
-        G.IsDesignatedContinuationRoot profile) :
-    evaluation.IsNashOnDesignatedFreshRestarts
-        assembly profile ↔
-      evaluation.IsNashOnDesignatedContinuations assembly profile :=
-  evaluation.isNashOnDesignatedFreshRestarts_iff_isNashOnDesignatedContinuations_of_partialStepCompatible
-    assembly profile hcompatible.partialStep
 
 /-- Canonically rooted pointwise one-step compatibility suffices for
 rootwise fresh/absolute Nash equivalence. -/
@@ -302,21 +272,6 @@ private theorem isNashOnFreshRestarts_iff_isNashOnContinuations_of_rootedStepKer
   evaluation.isNashOnFreshRestarts_iff_isNashOnContinuations_of_partialStepCompatible
     assembly roots profile hcompatible.partialStep
 
-/-- Canonically rooted pointwise compatibility at every presentation-designated root
-suffices for fresh/absolute designated-continuation Nash equivalence. -/
-private theorem isNashOnDesignatedFreshRestarts_iff_isNashOnDesignatedContinuations_of_rootedStepKernelCompatible
-    {presentation : G.MeasurableKernelPresentation model}
-    (assembly : presentation.ProfileAssembly)
-    (profile : assembly.PlayerKernelProfile)
-    (hcompatible :
-      assembly.FreshRestartDeviationRootedStepKernelCompatibleOn
-        G.IsDesignatedContinuationRoot profile) :
-    evaluation.IsNashOnDesignatedFreshRestarts
-        assembly profile ↔
-      evaluation.IsNashOnDesignatedContinuations assembly profile :=
-  evaluation.isNashOnDesignatedFreshRestarts_iff_isNashOnDesignatedContinuations_of_partialStepCompatible
-    assembly profile hcompatible.partialStep
-
 /-- Primitive canonically rooted next-event compatibility suffices for
 rootwise fresh/absolute Nash equivalence. -/
 private theorem isNashAt_iff_isNashAtContinuation_of_rootedPathStepKernelCompatible
@@ -349,21 +304,6 @@ private theorem isNashOnFreshRestarts_iff_isNashOnContinuations_of_rootedPathSte
         assembly roots profile :=
   evaluation.isNashOnFreshRestarts_iff_isNashOnContinuations_of_partialStepCompatible
     assembly roots profile hcompatible.partialStep
-
-/-- Primitive canonically rooted next-event compatibility at every subgame
-root suffices for fresh/absolute designated-continuation Nash equivalence. -/
-private theorem isNashOnDesignatedFreshRestarts_iff_isNashOnDesignatedContinuations_of_rootedPathStepKernelCompatible
-    {presentation : G.MeasurableKernelPresentation model}
-    (assembly : presentation.ProfileAssembly)
-    (profile : assembly.PlayerKernelProfile)
-    (hcompatible :
-      assembly.FreshRestartDeviationRootedPathStepKernelCompatibleOn
-        G.IsDesignatedContinuationRoot profile) :
-    evaluation.IsNashOnDesignatedFreshRestarts
-        assembly profile ↔
-      evaluation.IsNashOnDesignatedContinuations assembly profile :=
-  evaluation.isNashOnDesignatedFreshRestarts_iff_isNashOnDesignatedContinuations_of_partialStepCompatible
-    assembly profile hcompatible.partialStep
 
 /-- Rooted behavioral action-kernel rebasing suffices for rootwise
 fresh-restart/absolute-continuation Nash equivalence. -/
@@ -398,21 +338,6 @@ private theorem isNashOnFreshRestarts_iff_isNashOnContinuations_of_rootedActionK
   evaluation.isNashOnFreshRestarts_iff_isNashOnContinuations_of_partialStepCompatible
     assembly roots profile hcompatible.partialStep
 
-/-- Rooted behavioral action-kernel rebasing at every presentation-designated root suffices
-for fresh-restart/absolute-continuation designated-continuation Nash equivalence. -/
-private theorem isNashOnDesignatedFreshRestarts_iff_isNashOnDesignatedContinuations_of_rootedActionKernelCompatible
-    {presentation : G.MeasurableKernelPresentation model}
-    (assembly : presentation.ProfileAssembly)
-    (profile : assembly.PlayerKernelProfile)
-    (hcompatible :
-      assembly.FreshRestartDeviationRootedActionKernelCompatibleOn
-        G.IsDesignatedContinuationRoot profile) :
-    evaluation.IsNashOnDesignatedFreshRestarts
-        assembly profile ↔
-      evaluation.IsNashOnDesignatedContinuations assembly profile :=
-  evaluation.isNashOnDesignatedFreshRestarts_iff_isNashOnDesignatedContinuations_of_partialStepCompatible
-    assembly profile hcompatible.partialStep
-
 /-- A deviation-complete root-uniform behavioral certificate suffices for
 rootwise fresh-restart/absolute-continuation Nash equivalence at any root. -/
 private theorem isNashAt_iff_isNashAtContinuation_of_rootUniformActionKernelCompatible
@@ -446,22 +371,6 @@ private theorem isNashOnFreshRestarts_iff_isNashOnContinuations_of_rootUniformAc
   evaluation.isNashOnFreshRestarts_iff_isNashOnContinuations_of_rootedActionKernelCompatible
     assembly roots profile (hcompatible.on roots)
 
-/-- A deviation-complete root-uniform behavioral certificate suffices for
-fresh-restart/absolute-continuation designated-continuation Nash equivalence. -/
-private theorem isNashOnDesignatedFreshRestarts_iff_isNashOnDesignatedContinuations_of_rootUniformActionKernelCompatible
-    {presentation : G.MeasurableKernelPresentation model}
-    (assembly : presentation.ProfileAssembly)
-    (profile : assembly.PlayerKernelProfile)
-    (hcompatible :
-      assembly.FreshRestartDeviationRootedActionKernelCompatible
-        profile) :
-    evaluation.IsNashOnDesignatedFreshRestarts
-        assembly profile ↔
-      evaluation.IsNashOnDesignatedContinuations assembly profile :=
-  evaluation.isNashOnDesignatedFreshRestarts_iff_isNashOnDesignatedContinuations_of_rootedActionKernelCompatible
-    assembly profile
-      (hcompatible.on G.IsDesignatedContinuationRoot)
-
 /-- Pointwise one-step kernel compatibility suffices for rootwise
 fresh/absolute Nash equivalence. -/
 private theorem isNashAt_iff_isNashAtContinuation_of_pointwiseStepKernelCompatible
@@ -494,21 +403,6 @@ private theorem isNashOnFreshRestarts_iff_isNashOnContinuations_of_pointwiseStep
         assembly roots profile :=
   evaluation.isNashOnFreshRestarts_iff_isNashOnContinuations_of_stepKernelCompatible
     assembly roots profile hcompatible.stepKernel
-
-/-- Pointwise one-step compatibility at every presentation-designated root suffices for
-fresh/absolute designated-continuation Nash equivalence. -/
-private theorem isNashOnDesignatedFreshRestarts_iff_isNashOnDesignatedContinuations_of_pointwiseStepKernelCompatible
-    {presentation : G.MeasurableKernelPresentation model}
-    (assembly : presentation.ProfileAssembly)
-    (profile : assembly.PlayerKernelProfile)
-    (hcompatible :
-      assembly.FreshRestartDeviationPointwiseStepKernelCompatibleOn
-        G.IsDesignatedContinuationRoot profile) :
-    evaluation.IsNashOnDesignatedFreshRestarts
-        assembly profile ↔
-      evaluation.IsNashOnDesignatedContinuations assembly profile :=
-  evaluation.isNashOnDesignatedFreshRestarts_iff_isNashOnDesignatedContinuations_of_stepKernelCompatible
-    assembly profile hcompatible.stepKernel
 
 end MeasurableHistoryModel.BoundedPathUtility
 
