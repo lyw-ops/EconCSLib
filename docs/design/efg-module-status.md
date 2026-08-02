@@ -117,6 +117,12 @@ Removal-policy codes keep the register readable:
 
 ## Canonical observed EFG
 
+The flat `Observed.Controlled*` filenames are governed by the role taxonomy in
+[`efg-controlled-api.md`](efg-controlled-api.md). In particular,
+`ControlledInfrastructure` and `ControlledMorphism` are declaration-free
+Compatibility aggregates, while the three `*Compat` modules are Internal
+payoff-aware adapters rather than alternative canonical owners.
+
 | Module | Status | Responsibility | Recommended import | Replacement | May grow | Action | Removal policy |
 |---|---|---|---|---|---|---|---|
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Game` | Canonical | State-payoff observed-game information, two-way payoff attachment/erasure, bijective player/payoff reindexing, external root presentations, and compatibility names for controlled lawful systems | `Finite` | `Controlled`/`ControlledInfrastructure.Subgame` for payoff-free clients | Yes, payoff-aware structure and adapters | Keep | C |
