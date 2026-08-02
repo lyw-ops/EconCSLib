@@ -264,12 +264,6 @@ def symm (e : G.Iso H) : H.Iso G where
         (cast_heq _ _).trans
           (cast_heq _ _).symm
     · exact cast_heq _ _
-  map_designatedContinuationRoot := by
-    intro history
-    simpa using
-      (e.map_designatedContinuationRoot
-        (e.historyIso.stateEquiv.symm history)).symm
-
 
 end Iso
 
