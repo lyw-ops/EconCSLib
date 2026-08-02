@@ -131,3 +131,15 @@ structure StrictCompilerPreservation
 
 /-- Compiler package for a serialization or abstraction whose visible source
 step may require a nonempty finite target trace. -/
+structure WeakCompilerPreservation
+    (source target : Arena)
+    (sourceInit : source.State)
+    (targetInit : target.State) where
+  /-- Weak step-matching relation. -/
+  simulation : source.WeakSimulation target
+  /-- Initial states are related. -/
+  initial : simulation.Rel sourceInit targetInit
+  /-- Each visible source step makes target progress. -/
+  progressing : simulation.Progressing
+
+end ExtensiveGame.Preservation
