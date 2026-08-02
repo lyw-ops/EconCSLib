@@ -640,3 +640,25 @@ theorem SignalRecallCertificate.signalPerfectRecall
   rw [hsame]
 
 /-- Factorization certificate for payoff-free public recall. -/
+structure PublicRecallCertificate
+    (G : ControlledObservedGame N) where
+  /-- Public-signal sequence assigned to each current public observation. -/
+  rememberedPublicSignals :
+    G.PublicObservation → List G.PublicObservation
+  /-- The assigned sequence agrees with every represented history. -/
+  rememberedPublicSignals_publicObserve :
+    ∀ history : G.base.History,
+      rememberedPublicSignals (G.publicObserve history) =
+        G.publicSignalHistory history
+
+/-- A payoff-free public-signal factorization certificate proves public
+recall. -/
+theorem PublicRecallCertificate.hasPublicPerfectRecall
+    (certificate : G.PublicRecallCertificate) :
+    G.HasPublicPerfectRecall := by
+  intro first second hsame
+  rw [← certificate.rememberedPublicSignals_publicObserve first]
+  rw [← certificate.rememberedPublicSignals_publicObserve second]
+  rw [hsame]
+
+end ExtensiveGame.ControlledObservedGame
