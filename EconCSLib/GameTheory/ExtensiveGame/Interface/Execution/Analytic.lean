@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
 import EconCSLib.GameTheory.ExtensiveGame.Interface.Execution.Infinite
+import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledAnalyticLaw
 import EconCSLib.GameTheory.ExtensiveGame.Simulation.Kernel.Arena
 import EconCSLib.GameTheory.ExtensiveGame.Simulation.Kernel.Execution
 import EconCSLib.GameTheory.ExtensiveGame.Simulation.Kernel.Endpoint
@@ -30,11 +31,18 @@ terminal-aware execution, finite endpoint and infinite event-time path laws,
 state/history/event/information-dependent action policies, abstract-action
 realization, and observed profile assembly.
 
+`ControlledAnalyticLaw` packages a measurable-kernel profile assembly into
+the same lawful `ControlledObservedGame.CompletePathLawSemantics` used by the
+discrete behavioral constructor; canonical deterministic-history legality is
+an explicit adapter premise.
+
 `Arena.pathLaw_eq_historyKernelArena_toMeasurable_pathMeasure` identifies the
 complete discrete history-path law with the analytic path measure after the
-canonical history-state lift. The infinite-discrete and non-atomic analytic
-entries therefore share one formally proved infinite-path semantics, rather
-than merely agreeing on single-coordinate marginals.
+canonical history-state lift. Thus the discrete embedding has a proved
+whole-path coherence theorem, rather than merely single-coordinate
+agreement. This does not assert a path-law equivalence for every non-atomic
+presentation; those presentations enter the common carrier through their
+own explicit adapter evidence.
 
 Legality is stated as genuine almost-sure membership in dependent action
 fibers. Numerical measure-one lemmas require local measurability assumptions.
