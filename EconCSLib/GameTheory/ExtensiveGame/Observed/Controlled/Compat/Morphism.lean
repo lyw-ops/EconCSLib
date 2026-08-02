@@ -9,13 +9,13 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.Morphism.Inverse
 /-!
 # Payoff-aware adapters for controlled observed-game morphisms
 
-API role: **downstream payoff-aware adapter**. Despite the shared
-`Controlled*` filename prefix, this is not a payoff-free declaration owner
-and canonical controlled modules must never import it.
+API role: **downstream payoff-aware adapter**. Its location under
+`Controlled.Compat` marks it as non-canonical, and canonical controlled
+modules must never import it.
 
-The strict structural relation is owned by `ControlledMorphism`.  This module
-adds only the terminal-payoff square and conversion from the legacy
-`ObservedGame.Iso`.
+The strict structural relation is owned by `Controlled.Morphism.Core`. This
+module adds only the terminal-payoff square and conversion from the
+payoff-aware `ObservedGame.Iso`.
 -/
 
 namespace ExtensiveGame.ObservedGame
