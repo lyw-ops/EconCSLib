@@ -438,6 +438,57 @@ theorem pathLaw_ae_legalTransition
   rw [hjoint] at hcomp
   exact MeasureTheory.ae_of_ae_map (by fun_prop) hcomp
 
+/-- Almost every stochastic trajectory is a complete legal play in the
+measure-free Arena semantics.
+
+The law remains defined on the ambient function space, while this theorem
+identifies its full-measure legal support. This avoids introducing a second
+probabilistic notion of play or requiring a measurable structure on the
+bundled `CompletePlayFromHistory` type. -/
+theorem pathLaw_ae_isCompletePlayPathFrom
+    [(s : A.State) → Decidable (A.IsTerminal s)]
+    [MeasurableSpace (A.HistoryFrom start)]
+    [MeasurableSingletonClass (A.HistoryFrom start)]
+    [Countable (A.HistoryFrom start)]
+    (policy : A.StochasticHistoryPolicy start)
+    (current : A.HistoryFrom start) :
+    ∀ᵐ path ∂pathLaw policy current,
+      A.IsCompletePlayPathFrom current path := by
+  have hinitial :
+      ∀ᵐ path ∂pathLaw policy current, path 0 = current := by
+    have hmeasurable :
+        MeasurableSet
+          {path : ℕ → A.HistoryFrom start | path 0 = current} :=
+      (measurable_pi_apply 0 :
+        Measurable
+          (fun path : ℕ → A.HistoryFrom start => path 0))
+        (measurableSet_singleton current)
+    change
+      {path : ℕ → A.HistoryFrom start | path 0 = current} ∈
+        ae (pathLaw policy current)
+    rw [MeasureTheory.mem_ae_iff_prob_eq_one hmeasurable]
+    change
+      pathLaw policy current
+          ((fun path : ℕ → A.HistoryFrom start => path 0) ⁻¹'
+            {current}) =
+        1
+    rw [← Measure.map_apply
+      (measurable_pi_apply 0 :
+        Measurable
+          (fun path : ℕ → A.HistoryFrom start => path 0))
+      (measurableSet_singleton current)]
+    rw [pathLaw_initial]
+    simp
+  filter_upwards
+    [hinitial, pathLaw_ae_legalTransition policy current]
+      with path hzero hlegal
+  refine ⟨hzero, fun n => ?_⟩
+  rcases hlegal n with hstay | hstep
+  · exact Or.inl hstay
+  · rcases hstep with
+      ⟨hnonterminal, action, hsupport, hnext⟩
+    exact Or.inr ⟨action, hnext⟩
+
 /-- Terminal histories are absorbing almost surely along the infinite path
 law. -/
 theorem pathLaw_terminal_absorbing
