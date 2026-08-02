@@ -1,0 +1,352 @@
+/-
+Copyright (c) 2026 EconCSLib contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+
+import EconCSLib.GameTheory.ExtensiveGame.Execution.InfiniteTrajectory
+import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphism.Core
+
+/-!
+# Payoff-free complete-path probability semantics
+
+This module owns the representation-independent probability law on complete,
+occurrence-sensitive history paths.  `CompletePathLawSemantics` is based only
+on `ControlledObservedGame`: it mentions no payoff, PMF, countability
+assumption, local Markov kernel, or particular strategy formalism.
+
+Every stored law is certified to be a probability measure and to satisfy the
+canonical terminal-absorbing complete-play predicate almost surely.  Local
+execution or chance-kernel coherence is deliberately orthogonal and is
+expressed by `RealizesExecution` or `ExecutionCoherent`.
+
+Same-game strategy realization and cross-game functional realization are
+separate structures.  A cross-game realization records measurable history and
+path maps and exact pushforward equality.  Source deviation mapping, reverse
+target-deviation coverage, and strategy-space isomorphism remain distinct.
+-/
+
+open MeasureTheory ProbabilityTheory
+
+namespace ExtensiveGame.ControlledObservedGame
+
+universe uN uStrategy uOutcome
+
+variable {N : Type uN}
+
+/-! ## Maximum lawful probability semantics -/
+
+/-- Probability semantics on complete occurrence-sensitive history paths.
+
+The legality field uses `Arena.IsCompletePlayPathFrom`, which already states
+the initial-coordinate, one-legal-step, and terminal-absorption laws. -/
+structure CompletePathLawSemantics
+    (G : ControlledObservedGame N)
+    [MeasurableSpace G.base.History] where
+  /-- One strategy carrier per player. -/
+  Strategy : N → Type uStrategy
+  /-- Complete-path law from every current absolute history. -/
+  pathLaw :
+    (profile : ∀ i, Strategy i) →
+      G.base.History →
+        Measure (ℕ → G.base.History)
+  /-- Every complete-path law has total mass one. -/
+  pathLaw_isProbability :
+    ∀ (profile : ∀ i, Strategy i)
+      (current : G.base.History),
+      IsProbabilityMeasure (pathLaw profile current)
+  /-- Almost every generated path is a canonical legal complete play. -/
+  pathLaw_ae_legal :
+    ∀ (profile : ∀ i, Strategy i)
+      (current : G.base.History),
+      ∀ᵐ path ∂pathLaw profile current,
+        G.base.toArena.IsCompletePlayPathFrom current path
+
+namespace CompletePathLawSemantics
+
+variable {G : ControlledObservedGame N}
+  [MeasurableSpace G.base.History]
+
+/-- Profiles for one complete-path semantic model. -/
+abbrev Profile (S : G.CompletePathLawSemantics) :=
+  ∀ i, S.Strategy i
+
+/-- The probability certificate stored by a semantic model is available as a
+local typeclass instance. -/
+instance instPathLawIsProbability
+    (S : G.CompletePathLawSemantics)
+    (profile : S.Profile)
+    (current : G.base.History) :
+    IsProbabilityMeasure (S.pathLaw profile current) :=
+  S.pathLaw_isProbability profile current
+
+/-- Equality of complete-path probability laws at one current history. -/
+def CompletePathLawEquivalentAt
+    (S T : G.CompletePathLawSemantics)
+    (source : S.Profile) (target : T.Profile)
+    (current : G.base.History) : Prop :=
+  S.pathLaw source current =
+    T.pathLaw target current
+
+/-- Coordinate evaluation on the history-path space is measurable. -/
+theorem measurable_pathCoordinate (time : ℕ) :
+    Measurable (fun path : ℕ → G.base.History => path time) :=
+  measurable_pi_apply time
+
+/-- The law of the complete history at one bounded event coordinate. -/
+noncomputable def boundedCompleteHistoryLaw
+    (S : G.CompletePathLawSemantics)
+    (profile : S.Profile)
+    (current : G.base.History)
+    (time : ℕ) :
+    Measure G.base.History :=
+  (S.pathLaw profile current).map
+    (fun path => path time)
+
+/-- Equality of bounded complete-history laws. -/
+def BoundedCompleteHistoryLawEquivalentAt
+    (S T : G.CompletePathLawSemantics)
+    (source : S.Profile) (target : T.Profile)
+    (current : G.base.History)
+    (time : ℕ) : Prop :=
+  S.boundedCompleteHistoryLaw source current time =
+    T.boundedCompleteHistoryLaw target current time
+
+/-- Complete-path equality implies every coordinate-history equality. -/
+theorem CompletePathLawEquivalentAt.boundedCompleteHistory
+    {S T : G.CompletePathLawSemantics}
+    {source : S.Profile} {target : T.Profile}
+    {current : G.base.History}
+    (hpath :
+      S.CompletePathLawEquivalentAt
+        T source target current)
+    (time : ℕ) :
+    S.BoundedCompleteHistoryLawEquivalentAt
+      T source target current time := by
+  unfold BoundedCompleteHistoryLawEquivalentAt
+    boundedCompleteHistoryLaw
+  rw [hpath]
+
+/-- Push a bounded history law through an explicitly measurable
+interpretation. -/
+noncomputable def interpretedHistoryLaw
+    (S : G.CompletePathLawSemantics)
+    (profile : S.Profile)
+    (current : G.base.History)
+    (time : ℕ)
+    {Outcome : Type uOutcome}
+    [MeasurableSpace Outcome]
+    (interpret : G.base.History → Outcome)
+    (_hinterpret : Measurable interpret) :
+    Measure Outcome :=
+  (S.boundedCompleteHistoryLaw
+    profile current time).map interpret
+
+/-- Bounded history-law equality is preserved by every common measurable
+interpretation. -/
+theorem BoundedCompleteHistoryLawEquivalentAt.interpreted
+    {S T : G.CompletePathLawSemantics}
+    {source : S.Profile} {target : T.Profile}
+    {current : G.base.History}
+    {time : ℕ}
+    (hhistory :
+      S.BoundedCompleteHistoryLawEquivalentAt
+        T source target current time)
+    {Outcome : Type uOutcome}
+    [MeasurableSpace Outcome]
+    (interpret : G.base.History → Outcome)
+    (hinterpret : Measurable interpret) :
+    S.interpretedHistoryLaw
+        source current time interpret hinterpret =
+      T.interpretedHistoryLaw
+        target current time interpret hinterpret := by
+  unfold interpretedHistoryLaw
+  rw [hhistory]
+
+/-! ## Downstream measurable interpretations -/
+
+/-- Terminal-history law equality under an explicitly measurable
+terminalization map. -/
+def TerminalHistoryLawEquivalentAt
+    (S T : G.CompletePathLawSemantics)
+    (source : S.Profile) (target : T.Profile)
+    (current : G.base.History)
+    (time : ℕ)
+    (terminalize : G.base.History → G.base.History)
+    (hterminalize : Measurable terminalize) : Prop :=
+  S.interpretedHistoryLaw
+      source current time terminalize hterminalize =
+    T.interpretedHistoryLaw
+      target current time terminalize hterminalize
+
+/-- Outcome-law equality under an explicitly measurable interpretation. -/
+def OutcomeLawEquivalentAt
+    (S T : G.CompletePathLawSemantics)
+    (source : S.Profile) (target : T.Profile)
+    (current : G.base.History)
+    (time : ℕ)
+    {Outcome : Type uOutcome}
+    [MeasurableSpace Outcome]
+    (outcome : G.base.History → Outcome)
+    (houtcome : Measurable outcome) : Prop :=
+  S.interpretedHistoryLaw
+      source current time outcome houtcome =
+    T.interpretedHistoryLaw
+      target current time outcome houtcome
+
+/-- Payoff-law equality is a downstream measurable outcome interpretation. -/
+abbrev PayoffLawEquivalentAt
+    (S T : G.CompletePathLawSemantics)
+    (source : S.Profile) (target : T.Profile)
+    (current : G.base.History)
+    (time : ℕ)
+    {Payoff : Type uOutcome}
+    [MeasurableSpace Payoff]
+    (payoff : G.base.History → Payoff)
+    (hpayoff : Measurable payoff) : Prop :=
+  S.OutcomeLawEquivalentAt
+    T source target current time payoff hpayoff
+
+/-- Bounded history equality implies terminal-history equality. -/
+theorem BoundedCompleteHistoryLawEquivalentAt.terminalHistory
+    {S T : G.CompletePathLawSemantics}
+    {source : S.Profile} {target : T.Profile}
+    {current : G.base.History}
+    {time : ℕ}
+    (hhistory :
+      S.BoundedCompleteHistoryLawEquivalentAt
+        T source target current time)
+    (terminalize : G.base.History → G.base.History)
+    (hterminalize : Measurable terminalize) :
+    S.TerminalHistoryLawEquivalentAt
+      T source target current time terminalize hterminalize :=
+  hhistory.interpreted terminalize hterminalize
+
+/-- Bounded history equality implies every common measurable outcome-law
+equality. -/
+theorem BoundedCompleteHistoryLawEquivalentAt.outcome
+    {S T : G.CompletePathLawSemantics}
+    {source : S.Profile} {target : T.Profile}
+    {current : G.base.History}
+    {time : ℕ}
+    (hhistory :
+      S.BoundedCompleteHistoryLawEquivalentAt
+        T source target current time)
+    {Outcome : Type uOutcome}
+    [MeasurableSpace Outcome]
+    (outcome : G.base.History → Outcome)
+    (houtcome : Measurable outcome) :
+    S.OutcomeLawEquivalentAt
+      T source target current time outcome houtcome :=
+  hhistory.interpreted outcome houtcome
+
+/-- Equality of outcome laws gives equality of arbitrary integrals.
+
+This theorem deliberately does not call the integral an expected utility. -/
+theorem OutcomeLawEquivalentAt.integral_eq
+    {S T : G.CompletePathLawSemantics}
+    {source : S.Profile} {target : T.Profile}
+    {current : G.base.History}
+    {time : ℕ}
+    {Outcome : Type uOutcome}
+    [MeasurableSpace Outcome]
+    {outcome : G.base.History → Outcome}
+    {houtcome : Measurable outcome}
+    (hlaw :
+      S.OutcomeLawEquivalentAt
+        T source target current time outcome houtcome)
+    (integrand : Outcome → ℝ) :
+    ∫ value,
+        integrand value ∂
+          S.interpretedHistoryLaw
+            source current time outcome houtcome =
+      ∫ value,
+        integrand value ∂
+          T.interpretedHistoryLaw
+            target current time outcome houtcome := by
+  rw [hlaw]
+
+/-- Integrability transfers to the target because the two outcome laws are
+equal; callers need not repeat the same hypothesis. -/
+theorem OutcomeLawEquivalentAt.integrable_target
+    {S T : G.CompletePathLawSemantics}
+    {source : S.Profile} {target : T.Profile}
+    {current : G.base.History}
+    {time : ℕ}
+    {Outcome : Type uOutcome}
+    [MeasurableSpace Outcome]
+    {outcome : G.base.History → Outcome}
+    {houtcome : Measurable outcome}
+    (hlaw :
+      S.OutcomeLawEquivalentAt
+        T source target current time outcome houtcome)
+    {utility : Outcome → ℝ}
+    (hintegrable :
+      Integrable utility
+        (S.interpretedHistoryLaw
+          source current time outcome houtcome)) :
+    Integrable utility
+      (T.interpretedHistoryLaw
+        target current time outcome houtcome) := by
+  rw [← hlaw]
+  exact hintegrable
+
+/-- Expected-utility equality with explicit measurable-utility and
+integrability hypotheses.  Target integrability is derived from law equality. -/
+theorem OutcomeLawEquivalentAt.expectedUtility
+    {S T : G.CompletePathLawSemantics}
+    {source : S.Profile} {target : T.Profile}
+    {current : G.base.History}
+    {time : ℕ}
+    {Outcome : Type uOutcome}
+    [MeasurableSpace Outcome]
+    {outcome : G.base.History → Outcome}
+    {houtcome : Measurable outcome}
+    (hlaw :
+      S.OutcomeLawEquivalentAt
+        T source target current time outcome houtcome)
+    (utility : Outcome → ℝ)
+    (_hutility : Measurable utility)
+    (hintegrable :
+      Integrable utility
+        (S.interpretedHistoryLaw
+          source current time outcome houtcome)) :
+    ∫ value,
+        utility value ∂
+          S.interpretedHistoryLaw
+            source current time outcome houtcome =
+      ∫ value,
+        utility value ∂
+          T.interpretedHistoryLaw
+            target current time outcome houtcome := by
+  have _htarget := hlaw.integrable_target hintegrable
+  exact hlaw.integral_eq utility
+
+/-! ## Execution coherence outside the maximum carrier -/
+
+/-- A semantic path law realizes a separately supplied execution
+implementation exactly. -/
+def RealizesExecution
+    (S : G.CompletePathLawSemantics)
+    (executionLaw :
+      S.Profile → G.base.History →
+        Measure (ℕ → G.base.History)) : Prop :=
+  ∀ profile current,
+    S.pathLaw profile current =
+      executionLaw profile current
+
+/-- A general external coherence predicate holds for every semantic law.
+
+This accommodates local-kernel, correlated, mediator, or other implementation
+certificates without forcing a Markov factorization into the maximum carrier. -/
+def ExecutionCoherent
+    (S : G.CompletePathLawSemantics)
+    (coherence :
+      S.Profile → G.base.History →
+        Measure (ℕ → G.base.History) → Prop) : Prop :=
+  ∀ profile current,
+    coherence profile current
+      (S.pathLaw profile current)
+
+/-! ## Same-game realization -/
+
+/-- One-way realization between two strategy semantics on the same game. -/
