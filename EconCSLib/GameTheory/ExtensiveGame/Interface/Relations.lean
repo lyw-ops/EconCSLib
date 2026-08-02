@@ -5,11 +5,20 @@ Released under Apache 2.0 license as described in the file LICENSE.
 
 import EconCSLib.GameTheory.ExtensiveGame.Interface.Execution.Analytic
 import EconCSLib.GameTheory.ExtensiveGame.Interface.Relations.Discrete
+import EconCSLib.GameTheory.ExtensiveGame.Observed.PathLawEquivalence
+import EconCSLib.GameTheory.ExtensiveGame.Relations.Preservation
 
 /-!
 # EconCSLib.GameTheory.ExtensiveGame.Interface.Relations
 
 Compatibility aggregate for structural/PMF relations and analytic execution.
+It additionally exposes lawful complete-path probability semantics and
+same-game/cross-game realization interfaces, whose semantic object is the
+full path measure rather than only finite marginals.  Importing the interface
+does not itself prove a path-law transfer for every compiler.
+It also exposes the formal preservation-certificate vocabulary used by the
+preservation matrix, including law realizations, couplings, strict/weak
+relations, and compiler-specific packages.
 
 New structural and PMF clients should import `Interface.Relations.Discrete`;
 it exposes strict morphisms and isomorphisms, structural information
