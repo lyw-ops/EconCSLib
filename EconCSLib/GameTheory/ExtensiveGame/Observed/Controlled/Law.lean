@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
 import EconCSLib.GameTheory.ExtensiveGame.Execution.InfiniteTrajectory
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphism.Core
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism.Core
 
 /-!
 # Payoff-free complete-path probability semantics
