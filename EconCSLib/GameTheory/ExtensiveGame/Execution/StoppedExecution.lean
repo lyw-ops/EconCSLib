@@ -3,7 +3,7 @@ Copyright (c) 2026 EconCSLib contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
-import EconCSLib.GameTheory.ExtensiveGame.Execution.History
+import EconCSLib.GameTheory.ExtensiveGame.Execution.CompletePlay
 
 /-!
 # EconCSLib.GameTheory.ExtensiveGame.Execution.StoppedExecution
@@ -224,6 +224,60 @@ theorem stoppedHistory_terminal_or_length_eq
       (HistoryFrom.nil A start) fuel with hterminal | hlength
   · exact Or.inl hterminal
   · exact Or.inr (by simpa [stoppedHistory, HistoryFrom.nil] using hlength)
+
+/-! ### Complete-play realization -/
+
+/-- The terminal-aware finite executor at every fuel value forms one legal
+terminal-absorbing complete play from the supplied absolute history. -/
+def HistoryPolicy.completePlayFrom
+    [(s : A.State) → Decidable (A.IsTerminal s)]
+    (policy : A.HistoryPolicy start)
+    (current : A.HistoryFrom start) :
+    A.CompletePlayFromHistory current where
+  historyAt fuel := stoppedHistoryFrom policy current fuel
+  historyAt_zero := rfl
+  step n := by
+    rw [stoppedHistoryFrom_add policy current n 1]
+    let reached := stoppedHistoryFrom policy current n
+    change
+      (A.IsTerminal reached.1 ∧
+          stoppedHistoryFrom policy reached 1 = reached) ∨
+        A.IsChildFrom
+          (stoppedHistoryFrom policy reached 1) reached
+    by_cases hterminal : A.IsTerminal reached.1
+    · exact Or.inl
+        ⟨hterminal,
+          stoppedHistoryFrom_eq_self_of_terminal
+            policy reached hterminal 1⟩
+    · rw [stoppedHistoryFrom_succ_of_not_terminal
+        policy reached 0 hterminal]
+      exact Or.inr
+        (IsChildFrom.snoc reached
+          (policy reached hterminal))
+
+/-- The complete play induced by a history policy from the empty history. -/
+def HistoryPolicy.completePlay
+    [(s : A.State) → Decidable (A.IsTerminal s)]
+    (policy : A.HistoryPolicy start) :
+    A.CompletePlayFrom start :=
+  policy.completePlayFrom (HistoryFrom.nil A start)
+
+@[simp]
+theorem HistoryPolicy.completePlayFrom_historyAt
+    [(s : A.State) → Decidable (A.IsTerminal s)]
+    (policy : A.HistoryPolicy start)
+    (current : A.HistoryFrom start) (fuel : ℕ) :
+    (policy.completePlayFrom current).historyAt fuel =
+      stoppedHistoryFrom policy current fuel :=
+  rfl
+
+@[simp]
+theorem HistoryPolicy.completePlay_historyAt
+    [(s : A.State) → Decidable (A.IsTerminal s)]
+    (policy : A.HistoryPolicy start) (fuel : ℕ) :
+    policy.completePlay.historyAt fuel =
+      stoppedHistory policy fuel :=
+  rfl
 
 end Arena
 
