@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
 import EconCSLib.GameTheory.ExtensiveGame.Execution.StoppedExecution
+import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.Subgame
 
 /-!
 # EconCSLib.GameTheory.ExtensiveGame.Observed.Game
@@ -35,27 +36,30 @@ information-indexed pure-strategy interfaces.
 
 * `ExtensiveGame.ObservedGame` — observations and information-indexed actions
   over a base extensive game.
-* `ObservedGame.historyInformationPresentation` — full-history private
-  observation/information with an explicit public projection.
-* `ObservedGame.completeInformationPresentation` — the canonical full-history
-  observation and information presentation of an ordinary `ExtensiveGame`.
+* `ObservedGame.ofControlledObservedGame` and `toControlledObservedGame` —
+  attach an arbitrary state payoff to, or erase it from, the payoff-free
+  controlled observed carrier.
+* `ObservedGame.relabelPlayers` and `relabelPureProfileEquiv` — reindex the
+  player carrier, payoff coordinates, and dependent pure profiles along an
+  equivalence.
+* `ObservedGame.historyInformation` — the legacy all-history information
+  carrier with an explicit public projection.
+* `ObservedGame.decisionHistoryInformation` — full-history private observation
+  with decision-only information states.
+* `ObservedGame.completeInformation` — the canonical root-free
+  decision-history complete-information carrier of an ordinary
+  `ExtensiveGame`.
 * `ObservedGame.ContinuationRootPresentation.initialOnly` and
   `.allHistories` — explicit, orthogonal choices of presentation-designated
   continuation roots.
 * `ObservedGame.PureStrategy` and `PureProfile` — game-bound contingent plans.
 * `PureProfile.toHistoryPolicy` — terminal-aware execution of a no-chance
   profile.
-* `ObservedGame.IsDesignatedContinuationRoot` — history roots designated by
-  the presentation for continuation semantics; lawfulness as standard
-  subgames is separate.
-* `ObservedGame.IsLawfulSubgameRoot` — the structural proper-root singleton
-  and information-closure criterion for one standard-subgame root, with the
-  whole-game initial-root convention and independent of presentation
-  designation.
-* `ObservedGame.SubgameSystem` — an explicit, possibly conservative nonempty
-  system of designated lawful roots.
-* `ObservedGame.CompleteSubgameSystem` — a `SubgameSystem` whose selected
-  roots are exactly all structurally lawful roots.
+* `ObservedGame.RootPresentation` — external history roots selected for one
+  continuation analysis; lawfulness as standard subgames is separate.
+* `ObservedGame.IsLawfulSubgameRoot`, `SubgameSystem`, and
+  `CompleteSubgameSystem` — compatibility names projected definitionally from
+  the canonical payoff-free `ControlledObservedGame` infrastructure.
 * `ObservedGame.stoppedHistoryFrom`, `stoppedPayoffFrom`, `stoppedHistory`, and
   `stoppedPayoff` — continuation and root profile semantics.
 -/
@@ -74,7 +78,7 @@ player-decision information; `infoAt` and `actionEquiv` are therefore required
 only when the history is controlled by the given player. -/
 structure ObservedGame (N : Type uN) (U : Type uU) where
   /-- The underlying transition, mover, and payoff data. -/
-  base : ExtensiveGame.{uN, uU, uA, uS} N U
+  base : ExtensiveGame.{uN, uU, uS, uA} N U
   /-- Player `i`'s observation type, defined at every history. -/
   Observation : N → Type uO
   /-- Public observation type. -/
@@ -116,22 +120,120 @@ structure ObservedGame (N : Type uN) (U : Type uU) where
     ∀ (h : base.toArena.HistoryFrom base.init) (i : N)
       (hmover : base.mover h.1 = some i),
       InfoAction i (infoAt h i hmover) ≃ base.Action h.1
-  /-- Histories designated by this presentation as continuation roots.
-
-  This is explicit data because information-set closure and public-state
-  conditions vary between EFG presentations.  The predicate alone carries no
-  claim that these are all, or only, the roots of standard proper subgames.
-  Standard SPE uses a separate `SubgameSystem` lawfulness certificate. -/
-  IsDesignatedContinuationRoot :
-    base.toArena.HistoryFrom base.init → Prop
-  /-- The initial empty history is always a designated continuation root. -/
-  init_isDesignatedContinuationRoot :
-    IsDesignatedContinuationRoot
-      (Arena.HistoryFrom.nil base.toArena base.init)
 
 namespace ObservedGame
 
-variable {N U : Type*} (G : ObservedGame N U)
+variable {N M U : Type*} (G : ObservedGame N U)
+
+/-- Forget the state-payoff interpretation, retaining exactly the payoff-free
+controlled dynamics and observation/information structure.
+
+This is the additive migration projection to the canonical root-free carrier.
+All state, action, transition, mover, observation, information, and
+information-action data are preserved definitionally. -/
+def toControlledObservedGame (G : ObservedGame N U) :
+    ControlledObservedGame N where
+  base := G.base.toControlledGame
+  Observation := G.Observation
+  PublicObservation := G.PublicObservation
+  observe := G.observe
+  publicObserve := G.publicObserve
+  publicOf := G.publicOf
+  observe_public := G.observe_public
+  InfoState := G.InfoState
+  infoObserve := G.infoObserve
+  infoAt := G.infoAt
+  infoAt_observe := G.infoAt_observe
+  InfoAction := G.InfoAction
+  actionEquiv := G.actionEquiv
+
+@[simp]
+theorem toControlledObservedGame_base
+    (G : ObservedGame N U) :
+    G.toControlledObservedGame.base = G.base.toControlledGame :=
+  rfl
+
+/-- Add an arbitrary endpoint-state payoff interpretation to a payoff-free
+controlled observed game.
+
+This is the downstream inverse construction to
+`ObservedGame.toControlledObservedGame`: it preserves the entire controlled
+observation/information carrier definitionally and adds only the supplied
+state payoff. Path objectives and solution concepts remain external. -/
+def ofControlledObservedGame
+    (G : ControlledObservedGame N)
+    (payoff : G.base.State → N → U) :
+    ObservedGame N U where
+  base := ExtensiveGame.ofControlledGame G.base payoff
+  Observation := G.Observation
+  PublicObservation := G.PublicObservation
+  observe := G.observe
+  publicObserve := G.publicObserve
+  publicOf := G.publicOf
+  observe_public := G.observe_public
+  InfoState := G.InfoState
+  infoObserve := G.infoObserve
+  infoAt := G.infoAt
+  infoAt_observe := G.infoAt_observe
+  InfoAction := G.InfoAction
+  actionEquiv := G.actionEquiv
+
+@[simp]
+theorem ofControlledObservedGame_toControlledObservedGame
+    (G : ControlledObservedGame N)
+    (payoff : G.base.State → N → U) :
+    (ofControlledObservedGame G payoff).toControlledObservedGame = G :=
+  rfl
+
+@[simp]
+theorem ofControlledObservedGame_payoff
+    (G : ControlledObservedGame N)
+    (payoff : G.base.State → N → U)
+    (state : G.base.State) (i : N) :
+    (ofControlledObservedGame G payoff).base.payoff state i =
+      payoff state i :=
+  rfl
+
+/-- Reattaching an observed game's existing state payoff after the payoff-free
+projection recovers the original observed game. -/
+@[simp]
+theorem ofControlledObservedGame_toControlledObservedGame_payoff
+    (G : ObservedGame N U) :
+    ofControlledObservedGame
+        G.toControlledObservedGame G.base.payoff =
+      G := by
+  cases G
+  rfl
+
+/-- Relabel an observed game's player carrier along an equivalence.
+
+The controlled observation/information carrier uses the canonical payoff-free
+relabeling. The endpoint payoff vector is reindexed by the same equivalence,
+so no player-specific outcome coordinate is lost. -/
+def relabelPlayers
+    (G : ObservedGame N U)
+    (e : M ≃ N) :
+    ObservedGame M U :=
+  ofControlledObservedGame
+    (G.toControlledObservedGame.relabelPlayers e)
+    (fun state i => G.base.payoff state (e i))
+
+@[simp]
+theorem relabelPlayers_toControlledObservedGame
+    (G : ObservedGame N U)
+    (e : M ≃ N) :
+    (G.relabelPlayers e).toControlledObservedGame =
+      G.toControlledObservedGame.relabelPlayers e :=
+  rfl
+
+@[simp]
+theorem relabelPlayers_payoff
+    (G : ObservedGame N U)
+    (e : M ≃ N)
+    (state : G.base.State) (i : M) :
+    (G.relabelPlayers e).base.payoff state i =
+      G.base.payoff state (e i) :=
+  rfl
 
 /-- Presentation-level selection of designated continuation roots for an
 ordinary extensive game.
@@ -195,6 +297,45 @@ theorem allHistories_isRoot
   trivial
 
 end ContinuationRootPresentation
+
+/-- A root presentation for an already constructed observed game. -/
+abbrev RootPresentation (G : ObservedGame N U) :=
+  ContinuationRootPresentation G.base
+
+/-- Migrate a legacy root presentation to the root-free payoff-free observed
+carrier. -/
+def ContinuationRootPresentation.toControlled
+    {base : ExtensiveGame N U}
+    (roots : ContinuationRootPresentation base)
+    (G : ObservedGame N U)
+    (hbase : G.base = base) :
+    G.toControlledObservedGame.ContinuationRootPresentation := by
+  subst hbase
+  exact
+    { IsRoot := roots.IsRoot
+      init_isRoot := roots.init_isRoot }
+
+/-- An `ObservedGame` root presentation coerces losslessly to the canonical
+payoff-free root presentation of its controlled projection.
+
+This keeps established dot-notation calls such as
+`system.IsVisibleIn roots` compatible after lawful subgame systems are
+definitionally owned by `ControlledObservedGame`. -/
+instance rootPresentationCoeToControlled (G : ObservedGame N U) :
+    Coe G.RootPresentation
+      G.toControlledObservedGame.ContinuationRootPresentation where
+  coe roots :=
+    roots.toControlled G rfl
+
+@[simp]
+theorem rootPresentation_coe_isRoot
+    {G : ObservedGame N U}
+    (roots : G.RootPresentation)
+    (root : G.base.toArena.HistoryFrom G.base.init) :
+    ((roots :
+      G.toControlledObservedGame.ContinuationRootPresentation).IsRoot root) ↔
+      roots.IsRoot root :=
+  Iff.rfl
 
 namespace CompleteInformation
 
@@ -261,37 +402,45 @@ theorem trivial_publicObserve
 
 end PublicObservationPresentation
 
-/-- Player `i`'s complete-history information state.
+/-- Player `i`'s legacy all-history information state.
 
 This intentionally includes histories where `i` does not move. Consequently
 `PureStrategy i` asks for an action at every complete history; callers whose
 action family is empty away from `i`'s decision histories should instead use
-a decision-history subtype, as the occurrence-sensitive `GameTree` compiler
-does. -/
+a decision-history presentation. -/
 abbrev InfoState (base : ExtensiveGame N U) (_i : N) :=
   History base
 
-/-- Legal actions at a complete decision history. -/
+/-- Endpoint actions for a legacy all-history information carrier. -/
 abbrev InfoAction (base : ExtensiveGame N U) (i : N)
     (information : InfoState base i) :=
   base.Action information.1
 
+/-- A complete history whose mover label is player `i`.
+
+This is the canonical perfect-information strategy domain under the standard
+mover-coherence convention. Chance and other-player histories are excluded.
+A terminal history is excluded when terminal movers are normalized to `none`;
+if an unconstrained base instead labels a terminal endpoint with player `i`,
+`DecisionMoverCoherent` rejects the resulting empty action fiber. -/
+abbrev DecisionHistory (base : ExtensiveGame N U) (i : N) :=
+  {history : History base // base.mover history.1 = some i}
+
+/-- Legal actions at one decision history of player `i`. -/
+abbrev DecisionAction (base : ExtensiveGame N U) (i : N)
+    (information : DecisionHistory base i) :=
+  base.Action information.1.1
+
 end CompleteInformation
 
-/-- Equip an ordinary extensive game with complete-history private
-observations and information states, plus explicit public and root
-presentations.
+/-- Root-free form of the legacy all-history information presentation.
 
-The public projection is automatically reused as `publicOf`, so the
-private/public compatibility proof is definitional. This constructor is the
-orthogonal base of `completeInformationPresentation`; it is useful when
-players remember the full history but public disclosure is intentionally
-coarser. -/
-abbrev historyInformationPresentation
+Continuation roots are supplied later through a `RootPresentation`; this
+constructor chooses only observation and information data. -/
+abbrev historyInformation
     (base : ExtensiveGame N U)
     (publicPresentation :
-      CompleteInformation.PublicObservationPresentation base)
-    (roots : ContinuationRootPresentation base) :
+      CompleteInformation.PublicObservationPresentation base) :
     ObservedGame N U where
   base := base
   Observation := fun _i => CompleteInformation.History base
@@ -307,184 +456,85 @@ abbrev historyInformationPresentation
   infoAt_observe := fun _history _i _hmover => rfl
   InfoAction := CompleteInformation.InfoAction base
   actionEquiv := fun _history _i _hmover => Equiv.refl _
-  IsDesignatedContinuationRoot := roots.IsRoot
-  init_isDesignatedContinuationRoot := roots.init_isRoot
 
-/-- Equip an ordinary extensive game with its canonical complete-information
-presentation and an explicit choice of presentation-designated roots.
+/-- Root-free decision-history complete-information presentation.
 
-Every player and the public observe the complete history. A player's
-information state is that complete history, and its abstract action type is
-definitionally the underlying `Arena.Action`. The constructor chooses no
-chance law, no measurable structure, and no standard-subgame system. Because
-strategies quantify over every information state, callers must ensure that
-this total history-indexed action family is the intended strategy domain. -/
-abbrev completeInformationPresentation
+Player `i`'s information states are exactly the complete histories controlled
+by `i`. The result contains no analysis-root choice; pair it with an explicit
+`RootPresentation` when constructing continuation semantics. -/
+abbrev decisionHistoryInformation
     (base : ExtensiveGame N U)
-    (roots : ContinuationRootPresentation base) :
+    (publicPresentation :
+      CompleteInformation.PublicObservationPresentation base) :
+    ObservedGame N U where
+  base := base
+  Observation := fun _i => CompleteInformation.History base
+  PublicObservation := publicPresentation.PublicObservation
+  observe := fun _i history => history
+  publicObserve := publicPresentation.publicObserve
+  publicOf :=
+    fun _i observation => publicPresentation.publicObserve observation
+  observe_public := fun _i _history => rfl
+  InfoState := CompleteInformation.DecisionHistory base
+  infoObserve := fun _i information => information.1
+  infoAt := fun history _i hmover => ⟨history, hmover⟩
+  infoAt_observe := fun _history _i _hmover => rfl
+  InfoAction := CompleteInformation.DecisionAction base
+  actionEquiv := fun _history _i _hmover => Equiv.refl _
+
+/-- Canonical root-free complete-information presentation of an ordinary
+state-payoff extensive game. -/
+abbrev completeInformation
+    (base : ExtensiveGame N U) :
     ObservedGame N U :=
-  historyInformationPresentation base
+  decisionHistoryInformation base
     (CompleteInformation.PublicObservationPresentation.fullHistory base)
-    roots
 
-@[simp]
-theorem completeInformationPresentation_base
-    (base : ExtensiveGame N U)
-    (roots : ContinuationRootPresentation base) :
-    (completeInformationPresentation base roots).base = base :=
-  rfl
+/-- `current` extends `root` in the occurrence-sensitive history unfolding.
 
-@[simp]
-theorem completeInformationPresentation_observe
-    (base : ExtensiveGame N U)
-    (roots : ContinuationRootPresentation base) (i : N)
-    (history : base.toArena.HistoryFrom base.init) :
-    (completeInformationPresentation base roots).observe i history =
-      history :=
-  rfl
+This is a compatibility name for the canonical payoff-free predicate on
+`G.toControlledObservedGame`; state payoffs play no role. -/
+abbrev IsContinuationOf
+    (root current : G.base.toArena.HistoryFrom G.base.init) : Prop :=
+  G.toControlledObservedGame.IsContinuationOf root current
 
-@[simp]
-theorem completeInformationPresentation_publicObserve
-    (base : ExtensiveGame N U)
-    (roots : ContinuationRootPresentation base)
-    (history : base.toArena.HistoryFrom base.init) :
-    (completeInformationPresentation base roots).publicObserve history =
-      history :=
-  rfl
-
-@[simp]
-theorem completeInformationPresentation_publicOf
-    (base : ExtensiveGame N U)
-    (roots : ContinuationRootPresentation base) (i : N)
-    (observation :
-      (completeInformationPresentation base roots).Observation i) :
-    (completeInformationPresentation base roots).publicOf i observation =
-      observation :=
-  rfl
-
-@[simp]
-theorem completeInformationPresentation_infoObserve
-    (base : ExtensiveGame N U)
-    (roots : ContinuationRootPresentation base) (i : N)
-    (information :
-      (completeInformationPresentation base roots).InfoState i) :
-    (completeInformationPresentation base roots).infoObserve i information =
-      information :=
-  rfl
-
-@[simp]
-theorem completeInformationPresentation_infoAt
-    (base : ExtensiveGame N U)
-    (roots : ContinuationRootPresentation base)
-    (history : base.toArena.HistoryFrom base.init) (i : N)
-    (hmover : base.mover history.1 = some i) :
-    (completeInformationPresentation base roots).infoAt
-        history i hmover =
-      history :=
-  rfl
-
-@[simp]
-theorem completeInformationPresentation_isDesignatedContinuationRoot
-    (base : ExtensiveGame N U)
-    (roots : ContinuationRootPresentation base)
-    (history : base.toArena.HistoryFrom base.init) :
-    (completeInformationPresentation base roots).IsDesignatedContinuationRoot
-        history ↔
-      roots.IsRoot history :=
-  Iff.rfl
-
-/-- `current` extends `root` when it is reachable from `root` in the complete
-history unfolding.  Because states of the unfolding are complete histories,
-this is the occurrence-sensitive prefix relation rather than mere
-reachability between compact world states. -/
-def IsContinuationOf
-    (root current :
-      G.base.toArena.HistoryFrom G.base.init) : Prop :=
-  Arena.Reachable G.base.unfold.toArena root current
-
-/-- Every history is a continuation of itself. -/
+/-- Every history is its own payoff-free continuation. -/
 theorem IsContinuationOf.refl
     (root : G.base.toArena.HistoryFrom G.base.init) :
     G.IsContinuationOf root root :=
-  by
-    change Arena.Reachable G.base.unfold.toArena root root
-    exact @Arena.Reachable.refl G.base.unfold.toArena root
+  ControlledObservedGame.IsContinuationOf.refl
+    G.toControlledObservedGame root
 
-/-- The information-set conditions making one history a lawful standard
-subgame root.
+/-- Compatibility name for the canonical payoff-free lawful-subgame-root
+predicate on `G.toControlledObservedGame`. -/
+abbrev IsLawfulSubgameRoot
+    (root : G.base.toArena.HistoryFrom G.base.init) : Prop :=
+  G.toControlledObservedGame.IsLawfulSubgameRoot root
 
-This predicate is independent of the presentation's designated continuation
-roots. The initial history represents the whole game and is lawful by
-convention. A proper root must be a singleton decision information set when
-controlled by a player, and every information set encountered after entry
-must be wholly contained in the continuation. -/
-structure IsLawfulSubgameRoot
-    (root : G.base.toArena.HistoryFrom G.base.init) : Prop where
-  /-- A player decision at a proper root has a singleton information set.
-  The initial history is exempt because it represents the whole game. -/
-  root_information_singleton :
-    root ≠ Arena.HistoryFrom.nil G.base.toArena G.base.init →
-      ∀ (i : N) (hmover : G.base.mover root.1 = some i)
-      (other : G.base.toArena.HistoryFrom G.base.init)
-      (hother : G.base.mover other.1 = some i),
-      G.infoAt root i hmover =
-          G.infoAt other i hother →
-        other = root
-  /-- Any player information set met after entering at `root` remains wholly
-  inside its continuation. -/
-  information_closed :
-    ∀ current, G.IsContinuationOf root current →
-      ∀ (i : N) (hmover : G.base.mover current.1 = some i)
-        (other : G.base.toArena.HistoryFrom G.base.init)
-        (hother : G.base.mover other.1 = some i),
-        G.infoAt current i hmover =
-            G.infoAt other i hother →
-          G.IsContinuationOf root other
-
-/-- An explicit system of lawful subgame roots.
-
-The certificate requires `IsLawfulSubgameRoot`: the whole-game initial root is
-admitted by convention, every proper player root has singleton decision
-information, and every later information set intersecting the continuation is
-contained in it. It is deliberately independent of presentation-designated
-continuation roots. Presentation visibility is the separate
-`SubgameSystem.IsPresentationVisible` property below.
-
-The structure does not claim that every lawful root is selected. Equilibrium
-on this possibly conservative system is therefore named
-`IsPureSubgamePerfectOn`; a complete standard-subgame claim additionally uses
-`CompleteSubgameSystem`. -/
-structure SubgameSystem where
-  /-- Roots admitted by this explicit lawful subgame convention. -/
-  IsRoot :
-    G.base.toArena.HistoryFrom G.base.init → Prop
-  /-- The whole game is a subgame. -/
-  init_isRoot :
-    IsRoot (Arena.HistoryFrom.nil G.base.toArena G.base.init)
-  /-- Every selected root satisfies the single-root structural lawfulness
-  predicate. -/
-  lawful :
-    ∀ root, IsRoot root → G.IsLawfulSubgameRoot root
+/-- Compatibility name for a payoff-free selected lawful-subgame system. -/
+abbrev SubgameSystem :=
+  G.toControlledObservedGame.SubgameSystem
 
 namespace SubgameSystem
 
 variable {G : ObservedGame N U}
 
-/-- Every root selected by a `SubgameSystem` satisfies the representation-
-independent information-set lawfulness predicate. -/
+/-- Every selected root satisfies the canonical payoff-free lawfulness
+predicate. -/
 def isLawful (system : G.SubgameSystem)
     {root : G.base.toArena.HistoryFrom G.base.init}
     (hroot : system.IsRoot root) :
     G.IsLawfulSubgameRoot root :=
-  system.lawful root hroot
+  ControlledObservedGame.SubgameSystem.isLawful system hroot
 
 /-- Whether every root in a lawful system is also exposed by the
 presentation's designated-continuation metadata.
 
 This is intentionally a property rather than a field: mathematical subgame
 lawfulness and standard SPE do not depend on presentation visibility. -/
-def IsPresentationVisible (system : G.SubgameSystem) : Prop :=
-  ∀ root, system.IsRoot root → G.IsDesignatedContinuationRoot root
+def IsVisibleIn (system : G.SubgameSystem)
+    (roots : G.RootPresentation) : Prop :=
+  ∀ root, system.IsRoot root → roots.IsRoot root
 
 /-- Derived compatibility accessor for the proper-root singleton condition. -/
 theorem root_information_singleton (system : G.SubgameSystem)
@@ -498,7 +548,8 @@ theorem root_information_singleton (system : G.SubgameSystem)
       G.infoAt root i hmover =
           G.infoAt other i hother →
         other = root :=
-  (system.isLawful hroot).root_information_singleton hproper
+  ControlledObservedGame.SubgameSystem.root_information_singleton
+    system root hroot hproper
 
 /-- Derived compatibility accessor for information-set closure. -/
 theorem information_closed (system : G.SubgameSystem)
@@ -511,7 +562,8 @@ theorem information_closed (system : G.SubgameSystem)
         G.infoAt current i hmover =
             G.infoAt other i hother →
           G.IsContinuationOf root other :=
-  (system.isLawful hroot).information_closed
+  ControlledObservedGame.SubgameSystem.information_closed
+    system root hroot
 
 end SubgameSystem
 
@@ -521,26 +573,17 @@ true when an imperfect-recall presentation reuses the initial decision
 information state later in play. -/
 theorem init_isLawfulSubgameRoot (G : ObservedGame N U) :
     G.IsLawfulSubgameRoot
-      (Arena.HistoryFrom.nil G.base.toArena G.base.init) where
-  root_information_singleton := by
-    intro hproper
-    exact (hproper rfl).elim
-  information_closed := by
-    intro _current _hcurrent i _hmover other _hother _hsame
-    exact other.2.reachableInUnfolding G.base.toArena G.base.init
+      (Arena.HistoryFrom.nil G.base.toArena G.base.init) :=
+  ControlledObservedGame.init_isLawfulSubgameRoot
+    G.toControlledObservedGame
 
 /-- The smallest lawful subgame system selects only the whole-game initial
 root. This is independent of which additional roots the presentation
 designates. -/
 def SubgameSystem.initialOnly (G : ObservedGame N U) :
-    G.SubgameSystem where
-  IsRoot := fun root =>
-    root = Arena.HistoryFrom.nil G.base.toArena G.base.init
-  init_isRoot := rfl
-  lawful := by
-    intro root hroot
-    subst root
-    exact G.init_isLawfulSubgameRoot
+    G.SubgameSystem :=
+  ControlledObservedGame.SubgameSystem.initialOnly
+    G.toControlledObservedGame
 
 @[simp]
 theorem SubgameSystem.initialOnly_isRoot_iff
@@ -548,18 +591,12 @@ theorem SubgameSystem.initialOnly_isRoot_iff
     (root : G.base.toArena.HistoryFrom G.base.init) :
     (SubgameSystem.initialOnly G).IsRoot root ↔
       root = Arena.HistoryFrom.nil G.base.toArena G.base.init :=
-  Iff.rfl
+  ControlledObservedGame.SubgameSystem.initialOnly_isRoot_iff
+    G.toControlledObservedGame root
 
-/-- A complete standard-subgame system.
-
-It extends a lawful system with the converse coverage law: every structurally
-lawful root of the observed EFG is selected. Its existence is independent of
-presentation-designated continuation metadata. -/
-structure CompleteSubgameSystem extends G.SubgameSystem where
-  /-- Every structurally lawful subgame root is present in the system. -/
-  complete :
-    ∀ root, G.IsLawfulSubgameRoot root →
-      toSubgameSystem.IsRoot root
+/-- Compatibility name for a complete payoff-free lawful-subgame system. -/
+abbrev CompleteSubgameSystem :=
+  G.toControlledObservedGame.CompleteSubgameSystem
 
 namespace CompleteSubgameSystem
 
@@ -570,18 +607,32 @@ theorem isRoot_iff_isLawful (system : G.CompleteSubgameSystem)
     (root : G.base.toArena.HistoryFrom G.base.init) :
     system.toSubgameSystem.IsRoot root ↔
       G.IsLawfulSubgameRoot root :=
-  ⟨system.toSubgameSystem.isLawful, system.complete root⟩
+  ControlledObservedGame.CompleteSubgameSystem.isRoot_iff_isLawful
+    system root
 
 /-- The canonical complete system selects exactly the structurally lawful
 roots. It exists for every observed EFG and does not inspect designated-root
 metadata. -/
-def canonical (G : ObservedGame N U) : G.CompleteSubgameSystem where
-  IsRoot := G.IsLawfulSubgameRoot
-  init_isRoot := G.init_isLawfulSubgameRoot
-  lawful := fun _root hroot => hroot
-  complete := fun _root hroot => hroot
+def canonical (G : ObservedGame N U) : G.CompleteSubgameSystem :=
+  ControlledObservedGame.CompleteSubgameSystem.canonical
+    G.toControlledObservedGame
 
 end CompleteSubgameSystem
+
+/-- A represented history witnessing that `information` is a reachable
+decision information state for player `i`.
+
+This witness belongs to the core observed-game vocabulary: representation is
+independent of any later recall, finiteness, or equilibrium hypothesis. -/
+structure DecisionInfoWitness
+    (G : ObservedGame N U) (i : N)
+    (information : G.InfoState i) where
+  /-- A complete history represented by the information state. -/
+  history : G.base.toArena.HistoryFrom G.base.init
+  /-- Player `i` controls the endpoint. -/
+  mover : G.base.mover history.1 = some i
+  /-- The endpoint has the specified information state. -/
+  infoAt_eq : G.infoAt history i mover = information
 
 /-- A game-bound pure strategy for player `i`: one abstract action at every
 information state, with no concrete history argument. -/
@@ -591,6 +642,12 @@ def PureStrategy (i : N) : Type _ :=
 /-- A pure-strategy profile for all players. -/
 def PureProfile : Type _ :=
   (i : N) → G.PureStrategy i
+
+/-- Pure observed-game profiles are invariant under bijective player
+renaming, up to dependent-function reindexing. -/
+def relabelPureProfileEquiv (e : M ≃ N) :
+    (G.relabelPlayers e).PureProfile ≃ G.PureProfile :=
+  e.piCongrLeft G.PureStrategy
 
 /-- The legal base action prescribed by a pure strategy at a concrete history
 controlled by player `i`. -/
