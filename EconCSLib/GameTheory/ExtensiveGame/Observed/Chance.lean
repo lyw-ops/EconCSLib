@@ -15,21 +15,26 @@ Normalized chance kernels for history-indexed observed extensive games.
 
 `ObservedChanceGame` wraps an `ObservedGame` with a `PMF` on the legal action
 type at every nonterminal history whose mover is `none`.  Since the kernel is a
-`PMF`, total probability mass is one by construction.
+`PMF`, total probability mass is one by construction.  This is the discrete,
+countably supported probability layer; it does not represent non-atomic or
+uncountable-support randomization.  Those models use `MeasurableKernelArena`
+and a measurable presentation.
 
 A strict chance-game isomorphism extends the strict structural
 `ObservedGame.Iso`.  In addition to preserving observations, public states,
-information actions, terminal payoffs, and presentation-designated
-continuation roots, it requires the source chance law pushed through the
-dependent action equivalence to equal the target chance law exactly.
+information actions, and terminal payoffs, it requires the source chance law
+pushed through the dependent action equivalence to equal the target chance
+law exactly. Root presentations are external and have their own preservation
+predicate.
 
 ## Main definitions
 
-* `ObservedChanceGame` — an observed EFG with normalized chance kernels.
+* `ObservedChanceGame` / `DiscreteObservedChanceGame` — an observed EFG with
+  normalized discrete chance kernels.
 * `ObservedChanceGame.withChanceKernel` — attach an explicitly supplied
   chance law to any observed presentation.
-* `ObservedChanceGame.completeInformationPresentation` — compose the
-  complete-information presentation with an explicit chance law.
+* `ObservedChanceGame.completeInformation` — compose the root-free
+  complete-information presentation with an explicit discrete chance law.
 * `ObservedChanceGame.chanceSuccessorKernel` — the induced distribution on
   complete successor histories.
 * `ObservedChanceGame.Iso` — strict observed-EFG isomorphism preserving chance
@@ -50,14 +55,22 @@ universe uN uU uA uS uO uI uP
 /-- A history-indexed observed EFG equipped with a normalized kernel at every
 chance history. -/
 structure ObservedChanceGame (N : Type uN) (U : Type uU) where
-  /-- The strategic, payoff, observation, public-state, information, and
-  designated-continuation-root structure. -/
+  /-- The strategic, payoff, observation, public-state, and information
+  structure. -/
   observed : ObservedGame.{uN, uU, uA, uS, uO, uI, uP} N U
   /-- The normalized distribution on legal actions at each chance history. -/
   chanceKernel :
     (h : observed.base.toArena.HistoryFrom observed.base.init) →
       observed.base.isChanceState h.1 →
       PMF (observed.base.Action h.1)
+
+/-- Canonical descriptive name for the PMF-supported chance-game layer.
+
+This alias makes the discrete boundary explicit without breaking the
+established `ObservedChanceGame` API. It does not include non-atomic
+measurable kernels. -/
+abbrev DiscreteObservedChanceGame (N : Type uN) (U : Type uU) :=
+  ObservedChanceGame N U
 
 namespace ObservedChanceGame
 
@@ -78,19 +91,18 @@ abbrev withChanceKernel
   observed := observed
   chanceKernel := chanceKernel
 
-/-- Canonical complete-information observation of an ordinary extensive game,
-with independently selected presentation roots and an explicitly supplied
-chance kernel. -/
-abbrev completeInformationPresentation
+/-- Canonical root-free complete-information discrete chance presentation.
+
+Continuation roots are supplied independently after construction. -/
+abbrev completeInformation
     (base : ExtensiveGame N U)
-    (roots : ObservedGame.ContinuationRootPresentation base)
     (chanceKernel :
       (h : base.toArena.HistoryFrom base.init) →
         base.isChanceState h.1 →
         PMF (base.Action h.1)) :
     ObservedChanceGame N U :=
   withChanceKernel
-    (ObservedGame.completeInformationPresentation base roots)
+    (ObservedGame.completeInformation base)
     chanceKernel
 
 @[simp]
@@ -113,33 +125,6 @@ theorem withChanceKernel_chanceKernel
     (history : observed.base.toArena.HistoryFrom observed.base.init)
     (hchance : observed.base.isChanceState history.1) :
     (withChanceKernel observed chanceKernel).chanceKernel history hchance =
-      chanceKernel history hchance :=
-  rfl
-
-@[simp]
-theorem completeInformationPresentation_observed
-    (base : ExtensiveGame N U)
-    (roots : ObservedGame.ContinuationRootPresentation base)
-    (chanceKernel :
-      (h : base.toArena.HistoryFrom base.init) →
-        base.isChanceState h.1 →
-        PMF (base.Action h.1)) :
-    (completeInformationPresentation base roots chanceKernel).observed =
-      ObservedGame.completeInformationPresentation base roots :=
-  rfl
-
-@[simp]
-theorem completeInformationPresentation_chanceKernel
-    (base : ExtensiveGame N U)
-    (roots : ObservedGame.ContinuationRootPresentation base)
-    (chanceKernel :
-      (h : base.toArena.HistoryFrom base.init) →
-        base.isChanceState h.1 →
-        PMF (base.Action h.1))
-    (history : base.toArena.HistoryFrom base.init)
-    (hchance : base.isChanceState history.1) :
-    (completeInformationPresentation base roots chanceKernel).chanceKernel
-        history hchance =
       chanceKernel history hchance :=
   rfl
 
