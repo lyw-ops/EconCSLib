@@ -350,3 +350,56 @@ def ExecutionCoherent
 /-! ## Same-game realization -/
 
 /-- One-way realization between two strategy semantics on the same game. -/
+structure CompletePathLawRealization
+    (S T : G.CompletePathLawSemantics) where
+  /-- Playerwise strategy map. -/
+  mapStrategy :
+    (i : N) → S.Strategy i → T.Strategy i
+  /-- Complete path law is preserved at every profile and history. -/
+  pathLaw_eq :
+    ∀ (profile : S.Profile)
+      (current : G.base.History),
+      S.pathLaw profile current =
+        T.pathLaw (fun i => mapStrategy i (profile i)) current
+
+/-- Map a complete source profile player by player. -/
+def CompletePathLawRealization.mapProfile
+    {S T : G.CompletePathLawSemantics}
+    (R : S.CompletePathLawRealization T)
+    (profile : S.Profile) : T.Profile :=
+  fun i => R.mapStrategy i (profile i)
+
+/-- Playerwise realization commutes with unilateral profile update. -/
+theorem CompletePathLawRealization.mapProfile_update
+    [DecidableEq N]
+    {S T : G.CompletePathLawSemantics}
+    (R : S.CompletePathLawRealization T)
+    (profile : S.Profile) (who : N)
+    (deviation : S.Strategy who) :
+    R.mapProfile (Function.update profile who deviation) =
+      Function.update (R.mapProfile profile) who
+        (R.mapStrategy who deviation) := by
+  funext i
+  by_cases hi : i = who
+  · subst i
+    simp [CompletePathLawRealization.mapProfile]
+  · simp [CompletePathLawRealization.mapProfile, hi]
+
+/-- Reverse target-deviation coverage at one same-game root. -/
+def CompletePathLawRealization.TargetDeviationsCoveredAt
+    [DecidableEq N]
+    {S T : G.CompletePathLawSemantics}
+    (R : S.CompletePathLawRealization T)
+    (profile : S.Profile)
+    (current : G.base.History) : Prop :=
+  ∀ (who : N) (targetDeviation : T.Strategy who),
+    ∃ sourceDeviation : S.Strategy who,
+      T.pathLaw
+          (Function.update (R.mapProfile profile)
+            who targetDeviation) current =
+        S.pathLaw
+          (Function.update profile who sourceDeviation)
+          current
+
+/-- Strategy-space isomorphism is stronger than one-way realization and
+target-deviation coverage. -/
