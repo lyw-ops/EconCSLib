@@ -544,3 +544,94 @@ end CrossGameCompletePathLawRealization
 
 /-- Cross-game strategy-space isomorphism is stronger than a functional
 realization and reverse deviation coverage. -/
+structure CrossGameCompletePathLawStrategyIso
+    {G H : ControlledObservedGame N}
+    [MeasurableSpace G.base.History]
+    [MeasurableSpace H.base.History]
+    (S : G.CompletePathLawSemantics)
+    (T : H.CompletePathLawSemantics)
+    extends CrossGameCompletePathLawRealization S T where
+  /-- Each player strategy carrier is equivalent. -/
+  strategyEquiv : (i : N) → S.Strategy i ≃ T.Strategy i
+  /-- The realization map is the forward equivalence. -/
+  mapStrategy_eq :
+    ∀ i, toCrossGameCompletePathLawRealization.mapStrategy i =
+      strategyEquiv i
+
+namespace CompletePathLawSemantics.CompletePathLawRealization
+
+variable {G : ControlledObservedGame N}
+  [MeasurableSpace G.base.History]
+  {S T : G.CompletePathLawSemantics}
+
+/-- Same-game realization is the identity-history special case of cross-game
+functional realization. -/
+def toCrossGame
+    (R : S.CompletePathLawRealization T) :
+    CrossGameCompletePathLawRealization S T where
+  mapStrategy := R.mapStrategy
+  mapHistory := id
+  mapHistory_measurable := measurable_id
+  mapPath := id
+  mapPath_measurable := measurable_id
+  mapPath_apply := by
+    intro _path _time
+    rfl
+  pathLaw_map_eq := by
+    intro profile current
+    rw [Measure.map_id]
+    exact R.pathLaw_eq profile current
+
+end CompletePathLawSemantics.CompletePathLawRealization
+
+namespace Iso
+
+variable {G H : ControlledObservedGame N}
+  [MeasurableSpace G.base.History]
+  [MeasurableSpace H.base.History]
+
+/-- A strict structural isomorphism packages a canonical cross-game
+realization once measurability and semantic naturality are supplied.
+
+The law equality is not inferred from structure alone. -/
+def toCrossGameCompletePathLawRealization
+    (e : G.Iso H)
+    (S : G.CompletePathLawSemantics)
+    (T : H.CompletePathLawSemantics)
+    (mapStrategy :
+      (i : N) → S.Strategy i → T.Strategy i)
+    (hhistory :
+      Measurable e.completeHistoryEquiv)
+    (hpath :
+      Measurable e.completePathEquiv)
+    (hlaw :
+      ∀ (profile : S.Profile)
+        (current : G.base.History),
+        (S.pathLaw profile current).map
+            e.completePathEquiv =
+          T.pathLaw
+            (fun i => mapStrategy i (profile i))
+            (e.completeHistoryEquiv current)) :
+    CrossGameCompletePathLawRealization S T where
+  mapStrategy := mapStrategy
+  mapHistory := e.completeHistoryEquiv
+  mapHistory_measurable := hhistory
+  mapPath := e.completePathEquiv
+  mapPath_measurable := hpath
+  mapPath_apply := e.completePathEquiv_apply
+  pathLaw_map_eq := hlaw
+
+end Iso
+
+/-! ## Zero measure cannot be probability semantics -/
+
+/-- The zero measure cannot satisfy the probability certificate required by
+`CompletePathLawSemantics`. -/
+theorem zeroMeasure_not_probability
+    {α : Type*} [MeasurableSpace α] :
+    ¬ IsProbabilityMeasure (0 : Measure α) := by
+  intro hprobability
+  letI : IsProbabilityMeasure (0 : Measure α) := hprobability
+  exact IsProbabilityMeasure.ne_zero (0 : Measure α) rfl
+
+end ExtensiveGame.ControlledObservedGame
