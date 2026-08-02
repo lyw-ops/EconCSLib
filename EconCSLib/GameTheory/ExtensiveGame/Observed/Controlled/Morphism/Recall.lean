@@ -3,8 +3,8 @@ Copyright (c) 2026 EconCSLib contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledMorphism.Core
-import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.Recall
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism.Core
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Recall
 
 /-!
 # Recall preservation under controlled morphisms
