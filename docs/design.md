@@ -73,13 +73,22 @@ and all `admit` uses remain forbidden.
 | `Math/` | fixed-point theorems, simplex helpers, reusable discrete probability, linear algebra, linear programming, and minimax |
 | `GameTheory/GameForm.lean`, `GameTheory/GameForm/` | stable aggregate plus representation-neutral deterministic, law-valued, and continuation-family semantics, with composable realization and functional/relational Nash-on-declared-roots transfer morphisms; representation-aware standard SPE remains in the EFG layer |
 | `GameTheory/StrategicGame/` | strategic games, equilibrium, dominance, checkers, mixed strategies, ESS, IESDS, correlated-equilibrium foundations, potential games, and zero-sum games |
-| `GameTheory/ExtensiveGame/` | Arena-based games with canonical reachability and typed-history infrastructure plus granular public facades: `Interface.Core`, measure-free finite/PMF `Interface.Execution.Finite`, measure-valued discrete-path `Interface.Execution.Infinite`, `Interface.Relations.Discrete`, `Interface.Equilibrium.Discrete`, analytic `Interface.Execution.Analytic` and `Interface.Equilibrium.Analytic`, `Interface.Restart`, and `Interface.Compilation.Discrete`. The former `Execution.Discrete`, `Relations`, `Equilibrium`, and `Compilation` paths remain supported broad aggregates; `SimulationFramework.lean` is the compatibility-only complete-stack aggregate. The stack contains discrete PMF and analytic measurable Markov-kernel execution, strict and coupling-based weak simulations, observed/chance-EFG relations, pure/behavioral/mixed semantics, FOSG serialization, reference compilers, finite trees, backward induction, and SPE. The root `EconCSLib.lean` now exposes only `Interface.Execution.Finite` plus the finite `GameTree`, backward-induction, and exact zero-sum chance-tree tracks; Historical and Compatibility modules, infinite paths, endpoint-policy equilibrium, extraction, Zermelo, analytic execution, restart, and compilation are explicit opt-ins. |
+| `GameTheory/ExtensiveGame/` | Arena-based games with payoff-free `ControlledGame`/`ControlledObservedGame`, the state-payoff `ExtensiveGame` compatibility extension, external continuation-root presentations, canonical reachability, typed histories, measure-free complete plays, structural termination and finite-EFG certificates, and granular public facades: exact five-module `Interface.StructuralCore`, the broader `Interface.Core` Foundation Facade, `Interface.Objective`, `Interface.Winning`, `Interface.Winning.Stochastic`, measure-free finite/PMF `Interface.Execution.Finite`, measure-valued discrete-path `Interface.Execution.Infinite`, `Interface.Relations.Discrete`, `Interface.Equilibrium.Discrete`, analytic `Interface.Execution.Analytic` and `Interface.Equilibrium.Analytic`, `Interface.Restart`, and `Interface.Compilation.Discrete`. Controlled execution, general well-formedness, lawful-subgame, finite, quasistrategy, and recall declarations are physically owned by focused `Observed.ControlledInfrastructure.*` leaves; payoff-free controlled morphisms are independently layered as `Observed.ControlledMorphism.{Core,Subgame,Recall}`. Both former aggregate paths remain import-only. The former `Execution.Discrete`, `Relations`, `Equilibrium`, and `Compilation` paths remain supported broad aggregates; `SimulationFramework.lean` is the compatibility-only complete-stack aggregate. The stack contains history-sensitive terminal/path outcomes, logical winning conditions, prefix topology, complete-history/path-law equivalence, determinacy and discrete almost-sure-winning interfaces, quasistrategies, discrete general-strategy carriers, discrete PMF and analytic measurable Markov-kernel execution, strict and coupling-based weak simulations, observed/chance-EFG relations, pure/behavioral/mixed semantics, FOSG serialization, reference compilers, finite occurrence-sensitive unfolding, finite trees, backward induction, and SPE. The root `EconCSLib.lean` exposes `Interface.Execution.Finite` plus the finite `GameTree`, backward-induction, and exact zero-sum chance-tree tracks; higher objective/winning facade contracts, Historical and Compatibility modules, infinite probability laws, endpoint-policy equilibrium, extraction, Zermelo, analytic execution, restart, and compilation remain explicit opt-ins. |
 | `GameTheory/CoalitionalGame/` | transferable-utility games, the core, and Shapley-value infrastructure |
 | `SocialChoice/` | social-choice vocabulary, voting theory, and fair division |
 | `MarketDesign/Matching/` | matching markets and Gale-Shapley developments |
 | `MechanismDesign/Auction/` | mechanism-design and auction infrastructure |
 | `Examples/` | opt-in examples and executable regression targets |
 | `OpenProblem/` | opt-in experimental open-problem interfaces |
+
+Generic horizon/outcome-parametric continuation semantics and their
+assumption-explicit standard-SPE transfer theorem are owned by the payoff-free
+`Observed.ControlledSemantics` module. `Observed.Semantics` preserves the
+state-payoff `ObservedGame` spelling only as a downstream compatibility
+adapter; state payoffs are not an input to the generic evaluator or theorem.
+`ObservedGame.ofControlledObservedGame` attaches any caller-supplied state
+payoff without rebuilding the observation carrier, and projecting the result
+back is definitional.
 
 ## Design Choices
 
@@ -94,6 +103,10 @@ compatibility helpers.
 The extensive-form layer uses an arena and state-space model so infinite-state
 and infinite-horizon games remain representable. Separate finite-tree modules
 support backward induction and executable examples.
+Bijective player renamings use
+`ControlledObservedGame.relabelPlayers`; this leaves Arena histories
+definitionally unchanged and reindexes dependent strategy profiles without
+placing player maps in the minimal record.
 
 Common observed-game record literals should use the orthogonal presentation,
 root, and chance constructors audited in
@@ -104,6 +117,14 @@ The finite `GameTree`, `StochasticGameTree`, `ZeroSumChance.GameTree`, and
 `FiniteImperfectGame` roles and their canonical routes to
 `ObservedChanceGame` are audited in
 [`docs/design/efg-representation-compilation.md`](design/efg-representation-compilation.md).
+The additive target architecture for finite, well-founded, almost-surely
+terminating, and genuinely infinite EFGs, including path objectives and
+logical winning conditions, is specified in
+[`docs/design/efg-general-foundations.md`](design/efg-general-foundations.md)
+and its continuations for
+[`strategies and solutions`](design/efg-general-foundations-2-strategy.md),
+the [`Lean API plan`](design/efg-general-foundations-3-lean-api.md), and the
+[`theorem roadmap`](design/efg-general-foundations-4-theorem-roadmap.md).
 Lifecycle, frontend/historical boundaries, root-import policy, and the complete
 module register are maintained in
 [`docs/design/efg-governance.md`](design/efg-governance.md) and
@@ -117,6 +138,11 @@ discrete policy step exactly. Finite iteration produces normalized endpoint
 kernels and recovers every discrete `stateLawFrom` exactly. An
 Ionescu--Tulcea construction supplies a normalized infinite discrete-event
 state-path law whose coordinate marginals are exactly those endpoint laws.
+A payoff-free `CompletePathLawSemantics` packages strategy-indexed full
+history-path laws only when each law is a probability measure and is almost
+surely a canonical terminal-absorbing legal play. The discrete behavioral and
+analytic-kernel adapters share this carrier, while local execution coherence
+remains a separate certificate.
 A second policy interface permits time- and finite-state-prefix-dependent
 action kernels and contains the stationary state-Markov executor exactly.
 Analytic observed strategies live in a separate higher layer with
