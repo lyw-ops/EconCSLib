@@ -48,7 +48,7 @@ isomorphism:
 
 | Relation | Required preservation | Typical use |
 |----------|-----------------------|-------------|
-| Strict observed-EFG isomorphism | bijective histories/actions; exact observations, public states, information, payoffs, chance laws, and presentation-designated continuation roots; lawful subgame systems transport separately | relabeling or genuinely equivalent EFG encodings |
+| Strict observed-EFG isomorphism | bijective histories/actions; exact observations, public states, information, payoffs, chance laws, and presentation-designated continuation roots; lawful subgame systems transport separately | state/action relabeling or genuinely equivalent EFG encodings on one player carrier |
 | Information refinement | strict dynamics plus directional forgetting/lifting of information | fine versus coarse information models |
 | Kernel simulation/bisimulation | related stochastic steps with exact PMF couplings | non-functional stochastic representation changes |
 | Weak/stuttering simulation | one macro step matched by a positive finite micro execution | FOSG sequentialization with administrative states |
@@ -57,6 +57,9 @@ Consequently, inserting hidden player/chance states is not presented as a
 strict history-tree isomorphism. Exactness is instead proved at macro
 boundaries for traces, payoff laws, unilateral deviations, Nash equilibrium,
 and Nash on caller-declared finite-horizon macro continuations.
+Bijective player-label changes use `ControlledObservedGame.relabelPlayers`
+before applying same-carrier relations; this preserves lawful subgames and
+dependent pure profiles.
 
 ### Keep strategy and solution concepts game-bound
 
@@ -198,10 +201,11 @@ isomorphisms transport both levels and preserve their equilibrium predicates.
 
 For strict-isomorphism transfer of bounded Nash on presentation-designated
 continuations, the canonical public entry points are
-`ObservedGame.Iso.isPureNashOnDesignatedContinuationsAtFuel_iff`,
-`ObservedChanceGame.Iso.isBehavioralNashOnDesignatedContinuationsAtFuel_iff`,
+`ObservedGame.Iso.isPureNashOnRootsAtFuel_iff`,
+`ObservedChanceGame.Iso.isBehavioralNashOnRootsAtFuel_iff`,
 and
-`ObservedChanceGame.Iso.isMixedNashOnDesignatedContinuationsAtFuel_iff`.
+`ObservedChanceGame.Iso.isMixedNashOnRootsAtFuel_iff`.
+Each theorem receives the source and target root presentations explicitly.
 Equivalent derivations through continuation families and information
 refinements remain build-enforced private regressions, not alternate
 downstream APIs.
@@ -611,9 +615,10 @@ For finite decision-information types:
 3. complete bounded history and payoff laws agree exactly;
 4. arbitrary unilateral deviations have exact rootwise semantic realizations.
 
-Therefore `isBehavioralNashOnDesignatedContinuationsAtFuel_iff_mixed` proves two-way bounded
+Therefore `isBehavioralNashOnRootsAtFuel_iff_mixed` proves two-way bounded
 SPE equivalence between a behavioral profile and its independently sampled
-complete-plan profile. The mixed-to-behavioral map remains root-scoped because
+complete-plan profile on the explicitly supplied roots. The
+mixed-to-behavioral map remains root-scoped because
 one root-independent map for every arbitrary correlated mixed plan would be
 false in general.
 
@@ -670,7 +675,9 @@ law consequences, are implemented in
 `Simulation/Presentation/Chance/Realized.lean`.
 Formal reverse regressions show that the raw transition, executed one-step
 law, every positive finite endpoint unit-interval volume law, and the
-resulting whole path law are not any `PMF.toMeasure`. A separate
+resulting whole path law are not any `PMF.toMeasure`. A generated-state-path
+lower-half cylinder is measurable, nonempty, proper, and has probability
+exactly one half. A separate
 absent-minded regression proves that the current concrete-bundle information
 policy cannot merge two distinct nonterminal history states, even when the
 behavioral profile correctly reuses one abstract information-action law. A
