@@ -33,8 +33,8 @@ chance games, where chance-kernel naturality is inherited exactly.
 Private bounded-Nash derivations through information refinement serve as
 hierarchy regressions, not alternative downstream entry points.
 Strict-isomorphism clients should use
-`ObservedGame.Iso.isPureNashOnDesignatedContinuationsAtFuel_iff` and
-`ObservedChanceGame.Iso.isBehavioralNashOnDesignatedContinuationsAtFuel_iff`.
+`ObservedGame.Iso.isPureNashOnRootsAtFuel_iff` and
+`ObservedChanceGame.Iso.isBehavioralNashOnRootsAtFuel_iff`.
 
 ## Main definitions
 
@@ -235,7 +235,6 @@ def toInformationRefinement
     exact
       e.map_infoActionAt
         history i hsource htarget action
-  map_designatedContinuationRoot := e.map_designatedContinuationRoot
 
 /-- The refinement action lift induced by a strict isomorphism is exactly the
 strict dependent action equivalence, evaluated through its inverse information
@@ -378,54 +377,6 @@ theorem
     (e.behavioralStrategyEquiv i).apply_symm_apply
       targetStrategy
 
-/-- Strict pure Nash on presentation-designated continuations transfer can be recovered through the induced information
-refinement and the representation-neutral continuation-family theorem.
-
-This is a hierarchy regression: the strict theorem does not require a second
-independent equilibrium proof once strict isomorphisms are recognized as
-surjective refinements.  Downstream code should use
-`ObservedGame.Iso.isPureNashOnDesignatedContinuationsAtFuel_iff`. -/
-private theorem
-    isPureNashOnDesignatedContinuationsAtFuel_iff_viaInformationRefinement
-    {V : Type*} [DecidableEq N] [Preorder V]
-    [(state : G.base.State) →
-      Decidable (G.base.isTerminal state)]
-    [(state : H.base.State) →
-      Decidable (H.base.isTerminal state)]
-    (e : G.Iso H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
-    (utility : Option (N → U) → N → V)
-    (profile : G.PureProfile)
-    (fuel : ℕ) :
-    G.IsPureNashOnDesignatedContinuationsAtFuel
-        hNoChanceG utility profile fuel ↔
-      H.IsPureNashOnDesignatedContinuationsAtFuel
-        hNoChanceH utility
-        (e.mapProfile profile) fuel := by
-  rw [← e.toInformationRefinement_mapProfile]
-  change
-    (G.pureContinuationFamily
-      hNoChanceG fuel).IsNashOnRoots
-        (fun _ => utility) profile ↔
-      (H.pureContinuationFamily
-        hNoChanceH fuel).IsNashOnRoots
-          (fun _ => utility)
-          ((e.toInformationRefinement.pureContinuationFamilyHom
-            hNoChanceG hNoChanceH fuel).mapProfile profile)
-  exact
-    (e.toInformationRefinement.pureContinuationFamilyHom
-      hNoChanceG hNoChanceH fuel
-      ).isNashOnRoots_iff_of_surjective
-        (e.toInformationRefinement.pureContinuationFamilyHom_utilityCompatible
-          hNoChanceG hNoChanceH utility fuel)
-        (e.toInformationRefinement.pureContinuationFamilyHom_strategySurjective
-          hNoChanceG hNoChanceH fuel
-          e.toInformationRefinement_strategySurjective)
-        (e.toInformationRefinement.pureContinuationFamilyHom_declaredRootSurjective
-          hNoChanceG hNoChanceH fuel)
-        profile
-
 end ObservedGame.Iso
 
 namespace ObservedChanceGame.Iso
@@ -452,54 +403,6 @@ theorem
     (e.toInformationRefinement.observedRefinement
       ).BehavioralStrategySurjective :=
   e.observedIso.toInformationRefinement_behavioralStrategySurjective
-
-/-- Strict behavioral Nash on presentation-designated continuations transfer can be recovered through the induced
-chance-aware information refinement and the representation-neutral
-continuation-family theorem.
-
-This is a hierarchy regression.  Downstream code should use
-`ObservedChanceGame.Iso.isBehavioralNashOnDesignatedContinuationsAtFuel_iff`. -/
-private theorem
-    isBehavioralNashOnDesignatedContinuationsAtFuel_iff_viaInformationRefinement
-    {V : Type*} [DecidableEq N] [Preorder V]
-    [(state : G.observed.base.State) →
-      Decidable
-        (G.observed.base.isTerminal state)]
-    [(state : H.observed.base.State) →
-      Decidable
-        (H.observed.base.isTerminal state)]
-    (e : G.Iso H)
-    (utility :
-      PMF (Option (N → U)) → N → V)
-    (profile : G.observed.BehavioralProfile)
-    (fuel : ℕ) :
-    G.IsBehavioralNashOnDesignatedContinuationsAtFuel
-        utility profile fuel ↔
-      H.IsBehavioralNashOnDesignatedContinuationsAtFuel
-        utility
-        (e.observedIso.mapBehavioralProfile
-          profile)
-        fuel := by
-  rw [← e.observedIso.toInformationRefinement_mapBehavioralProfile]
-  change
-    (G.behavioralContinuationFamily
-      fuel).IsNashOnRoots
-        (fun _ => utility) profile ↔
-      (H.behavioralContinuationFamily
-        fuel).IsNashOnRoots
-          (fun _ => utility)
-          ((e.toInformationRefinement.behavioralContinuationFamilyHom
-            fuel).mapProfile profile)
-  exact
-    (e.toInformationRefinement.behavioralContinuationFamilyHom
-      fuel).isNashOnRoots_iff_of_surjective
-        (e.toInformationRefinement.behavioralContinuationFamilyHom_utilityCompatible
-          utility fuel)
-        (e.toInformationRefinement.behavioralContinuationFamilyHom_strategySurjective
-          fuel e.toInformationRefinement_behavioralStrategySurjective)
-        (e.toInformationRefinement.behavioralContinuationFamilyHom_declaredRootSurjective
-          fuel)
-        profile
 
 end ObservedChanceGame.Iso
 
