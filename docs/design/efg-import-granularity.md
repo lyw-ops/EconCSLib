@@ -6,8 +6,8 @@ measure-valued analytic semantics. It complements
 
 ## Audit method
 
-The counts below were computed from the transitive source import graph on
-2026-07-29 and rechecked after the 2026-07-30 physical-layout closeout. “EFG”
+The counts below were computed from the transitive source import graph and
+rechecked after the 2026-08-01 payoff-free/path-law refactor. “EFG”
 counts modules below
 `EconCSLib.GameTheory.ExtensiveGame`; “local” counts all `EconCSLib` modules.
 The imported facade itself is excluded.
@@ -101,7 +101,7 @@ not by every name that becomes transitively visible.
 
 | Surface | Class | Defining modules and representative declarations |
 |---|---|---|
-| Relations | pure structural | `Relations.Discrete.Morphism`: `Arena.Hom`, `Arena.Iso`, `Arena.Simulation`, `Arena.Bisimulation`, `Arena.WeakSimulation`; `Observed.Morphism.{Fiber,Structural,Inverse,Operational}`: `ObservedGame.Iso` and exact history/payoff transport; `Observed.Refinement.Structural`: `ObservedGame.InformationRefinement` |
+| Relations | pure structural | `Relations.Discrete.Morphism`: `Arena.Hom`, `Arena.Iso`, `Arena.Simulation`, `Arena.Bisimulation`, `Arena.WeakSimulation`; `Observed.ControlledMorphism.{Core,Subgame,Recall}`: payoff-free `Hom`, `Iso`, information refinement, and separately layered subgame/recall transport; `Observed.Morphism.{Fiber,Structural,Inverse,Operational}`: `ObservedGame.Iso` and exact history/payoff transport; `Observed.Refinement.Structural`: `ObservedGame.InformationRefinement` |
 | Relations | PMF/discrete | `KernelArena`: `KernelArena.Hom`, `KernelArena.Simulation`; `KernelTrajectory`: `Policy`, `stateLawFrom`, `traceLawFrom`, `Simulation.PolicyMatch`; `KernelWeakSimulation`: `ProbabilisticWeakSimulation`, `supportArena`, `executionKernelArena`; `Observed.Chance`, `Observed.Behavior`, and `BehaviorRefinement.Structural`: chance kernels, behavioral PMFs, and chance-aware information refinement |
 | Relations | Kernel/Measure | no relation declaration; the old facade exposed this class only by inheriting `Execution.Analytic` |
 | Equilibrium | pure deterministic/structural | `Observed.SPE`, `Observed.Morphism.Continuation`, `Observed.Refinement.{Core,Termination}`, `Observed.MorphismHierarchy`, and `Observed.PerfectRecall`: pure Nash/SPE, lawful-root transport, termination-certified transfer, and recall structure |
@@ -118,32 +118,48 @@ dependency problem.
 
 | Use case | Former entry and closure | Recommended entry and closure | Reduction |
 |---|---:|---:|---:|
-| finite deterministic/PMF execution | `Execution.Discrete`, 17 / 32 | `Execution.Finite`, 15 / 30 | 2 EFG / 2 local; analytic roots 5 → 0 |
-| strict structure, PMF coupling, weak simulation | `Relations`, 41 / 57 | `Relations.Discrete`, 21 / 36 | 20 EFG / 21 local |
-| pure/behavioral/mixed finite-fuel equilibrium and Kuhn | `Equilibrium`, 72 / 92 | `Equilibrium.Discrete`, 47 / 66 | 25 EFG / 26 local |
-| finite observed-EFG compilers and FOSG serialization | `Compilation`, 94 / 116 | `Compilation.Discrete`, 69 / 90 | 25 EFG / 26 local |
+| finite deterministic/PMF execution | `Execution.Discrete`, 39 / 46 | `Execution.Finite`, 33 / 40 | 6 EFG / 6 local |
+| strict structure, PMF coupling, weak simulation | `Relations`, 68 / 76 | `Relations.Discrete`, 39 / 46 | 29 EFG / 30 local |
+| pure/behavioral/mixed/general finite-fuel semantics and Kuhn | `Equilibrium`, 101 / 118 | `Equilibrium.Discrete`, 66 / 82 | 35 EFG / 36 local |
+| finite observed-EFG compilers and FOSG serialization | `Compilation`, 123 / 142 | `Compilation.Discrete`, 87 / 105 | 36 EFG / 37 local |
 
 The compatibility wrappers add only facade modules to the old closures:
 
 | Current compatibility/analytic entry | EFG / local closure |
 |---|---:|
-| `Execution.Infinite` | 18 / 33 |
-| `Execution.Discrete` | 19 / 34 |
-| `Execution.Analytic` | 37 / 53 |
-| `Relations` | 43 / 59 |
-| `Equilibrium.Analytic` | 74 / 94 |
-| `Equilibrium` | 76 / 96 |
-| `Restart` | 82 / 102 |
-| `Compilation` | 99 / 121 |
-| `SimulationFramework` | 108 / 131 |
+| `Execution.Infinite` | 38 / 45 |
+| `Execution.Discrete` | 39 / 46 |
+| `Execution.Analytic` | 58 / 66 |
+| `Relations` | 68 / 76 |
+| `Equilibrium.Analytic` | 96 / 113 |
+| `Equilibrium` | 101 / 118 |
+| `Restart` | 104 / 121 |
+| `Compilation` | 123 / 142 |
+| `SimulationFramework` | 132 / 152 |
 
-The increases relative to the former broad closures are the new facade files,
-not duplicated mathematical declarations.
+The current counts include the minimal `ControlledInfrastructure.WellFormed`
+owner and three `ControlledMorphism` declaration leaves. This changes
+physical module counting, not mathematical ownership cardinality: every
+declaration has one definition. In return, Recall no longer inherits
+finite/length execution, and clients needing only structural controlled
+morphisms can use an 8 / 8 closure rather than the 14 / 14 compatibility
+aggregate. The earlier infrastructure split also removed the former
+Core-to-Winning/Objective import edge.
+
+The two foundation entries are now measured separately:
+
+| Foundation entry | EFG / local closure | Boundary |
+|---|---:|---|
+| `Interface.StructuralCore` | 5 / 5 | exact Arena/reachability/history/complete-play/controlled-observation closure |
+| `Interface.Core` | 14 / 14 | broader Foundation Facade with length, bounded deterministic/PMF execution, general well-formedness, subgame, finite, quasistrategy, and recall leaves |
 
 ## Downstream imports and build targets
 
 | Client need | Import/build target |
 |---|---|
+| only Arena dynamics, reachability, histories, complete plays, payoff-free observed control, root presentations, and pure strategies | `EconCSLib.GameTheory.ExtensiveGame.Interface.StructuralCore` |
+| foundation certificates or bounded deterministic/PMF execution | `EconCSLib.GameTheory.ExtensiveGame.Interface.Core` |
+| measure-free complete plays, structural termination, or terminal/path outcomes | `EconCSLib.GameTheory.ExtensiveGame.Interface.Objective` |
 | bounded deterministic, observed behavioral, or PMF-kernel execution | `EconCSLib.GameTheory.ExtensiveGame.Interface.Execution.Finite` |
 | measure-valued infinite paths generated by discrete PMF policies | `EconCSLib.GameTheory.ExtensiveGame.Interface.Execution.Infinite` |
 | strict structural, information-refinement, PMF-coupling, or weak-simulation results | `EconCSLib.GameTheory.ExtensiveGame.Interface.Relations.Discrete` |
@@ -152,6 +168,6 @@ not duplicated mathematical declarations.
 | finite compilers and PMF FOSG serialization | `EconCSLib.GameTheory.ExtensiveGame.Interface.Compilation.Discrete` |
 | old complete relation/equilibrium/compiler closure | unchanged `Interface.Relations`, `Interface.Equilibrium`, or `Interface.Compilation` |
 
-The granular paths are facade-only changes: declarations remain in their
-original implementation modules, so theorem names, namespaces, and record
-fields are unchanged.
+The granular paths remain the supported migration boundary. The 2026-08-01
+refactor also moved payoff-aware projections into explicit adapter modules;
+the canonical payoff-free owners are listed in the module register.
