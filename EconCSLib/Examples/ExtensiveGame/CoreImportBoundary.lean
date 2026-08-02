@@ -9,19 +9,34 @@ import EconCSLib.GameTheory.ExtensiveGame.Interface.Core
 # Core/discrete import boundary
 
 The core facade provides typed deterministic and stochastic history execution
-plus observed-game semantics. Infinite event-time execution and discrete
-kernel arenas remain opt-in through `Interface.Execution.Discrete`.
+plus payoff-free controlled information. Payoff-aware observed games, infinite
+event-time execution, and discrete kernel arenas remain opt-in.
 -/
 
-#check ExtensiveGame.ObservedGame
-#check ExtensiveGame.ofArena
-#check ExtensiveGame.ObservedGame.historyInformationPresentation
-#check ExtensiveGame.ObservedGame.completeInformationPresentation
-#check ExtensiveGame.ObservedGame.CompleteInformation.PublicObservationPresentation.trivial
-#check ExtensiveGame.ObservedGame.ContinuationRootPresentation.initialOnly
-#check ExtensiveGame.ObservedGame.ContinuationRootPresentation.allHistories
-#check ExtensiveGame.ObservedGame.SubgameSystem.initialOnly
+#check ControlledGame
+#check ExtensiveGame.ControlledObservedGame
+#check ExtensiveGame.ControlledObservedGame.completeInformation
+#check ExtensiveGame.ControlledObservedGame.ContinuationRootPresentation.initialOnly
+#check ExtensiveGame.ControlledObservedGame.ContinuationRootPresentation.allHistories
+#check ExtensiveGame.ControlledObservedGame.SubgameSystem.initialOnly
+#check ExtensiveGame.ControlledObservedGame.isLawfulSubgameRoot_relabelPlayers_iff
+#check ExtensiveGame.ControlledObservedGame.SubgameSystem.relabelPlayers
+#check ExtensiveGame.ControlledObservedGame.CompleteSubgameSystem.relabelPlayers
+#check Arena.CompletePlayFromHistory
+#check Arena.HasLengthBoundAt
+#check Arena.IsWellFoundedAt
+#check ExtensiveGame.ControlledObservedGame.AllDecisionInfoRepresented
+#check ExtensiveGame.ControlledObservedGame.FiniteEFGHypotheses
+#check ExtensiveGame.ControlledObservedGame.RecallCertificate
+#check ExtensiveGame.ControlledObservedGame.SignalRecallCertificate
+#check ExtensiveGame.ControlledObservedGame.PublicRecallCertificate
 #check Arena.StochasticHistoryPolicy
+
+/--
+error: Unknown constant `ExtensiveGame.ObservedGame`
+-/
+#guard_msgs in
+#check ExtensiveGame.ObservedGame
 
 /--
 error: Unknown identifier `KernelArena`
@@ -45,22 +60,21 @@ namespace CompleteInformationInstanceBoundary
 
 open ExtensiveGame
 
-variable {N U : Type*} (base : ExtensiveGame N U)
-  (roots : ObservedGame.ContinuationRootPresentation base) (i : N)
+variable {N : Type*} (base : ControlledGame N) (i : N)
 
 abbrev observed :=
-  ObservedGame.completeInformationPresentation base roots
+  ControlledObservedGame.completeInformation base
 
 /-- Decidable equality on histories is reused without a constructor-specific
 typeclass assumption. -/
 example [DecidableEq (base.toArena.HistoryFrom base.init)] :
-    DecidableEq ((observed base roots).Observation i) :=
+    DecidableEq ((observed base).Observation i) :=
   inferInstance
 
-/-- Finiteness on histories is likewise inherited definitionally by
-observations and information states. -/
-example [Fintype (base.toArena.HistoryFrom base.init)] :
-    Fintype ((observed base roots).InfoState i) :=
+/-- Finite histories induce finite decision-history information subtypes
+without requiring decidable mover equality. -/
+example [Finite (base.toArena.HistoryFrom base.init)] :
+    Finite ((observed base).InfoState i) :=
   inferInstance
 
 end CompleteInformationInstanceBoundary
