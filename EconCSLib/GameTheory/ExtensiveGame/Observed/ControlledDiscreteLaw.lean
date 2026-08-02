@@ -249,3 +249,17 @@ def CompleteHistoryLawRealization.TargetDeviationsCoveredAt
 
 This is strictly stronger data than a one-way realization plus a particular
 target-deviation coverage proof. -/
+structure CompleteHistoryLawStrategyIso
+    (S T : G.BoundedCompleteHistoryLawSemantics)
+    extends S.CompleteHistoryLawRealization T where
+  /-- Playerwise strategy equivalence. -/
+  strategyEquiv : (i : N) → S.Strategy i ≃ T.Strategy i
+  /-- The realization map is the equivalence's forward map. -/
+  mapStrategy_eq :
+    ∀ i, toCompleteHistoryLawRealization.mapStrategy i =
+      strategyEquiv i
+
+end BoundedCompleteHistoryLawSemantics
+
+/-- Functional bounded complete-history-law realization across two different
+payoff-free discrete EFG representations. -/
