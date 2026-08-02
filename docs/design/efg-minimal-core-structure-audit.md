@@ -27,15 +27,15 @@ accuracy, not the mathematical carrier.
 |---|---|---|
 | Data-record minimality | Pass | The three records and their fields are unchanged. |
 | Literal structural import boundary | Pass, F1 resolved | `Interface.StructuralCore` has the exact five-module EFG/local closure enforced by governance. |
-| Infrastructure cohesion | Pass, F2 resolved | Six responsibility leaves now separate execution, general well-formedness, subgames, finite certificates, quasistrategies, and recall; the old path is import-only. |
-| Morphism layering | Pass, F7 resolved | Structural, lawful-subgame, and recall transport have separate exact closures; the old `ControlledMorphism` path is import-only. |
+| Infrastructure cohesion | Pass, F2 resolved | Six responsibility leaves separate execution, general well-formedness, subgames, finite certificates, quasistrategies, and recall; their aggregate is a declaration-free canonical facade. |
+| Morphism layering | Pass, F7 resolved | Structural, lawful-subgame, and recall transport have separate exact closures; their aggregate is a declaration-free canonical facade. |
 | Foundation-facade accuracy | Pass | `Interface.Core` is documented and governed as a Foundation Facade, not as the literal core. |
 | Objective/payoff neutrality | Pass through generic continuation/SPE semantics | Core reaches neither `Execution.Objective` nor `Winning.*` nor payoff-aware `Observed.Game`; `ContinuationSemantics` and its generic standard-SPE theorem are owned by `ControlledObservedGame`. |
 | Probability neutrality | Pass at StructuralCore; bounded PMF is intentional in Core | StructuralCore has no PMF module; Core intentionally imports `StochasticExecution`. |
 | Assumption generality | Pass | Finiteness, decidability, recall, termination, and measurability remain external. |
 | Player-label compatibility | Pass for bijections | `relabelPlayers` reindexes mover, observation, information, actions, presentations, profiles, and lawful/complete subgame systems without changing Arena histories. |
 | Representation compatibility | Pass with explicit preservation claims | Compilers and relations retain their existing preservation packages; absence from a package is not inferred. |
-| Controlled module-family clarity | Pass, F12 resolved | The flat family has one carrier, five semantic owners, two declaration-free aggregates, and three payoff-aware adapters; governance fixes the set and dependency direction. |
+| Controlled module-family clarity | Pass, F12 resolved | The complete `Observed.Controlled` hierarchy has one carrier, five semantic owners, nine responsibility owners, two declaration-free facades, and three payoff-aware adapters; flat siblings are forbidden. |
 | Current validation health | Source, mathematical, and local branch-history gates pass | Clean aggregate/example builds and semantic/governance checks pass; the rewritten branch and all subsequent changes pass the repository's commit-scope checker. |
 
 There remains no architectural reason to replace `Arena`.
@@ -157,12 +157,12 @@ The facade itself is excluded from both counts. Its exact transitive closure is
 6. `EconCSLib.GameTheory.ExtensiveGame.Execution.StoppedExecution`
 7. `EconCSLib.GameTheory.ExtensiveGame.Execution.StochasticExecution`
 8. `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled`
-9. `EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.Core`
-10. `EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.WellFormed`
-11. `EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.Subgame`
-12. `EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.Finite`
-13. `EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.Quasi`
-14. `EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.Recall`
+9. `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Core`
+10. `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.WellFormed`
+11. `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Subgame`
+12. `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Finite`
+13. `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Quasi`
+14. `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Recall`
 
 Core contains the five StructuralCore implementation modules but does not
 import the `Interface.StructuralCore` facade module itself. Its stable
@@ -177,22 +177,21 @@ It also remains subject to the payoff-free reverse-dependency rules, which
 exclude payoff-aware observed games and their compatibility adapters,
 equilibrium, and simulation.
 
-## 5. ControlledInfrastructure physical split
+## 5. Controlled.Infrastructure physical split
 
-The historical path
-`Observed.ControlledInfrastructure` is now a Compatibility module containing
-only imports and a module docstring. It re-exports the six leaves and
-`Winning.Basic` so existing downstream imports retain the former declaration
-surface.
+`Observed.Controlled.Infrastructure` is a canonical aggregate facade
+containing only imports and a module docstring. It re-exports the six leaves
+and `Winning.Basic`, while implementation modules import the narrowest defining
+leaf.
 
 | Defining leaf | Authoritative responsibility |
 |---|---|
-| `ControlledInfrastructure.Core` | no-chance mover helpers, pure-profile history execution, and pure-strategy complete-play compatibility |
-| `ControlledInfrastructure.WellFormed` | `DecisionInfoWitness`, represented information, mover coherence, terminal normalization on reachable histories, and inhabited strategy/profile consequences |
-| `ControlledInfrastructure.Subgame` | occurrence-sensitive continuation, `IsLawfulSubgameRoot`, `SubgameSystem`, `CompleteSubgameSystem`, and their bijective player-relabel transport |
-| `ControlledInfrastructure.Finite` | uniform history-length, finite reachable-action/information assumptions, `FiniteEFGHypotheses`, and its well-foundedness/termination consequences |
-| `ControlledInfrastructure.Quasi` | nonempty action permissions, quasistrategies, refinement, pure embedding, and play compatibility |
-| `ControlledInfrastructure.Recall` | personal decisions, own-decision histories, perfect/signal/public recall, no-absent-mindedness, and recall certificates |
+| `Controlled.Infrastructure.Core` | no-chance mover helpers, pure-profile history execution, and pure-strategy complete-play compatibility |
+| `Controlled.Infrastructure.WellFormed` | `DecisionInfoWitness`, represented information, mover coherence, terminal normalization on reachable histories, and inhabited strategy/profile consequences |
+| `Controlled.Infrastructure.Subgame` | occurrence-sensitive continuation, `IsLawfulSubgameRoot`, `SubgameSystem`, `CompleteSubgameSystem`, and their bijective player-relabel transport |
+| `Controlled.Infrastructure.Finite` | uniform history-length, finite reachable-action/information assumptions, `FiniteEFGHypotheses`, and its well-foundedness/termination consequences |
+| `Controlled.Infrastructure.Quasi` | nonempty action permissions, quasistrategies, refinement, pure embedding, and play compatibility |
+| `Controlled.Infrastructure.Recall` | personal decisions, own-decision histories, perfect/signal/public recall, no-absent-mindedness, and recall certificates |
 | `Winning.Basic` | winning conditions, pure robust winning, and the winning-dependent `HasWinningQuasiStrategy` predicate |
 
 Every declaration retains its original namespace and full declaration name.
@@ -200,12 +199,12 @@ No definition is copied between leaves. `Finite` and `Recall` both import the
 minimal `WellFormed` owner. Neither imports the other, and `Recall` therefore
 reaches no `Finite`, `Execution.Length`, or controlled execution module.
 
-The exact source-graph change for `ControlledInfrastructure.Recall` is:
+The exact source-graph change for `Controlled.Infrastructure.Recall` is:
 
 | Snapshot | Exact EFG closure, excluding `Recall` itself |
 |---|---|
-| Before | `Basic`, `Execution.{Reachability,History,CompletePlay,Length}`, `Observed.Controlled`, `ControlledInfrastructure.Finite` |
-| After | `Basic`, `Execution.{Reachability,History,CompletePlay}`, `Observed.Controlled`, `ControlledInfrastructure.WellFormed` |
+| Before | `Basic`, `Execution.{Reachability,History,CompletePlay,Length}`, `Observed.Controlled`, `Controlled.Infrastructure.Finite` |
+| After | `Basic`, `Execution.{Reachability,History,CompletePlay}`, `Observed.Controlled`, `Controlled.Infrastructure.WellFormed` |
 
 The closure shrank from **7 to 6 EFG/local modules**. The governance checker
 compares the complete post-refactor set exactly; the
@@ -213,15 +212,15 @@ compares the complete post-refactor set exactly; the
 `FiniteEFGHypotheses` and `Arena.HasLengthBoundFrom` are not name-resolvable.
 
 Before the split, six implementation/facade modules directly imported the
-broad aggregate: `ControlledMorphism`, `Winning.Determinacy`,
-`Interface.Core`, `ControlledInfrastructureCompat`, `Observed.Quasi`,
+broad aggregate: `Controlled.Morphism`, `Winning.Determinacy`,
+`Interface.Core`, `Controlled.Compat.Infrastructure`, `Observed.Quasi`,
 and `FiniteUnfolding`. That broad aggregate edge count is now **0**.
 Each imports only the leaf or leaves it actually uses. In particular:
 
-- `ControlledMorphism.Subgame` and `ControlledMorphism.Recall` import only
+- `Controlled.Morphism.Subgame` and `Controlled.Morphism.Recall` import only
   their corresponding infrastructure leaf and the morphism core;
 - `Interface.Core` imports all promised leaves directly, but not the
-  compatibility aggregate;
+  aggregate facade;
 - `FiniteUnfolding` imports `Finite` and its actual winning dependency
   directly;
 - `Winning.Determinacy` imports execution Core, Finite, Recall, and
@@ -229,45 +228,46 @@ Each imports only the leaf or leaves it actually uses. In particular:
 - compatibility adapters remain downstream of payoff-free owners.
 
 The payoff-free Core closure consequently lost its former
-`ControlledInfrastructure -> Winning.Basic -> Execution.Objective` edge.
+`Controlled.Infrastructure -> Winning.Basic -> Execution.Objective` edge.
 
-### 5.1 `ControlledMorphism` declaration split
+### 5.1 `Controlled.Morphism` declaration split
 
 The former 1,883-line canonical file had three genuine declaration layers:
 
 | Defining leaf | Declaration families |
 |---|---|
-| `ControlledMorphism.Core` | `Hom`; `InformationRefinement`; strict `Iso`; carrier/history/action/strategy maps; external root-presentation comparison; identity/composition/inverse; and Iso unit/associativity laws |
-| `ControlledMorphism.Subgame` | continuation reachability, `map_isContinuationOf`, `mapLawfulSubgameRoot`, `mapSubgameSystem`, and `mapCompleteSubgameSystem` |
-| `ControlledMorphism.Recall` | personal-decision and own-decision-history transport, signal/public-signal transport, and classic/private/public recall preservation/reflection |
+| `Controlled.Morphism.Core` | `Hom`; `InformationRefinement`; strict `Iso`; carrier/history/action/strategy maps; external root-presentation comparison; identity/composition/inverse; and Iso unit/associativity laws |
+| `Controlled.Morphism.Subgame` | continuation reachability, `map_isContinuationOf`, `mapLawfulSubgameRoot`, `mapSubgameSystem`, and `mapCompleteSubgameSystem` |
+| `Controlled.Morphism.Recall` | personal-decision and own-decision-history transport, signal/public-signal transport, and classic/private/public recall preservation/reflection |
 
 An extra Iso or Fiber leaf was not introduced: the inverse/cast calculus is
 used directly to construct `Iso.symm` and remains cohesive with the structural
-carrier. The former path is a 16-line import-only Compatibility aggregate, and
-`ControlledMorphismCompat` remains the separate payoff-aware adapter.
+carrier. `Controlled.Morphism` is a 16-line declaration-free canonical
+aggregate facade, and `Controlled.Compat.Morphism` remains the separate
+payoff-aware adapter.
 
 The exact post-refactor EFG closures, excluding each entry itself, are:
 
 | Entry | EFG/local closure | Forbidden higher leaves absent |
 |---|---:|---|
-| `ControlledMorphism.Core` | 8 / 8 | `ControlledInfrastructure.{Subgame,Recall,Finite}`, `ControlledMorphism.{Subgame,Recall}`, and `Execution.Length` |
-| `ControlledMorphism.Subgame` | 10 / 10 | both recall leaves, `Finite`, and `Execution.Length` |
-| `ControlledMorphism.Recall` | 11 / 11 | both subgame leaves, `Finite`, and `Execution.Length` |
-| compatibility aggregate | 14 / 14 | re-exports all three leaves by design |
+| `Controlled.Morphism.Core` | 8 / 8 | `Controlled.Infrastructure.{Subgame,Recall,Finite}`, `Controlled.Morphism.{Subgame,Recall}`, and `Execution.Length` |
+| `Controlled.Morphism.Subgame` | 10 / 10 | both recall leaves, `Finite`, and `Execution.Length` |
+| `Controlled.Morphism.Recall` | 11 / 11 | both subgame leaves, `Finite`, and `Execution.Length` |
+| aggregate facade | 14 / 14 | re-exports all three leaves by design |
 
-Before the split, `ControlledMorphism` had a 12-module closure containing
-`ControlledInfrastructure.{Subgame,Recall,Finite}` and `Execution.Length`.
-The compatibility aggregate now has a 14-module closure because three
+Before the split, `Controlled.Morphism` had a 12-module closure containing
+`Controlled.Infrastructure.{Subgame,Recall,Finite}` and `Execution.Length`.
+The aggregate facade has a 14-module closure because three
 declaration owners replace one and `WellFormed` replaces `Finite`/`Length`;
 the useful structural leaf is the materially smaller 8-module boundary.
 
-Internal imports are now narrow: `ControlledMorphismCompat`, `ControlledLaw`,
+Internal imports are now narrow: `Controlled.Compat.Morphism`, `Controlled.Law`,
 and `Observed.Refinement.Structural` use `Core`; `FiniteUnfolding` uses the
 `Subgame` and `Recall` leaves; the relations facade imports all three
-deliberately; and `ControlledDiscreteLaw` dropped an unused morphism import.
-No internal Lean source imports either controlled compatibility aggregate.
-Governance checks the exact leaf closures, exact aggregate imports, import-only
-status, and the absence of an in-scope import cycle.
+deliberately; and `Controlled.Law.Discrete` dropped an unused morphism import.
+No internal Lean source imports either controlled aggregate facade.
+Governance checks the exact leaf closures, exact facade imports,
+declaration-free status, and the absence of an in-scope import cycle.
 
 ## 6. Dependency direction and compatibility
 
@@ -418,22 +418,20 @@ The governed in-scope register now contains **183 modules**:
 
 | Status | Modules |
 |---|---:|
-| Canonical | 84 |
+| Canonical | 86 |
 | Frontend | 13 |
 | Historical | 7 |
-| Compatibility | 21 |
+| Compatibility | 19 |
 | Experimental | 0 |
 | Internal | 58 |
 | **Total** | **183** |
 
 Relative to the pre-refactor 178-module snapshot, this orthogonalization adds
-five defining modules: `ControlledInfrastructure.WellFormed`, the three
-`ControlledMorphism.*` leaves, and the payoff-free
-`ControlledSemantics` owner. The old `ControlledMorphism` module is
-reclassified from Canonical to Compatibility and remains at the same import
-path. The earlier `ControlledInfrastructure` compatibility path and its
-defining leaves remain unchanged except for the new minimal well-formedness
-owner.
+five defining modules: `Controlled.Infrastructure.WellFormed`, the three
+`Controlled.Morphism.*` leaves, and the payoff-free
+`Controlled.Semantics` owner. The later pre-stability hierarchy migration
+placed every controlled responsibility below `Observed.Controlled` and
+classified both declaration-free aggregates as canonical facades.
 
 ## 11. Findings
 
@@ -448,7 +446,7 @@ Acceptance evidence:
 - the positive import regression builds; and
 - source-graph governance rejects every extra EFG module in its closure.
 
-### F2 — Split ControlledInfrastructure by responsibility
+### F2 — Split Controlled.Infrastructure by responsibility
 
 **Priority:** medium · **Status:** resolved
 
@@ -498,7 +496,7 @@ lawful-root, total-outcome, and deviation-coverage premises. Those premises
 cannot be inferred from macro-boundary simulation alone and are not part of
 minimal-core completion.
 
-### F7 — Split ControlledMorphism by semantic layer
+### F7 — Split Controlled.Morphism by semantic layer
 
 **Priority:** medium · **Status:** resolved
 
@@ -535,7 +533,7 @@ Acceptance evidence:
 - its Nash-on-presentation, subgame-perfection-on, complete standard-SPE, and
   surjective transfer theorem use only payoff-free lawful-subgame systems;
 - source and target games in the generic theorem carry no payoff parameter;
-- `check_efg_governance.py` treats `ControlledSemantics` as a payoff-free
+- `check_efg_governance.py` treats `Controlled.Semantics` as a payoff-free
   boundary and rejects any future closure edge to `ObservedGame`,
   payoff-aware adapters, equilibrium implementations, or simulations;
 - `ObservedGame.ContinuationSemantics` is a compatibility abbreviation, and
@@ -583,31 +581,31 @@ Acceptance evidence:
   available without pulling in payoff, probability, or higher solution
   layers.
 
-### F12 — Classify the flat `Controlled*` module family
+### F12 — Consolidate the `Observed.Controlled` module hierarchy
 
 **Priority:** medium · **Status:** resolved
 
-There is no duplicate declaration owner or old/new namespace collision. The
-visible flat files have four different roles:
+There is no duplicate declaration owner or old/new namespace collision. Before
+the EFG module paths became stable, the implementation was hard-migrated into
+one physical hierarchy:
 
 - `Controlled` is the canonical carrier;
 - five law/semantics modules are canonical semantic owners;
-- `ControlledInfrastructure` and `ControlledMorphism` are declaration-free
-  legacy import aggregates; and
-- the three `*Compat` modules are downstream payoff-aware adapters declaring
-  only under `ObservedGame` or `ObservedChanceGame`.
+- nine infrastructure/morphism leaves are canonical responsibility owners;
+- `Controlled.Infrastructure` and `Controlled.Morphism` are declaration-free
+  canonical aggregate facades; and
+- the three `Controlled.Compat.*` modules are downstream payoff-aware adapters
+  declaring only under `ObservedGame` or `ObservedChanceGame`.
 
 The complete map and import selection guide live in
-[`efg-controlled-api.md`](efg-controlled-api.md). Governance now rejects an
-unclassified new flat `Controlled*` file, a role/lifecycle mismatch, any
-change to an adapter's exact import contract, an adapter reopening a
-payoff-free controlled namespace, or a canonical owner reaching an adapter.
-`ControlledCompatibilityImportBoundary` jointly imports the family and checks
-that canonical and payoff-aware declarations coexist under their intended
-namespaces.
-Physically renaming the established paths would require leaving compatibility
-stubs and would increase the file count, so the safe resolution is one
-canonical owner per concept plus mechanically enforced one-way compatibility.
+[`efg-controlled-api.md`](efg-controlled-api.md). Governance fixes all twenty
+modules, rejects a new flat sibling such as `Observed.ControlledFoo`, and
+rejects role/lifecycle mismatches, adapter import changes, adapters reopening a
+payoff-free namespace, or canonical modules reaching an adapter.
+`ControlledCompatibilityImportBoundary` jointly imports all public roles and
+checks that canonical and payoff-aware declarations coexist under their
+intended mathematical namespaces. Former flat paths are absent; no forwarding
+stubs remain.
 
 ## 12. Validation and environment health
 
@@ -620,7 +618,7 @@ does not depend on the formerly duplicated numbered artifacts.
 | Stable library | Pass | Clean `lake build`: 8,641 jobs; repeated after the facade fix with the same successful aggregate. |
 | Opt-in examples and regressions | Pass | Clean `lake build EconCSLib.Examples`: 8,820 jobs; repeated after the facade fix. |
 | Discrete equilibrium facade | Pass | The controlled and compatibility continuation-semantics names elaborate through `Interface.Equilibrium.Discrete`. |
-| EFG governance | Pass | 183 registered modules, 21 import-only compatibility paths, root closure 37 / 165, Simulation 30, and controlled flat family 11 = 1 carrier / 5 owners / 2 aggregates / 3 adapters. |
+| EFG governance | Pass | 183 registered modules, 19 import-only compatibility paths, root closure 37 / 165, Simulation 30, and Controlled hierarchy 20 = 1 carrier / 5 semantic owners / 9 responsibility owners / 2 facades / 3 adapters. |
 | Lean placeholders | Pass | `check_lean_placeholders.py EconCSLib` reports no forbidden placeholder. |
 | Knowledge checks | Pass | Reference unit tests, reference scan, and `mdblueprint-check` all pass with 0 errors and 0 warnings. |
 | Declaration lifecycle report | Pass, triage remains | 1,682 theorems/lemmas across 183 modules; 478 conservative zero-source-indegree candidates, not an automatic deletion list. |
