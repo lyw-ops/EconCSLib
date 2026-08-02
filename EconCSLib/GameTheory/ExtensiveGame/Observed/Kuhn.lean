@@ -6,6 +6,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Continuation
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Mixed
 import EconCSLib.GameTheory.ExtensiveGame.Observed.PerfectRecall
+import EconCSLib.GameTheory.ExtensiveGame.Observed.WellFormed
 
 /-!
 # EconCSLib.GameTheory.ExtensiveGame.Observed.Kuhn
@@ -49,7 +50,7 @@ behavioral execution.
 * `ObservedGame.FiniteInformationHypotheses`.
 * `ObservedGame.FiniteNoAbsentMindednessHypotheses`.
 * `ObservedGame.BehavioralStrategy.toMixed`.
-* `ObservedChanceGame.mixedContinuationFamily`.
+* `ObservedChanceGame.mixedContinuationFamilyOnRoots`.
 * `ObservedChanceGame.MixedBehavioralRealizationAt`.
 * `ObservedChanceGame.MixedBehavioralContinuationRealization`.
 
@@ -105,6 +106,29 @@ structure FiniteNoAbsentMindednessHypotheses
   /-- Every player has finitely many decision information states. -/
   finiteInfoState :
     ∀ i : N, Finite (G.InfoState i)
+
+namespace FiniteEFGHypotheses
+
+variable {G : ObservedGame N U}
+
+/-- The structural finite-EFG certificate supplies the finite-information
+hypothesis needed for independent complete-plan sampling. -/
+def toFiniteInformationHypotheses
+    (h : G.FiniteEFGHypotheses) :
+    G.FiniteInformationHypotheses where
+  finiteInfoState := h.finiteInfoState
+
+/-- Adding perfect recall to a structural finite-EFG certificate supplies the
+standard hypotheses for root-scoped constructive Kuhn realization. -/
+def toFiniteKuhnHypotheses
+    [DecidableEq N]
+    (h : G.FiniteEFGHypotheses)
+    (hPerfectRecall : G.PerfectRecall) :
+    G.FiniteKuhnHypotheses where
+  perfectRecall := hPerfectRecall
+  finiteInfoState := h.finiteInfoState
+
+end FiniteEFGHypotheses
 
 namespace BehavioralStrategy
 
@@ -478,62 +502,60 @@ universe uV
 
 variable {N U : Type*}
 
-/-- Representation-neutral family of bounded mixed contingent-plan
-continuations. -/
-noncomputable def mixedContinuationFamily
+/-- Bounded mixed contingent-plan continuations on a separately supplied root
+presentation. -/
+noncomputable def mixedContinuationFamilyOnRoots
     (G : ObservedChanceGame N U)
     [Fintype N]
     [(state : G.observed.base.State) →
-      Decidable
-        (G.observed.base.isTerminal state)]
+      Decidable (G.observed.base.isTerminal state)]
+    (roots : G.observed.RootPresentation)
     (fuel : ℕ) :
     ContinuationGameForm N where
-  Strategy :=
-    G.observed.MixedStrategy
+  Strategy := G.observed.MixedStrategy
   Root :=
     G.observed.base.toArena.HistoryFrom
       G.observed.base.init
-  IsDeclaredRoot :=
-    G.observed.IsDesignatedContinuationRoot
-  Outcome :=
-    PMF (Option (N → U))
+  IsDeclaredRoot := roots.IsRoot
+  Outcome := PMF (Option (N → U))
   outcome := fun current profile =>
-    G.mixedStoppedPayoffLawFrom
-      profile current fuel
+    G.mixedStoppedPayoffLawFrom profile current fuel
 
 /-- Fixing a root in the mixed continuation family recovers the deterministic
 view of the mixed law game form definitionally. -/
-theorem mixedContinuationFamily_toGameForm
+theorem mixedContinuationFamilyOnRoots_toGameForm
     (G : ObservedChanceGame N U)
     [Fintype N]
     [(state : G.observed.base.State) →
       Decidable
         (G.observed.base.isTerminal state)]
+    (roots : G.observed.RootPresentation)
     (fuel : ℕ)
     (current :
       G.observed.base.toArena.HistoryFrom
         G.observed.base.init) :
-    (G.mixedContinuationFamily
-      fuel).toGameForm current =
+    (G.mixedContinuationFamilyOnRoots
+      roots fuel).toGameForm current =
       (G.mixedLawGameForm current fuel).toGameForm :=
   rfl
 
 /-- Bounded mixed Nash on presentation-designated continuations is exactly Nash on presentation-designated continuations in the representation-neutral mixed
 continuation family. -/
-theorem isMixedNashOnDesignatedContinuationsAtFuel_iff_continuationFamily
+theorem isMixedNashOnRootsAtFuel_iff_continuationFamily
     (G : ObservedChanceGame N U)
     [Fintype N] [DecidableEq N] [Preorder V]
     [(state : G.observed.base.State) →
       Decidable
         (G.observed.base.isTerminal state)]
+    (roots : G.observed.RootPresentation)
     (utility :
       PMF (Option (N → U)) → N → V)
     (profile : G.observed.MixedProfile)
     (fuel : ℕ) :
-    G.IsMixedNashOnDesignatedContinuationsAtFuel
-        utility profile fuel ↔
-      (G.mixedContinuationFamily
-        fuel).IsNashOnRoots
+    G.IsMixedNashOnRootsAtFuel
+        roots utility profile fuel ↔
+      (G.mixedContinuationFamilyOnRoots
+        roots fuel).IsNashOnRoots
           (fun _ => utility) profile :=
   Iff.rfl
 
@@ -782,9 +804,10 @@ noncomputable def atRoot
 /-- A continuation-wide realization induces a representation-neutral
 continuation morphism. -/
 noncomputable def continuationHom
-    (R : G.MixedBehavioralContinuationRealization fuel) :
-    (G.mixedContinuationFamily fuel).Hom
-      (G.behavioralContinuationFamily fuel) where
+    (R : G.MixedBehavioralContinuationRealization fuel)
+    (roots : G.observed.RootPresentation) :
+    (G.mixedContinuationFamilyOnRoots roots fuel).Hom
+      (G.behavioralContinuationFamilyOnRoots roots fuel) where
   rootMap := id
   strategyMap :=
     R.behavioralize
@@ -803,8 +826,9 @@ noncomputable def continuationHom
 
 /-- The identity root map covers every target declared root. -/
 theorem continuationHom_declaredRootSurjective
-    (R : G.MixedBehavioralContinuationRealization fuel) :
-    R.continuationHom.DeclaredRootSurjective := by
+    (R : G.MixedBehavioralContinuationRealization fuel)
+    (roots : G.observed.RootPresentation) :
+    (R.continuationHom roots).DeclaredRootSurjective := by
   intro targetRoot htargetRoot
   exact ⟨targetRoot, htargetRoot, rfl⟩
 
@@ -812,8 +836,9 @@ theorem continuationHom_declaredRootSurjective
 coverage. -/
 theorem continuationHom_outcomeDeviationCompleteAt
     (R : G.MixedBehavioralContinuationRealization fuel)
+    (roots : G.observed.RootPresentation)
     (profile : G.observed.MixedProfile) :
-    R.continuationHom.OutcomeDeviationCompleteAt
+    (R.continuationHom roots).OutcomeDeviationCompleteAt
       profile := by
   intro current hroot i targetStrategy
   obtain ⟨sourceStrategy, hrealizes⟩ :=
@@ -835,31 +860,31 @@ theorem continuationHom_outcomeDeviationCompleteAt
 theorem isNashOnRootsAtFuel_iff
     [Preorder V]
     (R : G.MixedBehavioralContinuationRealization fuel)
+    (roots : G.observed.RootPresentation)
     (utility :
       PMF (Option (N → U)) → N → V)
     (profile : G.observed.MixedProfile) :
-    G.IsMixedNashOnDesignatedContinuationsAtFuel
-        utility profile fuel ↔
-      G.IsBehavioralNashOnDesignatedContinuationsAtFuel
-        utility (R.mapProfile profile) fuel := by
+    G.IsMixedNashOnRootsAtFuel
+        roots utility profile fuel ↔
+      G.IsBehavioralNashOnRootsAtFuel
+        roots utility (R.mapProfile profile) fuel := by
   change
-    (G.mixedContinuationFamily
-      fuel).IsNashOnRoots
+    (G.mixedContinuationFamilyOnRoots
+      roots fuel).IsNashOnRoots
         (fun _ => utility) profile ↔
-      (G.behavioralContinuationFamily
-        fuel).IsNashOnRoots
+      (G.behavioralContinuationFamilyOnRoots
+        roots fuel).IsNashOnRoots
           (fun _ => utility)
-          (R.continuationHom.mapProfile profile)
+          ((R.continuationHom roots).mapProfile profile)
   apply
-    R.continuationHom.isNashOnRoots_iff_of_outcomeDeviationCompleteAt
+    (R.continuationHom roots).isNashOnRoots_iff_of_outcomeDeviationCompleteAt
       (profile := profile)
   · intro root outcome i
     rfl
   · exact
-      R.continuationHom_declaredRootSurjective
+      R.continuationHom_declaredRootSurjective roots
   · exact
-      R.continuationHom_outcomeDeviationCompleteAt
-        profile
+      R.continuationHom_outcomeDeviationCompleteAt roots profile
 
 end MixedBehavioralContinuationRealization
 
