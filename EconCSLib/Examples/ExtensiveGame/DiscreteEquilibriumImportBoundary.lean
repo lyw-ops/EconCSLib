@@ -12,30 +12,40 @@ Finite-fuel pure, behavioral, mixed, and Kuhn equilibrium semantics remain
 available without the measure-valued execution and path-utility layers.
 -/
 
-#check ExtensiveGame.ObservedGame.Iso.isPureNashOnDesignatedContinuationsAtFuel_iff
-#check ExtensiveGame.ObservedChanceGame.Iso.isBehavioralNashOnDesignatedContinuationsAtFuel_iff
+#check ExtensiveGame.ObservedGame.Iso.isPureNashOnRootsAtFuel_iff
+#check ExtensiveGame.ObservedChanceGame.Iso.isBehavioralNashOnRootsAtFuel_iff
 #check ExtensiveGame.ObservedChanceGame.finiteKuhn_isNash_iff
+#check ExtensiveGame.ObservedGame.DiscreteGeneralStrategy
+#check ExtensiveGame.ObservedGame.DiscreteGeneralProfile.behavioralProfileLaw
+#check ExtensiveGame.ObservedChanceGame.BoundedCompleteHistorySemantics
+#check ExtensiveGame.ObservedChanceGame.BoundedCompleteHistorySemantics.CompleteHistoryLawRealization
+#check ExtensiveGame.ControlledObservedGame.ContinuationSemantics
+#check ExtensiveGame.ControlledObservedGame.ContinuationSemantics.isStandardSubgamePerfectAt_iff_of_surjective
+#check ExtensiveGame.ObservedGame.ofControlledObservedGame
+#check ExtensiveGame.ObservedGame.relabelPlayers
+#check ExtensiveGame.ObservedGame.relabelPureProfileEquiv
+#check ExtensiveGame.ObservedGame.ContinuationSemantics
 
 /--
-error: Unknown constant `ExtensiveGame.ObservedGame.Iso.isPureNashOnDesignatedContinuationsAtFuel_iff_viaContinuationFamily`
+error: Unknown constant `ExtensiveGame.ObservedGame.Iso.isPureNashOnRootsAtFuel_iff_viaContinuationFamily`
 -/
 #guard_msgs in
 #check
-  ExtensiveGame.ObservedGame.Iso.isPureNashOnDesignatedContinuationsAtFuel_iff_viaContinuationFamily
+  ExtensiveGame.ObservedGame.Iso.isPureNashOnRootsAtFuel_iff_viaContinuationFamily
 
 /--
-error: Unknown constant `ExtensiveGame.ObservedGame.InformationRefinement.isPureNashOnDesignatedContinuationsAtFuel_of_map_viaContinuationSimulation`
+error: Unknown constant `ExtensiveGame.ObservedGame.InformationRefinement.isPureNashOnRootsAtFuel_of_map_viaContinuationSimulation`
 -/
 #guard_msgs in
 #check
-  ExtensiveGame.ObservedGame.InformationRefinement.isPureNashOnDesignatedContinuationsAtFuel_of_map_viaContinuationSimulation
+  ExtensiveGame.ObservedGame.InformationRefinement.isPureNashOnRootsAtFuel_of_map_viaContinuationSimulation
 
 /--
-error: Unknown constant `ExtensiveGame.ObservedChanceGame.Iso.isBehavioralNashOnDesignatedContinuationsAtFuel_iff_viaInformationRefinement`
+error: Unknown constant `ExtensiveGame.ObservedChanceGame.Iso.isBehavioralNashOnRootsAtFuel_iff_viaInformationRefinement`
 -/
 #guard_msgs in
 #check
-  ExtensiveGame.ObservedChanceGame.Iso.isBehavioralNashOnDesignatedContinuationsAtFuel_iff_viaInformationRefinement
+  ExtensiveGame.ObservedChanceGame.Iso.isBehavioralNashOnRootsAtFuel_iff_viaInformationRefinement
 
 /--
 error: Unknown constant `Arena.pathLaw`
