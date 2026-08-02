@@ -276,8 +276,6 @@ def toObservedGame (root : GameTree N U) :
   InfoAction := fun _ info => info.Action
   actionEquiv := fun history i hmover =>
     nodeActionEquiv root history.1 i hmover
-  IsDesignatedContinuationRoot := fun _ => True
-  init_isDesignatedContinuationRoot := trivial
 
 instance toObservedGame.instTerminalDecidable (root : GameTree N U) :
     (g : (toObservedGame root).base.State) →
@@ -586,9 +584,12 @@ theorem stoppedHistoryFrom_observedProfile_reaches_outcome
 
 /-- The finite compiled `GameTree` terminates under every pure profile from
 every admissible history root. -/
-theorem toObservedGame_pureTerminating (root : GameTree N U) :
-    (toObservedGame root).PureTerminating
-      (toExtensiveGame_noChance root) := by
+theorem toObservedGame_pureTerminatingOnAllContinuations
+    (root : GameTree N U) :
+    (toObservedGame root).PureTerminatingOnRoots
+      (toExtensiveGame_noChance root)
+      (ExtensiveGame.ObservedGame.ContinuationRootPresentation.allHistories
+        (toObservedGame root).base) := by
   intro current _hroot profile
   refine ⟨root.size, ?_⟩
   obtain ⟨payoff, hendpoint, _⟩ :=
@@ -649,7 +650,8 @@ noncomputable def terminalContinuationGameFormIso
     (toGameForm current.1).Iso
       ((toObservedGame root).terminalContinuationGameForm
         (toExtensiveGame_noChance root) current
-        ((toObservedGame_pureTerminating root) current trivial)) where
+        ((toObservedGame_pureTerminatingOnAllContinuations root)
+          current trivial)) where
   strategyEquiv := fun i => (playerStrategyEquiv root i).symm
   outcomeEquiv := Equiv.refl _
   map_outcome := by
@@ -684,14 +686,16 @@ theorem terminalContinuationGameForm_isNash_iff_isNashAt
       (toExtensiveGame root).toArena.HistoryFrom root) :
     ((toObservedGame root).terminalContinuationGameForm
         (toExtensiveGame_noChance root) current
-        ((toObservedGame_pureTerminating root) current trivial)).IsNash
+        ((toObservedGame_pureTerminatingOnAllContinuations root)
+          current trivial)).IsNash
         (fun payoff : N → U => payoff)
         (playerProfileToObservedProfile root profile) ↔
       IsNashAt (profileStrategy profile) current.1 := by
   calc
     ((toObservedGame root).terminalContinuationGameForm
         (toExtensiveGame_noChance root) current
-        ((toObservedGame_pureTerminating root) current trivial)).IsNash
+        ((toObservedGame_pureTerminatingOnAllContinuations root)
+          current trivial)).IsNash
         (fun payoff : N → U => payoff)
         (playerProfileToObservedProfile root profile) ↔
         (toGameForm current.1).IsNash
@@ -713,13 +717,15 @@ continuations predicate recovers the existing root-scoped structural
 `GameTree.IsGlobalEndpointSubgamePerfectOn` predicate.
 
 This is not the canonical occurrence-sensitive standard-SPE theorem. -/
-theorem observed_isPureNashOnDesignatedContinuations_iff_isGlobalEndpointSubgamePerfectOn
+theorem observed_isPureNashOnAllContinuations_iff_isGlobalEndpointSubgamePerfectOn
     [DecidableEq N] [TotalPreorder U]
     (root : GameTree N U)
     (profile : N → PlayerStrategy N U) :
-    (toObservedGame root).IsPureNashOnDesignatedContinuations
+    (toObservedGame root).IsPureNashOnRoots
         (toExtensiveGame_noChance root)
-        (toObservedGame_pureTerminating root)
+        (ExtensiveGame.ObservedGame.ContinuationRootPresentation.allHistories
+          (toObservedGame root).base)
+        (toObservedGame_pureTerminatingOnAllContinuations root)
         (fun payoff : N → U => payoff)
         (playerProfileToObservedProfile root profile) ↔
       IsGlobalEndpointSubgamePerfectOn (profileStrategy profile) root := by
