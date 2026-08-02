@@ -3,138 +3,163 @@ Copyright (c) 2026 EconCSLib contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
-import EconCSLib.GameTheory.GameForm.IndexedContinuation
+import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledSemantics
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Game
 
 /-!
 # EconCSLib.GameTheory.ExtensiveGame.Observed.Semantics
 
-Adapter from an observed EFG to an arbitrary indexed continuation evaluator.
+State-payoff observed-game compatibility for payoff-free continuation
+semantics.
 
-The operational modules provide concrete deterministic and discrete-PMF
-evaluators. `ContinuationSemantics` is the extension boundary for other
-semantics: a client supplies its strategy spaces, horizon/index type, outcome
-type, and evaluator on complete history roots. The observed game supplies the
-root type and presentation-designated predicate exactly once.
-
-Converting with `toIndexedGameForm` reuses
-`IndexedContinuationGameForm` morphisms and Nash-on-declared-roots transfer.
-The default adapter uses presentation-designated roots. Equilibrium on a
-possibly conservative lawful system uses `IsSubgamePerfectOnAt`; complete
-standard SPE uses `IsStandardSubgamePerfectAt` with a
-`CompleteSubgameSystem`. This adapter does not
-assume that the evaluator is computable, discrete, bounded, or measure-valued,
-and it does not assert application-specific convergence or termination
-theorems.
+The canonical carrier and theorem layer live in
+`Observed.ControlledSemantics` and depend only on `ControlledObservedGame`.
+This module preserves the established `ObservedGame.ContinuationSemantics`
+spelling by projecting through `toControlledObservedGame`. It does not inspect
+or store state payoffs. Its cross-game standard-SPE wrapper permits different
+source and target state-payoff types.
 -/
 
 namespace ExtensiveGame.ObservedGame
 
-universe uN uU uStrategy uHorizon uOutcome uV
+universe uN uU uW uStrategy uHorizon uOutcome uV
 
 variable {N : Type uN} {U : Type uU}
 
-/-- An arbitrary indexed continuation evaluator attached to an observed EFG. -/
-structure ContinuationSemantics (G : ObservedGame N U) where
-  /-- Complete strategy space for each player in this semantic mode. -/
-  Strategy : N → Type uStrategy
-  /-- Horizon, approximation, discount, or total-semantics index. -/
-  Horizon : Type uHorizon
-  /-- Result type of evaluation. -/
-  Outcome : Type uOutcome
-  /-- Evaluate a complete profile from a complete history root. -/
-  evaluate :
-    Horizon →
-      G.base.toArena.HistoryFrom G.base.init →
-      (∀ i, Strategy i) → Outcome
+/-- Compatibility name for the payoff-free continuation semantics attached to
+`G.toControlledObservedGame`.
+
+The state-payoff field of `G` is not stored or inspected. -/
+abbrev ContinuationSemantics (G : ObservedGame N U) :=
+  G.toControlledObservedGame.ContinuationSemantics
 
 namespace ContinuationSemantics
 
 variable {G : ObservedGame N U}
 
-/-- Complete profiles of one attached continuation semantics. -/
+/-- Compatibility name for complete profiles. -/
 abbrev Profile (S : G.ContinuationSemantics) :=
-  ∀ i, S.Strategy i
+  ControlledObservedGame.ContinuationSemantics.Profile S
 
-/-- Reuse the generic indexed continuation layer with an explicit tested-root
-predicate. -/
+/-- Compatibility adapter on an explicit root predicate. -/
 def toIndexedGameFormOn
     (S : G.ContinuationSemantics)
-    (roots :
-      G.base.toArena.HistoryFrom G.base.init → Prop) :
-    IndexedContinuationGameForm N where
-  Strategy := S.Strategy
-  Horizon := S.Horizon
-  Root := G.base.toArena.HistoryFrom G.base.init
-  IsDeclaredRoot := roots
-  Outcome := S.Outcome
-  outcome := S.evaluate
-
-/-- The indexed continuation adapter on presentation-designated roots. -/
-def toIndexedGameForm (S : G.ContinuationSemantics) :
+    (roots : G.base.toArena.HistoryFrom G.base.init → Prop) :
     IndexedContinuationGameForm N :=
-  S.toIndexedGameFormOn G.IsDesignatedContinuationRoot
+  ControlledObservedGame.ContinuationSemantics.toIndexedGameFormOn S roots
+
+/-- Compatibility adapter on a state-payoff observed-game root
+presentation. -/
+def toIndexedGameFormOnPresentation
+    (S : G.ContinuationSemantics)
+    (roots : G.RootPresentation) :
+    IndexedContinuationGameForm N :=
+  S.toIndexedGameFormOn roots.IsRoot
 
 @[simp]
-theorem toIndexedGameForm_outcome
+theorem toIndexedGameFormOnPresentation_outcome
     (S : G.ContinuationSemantics)
+    (roots : G.RootPresentation)
     (horizon : S.Horizon)
     (root : G.base.toArena.HistoryFrom G.base.init)
     (profile : S.Profile) :
-    S.toIndexedGameForm.outcome horizon root profile =
+    (S.toIndexedGameFormOnPresentation roots).outcome
+        horizon root profile =
       S.evaluate horizon root profile :=
   rfl
 
-/-- Nash equilibrium of an attached evaluator on every
-presentation-designated continuation at one semantic index. -/
-def IsNashOnDesignatedContinuationsAt
+/-- Compatibility definition of Nash equilibrium on a root presentation. -/
+def IsNashOnPresentationAt
     {V : Type uV} [DecidableEq N] [Preorder V]
     (S : G.ContinuationSemantics)
+    (roots : G.RootPresentation)
     (utility :
-      (G.base.toArena.HistoryFrom G.base.init) →
+      G.base.toArena.HistoryFrom G.base.init →
         S.Outcome → N → V)
     (horizon : S.Horizon) (profile : S.Profile) : Prop :=
-  S.toIndexedGameForm.IsNashOnRootsAt
+  (S.toIndexedGameFormOnPresentation roots).IsNashOnRootsAt
     utility horizon profile
 
-/-- Subgame perfection of an attached evaluator at one semantic index on an
-explicit, possibly conservative, lawful subgame system. -/
+/-- Compatibility definition of subgame perfection on a selected lawful
+payoff-free subgame system. -/
 def IsSubgamePerfectOnAt
     {V : Type uV} [DecidableEq N] [Preorder V]
     (S : G.ContinuationSemantics)
     (system : G.SubgameSystem)
     (utility :
-      (G.base.toArena.HistoryFrom G.base.init) →
+      G.base.toArena.HistoryFrom G.base.init →
         S.Outcome → N → V)
     (horizon : S.Horizon) (profile : S.Profile) : Prop :=
-  (S.toIndexedGameFormOn system.IsRoot).IsNashOnRootsAt
-    utility horizon profile
+  ControlledObservedGame.ContinuationSemantics.IsSubgamePerfectOnAt
+    S system utility horizon profile
 
-/-- Standard SPE of an attached evaluator at one semantic index on every
-structurally lawful subgame root. -/
+/-- Compatibility definition of standard SPE on every lawful payoff-free
+subgame root. -/
 def IsStandardSubgamePerfectAt
     {V : Type uV} [DecidableEq N] [Preorder V]
     (S : G.ContinuationSemantics)
     (system : G.CompleteSubgameSystem)
     (utility :
-      (G.base.toArena.HistoryFrom G.base.init) →
+      G.base.toArena.HistoryFrom G.base.init →
         S.Outcome → N → V)
     (horizon : S.Horizon) (profile : S.Profile) : Prop :=
-  S.IsSubgamePerfectOnAt system.toSubgameSystem
-    utility horizon profile
+  ControlledObservedGame.ContinuationSemantics.IsStandardSubgamePerfectAt
+    S system utility horizon profile
 
-/-- The designated-root adapter introduces no new equilibrium predicate. -/
-theorem isNashOnDesignatedContinuationsAt_iff
+/-- The compatibility presentation adapter introduces no new equilibrium
+predicate. -/
+theorem isNashOnPresentationAt_iff
     {V : Type uV} [DecidableEq N] [Preorder V]
     (S : G.ContinuationSemantics)
+    (roots : G.RootPresentation)
     (utility :
-      (G.base.toArena.HistoryFrom G.base.init) →
+      G.base.toArena.HistoryFrom G.base.init →
         S.Outcome → N → V)
     (horizon : S.Horizon) (profile : S.Profile) :
-    S.IsNashOnDesignatedContinuationsAt utility horizon profile ↔
-      S.toIndexedGameForm.IsNashOnRootsAt
+    S.IsNashOnPresentationAt roots utility horizon profile ↔
+      (S.toIndexedGameFormOnPresentation roots).IsNashOnRootsAt
         utility horizon profile :=
   Iff.rfl
+
+/-- Compatibility form of the payoff-free standard-SPE transfer theorem.
+
+Source and target state-payoff types may differ because neither payoff field
+participates in continuation evaluation or utility compatibility. -/
+theorem isStandardSubgamePerfectAt_iff_of_surjective
+    {W : Type uW} {H : ObservedGame N W}
+    {V : Type uV} [DecidableEq N] [Preorder V]
+    (S : G.ContinuationSemantics)
+    (T : H.ContinuationSemantics)
+    (sourceSystem : G.CompleteSubgameSystem)
+    (targetSystem : H.CompleteSubgameSystem)
+    (f :
+      (S.toIndexedGameFormOn
+        sourceSystem.toSubgameSystem.IsRoot).Hom
+        (T.toIndexedGameFormOn
+          targetSystem.toSubgameSystem.IsRoot))
+    (sourceUtility :
+      S.Horizon →
+        G.base.toArena.HistoryFrom G.base.init →
+          S.Outcome → N → V)
+    (targetUtility :
+      T.Horizon →
+        H.base.toArena.HistoryFrom H.base.init →
+          T.Outcome → N → V)
+    (hutility :
+      f.UtilityCompatible sourceUtility targetUtility)
+    (hstrategy : f.StrategySurjective)
+    (hroot : f.DeclaredRootSurjective)
+    (horizon : S.Horizon)
+    (profile : S.Profile) :
+    S.IsStandardSubgamePerfectAt sourceSystem
+        (sourceUtility horizon) horizon profile ↔
+      T.IsStandardSubgamePerfectAt targetSystem
+        (targetUtility (f.horizonMap horizon))
+        (f.horizonMap horizon) (f.mapProfile profile) := by
+  exact
+    ExtensiveGame.ControlledObservedGame.ContinuationSemantics.isStandardSubgamePerfectAt_iff_of_surjective
+        S T sourceSystem targetSystem f
+        sourceUtility targetUtility hutility hstrategy hroot horizon profile
 
 end ContinuationSemantics
 
