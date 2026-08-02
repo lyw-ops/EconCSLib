@@ -3,28 +3,40 @@ Copyright (c) 2026 EconCSLib contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
-import EconCSLib.GameTheory.GameForm
+import EconCSLib.GameTheory.ExtensiveGame.Execution.CompletePlay
 import EconCSLib.GameTheory.ExtensiveGame.Execution.History
+import EconCSLib.GameTheory.ExtensiveGame.Execution.Length
 import EconCSLib.GameTheory.ExtensiveGame.Execution.StoppedExecution
 import EconCSLib.GameTheory.ExtensiveGame.Execution.StochasticExecution
-import EconCSLib.GameTheory.ExtensiveGame.Observed.Game
-import EconCSLib.GameTheory.ExtensiveGame.Observed.Semantics
+import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.Core
+import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.WellFormed
+import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.Subgame
+import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.Finite
+import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.Quasi
+import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure.Recall
 
 /-!
 # EconCSLib.GameTheory.ExtensiveGame.Interface.Core
 
-Stable minimal import for representation-neutral game forms, typed execution,
-and the core history-indexed observed-game structure.
+Stable Foundation Facade for typed histories, measure-free complete plays,
+structural termination certificates, bounded deterministic and PMF execution,
+and the payoff-free controlled history-indexed information structure. It also
+includes represented information, mover coherence, finite-EFG certificates,
+recall predicates, quasistrategies, and external lawful subgame systems
+without introducing another game record.
 
-`ObservedGame.ContinuationSemantics` is the extension boundary for attaching
-arbitrary horizon- and outcome-valued evaluators to those history roots.
-`ObservedGame.historyInformationPresentation` and
-`completeInformationPresentation` provide reducible full-history
-presentations; public projection and designated-root selection remain explicit
-orthogonal arguments.
+`ControlledObservedGame.completeInformation` uses exactly each player's
+mover-labeled decision-history subtype, so chance and other-player histories
+do not create spurious strategy coordinates. Terminal histories are excluded
+under terminal-mover normalization; the general carrier instead exposes
+`DecisionMoverCoherent` as the explicit obligation. Public projection and
+designated-root selection remain explicit orthogonal arguments.
 
-This tier intentionally excludes representation relations, equilibrium
-transfer, finite Kuhn constructions, FOSG serialization, and concrete
-compilers. Downstream developments that only define a new EFG representation
-should prefer this import over `SimulationFramework`.
+This facade promises the declaration families above, not every declaration
+that might become visible through an implementation import. It intentionally
+excludes payoff-aware `ObservedGame`, objectives and winning conditions,
+measure-valued path laws, representation relations, equilibrium, simulation,
+serialization, and compilers. The genuinely narrow structural entry is
+`Interface.StructuralCore`; compatibility clients must import payoff-aware
+adapters explicitly.
 -/
