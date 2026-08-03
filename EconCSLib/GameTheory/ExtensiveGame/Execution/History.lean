@@ -195,6 +195,23 @@ namespace ControlledGame
 
 variable {N : Type*}
 
+/-- Reachable no-chance condition: every nonterminal complete history generated
+from the controlled game's initial state has a strategic mover.
+
+Unlike `ControlledGame.NoChance`, this predicate does not constrain
+nonterminal ambient states that are unreachable from `G.init`. -/
+def NoChanceOnHistories (G : ControlledGame N) : Prop :=
+  ∀ history : G.toArena.HistoryFrom G.init,
+    ¬ G.isTerminal history.1 →
+      ∃ i : N, G.mover history.1 = some i
+
+/-- A global no-chance game is no-chance on all reachable histories. -/
+theorem NoChance.noChanceOnHistories
+    {G : ControlledGame N} (hNoChance : G.NoChance) :
+    G.NoChanceOnHistories :=
+  fun history hnonterminal =>
+    hNoChance history.1 hnonterminal
+
 /-- Unroll a payoff-free controlled game into its complete-history tree.
 
 Missions and objectives remain external; movers are read from the endpoint
