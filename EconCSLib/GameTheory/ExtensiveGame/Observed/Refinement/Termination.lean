@@ -33,8 +33,8 @@ theorem pureTerminatesFrom_of_map
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
     (profile : G.PureProfile)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init)
     (hterminates :
       H.PureTerminatesFrom
@@ -68,8 +68,8 @@ theorem reflect_pureTerminatingOnRoots
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (sourceRoots : G.RootPresentation)
     (targetRoots : H.RootPresentation)
     (hroots :
@@ -101,8 +101,8 @@ theorem map_terminalHistoryFrom
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
     (profile : G.PureProfile)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init)
     (hterminatesG :
       G.PureTerminatesFrom
@@ -172,8 +172,8 @@ theorem map_terminalPayoffFrom
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
     (profile : G.PureProfile)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init)
     (hterminatesG :
       G.PureTerminatesFrom
@@ -207,8 +207,8 @@ noncomputable def terminalContinuationGameFormHom
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init)
     (hterminatesG :
       G.PureTerminatingAt hNoChanceG current)
@@ -240,8 +240,8 @@ theorem terminalContinuationGameFormHom_utilityCompatible
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (utility : (N → U) → N → V)
     (current : G.base.toArena.HistoryFrom G.base.init)
     (hterminatesG :
@@ -264,8 +264,8 @@ theorem terminalContinuationGameFormHom_strategySurjective
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init)
     (hterminatesG :
       G.PureTerminatingAt hNoChanceG current)
@@ -289,8 +289,8 @@ theorem terminalContinuationIsNash_of_map
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (utility : (N → U) → N → V)
     (profile : G.PureProfile)
     (current : G.base.toArena.HistoryFrom G.base.init)
@@ -326,8 +326,8 @@ theorem terminalContinuationIsNash_iff_of_strategySurjective
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (hsurjective : r.StrategySurjective)
     (utility : (N → U) → N → V)
     (profile : G.PureProfile)
@@ -368,8 +368,8 @@ theorem isPureNashOnRoots_of_map
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (sourceRoots : G.RootPresentation)
     (targetRoots : H.RootPresentation)
     (hroots :
@@ -417,8 +417,8 @@ theorem isPureNashOnRoots_iff_of_strategySurjective
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (sourceRoots : G.RootPresentation)
     (targetRoots : H.RootPresentation)
     (hroots :
