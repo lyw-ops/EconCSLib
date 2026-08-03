@@ -10,7 +10,7 @@ import EconCSLib.GameTheory.ExtensiveGame.Interface.Restart
 
 Fresh-restart compatibility extends equilibrium independently of the compiler
 branch. Reference compilers and FOSG serialization remain opt-in through
-`Interface.Compilation` or the compatibility aggregate.
+`Interface.Compilation.Discrete`.
 -/
 
 #check
