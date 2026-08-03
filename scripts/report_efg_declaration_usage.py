@@ -46,6 +46,12 @@ PRIVATE_ROUTE_MARKERS = (
     "_viaInformationRefinement",
     "_viaContinuationSimulation",
 )
+PUBLIC_ENDPOINT_LIFECYCLES = ("Canonical", "Frontend")
+# Current triage ceiling. The baseline does not claim that every item has
+# already received mathematical review. New zero-source-indegree public
+# endpoints must either have documentation/example/test evidence or avoid
+# growing the manual review queue.
+MAX_PUBLIC_ENDPOINT_REVIEW = 263
 
 
 @dataclass(frozen=True)
@@ -70,6 +76,32 @@ class Usage:
     @property
     def zero_indegree(self) -> bool:
         return self.source_references == 0
+
+    @property
+    def has_endpoint_evidence(self) -> bool:
+        return (
+            self.documentation_references
+            + self.example_references
+            + self.test_references
+        ) > 0
+
+    @property
+    def triage_queue(self) -> str:
+        """Conservative review queue; never an automatic deletion decision."""
+
+        if not self.zero_indegree:
+            return "source-used"
+        if self.has_endpoint_evidence:
+            return "evidenced-endpoint"
+        if self.declaration.is_private:
+            return "private-review"
+        if self.declaration.lifecycle == "Internal":
+            return "internal-review"
+        if self.declaration.lifecycle == "Historical":
+            return "historical-review"
+        if self.declaration.lifecycle in PUBLIC_ENDPOINT_LIFECYCLES:
+            return "public-endpoint-review"
+        return "lifecycle-review"
 
 
 def module_path(module: str) -> Path:
@@ -198,16 +230,17 @@ def render_report(usage: list[Usage]) -> str:
         "",
         "## Summary",
         "",
-        "| Lifecycle | Theorems/lemmas | Zero source indegree | Documented | Example/test referenced |",
-        "|---|---:|---:|---:|---:|",
+        "| Lifecycle | Theorems/lemmas | Zero source indegree | Evidenced endpoints | Public endpoint review | Internal/private review |",
+        "|---|---:|---:|---:|---:|---:|",
     ]
     for lifecycle in LIFECYCLES:
         items = by_lifecycle.get(lifecycle, [])
         lines.append(
             f"| {lifecycle} | {len(items)} | "
             f"{sum(item.zero_indegree for item in items)} | "
-            f"{sum(item.documentation_references > 0 for item in items)} | "
-            f"{sum((item.example_references + item.test_references) > 0 for item in items)} |"
+            f"{sum(item.triage_queue == 'evidenced-endpoint' for item in items)} | "
+            f"{sum(item.triage_queue == 'public-endpoint-review' for item in items)} | "
+            f"{sum(item.triage_queue in ('internal-review', 'private-review') for item in items)} |"
         )
 
     zero_items = sorted(
@@ -223,8 +256,8 @@ def render_report(usage: list[Usage]) -> str:
             "",
             "## Zero-source-indegree declarations",
             "",
-            "| Lifecycle | Visibility | Declaration | Owner | Docs | Examples | Tests |",
-            "|---|---|---|---|---:|---:|---:|",
+            "| Queue | Lifecycle | Visibility | Declaration | Owner | Docs | Examples | Tests |",
+            "|---|---|---|---|---|---:|---:|---:|",
         ]
     )
     for item in zero_items:
@@ -232,7 +265,7 @@ def render_report(usage: list[Usage]) -> str:
         visibility = "private" if declaration.is_private else "name-resolvable"
         owner = f"`{rel(declaration.path)}:{declaration.line}`"
         lines.append(
-            f"| {declaration.lifecycle} | {visibility} | "
+            f"| {item.triage_queue} | {declaration.lifecycle} | {visibility} | "
             f"`{declaration.name}` | {owner} | "
             f"{item.documentation_references} | {item.example_references} | "
             f"{item.test_references} |"
@@ -246,7 +279,9 @@ def render_report(usage: list[Usage]) -> str:
             "A declaration is a deletion or privatization candidate only after",
             "confirming that it has no source consumer, documentation role,",
             "example/test role, or intended public-endpoint role. Lifecycle",
-            "policy remains authoritative.",
+            "policy remains authoritative. `public-endpoint-review` means the",
+            "declaration needs an explicit endpoint role or a downstream",
+            "consumer; it does not mean the declaration is dead code.",
             "",
         ]
     )
@@ -280,6 +315,9 @@ def main() -> int:
 
     report = render_report(usage)
     zero_count = sum(item.zero_indegree for item in usage)
+    public_review_count = sum(
+        item.triage_queue == "public-endpoint-review" for item in usage
+    )
     route_leaks = public_route_regressions(usage)
 
     if args.output:
@@ -294,7 +332,8 @@ def main() -> int:
 
     print(
         f"EFG declaration usage: {len(rows)} modules, {len(usage)} "
-        f"theorems/lemmas, {zero_count} zero-source-indegree candidates"
+        f"theorems/lemmas, {zero_count} zero-source-indegree candidates, "
+        f"{public_review_count} public-endpoint-review"
     )
     if route_leaks:
         print(
@@ -307,8 +346,17 @@ def main() -> int:
                 f"{declaration.name}",
                 file=sys.stderr,
             )
-        if args.check:
-            return 1
+    public_review_growth = (
+        public_review_count > MAX_PUBLIC_ENDPOINT_REVIEW
+    )
+    if public_review_growth:
+        print(
+            "Unexplained public endpoint review queue grew beyond the "
+            f"{MAX_PUBLIC_ENDPOINT_REVIEW} baseline: {public_review_count}",
+            file=sys.stderr,
+        )
+    if args.check and (route_leaks or public_review_growth):
+        return 1
     return 0
 
 
