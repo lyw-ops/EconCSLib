@@ -2,23 +2,24 @@
 
 This note records the source-level changes made while converging the EFG
 public facade. No theorem or mathematical construction was deleted; the main
-compatibility impact is that a few clients must add a narrower explicit import
-or update pre-release record-field labels.
+source impact is that clients must use granular imports, honest semantic names,
+or updated pre-release record-field labels. Redirect-only modules were
+deleted because no external EFG API stability had been promised.
 
 ## Import migration
 
 | Former dependency | Required import now |
 |---|---|
 | occurrence-sensitive `GameTree` compiler obtained from `import EconCSLib` | `import EconCSLib.GameTheory.ExtensiveGame.Interface.Compilation.Discrete` |
-| bounded deterministic, observed behavioral, or PMF-kernel execution obtained from `Interface.Execution.Discrete` | `Interface.Execution.Finite` avoids infinite path measures; the old import remains valid |
-| infinite discrete `Arena.pathLaw`, almost-sure termination, or payoff convergence | `Interface.Execution.Infinite`; the old `Interface.Execution.Discrete` import remains valid |
+| bounded deterministic, observed behavioral, or PMF-kernel execution obtained from `Interface.Execution.Discrete` | `Interface.Execution.Finite` |
+| infinite discrete `Arena.pathLaw`, almost-sure termination, or payoff convergence | `Interface.Execution.Infinite` |
 | measurable-kernel execution obtained transitively | `Interface.Execution.Analytic` |
 | strict representation morphisms, information refinements, PMF couplings, or weak simulations | `Interface.Relations.Discrete` |
 | bounded pure/behavioral/mixed Nash, termination, or finite Kuhn transfer | `Interface.Equilibrium.Discrete` |
 | measurable path utility, constructive kernel Nash, absolute-prefix continuation, or conditioning | `Interface.Equilibrium.Analytic` |
 | fresh-clock restart declarations | `Interface.Restart` |
 | finite observed-EFG compilers or PMF FOSG serialization | `Interface.Compilation.Discrete` |
-| both restart and compiler branches from one legacy import | `Interface.SimulationFramework` (compatibility-only) |
+| both restart and compiler branches from one legacy import | import both `Interface.Restart` and `Interface.Compilation.Discrete` explicitly |
 
 The root aggregate exports finite/PMF execution and the standalone finite
 `GameTree`/backward-induction and exact zero-sum chance-tree tracks. Infinite
@@ -26,13 +27,29 @@ discrete paths, historical endpoint-policy equilibrium, Arena extraction,
 Zermelo, and the observed-EFG reference compilers now require explicit
 imports.
 
-No source edit is required merely because a caller already imports
-`Interface.Execution.Discrete`, `Interface.Relations`,
-`Interface.Equilibrium`, or `Interface.Compilation`: those paths retain their
-former declaration closures as supported compatibility aggregates. Switching
-to a new granular path is an opt-in dependency reduction. That earlier facade
-split moved no declaration; the stricter path-law record and payoff-free
-ownership changes below are the separate intentional source migration.
+The old `Interface.Execution.Discrete`, `Interface.Relations`,
+`Interface.Equilibrium`, `Interface.Compilation`, and
+`Interface.SimulationFramework` paths were deleted. Callers must replace them
+with the smallest rows above; no same-name redirect stubs remain.
+
+### Deleted redirect-only paths
+
+The hard migration also deleted:
+
+- `ExtensiveGame.Play` and `ExtensiveGame.BehaviorStrategy`;
+- `FOSG.FOSGSequentialization`;
+- `Observed.{Morphism,Refinement,BehaviorRefinement,DeferredSampling,KuhnConditioning}`;
+- `Simulation.ObservedMeasurableKernelRestartCompatibility`;
+- `ExtensiveGame.Probability.{ConditionalSampling,ConditionalProduct,DeferredSampling,FiniteProductCoupling}`;
+- `GameForm.Continuation`;
+- the declaration-free `Observed.Morphism.Fiber` forwarding path.
+
+Use the defining leaves documented in
+[`efg-public-api.md`](efg-public-api.md). The four historical broad-import
+boundary examples were removed along with their imports. The canonical
+`Observed.Controlled.Infrastructure` and
+`Observed.Controlled.Morphism` aggregate facades remain because their exact
+navigation roles are governed.
 
 ### Controlled infrastructure and morphism import paths
 
@@ -61,7 +78,7 @@ internal code should import the narrow owner:
 | lawful roots and subgame systems | `Observed.Controlled.Infrastructure.Subgame` |
 | finite EFG hypotheses | `Observed.Controlled.Infrastructure.Finite` |
 | quasistrategies | `Observed.Controlled.Infrastructure.Quasi` |
-| classic/private/public recall | `Observed.Controlled.Infrastructure.Recall` |
+| classic or event-clock private/public recall; silent-event traces | `Observed.Controlled.Infrastructure.Recall` |
 | structural Hom/Iso, information refinement, or strategy transport | `Observed.Controlled.Morphism.Core` |
 | lawful-subgame transport | `Observed.Controlled.Morphism.Subgame` |
 | recall transport | `Observed.Controlled.Morphism.Recall` |
@@ -111,6 +128,28 @@ or stored in the maximum carrier; prove `RealizesExecution` or
 `ExecutionCoherent` separately. Any former downstream
 `ObservedChanceGame.CompletePathLawSemantics` spelling is an abbreviation to
 this controlled carrier through `Observed/PathLawEquivalence.lean`.
+The carrier is only a family of lawful per-root marginals; it does not
+automatically define one common causal process. Restart, conditioning, and
+cross-root coherence remain additional certificates.
+
+The bounded discrete raw structure was renamed:
+
+| Former pre-release name | Current contract |
+|---|---|
+| `BoundedCompleteHistoryLawSemantics` | `BoundedHistoryLawFamily` (raw history-valued PMF data) |
+| `behavioralBoundedCompleteHistoryLawSemantics` | `behavioralCertifiedExecutionLaw` (normalization, reachable legality, terminal absorption, and exact behavioral-executor equality) |
+
+Execution-facing downstream code should consume
+`CertifiedBehavioralExecutionLaw` or its
+`toBoundedHistoryLawFamily` projection rather than present an arbitrary raw
+family as execution semantics.
+
+The former generic terminal-law name was split:
+
+| Former pre-release meaning | Current name |
+|---|---|
+| arbitrary `History → History` transform | `HistoryTransformLawEquivalentAt` |
+| transform proved terminal by its codomain | `TerminalHistoryLawEquivalentAt`, using `Arena.TerminalHistoryFrom` |
 
 The maximum carrier has no PMF/countability/chance tag. Use
 `Controlled.Law.DiscretePath` for discrete behavioral execution and
@@ -124,6 +163,31 @@ lemmas are available from the corresponding `Controlled.Compat.*` modules.
 Clients that imported an implementation file directly may need to add that
 explicit adapter import; public `Interface.*` facades provide their documented
 surface.
+
+## Reachability, evaluator, and recall migration
+
+- Pure execution/SPE/winning callers should pass
+  `ControlledGame.NoChanceOnHistories`. A global `NoChance` proof can be
+  converted with `.noChanceOnHistories`; it is no longer necessary to rule out
+  chance nodes in unreachable ambient components.
+- The old arbitrary-evaluator equilibrium spellings
+  `IsSubgamePerfectOnAt` and `IsStandardSubgamePerfectAt` were renamed
+  `IsEvaluatorContinuationEquilibriumOnAt` and
+  `IsEvaluatorContinuationEquilibriumAt`.
+  A short-lived `EvaluatorExecutionCertificate` /
+  `IsStandardEFGSubgamePerfectAt` experiment was removed before API stability:
+  its execution carrier and legality predicate were caller-defined and thus
+  did not certify canonical EFG execution. Operational standard-SPE names
+  remain on concrete execution layers.
+- `HasSignalPerfectRecall`, `SignalPerfectRecall`, and
+  `HasPublicPerfectRecall` were hard-renamed to their
+  `EventClock`-qualified forms. The old trace appends one signal per
+  transition. Asynchronous models should supply `SignalTraceBuilder`, whose
+  `eventSignal : ... → Option Signal` permits silent events.
+- Repeated profile-availability assumptions can use
+  `PureStrategyAvailabilityCertificate`; add reachable no-chance with
+  `ReachablePureStrategyModelCertificate`. These bundles intentionally omit
+  finiteness, payoff, probability, recall, and termination.
 
 ## Record-field migration
 
@@ -212,9 +276,15 @@ not retained. Choose the name that states the actual root scope:
 - `Is...StandardSubgamePerfect ... completeSystem` for coverage of every
   structurally lawful root.
 
+For arbitrary `ContinuationSemantics`, use the
+`IsEvaluatorContinuationEquilibrium...` names. There is intentionally no
+generic standard-EFG-SPE spelling for an arbitrary evaluator. A future common
+operational abstraction must first be derived from at least two concrete
+execution modes and must use canonical root-local strategies, deviations, and
+complete-play/path-law execution rather than caller-defined legality.
+
 A caller-declared or presentation-designated root predicate is not, by itself,
-a standard-subgame certificate. Compatibility aliases with former designated
-names use the broad all-history view only; new code must pass roots explicitly.
+a standard-subgame certificate. New code must pass roots explicitly.
 
 ## Declaration deprecations
 
@@ -264,7 +334,8 @@ solution concepts do not receive such aliases: their semantics differ.
 
 On 2026-07-30 the root replaced `Interface.Execution.Discrete` with
 `Interface.Execution.Finite`. Infinite path laws are available from
-`Interface.Execution.Infinite` or the old supported compatibility aggregate.
+`Interface.Execution.Infinite`; the old combined path was subsequently
+deleted during the pre-stability hard migration.
 The historical endpoint `GameTreeSPE`, `GameTreeNE`, and
 `GameTreeStrategicForm` modules, the niche `FiniteArenaExtraction` bridge, and
 `Zermelo` also became explicit imports.
@@ -272,5 +343,10 @@ The historical endpoint `GameTreeSPE`, `GameTreeNE`, and
 Existing examples now import the implementation paths they use, and
 `RootImportBoundary` checks both the retained finite surface and the removed
 transitive names. The granular facade and examples builds are the migration
-regressions. No theorem, declaration, namespace, or public module path was
-deleted by this root-only dependency change.
+regressions. The later lifecycle closeout deleted redirect-only module paths
+but no mathematical declaration.
+
+These checks provide machine-checked evidence for source elaboration, the
+axiom surface, placeholder policy, module boundaries, and the listed formal
+semantic properties. They are not a metamathematically complete certification
+of every intended model meaning.
