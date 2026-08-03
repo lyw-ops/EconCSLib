@@ -467,10 +467,10 @@ theorem map_publicSignalHistory
 
 /-- A strict payoff-free observed-game isomorphism transports private-signal
 perfect recall in its forward direction. -/
-theorem hasSignalPerfectRecall_of
+theorem hasEventClockSignalPerfectRecall_of
     (e : G.Iso H) (i : N)
-    (hrecall : G.HasSignalPerfectRecall i) :
-    H.HasSignalPerfectRecall i := by
+    (hrecall : G.HasEventClockSignalPerfectRecall i) :
+    H.HasEventClockSignalPerfectRecall i := by
   intro targetFirst targetSecond
     htargetFirst htargetSecond hsame
   let sourceFirst :=
@@ -559,30 +559,31 @@ theorem hasSignalPerfectRecall_of
 
 /-- Strict payoff-free observed-game isomorphisms preserve and reflect
 private-signal perfect recall for one player. -/
-theorem hasSignalPerfectRecall_iff
+theorem hasEventClockSignalPerfectRecall_iff
     (e : G.Iso H) (i : N) :
-    G.HasSignalPerfectRecall i ↔
-      H.HasSignalPerfectRecall i := by
+    G.HasEventClockSignalPerfectRecall i ↔
+      H.HasEventClockSignalPerfectRecall i := by
   constructor
-  · exact e.hasSignalPerfectRecall_of i
+  · exact e.hasEventClockSignalPerfectRecall_of i
   · intro hrecall
-    exact e.symm.hasSignalPerfectRecall_of i hrecall
+    exact e.symm.hasEventClockSignalPerfectRecall_of i hrecall
 
 /-- Strict payoff-free observed-game isomorphisms preserve and reflect
 private-signal perfect recall for every player. -/
-theorem signalPerfectRecall_iff
+theorem eventClockSignalPerfectRecall_iff
     (e : G.Iso H) :
-    G.SignalPerfectRecall ↔ H.SignalPerfectRecall := by
+    G.EventClockSignalPerfectRecall ↔
+      H.EventClockSignalPerfectRecall := by
   constructor <;> intro hrecall i
-  · exact (e.hasSignalPerfectRecall_iff i).mp (hrecall i)
-  · exact (e.hasSignalPerfectRecall_iff i).mpr (hrecall i)
+  · exact (e.hasEventClockSignalPerfectRecall_iff i).mp (hrecall i)
+  · exact (e.hasEventClockSignalPerfectRecall_iff i).mpr (hrecall i)
 
 /-- A strict payoff-free observed-game isomorphism transports public-signal
 perfect recall in its forward direction. -/
-theorem hasPublicPerfectRecall_of
+theorem hasEventClockPublicPerfectRecall_of
     (e : G.Iso H)
-    (hrecall : G.HasPublicPerfectRecall) :
-    H.HasPublicPerfectRecall := by
+    (hrecall : G.HasEventClockPublicPerfectRecall) :
+    H.HasEventClockPublicPerfectRecall := by
   intro targetFirst targetSecond hsame
   let sourceFirst :=
     e.historyIso.stateEquiv.symm targetFirst
@@ -629,14 +630,14 @@ theorem hasPublicPerfectRecall_of
 
 /-- Strict payoff-free observed-game isomorphisms preserve and reflect
 public-signal perfect recall. -/
-theorem hasPublicPerfectRecall_iff
+theorem hasEventClockPublicPerfectRecall_iff
     (e : G.Iso H) :
-    G.HasPublicPerfectRecall ↔
-      H.HasPublicPerfectRecall := by
+    G.HasEventClockPublicPerfectRecall ↔
+      H.HasEventClockPublicPerfectRecall := by
   constructor
-  · exact e.hasPublicPerfectRecall_of
+  · exact e.hasEventClockPublicPerfectRecall_of
   · intro hrecall
-    exact e.symm.hasPublicPerfectRecall_of hrecall
+    exact e.symm.hasEventClockPublicPerfectRecall_of hrecall
 
 
 end Iso
