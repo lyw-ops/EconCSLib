@@ -207,7 +207,7 @@ including profiles that condition on the complete path. -/
 theorem toOccurrenceObservedGame_pureTerminatingOnAllContinuations
     (root : GameTree N U) :
     (toOccurrenceObservedGame root).PureTerminatingOnRoots
-      (toExtensiveGame_noChance root)
+      (toExtensiveGame_noChanceOnHistories root)
       (ExtensiveGame.ObservedGame.ContinuationRootPresentation.allHistories
         (toOccurrenceObservedGame root).base) := by
   intro current _hroot profile
@@ -217,12 +217,12 @@ theorem toOccurrenceObservedGame_pureTerminatingOnAllContinuations
       root
       (profile.toHistoryPolicy
         (toOccurrenceObservedGame root)
-        (toExtensiveGame_noChance root))
+        (toExtensiveGame_noChanceOnHistories root))
       current root.size
       (arenaHistory_subtree current.2).size_le
   have hendpoint' :
       ((toOccurrenceObservedGame root).stoppedHistoryFrom
-        profile (toExtensiveGame_noChance root)
+        profile (toExtensiveGame_noChanceOnHistories root)
         current root.size).1 =
         .Leaf payoff := by
     simpa [ExtensiveGame.ObservedGame.stoppedHistoryFrom] using
@@ -263,12 +263,12 @@ system. -/
 theorem toOccurrenceObservedGame_pureTerminatingOn
     (root : GameTree N U) :
     (toOccurrenceObservedGame root).PureTerminatingOn
-      (toExtensiveGame_noChance root)
+      (toExtensiveGame_noChanceOnHistories root)
       (occurrenceSubgameSystem root) :=
   (toOccurrenceObservedGame_pureTerminatingOnAllContinuations
     root).onSubgameSystem
     (toOccurrenceObservedGame root)
-    (toExtensiveGame_noChance root)
+    (toExtensiveGame_noChanceOnHistories root)
     (ExtensiveGame.ObservedGame.ContinuationRootPresentation.allHistories
       (toOccurrenceObservedGame root).base)
     (occurrenceSubgameSystem root)
@@ -290,7 +290,7 @@ noncomputable def occurrenceOutcomeFrom
       let action :=
         profile.toHistoryPolicy
           (toOccurrenceObservedGame root)
-          (toExtensiveGame_noChance root)
+          (toExtensiveGame_noChanceOnHistories root)
           ⟨.Node mover head tail, history⟩ hnonterminal
       occurrenceOutcomeFrom root profile
         action.1 (history.snoc action)
@@ -334,14 +334,14 @@ theorem occurrenceOutcome_node
       occurrenceOutcome root profile
         ⟨(profile.toHistoryPolicy
             (toOccurrenceObservedGame root)
-            (toExtensiveGame_noChance root)
+            (toExtensiveGame_noChanceOnHistories root)
             ⟨.Node mover head tail, history⟩
             (toExtensiveGame_not_isTerminal_node
               root mover head tail)).1,
           history.snoc
             (profile.toHistoryPolicy
               (toOccurrenceObservedGame root)
-              (toExtensiveGame_noChance root)
+              (toExtensiveGame_noChanceOnHistories root)
               ⟨.Node mover head tail, history⟩
               (toExtensiveGame_not_isTerminal_node
                 root mover head tail))⟩ := by
@@ -362,7 +362,7 @@ theorem stoppedHistoryFrom_reaches_occurrenceOutcome
     (hsize : current.1.size ≤ fuel) :
     ∃ payoff : N → U,
       ((toOccurrenceObservedGame root).stoppedHistoryFrom
-        profile (toExtensiveGame_noChance root)
+        profile (toExtensiveGame_noChanceOnHistories root)
         current fuel).1 =
           .Leaf payoff ∧
       payoff = occurrenceOutcome root profile current := by
@@ -370,7 +370,7 @@ theorem stoppedHistoryFrom_reaches_occurrenceOutcome
       (toExtensiveGame root).toArena.HistoryPolicy root :=
     profile.toHistoryPolicy
       (toOccurrenceObservedGame root)
-      (toExtensiveGame_noChance root)
+      (toExtensiveGame_noChanceOnHistories root)
   let motive : GameTree N U → Prop := fun subtree =>
     ∀ (history :
         (toExtensiveGame root).toArena.History root subtree)
@@ -436,9 +436,9 @@ theorem terminalPayoffFrom_eq_occurrenceOutcome
       (toExtensiveGame root).toArena.HistoryFrom root)
     (hterminates :
       (toOccurrenceObservedGame root).PureTerminatesFrom
-        profile (toExtensiveGame_noChance root) current) :
+        profile (toExtensiveGame_noChanceOnHistories root) current) :
     (toOccurrenceObservedGame root).terminalPayoffFrom
-        profile (toExtensiveGame_noChance root)
+        profile (toExtensiveGame_noChanceOnHistories root)
         current hterminates =
       occurrenceOutcome root profile current := by
   obtain ⟨payoff, hendpoint, hpayoff⟩ :=
@@ -448,19 +448,19 @@ theorem terminalPayoffFrom_eq_occurrenceOutcome
   have hterminal :
       (toExtensiveGame root).isTerminal
         ((toOccurrenceObservedGame root).stoppedHistoryFrom
-          profile (toExtensiveGame_noChance root)
+          profile (toExtensiveGame_noChanceOnHistories root)
           current root.size).1 := by
     rw [hendpoint]
     exact toExtensiveGame_isTerminal_leaf root payoff
   rw [ExtensiveGame.ObservedGame.terminalPayoffFrom,
     (toOccurrenceObservedGame root
       ).terminalHistoryFrom_eq_of_terminal
-        profile (toExtensiveGame_noChance root)
+        profile (toExtensiveGame_noChanceOnHistories root)
         current hterminates root.size hterminal]
   calc
     (toExtensiveGame root).payoff
         ((toOccurrenceObservedGame root).stoppedHistoryFrom
-          profile (toExtensiveGame_noChance root)
+          profile (toExtensiveGame_noChanceOnHistories root)
           current root.size).1 =
         (toExtensiveGame root).payoff (.Leaf payoff) :=
       congrArg (toExtensiveGame root).payoff hendpoint
@@ -715,7 +715,7 @@ def toObservedChanceGame (root : GameTree N U) :
     ExtensiveGame.ObservedChanceGame N U :=
   ExtensiveGame.ObservedChanceGame.ofNoChance
     (toObservedGame root)
-    (toExtensiveGame_noChance root)
+    (toExtensiveGame_noChanceOnHistories root)
 
 /-- The occurrence-sensitive compiler, viewed through the chance-aware
 behavioral API. -/
@@ -724,7 +724,7 @@ def toOccurrenceObservedChanceGame
     ExtensiveGame.ObservedChanceGame N U :=
   ExtensiveGame.ObservedChanceGame.ofNoChance
     (toOccurrenceObservedGame root)
-    (toExtensiveGame_noChance root)
+    (toExtensiveGame_noChanceOnHistories root)
 
 instance toObservedChanceGame.instTerminalDecidable
     (root : GameTree N U) :
@@ -758,8 +758,8 @@ def endpointBehavioralInformationRefinement
     intro history hchance
     have himpossible : False := by
       obtain ⟨i, hmover⟩ :=
-        toExtensiveGame_noChance root
-          history.1 hchance.2
+        toExtensiveGame_noChanceOnHistories root
+          history hchance.2
       exact
         (Option.some_ne_none i)
           (hmover.symm.trans hchance.1)
@@ -903,19 +903,19 @@ theorem liftEndpointPureProfile_toHistoryPolicy
     (profile : (toObservedGame root).PureProfile) :
     (liftEndpointPureProfile root profile).toHistoryPolicy
         (toOccurrenceObservedGame root)
-        (toExtensiveGame_noChance root) =
+        (toExtensiveGame_noChanceOnHistories root) =
       profile.toHistoryPolicy
         (toObservedGame root)
-        (toExtensiveGame_noChance root) := by
+        (toExtensiveGame_noChanceOnHistories root) := by
   funext history hnonterminal
   exact
     liftEndpointPureProfile_actionAt
       root profile history
       ((toObservedGame root).playerAt
-        (toExtensiveGame_noChance root)
+        (toExtensiveGame_noChanceOnHistories root)
         history hnonterminal)
       ((toObservedGame root).mover_playerAt
-        (toExtensiveGame_noChance root)
+        (toExtensiveGame_noChanceOnHistories root)
         history hnonterminal)
 
 /-! ### Canonical occurrence-sensitive SPE -/
@@ -948,7 +948,7 @@ theorem occurrenceBackwardInductionProfile_toHistoryPolicy_node
         (.Node mover head tail)) :
     (occurrenceBackwardInductionProfile root).toHistoryPolicy
         (toOccurrenceObservedGame root)
-        (toExtensiveGame_noChance root)
+        (toExtensiveGame_noChanceOnHistories root)
         ⟨.Node mover head tail, history⟩
         hnonterminal =
       (optStrategy : Strategy N U) mover head tail := by
@@ -1036,7 +1036,7 @@ theorem occurrenceOutcome_deviate_le_value
     let action :=
       deviated.toHistoryPolicy
         (toOccurrenceObservedGame root)
-        (toExtensiveGame_noChance root)
+        (toExtensiveGame_noChanceOnHistories root)
         ⟨.Node mover head tail, history⟩
         hnonterminal
     have hmem : action.1 ∈ head :: tail := action.2
@@ -1068,7 +1068,7 @@ theorem occurrenceOutcome_deviate_le_value
             ExtensiveGame.ObservedGame.PureProfile.toHistoryPolicy_of_mover
               (toOccurrenceObservedGame root)
               (occurrenceBackwardInductionProfile root)
-              (toExtensiveGame_noChance root)
+              (toExtensiveGame_noChanceOnHistories root)
               ⟨.Node mover head tail, history⟩
               hnonterminal mover rfl]
           exact
@@ -1094,7 +1094,7 @@ theorem occurrenceBackwardInductionProfile_isPureSubgamePerfectOn
     [DecidableEq N] [TotalPreorder U] [DecidableLE U]
     (root : GameTree N U) :
     (toOccurrenceObservedGame root).IsPureSubgamePerfectOn
-      (toExtensiveGame_noChance root)
+      (toExtensiveGame_noChanceOnHistories root)
       (occurrenceSubgameSystem root)
       (toOccurrenceObservedGame_pureTerminatingOn root)
       (fun payoff => payoff)
@@ -1105,11 +1105,11 @@ theorem occurrenceBackwardInductionProfile_isPureSubgamePerfectOn
       (Function.update
         (occurrenceBackwardInductionProfile root)
         i strategy)
-      (toExtensiveGame_noChance root)
+      (toExtensiveGame_noChanceOnHistories root)
       current _) i ≤
     ((toOccurrenceObservedGame root).terminalPayoffFrom
       (occurrenceBackwardInductionProfile root)
-      (toExtensiveGame_noChance root)
+      (toExtensiveGame_noChanceOnHistories root)
       current _) i
   rw [terminalPayoffFrom_eq_occurrenceOutcome,
     terminalPayoffFrom_eq_occurrenceOutcome]
@@ -1126,7 +1126,7 @@ theorem occurrenceBackwardInductionProfile_isPureStandardSubgamePerfect
     [DecidableEq N] [TotalPreorder U] [DecidableLE U]
     (root : GameTree N U) :
     (toOccurrenceObservedGame root).IsPureStandardSubgamePerfect
-      (toExtensiveGame_noChance root)
+      (toExtensiveGame_noChanceOnHistories root)
       (occurrenceCompleteSubgameSystem root)
       (toOccurrenceObservedGame_pureTerminatingOn root)
       (fun payoff => payoff)
@@ -1140,7 +1140,7 @@ theorem Kuhn_exists_occurrencePureSPE
     (root : GameTree N U) :
     ∃ profile : (toOccurrenceObservedGame root).PureProfile,
       (toOccurrenceObservedGame root).IsPureStandardSubgamePerfect
-        (toExtensiveGame_noChance root)
+        (toExtensiveGame_noChanceOnHistories root)
         (occurrenceCompleteSubgameSystem root)
         (toOccurrenceObservedGame_pureTerminatingOn root)
         (fun payoff => payoff)
@@ -1158,11 +1158,11 @@ theorem stoppedHistoryFrom_liftEndpointPureProfile
     (fuel : ℕ) :
     (toOccurrenceObservedGame root).stoppedHistoryFrom
         (liftEndpointPureProfile root profile)
-        (toExtensiveGame_noChance root)
+        (toExtensiveGame_noChanceOnHistories root)
         current fuel =
       (toObservedGame root).stoppedHistoryFrom
         profile
-        (toExtensiveGame_noChance root)
+        (toExtensiveGame_noChanceOnHistories root)
         current fuel := by
   unfold ExtensiveGame.ObservedGame.stoppedHistoryFrom
   rw [liftEndpointPureProfile_toHistoryPolicy]
@@ -1178,11 +1178,11 @@ theorem stoppedPayoffFrom_liftEndpointPureProfile
     (fuel : ℕ) :
     (toOccurrenceObservedGame root).stoppedPayoffFrom
         (liftEndpointPureProfile root profile)
-        (toExtensiveGame_noChance root)
+        (toExtensiveGame_noChanceOnHistories root)
         current fuel =
       (toObservedGame root).stoppedPayoffFrom
         profile
-        (toExtensiveGame_noChance root)
+        (toExtensiveGame_noChanceOnHistories root)
         current fuel := by
   unfold ExtensiveGame.ObservedGame.stoppedPayoffFrom
   rw [stoppedHistoryFrom_liftEndpointPureProfile]
@@ -1201,19 +1201,19 @@ theorem endpoint_isPureNashOnAllContinuationsAtFuel_of_occurrence_lift
     (fuel : ℕ)
     (hSPE :
       (toOccurrenceObservedGame root).IsPureNashOnRootsAtFuel
-        (toExtensiveGame_noChance root)
+        (toExtensiveGame_noChanceOnHistories root)
         (occurrenceAllContinuationRoots root)
         utility
         (liftEndpointPureProfile root profile)
         fuel) :
     (toObservedGame root).IsPureNashOnRootsAtFuel
-      (toExtensiveGame_noChance root)
+      (toExtensiveGame_noChanceOnHistories root)
       (endpointAllContinuationRoots root)
       utility profile fuel := by
   exact
     (endpointInformationRefinement root).isPureNashOnRootsAtFuel_of_map
-        (toExtensiveGame_noChance root)
-        (toExtensiveGame_noChance root)
+        (toExtensiveGame_noChanceOnHistories root)
+        (toExtensiveGame_noChanceOnHistories root)
         (endpointAllContinuationRoots root)
         (occurrenceAllContinuationRoots root)
         (fun history =>
@@ -1231,13 +1231,13 @@ theorem endpoint_isPureNashOnAllContinuations_of_occurrence_lift
     (profile : (toObservedGame root).PureProfile)
     (hSPE :
       (toOccurrenceObservedGame root).IsPureNashOnRoots
-        (toExtensiveGame_noChance root)
+        (toExtensiveGame_noChanceOnHistories root)
         (occurrenceAllContinuationRoots root)
         (toOccurrenceObservedGame_pureTerminatingOnAllContinuations root)
         utility
         (liftEndpointPureProfile root profile)) :
     (toObservedGame root).IsPureNashOnRoots
-      (toExtensiveGame_noChance root)
+      (toExtensiveGame_noChanceOnHistories root)
       (endpointAllContinuationRoots root)
       (toObservedGame_pureTerminatingOnAllContinuations root)
       utility profile := by
@@ -1245,8 +1245,8 @@ theorem endpoint_isPureNashOnAllContinuations_of_occurrence_lift
     endpointInformationRefinement_mapProfile] using
       (endpointInformationRefinement root
         ).isPureNashOnRoots_of_map
-          (toExtensiveGame_noChance root)
-          (toExtensiveGame_noChance root)
+          (toExtensiveGame_noChanceOnHistories root)
+          (toExtensiveGame_noChanceOnHistories root)
           (endpointAllContinuationRoots root)
           (occurrenceAllContinuationRoots root)
           (fun history =>
