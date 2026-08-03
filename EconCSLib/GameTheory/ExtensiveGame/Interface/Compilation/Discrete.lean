@@ -19,7 +19,6 @@ Stable public import for the PMF-valued FOSG serializers and finite reference
 observed-EFG compilers.
 
 It extends `Interface.Equilibrium.Discrete` and does not import the analytic
-measurable-kernel execution/equilibrium stack. The older
-`Interface.Compilation` path remains a compatibility aggregate that also
-re-exports analytic equilibrium.
+measurable-kernel execution/equilibrium stack. Clients needing that sibling
+branch import `Interface.Equilibrium.Analytic` explicitly.
 -/
