@@ -23,23 +23,23 @@ variable {N : Type*} {G : ControlledObservedGame N}
 
 /-- The mover option at a nonterminal history is inhabited in a no-chance
 payoff-free game. -/
-def moverIsSome (hNoChance : G.base.NoChance)
+def moverIsSome (hNoChance : G.base.NoChanceOnHistories)
     (history : G.base.History)
     (hnonterminal : ¬ G.base.isTerminal history.1) :
     (G.base.mover history.1).isSome = true :=
   Option.isSome_iff_exists.mpr
-    (hNoChance history.1 hnonterminal)
+    (hNoChance history hnonterminal)
 
 /-- The player controlling a nonterminal history in a no-chance payoff-free
 game. -/
-def playerAt (hNoChance : G.base.NoChance)
+def playerAt (hNoChance : G.base.NoChanceOnHistories)
     (history : G.base.History)
     (hnonterminal : ¬ G.base.isTerminal history.1) : N :=
   (G.base.mover history.1).get
     (G.moverIsSome hNoChance history hnonterminal)
 
 /-- `playerAt` recovers the mover stored by the controlled game. -/
-theorem mover_playerAt (hNoChance : G.base.NoChance)
+theorem mover_playerAt (hNoChance : G.base.NoChanceOnHistories)
     (history : G.base.History)
     (hnonterminal : ¬ G.base.isTerminal history.1) :
     G.base.mover history.1 =
@@ -51,7 +51,7 @@ theorem mover_playerAt (hNoChance : G.base.NoChance)
 when every nonterminal node has a strategic mover. -/
 def PureProfile.toHistoryPolicy
     (profile : G.PureProfile)
-    (hNoChance : G.base.NoChance) :
+    (hNoChance : G.base.NoChanceOnHistories) :
     G.base.toArena.HistoryPolicy G.base.init :=
   fun history hnonterminal =>
     (profile (G.playerAt hNoChance history hnonterminal)).actionAt
@@ -62,7 +62,7 @@ def PureProfile.toHistoryPolicy
 player's component strategy. -/
 theorem PureProfile.toHistoryPolicy_of_mover
     (profile : G.PureProfile)
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (history : G.base.History)
     (hnonterminal : ¬ G.base.isTerminal history.1)
     (i : N)
@@ -110,7 +110,7 @@ theorem PureProfile.completePlay_isCompatibleWithPlayerStrategy
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
     (profile : G.PureProfile)
-    (hNoChance : G.base.NoChance) (i : N) :
+    (hNoChance : G.base.NoChanceOnHistories) (i : N) :
     G.IsCompatibleWithPlayerStrategy i (profile i)
       ((profile.toHistoryPolicy hNoChance).completePlay) := by
   intro n hnonterminal hmover
