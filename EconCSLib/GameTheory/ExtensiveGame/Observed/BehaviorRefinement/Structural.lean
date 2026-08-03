@@ -33,19 +33,18 @@ namespace ExtensiveGame.ObservedChanceGame
 
 variable {N U : Type*}
 
-/-- Regard an observed game with no chance histories as an observed chance
-game.  Its chance-kernel field is vacuous.  This adapter lets deterministic
-models use the behavioral/chance transfer API without inventing dummy chance
-actions or probabilities. -/
+/-- Regard an observed game with no reachable chance histories as an observed
+chance game. Its chance-kernel field is vacuous on complete histories from the
+initial state. This adapter does not constrain unreachable ambient states. -/
 def ofNoChance (G : ObservedGame N U)
-    (hNoChance : G.base.NoChance) :
+    (hNoChance : G.base.NoChanceOnHistories) :
     ObservedChanceGame N U where
   observed := G
   chanceKernel := by
     intro history hchance
     have himpossible : False := by
       obtain ⟨i, hmover⟩ :=
-        hNoChance history.1 hchance.2
+        hNoChance history hchance.2
       exact
         (Option.some_ne_none i)
           (hmover.symm.trans hchance.1)
