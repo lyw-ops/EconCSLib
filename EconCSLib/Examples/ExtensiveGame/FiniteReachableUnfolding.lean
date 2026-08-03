@@ -301,17 +301,17 @@ theorem classic_recall_preserved :
 /-- Private-signal recall is preserved and reflected by this finite
 unfolding. -/
 theorem signal_recall_preserved :
-    oneStep_controlledFinite.toFiniteObservedGame.SignalPerfectRecall ↔
-      oneStepControlled.SignalPerfectRecall :=
-  oneStep_controlledFinite.signalPerfectRecall_iff
+    oneStep_controlledFinite.toFiniteObservedGame.EventClockSignalPerfectRecall ↔
+      oneStepControlled.EventClockSignalPerfectRecall :=
+  oneStep_controlledFinite.eventClockSignalPerfectRecall_iff
 
 /-- Public-signal recall is preserved and reflected by this finite
 unfolding. -/
 theorem public_recall_preserved :
-    ExtensiveGame.ControlledObservedGame.HasPublicPerfectRecall
+    ExtensiveGame.ControlledObservedGame.HasEventClockPublicPerfectRecall
         oneStep_controlledFinite.toFiniteObservedGame ↔
-      oneStepControlled.HasPublicPerfectRecall :=
-  oneStep_controlledFinite.publicPerfectRecall_iff
+      oneStepControlled.HasEventClockPublicPerfectRecall :=
+  oneStep_controlledFinite.eventClockPublicPerfectRecall_iff
 
 /-- Every discrete chance law is pulled back pointwise at the represented
 original occurrence. This regression instantiates the generic contract at the
