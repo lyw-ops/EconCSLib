@@ -1,22 +1,92 @@
-# ExtensiveGame (GameTree) — API Design
+# Extensive games — API design
 
-Developer-facing design notes for the **finite perfect-information, no-chance**
-extensive-game line in `EconCSLib/GameTheory/ExtensiveGame/`, built on the
-inductive `GameTree` type: **how the Lean API is built** — the data model, where
-each typeclass assumption enters, and how backward induction climbs from a value
-function to Kuhn's SPE-existence theorem and Zermelo determinacy.
+Developer-facing design notes for the two extensive-game representations in
+`EconCSLib/GameTheory/ExtensiveGame/`: the general state-space `Arena` model
+and the finite perfect-information, no-chance inductive `GameTree` model.
 
-> Scope. This note covers the **`GameTree`** files (`GameTree`, `BackwardInduction`,
-> `GameTreeSPE`, `GameTreeNE`, `GameTreeStrategicForm`, `Zermelo`, plus the
-> `Examples/SimpleGameTree` smoke test). The *other* extensive-game framework —
-> the state-space **`Arena`** model (`Basic`/`Strategy`/`Play`/`Subgame`), which
-> supports infinite and imperfect-information games — is a separate design and is
-> only cross-referenced here.
+> Scope. The structural-core section below records the dependency boundary of
+> the `Arena` model. The remainder of this note covers the `GameTree` files
+> (`GameTree`, `BackwardInduction`, `GameTreeSPE`, `GameTreeNE`,
+> `GameTreeStrategicForm`, `Zermelo`, plus the `Examples/SimpleGameTree` smoke
+> test).
 
 Part of the [design documentation set](README.md). Complements, does not replace:
 
 - [`docs/design.md`](../design.md) — project-wide architecture and rules.
 - `docs/knowledge/` — the published mathematical blueprint (textbook layer).
+
+## Arena structural core
+
+The state-space model separates universal extensive-game structure from
+assumptions needed only by particular semantics or algorithms:
+
+```text
+Arena
+  → ControlledGame
+  → histories and complete plays
+  → ControlledObservedGame
+```
+
+- `Arena` stores only states, dependent legal actions, and transitions.
+- `ControlledGame` adds an initial state and a mover label. A nonterminal state
+  with `mover = none` is non-player-controlled (and may later be interpreted
+  as nature); `isNonPlayerState` is the canonical predicate for this case.
+  The compatibility name `isChanceState` supplies no probability law by
+  itself.
+- A mover label on a terminal state is ignored. In particular, observed games
+  create decision-information coordinates only from nonterminal histories.
+- `Arena.History` records action occurrences, so two paths that reach the same
+  state remain distinct.
+- `Arena.CompletePlayFromHistory` represents both infinite play and finite play
+  by stuttering after a terminal history.
+- `ControlledObservedGame` adds public/private observations, decision
+  information, information-indexed actions, and pure strategies.
+
+Its universe mapping is
+`base : ControlledGame.{uN, uA, uS} N`: both the concrete action fiber and
+`InfoAction` live in `uA`, while the state carrier remains independently in
+`uS`. This order follows the public player/action/state universe order of
+`ControlledGame`; reversing `uA` and `uS` would accidentally align abstract
+information actions with the state universe.
+
+Endpoint reachability and occurrence-sensitive history are connected by
+`Arena.reachable_iff_nonempty_history`. The proposition records that at least
+one history exists without identifying distinct action histories that merge
+at the same state.
+
+The opt-in import
+`EconCSLib.GameTheory.ExtensiveGame.Interface.StructuralCore` exposes exactly
+these structural facilities. It does not require finiteness, decidable
+equality, termination, an objective, a payoff interpretation, a probability
+law, perfect recall, or an equilibrium concept. Those assumptions belong in
+separate higher layers.
+
+The import boundary is physical rather than documentary:
+
+```text
+Structural/Basic.lean
+  → Structural/Reachability.lean
+  → Structural/History.lean
+  → Execution/CompletePlay.lean
+  → Observed/Controlled.lean
+  → Interface/StructuralCore.lean
+```
+
+The compatibility modules `Basic.lean`, `Execution/Reachability.lean`, and
+`Execution/History.lean` add the historical payoff-aware `ExtensiveGame`
+carrier and its projections, but are not imported by the structural facade.
+The import-boundary regression checks that `ExtensiveGame` and
+`ExtensiveGame.payoff` remain unavailable through the narrow facade.
+
+`ExtensiveGame N U` remains as the state-payoff compatibility layer over
+`ControlledGame N`. Its state payoff is convenient for the existing API but
+is not the authoritative semantics for general terminal-history or infinite
+play objectives.
+
+`Arena.unfoldEndpoint` is the canonical projection from an unfolded history
+state back to its compact Arena endpoint. Its transition theorem records that
+this projection commutes with `next`; later simulation or compiler layers can
+build on that theorem without entering the minimal carrier.
 
 ## Design principles, as they land here
 
