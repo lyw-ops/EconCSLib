@@ -703,21 +703,21 @@ theorem publicObserve_eq_of_infoAt_eq
 
 /-- The mover option at a nonterminal history is inhabited in a no-chance
 game. -/
-def moverIsSome (hNoChance : G.base.NoChance)
+def moverIsSome (hNoChance : G.base.NoChanceOnHistories)
     (h : G.base.toArena.HistoryFrom G.base.init)
     (hnonterminal : ¬ G.base.isTerminal h.1) :
     (G.base.mover h.1).isSome = true :=
-  Option.isSome_iff_exists.mpr (hNoChance h.1 hnonterminal)
+  Option.isSome_iff_exists.mpr (hNoChance h hnonterminal)
 
 /-- The strategic player controlling a nonterminal history in a no-chance
 game. -/
-def playerAt (hNoChance : G.base.NoChance)
+def playerAt (hNoChance : G.base.NoChanceOnHistories)
     (h : G.base.toArena.HistoryFrom G.base.init)
     (hnonterminal : ¬ G.base.isTerminal h.1) : N :=
   (G.base.mover h.1).get (G.moverIsSome hNoChance h hnonterminal)
 
 /-- `playerAt` recovers the player stored in the base mover field. -/
-theorem mover_playerAt (hNoChance : G.base.NoChance)
+theorem mover_playerAt (hNoChance : G.base.NoChanceOnHistories)
     (h : G.base.toArena.HistoryFrom G.base.init)
     (hnonterminal : ¬ G.base.isTerminal h.1) :
     G.base.mover h.1 =
@@ -727,7 +727,7 @@ theorem mover_playerAt (hNoChance : G.base.NoChance)
 /-- Convert a pure profile into a terminal-aware history policy when the base
 game has no chance nodes. -/
 def PureProfile.toHistoryPolicy (σ : G.PureProfile)
-    (hNoChance : G.base.NoChance) :
+    (hNoChance : G.base.NoChanceOnHistories) :
     G.base.toArena.HistoryPolicy G.base.init :=
   fun h hnonterminal =>
     σ.actionAt G h (G.playerAt hNoChance h hnonterminal)
@@ -736,7 +736,7 @@ def PureProfile.toHistoryPolicy (σ : G.PureProfile)
 /-- At a player-controlled history, profile execution uses exactly
 `PureProfile.actionAt`. -/
 theorem PureProfile.toHistoryPolicy_of_mover
-    (σ : G.PureProfile) (hNoChance : G.base.NoChance)
+    (σ : G.PureProfile) (hNoChance : G.base.NoChanceOnHistories)
     (h : G.base.toArena.HistoryFrom G.base.init)
     (hnonterminal : ¬ G.base.isTerminal h.1) (i : N)
     (hmover : G.base.mover h.1 = some i) :
@@ -753,7 +753,7 @@ theorem PureProfile.toHistoryPolicy_of_mover
 stopping at a terminal endpoint or when `fuel` is exhausted. -/
 def stoppedHistoryFrom
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
-    (σ : G.PureProfile) (hNoChance : G.base.NoChance)
+    (σ : G.PureProfile) (hNoChance : G.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init) (fuel : ℕ) :
     G.base.toArena.HistoryFrom G.base.init :=
   G.base.toArena.stoppedHistoryFrom
@@ -763,7 +763,7 @@ def stoppedHistoryFrom
 from an accumulated history, or `none` when the supplied fuel expires first. -/
 def stoppedPayoffFrom
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
-    (σ : G.PureProfile) (hNoChance : G.base.NoChance)
+    (σ : G.PureProfile) (hNoChance : G.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init) (fuel : ℕ) :
     Option (N → U) :=
   let result := G.stoppedHistoryFrom σ hNoChance current fuel
@@ -776,7 +776,7 @@ def stoppedPayoffFrom
 at a terminal endpoint or when `fuel` is exhausted. -/
 def stoppedHistory
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
-    (σ : G.PureProfile) (hNoChance : G.base.NoChance) (fuel : ℕ) :
+    (σ : G.PureProfile) (hNoChance : G.base.NoChanceOnHistories) (fuel : ℕ) :
     G.base.toArena.HistoryFrom G.base.init :=
   G.stoppedHistoryFrom σ hNoChance
     (Arena.HistoryFrom.nil G.base.toArena G.base.init) fuel
@@ -785,7 +785,7 @@ def stoppedHistory
 if its execution exhausts the supplied fuel first. -/
 def stoppedPayoff
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
-    (σ : G.PureProfile) (hNoChance : G.base.NoChance) (fuel : ℕ) :
+    (σ : G.PureProfile) (hNoChance : G.base.NoChanceOnHistories) (fuel : ℕ) :
     Option (N → U) :=
   G.stoppedPayoffFrom σ hNoChance
     (Arena.HistoryFrom.nil G.base.toArena G.base.init) fuel
