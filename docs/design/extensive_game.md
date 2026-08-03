@@ -15,10 +15,10 @@ measure-valued infinite-discrete, and analytic entries. Finite clients use
 `Interface.Equilibrium.Discrete`, and `Interface.Compilation.Discrete`;
 infinite PMF-path clients use `Interface.Execution.Infinite`; analytic clients
 use `Interface.Execution.Analytic`, `Interface.Equilibrium.Analytic`, and
-`Interface.Restart`. The former `Execution.Discrete`, `Relations`,
-`Equilibrium`, and `Compilation` paths remain broad supported aggregates, and
-`Interface.SimulationFramework` remains the compatibility import for the
-complete stack. The stability policy is specified in
+`Interface.Restart`. The former broad `Execution.Discrete`, `Relations`,
+`Equilibrium`, `Compilation`, and `SimulationFramework` paths were deleted in
+the pre-stability hard migration. Clients compose granular facades explicitly.
+The stability policy is specified in
 [`efg-public-api.md`](efg-public-api.md), the measured dependency audit and
 actual facade DAG in
 [`efg-import-granularity.md`](efg-import-granularity.md), and source-level
@@ -137,11 +137,9 @@ reuses both discrete equilibrium and analytic execution.
 [`Restart.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Interface/Restart.lean)
 is the analytic restart branch;
 [`Compilation/Discrete.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Interface/Compilation/Discrete.lean)
-is the measure-free compiler branch. The former `Execution.Discrete`,
-`Relations`, `Equilibrium`, and `Compilation` files retain their old broad
-closures as compatibility aggregates. Import the smallest applicable facade;
-[`SimulationFramework.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Interface/SimulationFramework.lean)
-is retained as a compatibility-only complete-stack aggregate.
+is the measure-free compiler branch. Import the smallest applicable facade
+and combine branches explicitly when needed; the former broad aggregate files
+have no redirect stubs.
 [`GameForm.lean`](../../EconCSLib/GameTheory/GameForm.lean) aggregates the
 representation-neutral semantic layer.
 
@@ -409,8 +407,8 @@ time. At that subgame, one certified replacement changes expected payoff from
 zero to one. The same baseline is thus initial-root Nash and not
 measurable-kernel subgame perfect.
 
-`ObservedMeasurableKernelRestartCompatibility` provides the exact semantic
-boundary between the two constructive executors. A raw full-event comparison
+The `Simulation.Restart` proof stack provides the exact semantic boundary
+between the two constructive executors. A raw full-event comparison
 would be structurally wrong at a nonempty root: absolute continuation tail
 coordinate zero retains the action occurrence entering the root, while a
 fresh restart uses the distinguished initial marker. The normalized event
@@ -555,10 +553,8 @@ clock-sensitive nonnatural one.
 
 ### Restart-compatibility API navigation
 
-`ObservedMeasurableKernelRestartCompatibility` remains the compatibility
-aggregate for every existing restart declaration. The stable facade is
-`Interface.Restart`; its implementation is ordered by the actual proof
-dependency:
+The stable facade is `Interface.Restart`; its implementation is ordered by
+the actual proof dependency:
 
 ```text
 Core → Trajectory → Certificates → Observed → Assembly → Equilibrium
