@@ -33,8 +33,8 @@ strict history and action equivalences. -/
 theorem map_toHistoryPolicy
     (e : G.Iso H)
     (profile : G.PureProfile)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (h : G.base.toArena.HistoryFrom G.base.init)
     (hsource : ¬ G.base.isTerminal h.1)
     (htarget :
@@ -65,8 +65,8 @@ theorem map_stoppedHistoryFrom
     [(t : H.base.State) → Decidable (H.base.isTerminal t)]
     (e : G.Iso H)
     (profile : G.PureProfile)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init) :
     ∀ fuel,
       e.historyIso.stateEquiv
@@ -130,8 +130,8 @@ theorem map_stoppedHistory
     [(t : H.base.State) → Decidable (H.base.isTerminal t)]
     (e : G.Iso H)
     (profile : G.PureProfile)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (fuel : ℕ) :
     e.historyIso.stateEquiv
         (G.stoppedHistory profile hNoChanceG fuel) =
@@ -151,8 +151,8 @@ theorem map_stoppedPayoffFrom
     [(t : H.base.State) → Decidable (H.base.isTerminal t)]
     (e : G.Iso H)
     (profile : G.PureProfile)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init)
     (fuel : ℕ) :
     H.stoppedPayoffFrom (e.mapProfile profile) hNoChanceH
@@ -186,8 +186,8 @@ theorem map_stoppedPayoff
     [(t : H.base.State) → Decidable (H.base.isTerminal t)]
     (e : G.Iso H)
     (profile : G.PureProfile)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (fuel : ℕ) :
     H.stoppedPayoff (e.mapProfile profile) hNoChanceH fuel =
       G.stoppedPayoff profile hNoChanceG fuel := by
