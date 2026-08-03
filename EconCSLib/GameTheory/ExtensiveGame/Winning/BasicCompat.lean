@@ -50,7 +50,7 @@ theorem PureProfile.completePlay_isCompatibleWithPlayerStrategy
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
     (profile : G.PureProfile)
-    (hNoChance : G.base.NoChance) (i : N) :
+    (hNoChance : G.base.NoChanceOnHistories) (i : N) :
     G.IsCompatibleWithPlayerStrategy i (profile i)
       ((profile.toHistoryPolicy G hNoChance).completePlay) := by
   intro n hnonterminal hmover
@@ -136,7 +136,7 @@ def HasStrategicWinningStrategy
     (G : ObservedGame N U)
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (W :
       G.base.toArena.WinningCondition G.base.init N)
     (i : N) (strategy : G.PureStrategy i) : Prop :=
@@ -154,7 +154,7 @@ theorem HasPathwiseWinningStrategy.hasStrategicWinningStrategy
     {i : N} {strategy : G.PureStrategy i}
     (hwinning :
       G.HasPathwiseWinningStrategy W i strategy)
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (hextends :
       G.HasPureProfileExtension i strategy) :
     G.HasStrategicWinningStrategy hNoChance W i strategy := by
@@ -172,7 +172,7 @@ def EveryCompatiblePlayRealizableByPureProfile
     (G : ObservedGame N U)
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (i : N) (strategy : G.PureStrategy i) : Prop :=
   ∀ play : G.base.toArena.CompletePlayFrom G.base.init,
     G.IsCompatibleWithPlayerStrategy i strategy play →
@@ -188,7 +188,7 @@ theorem HasStrategicWinningStrategy.hasPathwiseWinningStrategy
     {W :
       G.base.toArena.WinningCondition G.base.init N}
     {i : N} {strategy : G.PureStrategy i}
-    {hNoChance : G.base.NoChance}
+    {hNoChance : G.base.NoChanceOnHistories}
     (hwinning :
       G.HasStrategicWinningStrategy hNoChance W i strategy)
     (hrealizable :
