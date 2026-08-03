@@ -98,7 +98,7 @@ structure FiniteTwoPlayerHypotheses
     (G : ObservedGame (Fin 2) U)
     (W : G.base.toArena.WinningCondition G.base.init (Fin 2)) : Type _ where
   finiteEFG : G.FiniteEFGHypotheses
-  noChance : G.base.NoChance
+  noChance : G.base.NoChanceOnHistories
   perfectInformation : G.PerfectInformation
   zeroSum : W.IsTwoPlayerZeroSum
 
@@ -107,7 +107,7 @@ structure WellFoundedPrefixHypotheses
     (G : ObservedGame (Fin 2) U)
     (W : G.base.toArena.WinningCondition G.base.init (Fin 2)) : Type _ where
   wellFounded : G.base.toArena.IsWellFoundedFrom G.base.init
-  noChance : G.base.NoChance
+  noChance : G.base.NoChanceOnHistories
   perfectInformation : G.PerfectInformation
   zeroSum : W.IsTwoPlayerZeroSum
   prefixDecision : Arena.WinningConditionFrom.PrefixDecision W
@@ -119,7 +119,7 @@ theorem not_both_havePathwiseWinningStrategy
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
     {W : G.base.toArena.WinningCondition G.base.init (Fin 2)}
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (hexclusive : W.IsExclusive) :
     ¬ ((∃ strategy : G.PureStrategy 0,
           G.HasPathwiseWinningStrategy W 0 strategy) ∧
@@ -159,7 +159,7 @@ theorem not_both_haveWinningStrategy
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
     {W : G.base.toArena.WinningCondition G.base.init (Fin 2)}
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (hexclusive : W.IsExclusive) :
     ¬ ((∃ strategy : G.PureStrategy 0,
           G.HasPathwiseWinningStrategy W 0 strategy) ∧
