@@ -12,6 +12,10 @@ Represented-information and mover-coherence certificates that require neither
 finite action/information carriers nor a structural history-length bound.
 `Finite` and `Recall` depend on this leaf without acquiring each other's
 assumptions or execution infrastructure.
+
+`PureStrategyAvailabilityCertificate` bundles only represented information
+and mover coherence. This optional layer adds no finiteness, payoff,
+probability, recall, or termination.
 -/
 
 namespace ExtensiveGame.ControlledObservedGame
@@ -41,6 +45,32 @@ def DecisionMoverCoherent
   ∀ (history : G.base.History) (i : N),
     G.base.mover history.1 = some i →
       Nonempty (G.base.Action history.1)
+
+/-- Optional certificate for the two assumptions that make every declared
+pure-strategy coordinate inhabited.
+
+This bundle contains no no-chance, finiteness, payoff, probability, recall, or
+termination assumption. The independent predicates remain usable directly. -/
+structure PureStrategyAvailabilityCertificate
+    (G : ControlledObservedGame N) : Prop where
+  /-- Every declared decision-information state has a concrete witness. -/
+  allDecisionInfoRepresented : G.AllDecisionInfoRepresented
+  /-- Every reachable player-labelled history has a legal action. -/
+  decisionMoverCoherent : G.DecisionMoverCoherent
+
+/-- The availability bundle is exactly the conjunction of its two independent
+predicates. -/
+theorem pureStrategyAvailabilityCertificate_iff
+    (G : ControlledObservedGame N) :
+    G.PureStrategyAvailabilityCertificate ↔
+      G.AllDecisionInfoRepresented ∧ G.DecisionMoverCoherent := by
+  constructor
+  · intro certificate
+    exact
+      ⟨certificate.allDecisionInfoRepresented,
+        certificate.decisionMoverCoherent⟩
+  · rintro ⟨hrepresented, hcoherent⟩
+    exact ⟨hrepresented, hcoherent⟩
 
 /-- Mover coherence is exactly terminal-mover normalization on complete
 histories reachable from `G.base.init`.
@@ -112,5 +142,16 @@ theorem nonempty_pureProfile
         (hrepresented.nonempty_pureStrategy hcoherent i)⟩
 
 end AllDecisionInfoRepresented
+
+namespace PureStrategyAvailabilityCertificate
+
+/-- An availability certificate supplies an inhabited pure-profile carrier. -/
+theorem nonempty_pureProfile
+    (certificate : G.PureStrategyAvailabilityCertificate) :
+    Nonempty G.PureProfile :=
+  certificate.allDecisionInfoRepresented.nonempty_pureProfile
+    certificate.decisionMoverCoherent
+
+end PureStrategyAvailabilityCertificate
 
 end ExtensiveGame.ControlledObservedGame
