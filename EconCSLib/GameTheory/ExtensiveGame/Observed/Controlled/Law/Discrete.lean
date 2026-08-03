@@ -13,10 +13,13 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled
 supported `PMF` chance kernels to a payoff-free observed controlled game.
 It stores no payoff, root selection, finiteness, recall, or objective.
 
-The maximal semantic object in this finite import tier is the bounded PMF on
-complete occurrence-sensitive histories. Full measure-valued path laws and
-their downstream interpretation hierarchy live in `Controlled.Law`, so finite
-clients do not acquire the infinite execution stack.
+`BoundedHistoryLawFamily` is the raw data layer. The dependent history carrier
+already witnesses root reachability, but arbitrary values are not called
+execution semantics.
+
+Full measure-valued path laws and their downstream interpretation hierarchy
+live in `Controlled.Law`, so finite clients do not acquire the infinite
+execution stack.
 -/
 
 namespace ExtensiveGame
@@ -149,13 +152,16 @@ universe uStrategy
 
 variable {N : Type*}
 
-/-! ## Payoff-free bounded complete-history semantics -/
+/-! ## Payoff-free bounded history-law families -/
 
-/-- A strategy-indexed bounded complete-history PMF semantics.
+/-- Uncertified strategy-indexed bounded history PMFs.
 
 The semantic object is the full occurrence-sensitive history, not merely its
-endpoint state. The structure stores no payoff, objective, or root set. -/
-structure BoundedCompleteHistoryLawSemantics
+endpoint state. The dependent history type already enforces legal reachability
+from the game root, but this raw family stores no terminal-absorption or
+executor-consistency certificate. It must not by itself be advertised as
+operational execution semantics. -/
+structure BoundedHistoryLawFamily
     (G : DiscreteControlledObservedChanceGame N) where
   /-- One strategy carrier per player. -/
   Strategy : N → Type uStrategy
@@ -165,17 +171,17 @@ structure BoundedCompleteHistoryLawSemantics
       G.observed.base.History → ℕ →
         PMF G.observed.base.History
 
-namespace BoundedCompleteHistoryLawSemantics
+namespace BoundedHistoryLawFamily
 
 variable {G : DiscreteControlledObservedChanceGame N}
 
 /-- Profiles for one bounded complete-history semantic model. -/
-abbrev Profile (S : G.BoundedCompleteHistoryLawSemantics) :=
+abbrev Profile (S : G.BoundedHistoryLawFamily) :=
   ∀ i, S.Strategy i
 
 /-- Equality of bounded occurrence-sensitive complete-history laws. -/
 def CompleteHistoryLawEquivalentAt
-    (S T : G.BoundedCompleteHistoryLawSemantics)
+    (S T : G.BoundedHistoryLawFamily)
     (source : S.Profile) (target : T.Profile)
     (current : G.observed.base.History)
     (fuel : ℕ) : Prop :=
@@ -187,7 +193,7 @@ def CompleteHistoryLawEquivalentAt
 The playerwise strategy map gives a source-deviation map. Reverse target
 deviation coverage remains a separate property. -/
 structure CompleteHistoryLawRealization
-    (S T : G.BoundedCompleteHistoryLawSemantics) where
+    (S T : G.BoundedHistoryLawFamily) where
   /-- Map each player's source strategy into the target carrier. -/
   mapStrategy :
     (i : N) → S.Strategy i → T.Strategy i
@@ -203,7 +209,7 @@ structure CompleteHistoryLawRealization
 
 /-- Map a complete source profile player by player. -/
 def CompleteHistoryLawRealization.mapProfile
-    {S T : G.BoundedCompleteHistoryLawSemantics}
+    {S T : G.BoundedHistoryLawFamily}
     (R : S.CompleteHistoryLawRealization T)
     (profile : S.Profile) : T.Profile :=
   fun i => R.mapStrategy i (profile i)
@@ -211,7 +217,7 @@ def CompleteHistoryLawRealization.mapProfile
 /-- Playerwise complete-history realization commutes with unilateral update. -/
 theorem CompleteHistoryLawRealization.mapProfile_update
     [DecidableEq N]
-    {S T : G.BoundedCompleteHistoryLawSemantics}
+    {S T : G.BoundedHistoryLawFamily}
     (R : S.CompleteHistoryLawRealization T)
     (profile : S.Profile) (who : N)
     (deviation : S.Strategy who) :
@@ -230,7 +236,7 @@ This condition is intentionally stronger than merely mapping every source
 deviation. -/
 def CompleteHistoryLawRealization.TargetDeviationsCoveredAt
     [DecidableEq N]
-    {S T : G.BoundedCompleteHistoryLawSemantics}
+    {S T : G.BoundedHistoryLawFamily}
     (R : S.CompleteHistoryLawRealization T)
     (profile : S.Profile)
     (current : G.observed.base.History)
@@ -250,7 +256,7 @@ def CompleteHistoryLawRealization.TargetDeviationsCoveredAt
 This is strictly stronger data than a one-way realization plus a particular
 target-deviation coverage proof. -/
 structure CompleteHistoryLawStrategyIso
-    (S T : G.BoundedCompleteHistoryLawSemantics)
+    (S T : G.BoundedHistoryLawFamily)
     extends S.CompleteHistoryLawRealization T where
   /-- Playerwise strategy equivalence. -/
   strategyEquiv : (i : N) → S.Strategy i ≃ T.Strategy i
@@ -259,14 +265,14 @@ structure CompleteHistoryLawStrategyIso
     ∀ i, toCompleteHistoryLawRealization.mapStrategy i =
       strategyEquiv i
 
-end BoundedCompleteHistoryLawSemantics
+end BoundedHistoryLawFamily
 
 /-- Functional bounded complete-history-law realization across two different
 payoff-free discrete EFG representations. -/
 structure CrossGameBoundedCompleteHistoryLawRealization
     {G H : DiscreteControlledObservedChanceGame N}
-    (S : G.BoundedCompleteHistoryLawSemantics)
-    (T : H.BoundedCompleteHistoryLawSemantics) where
+    (S : G.BoundedHistoryLawFamily)
+    (T : H.BoundedHistoryLawFamily) where
   /-- Playerwise strategy map. -/
   mapStrategy :
     (i : N) → S.Strategy i → T.Strategy i
@@ -287,8 +293,8 @@ structure CrossGameBoundedCompleteHistoryLawRealization
 namespace CrossGameBoundedCompleteHistoryLawRealization
 
 variable {G H : DiscreteControlledObservedChanceGame N}
-  {S : G.BoundedCompleteHistoryLawSemantics}
-  {T : H.BoundedCompleteHistoryLawSemantics}
+  {S : G.BoundedHistoryLawFamily}
+  {T : H.BoundedHistoryLawFamily}
 
 /-- Map a bounded-law profile player by player. -/
 def mapProfile
@@ -313,13 +319,13 @@ theorem mapProfile_update
 
 end CrossGameBoundedCompleteHistoryLawRealization
 
-/-- Concrete payoff-free bounded complete-history semantics for behavioral
-strategies and discrete chance. -/
-noncomputable def behavioralBoundedCompleteHistoryLawSemantics
+/-- Concrete raw bounded history-law family for behavioral strategies and the
+stored discrete chance kernel. -/
+noncomputable def behavioralBoundedHistoryLawFamily
     (G : DiscreteControlledObservedChanceGame N)
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)] :
-    G.BoundedCompleteHistoryLawSemantics where
+    G.BoundedHistoryLawFamily where
   Strategy := G.BehavioralStrategy
   historyLaw := fun profile current fuel =>
     G.behavioralHistoryLaw profile current fuel
