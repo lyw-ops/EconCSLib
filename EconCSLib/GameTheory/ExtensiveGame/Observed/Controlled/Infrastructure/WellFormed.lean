@@ -14,7 +14,8 @@ finite action/information carriers nor a structural history-length bound.
 assumptions or execution infrastructure.
 
 `PureStrategyAvailabilityCertificate` bundles only represented information
-and mover coherence. This optional layer adds no finiteness, payoff,
+and mover coherence. `ReachablePureStrategyModelCertificate` adds
+`NoChanceOnHistories`. Neither optional layer adds finiteness, payoff,
 probability, recall, or termination.
 -/
 
@@ -58,6 +59,17 @@ structure PureStrategyAvailabilityCertificate
   /-- Every reachable player-labelled history has a legal action. -/
   decisionMoverCoherent : G.DecisionMoverCoherent
 
+/-- Optional higher-level certificate for models that need both inhabited pure
+profiles and chance-free execution on reachable histories.
+
+The bundle is deliberately narrow: consumers needing only one component
+should state that component instead of requiring this certificate. -/
+structure ReachablePureStrategyModelCertificate
+    (G : ControlledObservedGame N) : Prop
+    extends G.PureStrategyAvailabilityCertificate where
+  /-- Every reachable nonterminal history has a strategic mover. -/
+  noChanceOnHistories : G.base.NoChanceOnHistories
+
 /-- The availability bundle is exactly the conjunction of its two independent
 predicates. -/
 theorem pureStrategyAvailabilityCertificate_iff
@@ -71,6 +83,23 @@ theorem pureStrategyAvailabilityCertificate_iff
         certificate.decisionMoverCoherent⟩
   · rintro ⟨hrepresented, hcoherent⟩
     exact ⟨hrepresented, hcoherent⟩
+
+/-- The reachable pure-model bundle projects to exactly the three independent
+predicates it packages. -/
+theorem reachablePureStrategyModelCertificate_iff
+    (G : ControlledObservedGame N) :
+    G.ReachablePureStrategyModelCertificate ↔
+      G.AllDecisionInfoRepresented ∧
+        G.DecisionMoverCoherent ∧
+          G.base.NoChanceOnHistories := by
+  constructor
+  · intro certificate
+    exact
+      ⟨certificate.allDecisionInfoRepresented,
+        certificate.decisionMoverCoherent,
+        certificate.noChanceOnHistories⟩
+  · rintro ⟨hrepresented, hcoherent, hNoChance⟩
+    exact ⟨⟨hrepresented, hcoherent⟩, hNoChance⟩
 
 /-- Mover coherence is exactly terminal-mover normalization on complete
 histories reachable from `G.base.init`.
