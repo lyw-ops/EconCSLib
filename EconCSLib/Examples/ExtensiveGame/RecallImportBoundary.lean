@@ -17,6 +17,11 @@ infrastructure.
 #check ExtensiveGame.ControlledObservedGame.RecallCertificate
 #check ExtensiveGame.ControlledObservedGame.SignalRecallCertificate
 #check ExtensiveGame.ControlledObservedGame.PublicRecallCertificate
+#check ExtensiveGame.ControlledObservedGame.SignalTraceBuilder
+#check ExtensiveGame.ControlledObservedGame.SignalTraceBuilder.HasPerfectRecall
+#check ExtensiveGame.ControlledObservedGame.HasEventClockSignalPerfectRecall
+#check ExtensiveGame.ControlledObservedGame.HasEventClockPublicPerfectRecall
+#check ExtensiveGame.ControlledObservedGame.eventClockSignalTraceBuilder
 
 /--
 error: Unknown constant `ExtensiveGame.ControlledObservedGame.FiniteEFGHypotheses`
