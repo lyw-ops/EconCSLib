@@ -31,8 +31,8 @@ or analytic kernels.
 #check Arena.Set.IsPrefixOpenOn
 #check Arena.CompletePlayFromHistory.prefixMeasurableSpace
 #check ExtensiveGame.terminalPayoffOutcome
-#check ExtensiveGame.ObservedGame.HasSignalPerfectRecall
-#check ExtensiveGame.ObservedGame.HasPublicPerfectRecall
+#check ExtensiveGame.ObservedGame.HasEventClockSignalPerfectRecall
+#check ExtensiveGame.ObservedGame.HasEventClockPublicPerfectRecall
 #check ExtensiveGame.ObservedGame.HasPathwiseWinningStrategy
 #check ExtensiveGame.ObservedGame.HasStrategicWinningStrategy
 #check ExtensiveGame.ObservedGame.QuasiStrategy
