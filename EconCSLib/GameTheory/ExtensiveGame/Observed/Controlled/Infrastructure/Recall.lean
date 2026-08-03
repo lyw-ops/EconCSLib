@@ -8,10 +8,17 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Wel
 /-!
 # Payoff-free recall infrastructure
 
-Personal-decision histories, classic/private/public recall,
-no-absent-mindedness, and their factorization certificates. Recall uses the
-general `DecisionInfoWitness` from `Controlled.Infrastructure.WellFormed` and has no
-finite-EFG, structural history-length, or execution dependency.
+Personal-decision histories, classic recall, event-clock private/public
+signal recall, no-absent-mindedness, and their factorization certificates.
+The event-clock trace appends one signal at every arena transition and
+therefore reveals transition count. `SignalTraceBuilder` is an optional
+external asynchronous trace layer whose `eventSignal` may return `none` for a
+silent event. The always-emitting builder recovers the event-clock trace; no
+equivalence with arbitrary silent-event recall is claimed.
+
+Recall uses the general `DecisionInfoWitness` from
+`Controlled.Infrastructure.WellFormed` and has no finite-EFG, structural
+history-length, or execution dependency.
 -/
 
 namespace ExtensiveGame.ControlledObservedGame
@@ -449,8 +456,91 @@ theorem publicSignalHistory_snoc
           ⟨G.base.next state action, path.snoc action⟩] :=
   rfl
 
-/-- The private-signal sequence factors through current decision information. -/
-def HasSignalPerfectRecall
+/-! ### Optional silent-event signal traces -/
+
+/-- External builder for player-indexed signal traces.
+
+The builder is not part of the minimal observed-game carrier. `eventSignal`
+returns `none` for a silent transition and `some signal` for a disclosed
+event, so trace length need not reveal the number of Arena transitions. -/
+structure SignalTraceBuilder (G : ControlledObservedGame N) where
+  /-- Signal carrier for each player. -/
+  Signal : N → Type*
+  /-- Initial signal before any transition. -/
+  initial : (i : N) → Signal i
+  /-- Optional signal emitted by one legal transition. -/
+  eventSignal :
+    (i : N) →
+      (history : G.base.History) →
+        G.base.Action history.1 → Option (Signal i)
+
+namespace SignalTraceBuilder
+
+/-- Trace built along one dependent history, omitting silent events. -/
+def tracePath
+    (builder : G.SignalTraceBuilder) (i : N) :
+    {state : G.base.State} →
+      G.base.toArena.History G.base.init state →
+        List (builder.Signal i)
+  | _, .nil => [builder.initial i]
+  | _, @Arena.History.snoc _ _ state path action =>
+      builder.tracePath i path ++
+        (builder.eventSignal i ⟨state, path⟩ action).toList
+
+/-- Signal trace of a complete history. -/
+def trace
+    (builder : G.SignalTraceBuilder) (i : N)
+    (history : G.base.History) :
+    List (builder.Signal i) :=
+  builder.tracePath i history.2
+
+/-- Recall relative to an external, possibly silent-event trace builder. -/
+def HasPerfectRecall
+    (builder : G.SignalTraceBuilder) (i : N) : Prop :=
+  ∀ (first second : G.base.History)
+    (hfirst : G.base.mover first.1 = some i)
+    (hsecond : G.base.mover second.1 = some i),
+    G.infoAt first i hfirst = G.infoAt second i hsecond →
+      builder.trace i first = builder.trace i second
+
+end SignalTraceBuilder
+
+/-- The existing observation sequence as an event-clock trace builder.
+
+Every Arena transition emits exactly one private observation. -/
+def eventClockSignalTraceBuilder
+    (G : ControlledObservedGame N) :
+    G.SignalTraceBuilder where
+  Signal := G.Observation
+  initial := fun i =>
+    G.observe i
+      (Arena.HistoryFrom.nil G.base.toArena G.base.init)
+  eventSignal := fun i history action =>
+    some
+      (G.observe i
+        ⟨G.base.next history.1 action,
+          history.2.snoc action⟩)
+
+/-- Event-clock trace construction is definitionally the existing private
+signal history after structural recursion. -/
+theorem eventClockSignalTraceBuilder_trace
+    (G : ControlledObservedGame N) (i : N)
+    (history : G.base.History) :
+    (G.eventClockSignalTraceBuilder.trace i history) =
+      G.signalHistory i history := by
+  rcases history with ⟨finish, path⟩
+  induction path with
+  | nil => rfl
+  | snoc path action ih =>
+      simp only [SignalTraceBuilder.trace,
+        SignalTraceBuilder.tracePath, eventClockSignalTraceBuilder,
+        Option.toList_some, signalHistory, signalHistoryPath]
+      exact congrArg (fun trace => trace ++ [_]) ih
+
+/-- The private-signal sequence factors through current decision information
+under the event-clock convention: the initial observation is recorded and
+every Arena transition appends exactly one signal. -/
+def HasEventClockSignalPerfectRecall
     (G : ControlledObservedGame N) (i : N) : Prop :=
   ∀ (first second : G.base.History)
     (hfirst : G.base.mover first.1 = some i)
@@ -459,14 +549,32 @@ def HasSignalPerfectRecall
       G.signalHistory i first =
         G.signalHistory i second
 
-/-- Every player has private-signal recall. -/
-def SignalPerfectRecall
-    (G : ControlledObservedGame N) : Prop :=
-  ∀ i, G.HasSignalPerfectRecall i
+/-- Event-clock signal recall is precisely recall for the always-emitting
+external trace builder. No equivalence is asserted for builders with silent
+events. -/
+theorem hasEventClockSignalPerfectRecall_iff
+    (G : ControlledObservedGame N) (i : N) :
+    G.HasEventClockSignalPerfectRecall i ↔
+      G.eventClockSignalTraceBuilder.HasPerfectRecall i := by
+  constructor
+  · intro hrecall first second hfirst hsecond hsame
+    rw [G.eventClockSignalTraceBuilder_trace i first,
+      G.eventClockSignalTraceBuilder_trace i second]
+    exact hrecall first second hfirst hsecond hsame
+  · intro hrecall first second hfirst hsecond hsame
+    rw [← G.eventClockSignalTraceBuilder_trace i first,
+      ← G.eventClockSignalTraceBuilder_trace i second]
+    exact hrecall first second hfirst hsecond hsame
 
-/-- Current public observation determines the complete public-signal
-sequence. -/
-def HasPublicPerfectRecall
+/-- Every player has private-signal recall. -/
+def EventClockSignalPerfectRecall
+    (G : ControlledObservedGame N) : Prop :=
+  ∀ i, G.HasEventClockSignalPerfectRecall i
+
+/-- Current public observation determines the complete public-signal sequence
+under the event-clock convention. Because one public observation is appended
+at every Arena transition, this predicate exposes event count. -/
+def HasEventClockPublicPerfectRecall
     (G : ControlledObservedGame N) : Prop :=
   ∀ first second : G.base.History,
     G.publicObserve first = G.publicObserve second →
@@ -474,9 +582,9 @@ def HasPublicPerfectRecall
         G.publicSignalHistory second
 
 /-- Singleton decision information implies private-signal recall. -/
-theorem HasSingletonInformation.hasSignalPerfectRecall
+theorem HasSingletonInformation.hasEventClockSignalPerfectRecall
     {i : N} (hinformation : G.HasSingletonInformation i) :
-    G.HasSignalPerfectRecall i := by
+    G.HasEventClockSignalPerfectRecall i := by
   intro first second hfirst hsecond hsame
   exact congrArg (G.signalHistory i)
     (hinformation first second hfirst hsecond hsame)
@@ -515,8 +623,8 @@ theorem publicSignalHistory_length
 
 /-- Signal recall rules out absent-mindedness because every action adds one
 signal coordinate. -/
-theorem HasSignalPerfectRecall.hasNoAbsentMindedness
-    {i : N} (hrecall : G.HasSignalPerfectRecall i) :
+theorem HasEventClockSignalPerfectRecall.hasNoAbsentMindedness
+    {i : N} (hrecall : G.HasEventClockSignalPerfectRecall i) :
     G.HasNoAbsentMindedness i := by
   intro first hfirst action finish suffix hsecond hsame
   let second : G.base.History :=
@@ -534,15 +642,15 @@ theorem HasSignalPerfectRecall.hasNoAbsentMindedness
   omega
 
 /-- Perfect information implies private-signal recall for every player. -/
-theorem PerfectInformation.signalPerfectRecall
+theorem PerfectInformation.eventClockSignalPerfectRecall
     (hinformation : G.PerfectInformation) :
-    G.SignalPerfectRecall :=
-  fun i => (hinformation i).hasSignalPerfectRecall
+    G.EventClockSignalPerfectRecall :=
+  fun i => (hinformation i).hasEventClockSignalPerfectRecall
 
 /-- Private-signal recall for every player implies global
 no-absent-mindedness. -/
-theorem SignalPerfectRecall.noAbsentMindedness
-    (hrecall : G.SignalPerfectRecall) :
+theorem EventClockSignalPerfectRecall.noAbsentMindedness
+    (hrecall : G.EventClockSignalPerfectRecall) :
     G.NoAbsentMindedness :=
   fun i => (hrecall i).hasNoAbsentMindedness
 
@@ -631,9 +739,9 @@ structure SignalRecallCertificate
 
 /-- A payoff-free private-signal factorization certificate proves signal
 recall. -/
-theorem SignalRecallCertificate.signalPerfectRecall
+theorem SignalRecallCertificate.eventClockSignalPerfectRecall
     (certificate : G.SignalRecallCertificate) :
-    G.SignalPerfectRecall := by
+    G.EventClockSignalPerfectRecall := by
   intro i first second hfirst hsecond hsame
   rw [← certificate.rememberedSignals_infoAt i first hfirst]
   rw [← certificate.rememberedSignals_infoAt i second hsecond]
@@ -653,9 +761,9 @@ structure PublicRecallCertificate
 
 /-- A payoff-free public-signal factorization certificate proves public
 recall. -/
-theorem PublicRecallCertificate.hasPublicPerfectRecall
+theorem PublicRecallCertificate.hasEventClockPublicPerfectRecall
     (certificate : G.PublicRecallCertificate) :
-    G.HasPublicPerfectRecall := by
+    G.HasEventClockPublicPerfectRecall := by
   intro first second hsame
   rw [← certificate.rememberedPublicSignals_publicObserve first]
   rw [← certificate.rememberedPublicSignals_publicObserve second]
