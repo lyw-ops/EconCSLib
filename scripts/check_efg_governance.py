@@ -2,7 +2,7 @@
 """Check enforceable EFG architecture and lifecycle invariants.
 
 This is intentionally a source-graph check rather than a Lean parser. It
-guards the documented module register, import-only compatibility modules,
+guards the documented module register, explicit import-only facade lifecycle,
 stable facade closures, root aggregate boundary, and dependency direction.
 Lean elaboration and placeholder checks remain separate CI steps.
 """
@@ -18,6 +18,9 @@ import sys
 
 IMPORT_RE = re.compile(
     r"^import\s+(EconCSLib(?:\.[A-Za-z0-9_]+)*)\s*$", re.MULTILINE
+)
+ANY_IMPORT_RE = re.compile(
+    r"^import\s+([A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)\s*$", re.MULTILINE
 )
 MODULE_ROW_RE = re.compile(r"^\| `(EconCSLib\.[^`]+)` \|", re.MULTILINE)
 DECLARATION_RE = re.compile(
@@ -36,21 +39,78 @@ DEPRECATED_RE = re.compile(
 
 EFG_PREFIX = "EconCSLib.GameTheory.ExtensiveGame."
 
+# Every import-only source module is an explicit navigation surface. Adding a
+# new one therefore requires a deliberate entry here, not merely a file with a
+# convenient transitive closure.
+CANONICAL_IMPORT_ONLY_MODULES = {
+    "EconCSLib",
+    "EconCSLib.Examples",
+    "EconCSLib.OpenProblem",
+    "EconCSLib.GameTheory.GameForm",
+    "EconCSLib.Math.Probability.PMF",
+    f"{EFG_PREFIX}Interface.StructuralCore",
+    f"{EFG_PREFIX}Interface.Core",
+    f"{EFG_PREFIX}Interface.Objective",
+    f"{EFG_PREFIX}Interface.Winning",
+    f"{EFG_PREFIX}Interface.Winning.Stochastic",
+    f"{EFG_PREFIX}Interface.Execution.Finite",
+    f"{EFG_PREFIX}Interface.Execution.Infinite",
+    f"{EFG_PREFIX}Interface.Execution.Analytic",
+    f"{EFG_PREFIX}Interface.Relations.Discrete",
+    f"{EFG_PREFIX}Interface.Equilibrium.Discrete",
+    f"{EFG_PREFIX}Interface.Equilibrium.Analytic",
+    f"{EFG_PREFIX}Interface.Restart",
+    f"{EFG_PREFIX}Interface.Compilation.Discrete",
+    f"{EFG_PREFIX}Observed.Controlled.Infrastructure",
+    f"{EFG_PREFIX}Observed.Controlled.Morphism",
+}
+
+# Compatibility wrappers are allowed only while explicitly listed here and in
+# the module-status register. The current pre-release hard migration leaves no
+# temporary wrappers.
+TEMPORARY_COMPATIBILITY_IMPORT_ONLY_MODULES: set[str] = set()
+
+# These paths were intentionally removed after their internal consumers were
+# migrated. Recreating a redirect stub or importing one is a governance error.
+REMOVED_MODULE_PATHS = {
+    "EconCSLib.Foundation.Player",
+    f"{EFG_PREFIX}Play",
+    f"{EFG_PREFIX}BehaviorStrategy",
+    f"{EFG_PREFIX}FOSG.FOSGSequentialization",
+    f"{EFG_PREFIX}Observed.Morphism",
+    f"{EFG_PREFIX}Observed.Morphism.Fiber",
+    f"{EFG_PREFIX}Observed.Refinement",
+    f"{EFG_PREFIX}Observed.BehaviorRefinement",
+    f"{EFG_PREFIX}Observed.DeferredSampling",
+    f"{EFG_PREFIX}Observed.KuhnConditioning",
+    f"{EFG_PREFIX}Interface.Execution.Discrete",
+    f"{EFG_PREFIX}Interface.Relations",
+    f"{EFG_PREFIX}Interface.Equilibrium",
+    f"{EFG_PREFIX}Interface.Compilation",
+    f"{EFG_PREFIX}Interface.SimulationFramework",
+    f"{EFG_PREFIX}Simulation.ObservedMeasurableKernelRestartCompatibility",
+    f"{EFG_PREFIX}Probability.ConditionalSampling",
+    f"{EFG_PREFIX}Probability.ConditionalProduct",
+    f"{EFG_PREFIX}Probability.DeferredSampling",
+    f"{EFG_PREFIX}Probability.FiniteProductCoupling",
+    "EconCSLib.GameTheory.GameForm.Continuation",
+}
+
 EXPECTED_CLOSURES = {
-    "EconCSLib": (37, 165),
+    "EconCSLib": (36, 163),
     f"{EFG_PREFIX}Interface.StructuralCore": (5, 5),
     f"{EFG_PREFIX}Interface.Core": (14, 14),
-    f"{EFG_PREFIX}Interface.Objective": (32, 37),
-    f"{EFG_PREFIX}Interface.Winning": (35, 40),
-    f"{EFG_PREFIX}Interface.Winning.Stochastic": (50, 57),
-    f"{EFG_PREFIX}Interface.Execution.Finite": (33, 40),
-    f"{EFG_PREFIX}Interface.Execution.Infinite": (38, 45),
-    f"{EFG_PREFIX}Interface.Execution.Analytic": (58, 66),
-    f"{EFG_PREFIX}Interface.Relations.Discrete": (39, 46),
-    f"{EFG_PREFIX}Interface.Equilibrium.Discrete": (66, 82),
-    f"{EFG_PREFIX}Interface.Equilibrium.Analytic": (96, 113),
-    f"{EFG_PREFIX}Interface.Restart": (104, 121),
-    f"{EFG_PREFIX}Interface.Compilation.Discrete": (87, 105),
+    f"{EFG_PREFIX}Interface.Objective": (31, 36),
+    f"{EFG_PREFIX}Interface.Winning": (34, 39),
+    f"{EFG_PREFIX}Interface.Winning.Stochastic": (49, 56),
+    f"{EFG_PREFIX}Interface.Execution.Finite": (32, 39),
+    f"{EFG_PREFIX}Interface.Execution.Infinite": (37, 44),
+    f"{EFG_PREFIX}Interface.Execution.Analytic": (57, 65),
+    f"{EFG_PREFIX}Interface.Relations.Discrete": (38, 45),
+    f"{EFG_PREFIX}Interface.Equilibrium.Discrete": (65, 81),
+    f"{EFG_PREFIX}Interface.Equilibrium.Analytic": (95, 112),
+    f"{EFG_PREFIX}Interface.Restart": (103, 120),
+    f"{EFG_PREFIX}Interface.Compilation.Discrete": (86, 104),
 }
 
 STRUCTURAL_CORE = f"{EFG_PREFIX}Interface.StructuralCore"
@@ -418,6 +478,13 @@ class StatusRow:
     removal_policy: str
 
 
+@dataclass(frozen=True)
+class LeanLifecycle:
+    zero_byte: set[str]
+    comment_only: set[str]
+    import_only: set[str]
+
+
 def module_name(path: Path, root: Path) -> str | None:
     relative = path.relative_to(root)
     if relative == Path("EconCSLib.lean"):
@@ -431,6 +498,39 @@ def module_path(module: str, root: Path) -> Path:
     if module == "EconCSLib":
         return root / "EconCSLib.lean"
     return root / Path(*module.split(".")).with_suffix(".lean")
+
+
+def lean_lifecycle(root: Path) -> LeanLifecycle:
+    """Classify source modules without treating module docstrings as code."""
+
+    paths = [root / "EconCSLib.lean"]
+    paths.extend((root / "EconCSLib").rglob("*.lean"))
+    zero_byte: set[str] = set()
+    comment_only: set[str] = set()
+    import_only: set[str] = set()
+    namespace_shell_re = re.compile(
+        r"^\s*(?:namespace(?:\s+[A-Za-z0-9_.]+)?|"
+        r"end(?:\s+[A-Za-z0-9_.]+)?)\s*$",
+        re.MULTILINE,
+    )
+    for path in paths:
+        if not path.is_file():
+            continue
+        module = module_name(path, root)
+        if module is None:
+            continue
+        source = path.read_text(encoding="utf-8")
+        if path.stat().st_size == 0:
+            zero_byte.add(module)
+        stripped = strip_lean_comments_and_strings(source)
+        shell_residue = namespace_shell_re.sub("", stripped)
+        if not shell_residue.strip():
+            comment_only.add(module)
+        imports = set(ANY_IMPORT_RE.findall(stripped))
+        import_residue = ANY_IMPORT_RE.sub("", stripped)
+        if imports and not import_residue.strip():
+            import_only.add(module)
+    return LeanLifecycle(zero_byte, comment_only, import_only)
 
 
 def in_scope_modules(root: Path) -> set[str]:
@@ -629,6 +729,49 @@ def run(root: Path) -> list[str]:
     if cycle is not None:
         errors.append("local import graph contains a cycle: " + " -> ".join(cycle))
 
+    lifecycle = lean_lifecycle(root)
+    for module in sorted(lifecycle.zero_byte):
+        errors.append(
+            f"{module_path(module, root)}: zero-byte Lean modules are forbidden"
+        )
+    for module in sorted(lifecycle.comment_only - lifecycle.zero_byte):
+        errors.append(
+            f"{module_path(module, root)}: comment/namespace-only Lean module "
+            "has no registered lifecycle role"
+        )
+
+    expected_import_only = (
+        CANONICAL_IMPORT_ONLY_MODULES
+        | TEMPORARY_COMPATIBILITY_IMPORT_ONLY_MODULES
+    )
+    for module in sorted(lifecycle.import_only - expected_import_only):
+        errors.append(
+            f"{module_path(module, root)}: import-only Lean module is not "
+            "registered as a canonical facade or temporary compatibility path"
+        )
+    for module in sorted(expected_import_only - lifecycle.import_only):
+        errors.append(
+            f"{module_path(module, root)}: registered import-only module is "
+            "missing or contains non-import source"
+        )
+    for module in sorted(CANONICAL_IMPORT_ONLY_MODULES):
+        row = rows.get(module)
+        if row is not None and row.status != "Canonical":
+            errors.append(
+                f"{status_path}: canonical import-only facade {module} must "
+                f"be registered Canonical, found {row.status}"
+            )
+
+    for removed in sorted(REMOVED_MODULE_PATHS):
+        if removed in graph or module_path(removed, root).exists():
+            errors.append(f"removed module path was recreated: {removed}")
+        for importer, imports in graph.items():
+            if removed in imports:
+                errors.append(
+                    f"{module_path(importer, root)}: imports removed module "
+                    f"path {removed}"
+                )
+
     for pair, reason in HISTORICAL_IMPORT_ALLOWLIST.items():
         importer, imported = pair
         if not reason.strip():
@@ -719,13 +862,20 @@ def run(root: Path) -> list[str]:
     compatibility = {
         module for module, row in rows.items() if row.status == "Compatibility"
     }
+    if compatibility != TEMPORARY_COMPATIBILITY_IMPORT_ONLY_MODULES:
+        errors.append(
+            f"{status_path}: temporary compatibility registry differs; "
+            f"status={sorted(compatibility)}, "
+            "governance="
+            f"{sorted(TEMPORARY_COMPATIBILITY_IMPORT_ONLY_MODULES)}"
+        )
     for module in sorted(compatibility):
         path = module_path(module, root)
         source = path.read_text(encoding="utf-8")
         stripped = strip_lean_comments_and_strings(source)
         if DECLARATION_RE.search(stripped):
             errors.append(f"{path}: compatibility module defines a declaration")
-        residue = IMPORT_RE.sub("", stripped)
+        residue = ANY_IMPORT_RE.sub("", stripped)
         if residue.strip():
             errors.append(f"{path}: compatibility module must contain only imports")
         row = rows[module]
@@ -784,6 +934,16 @@ def run(root: Path) -> list[str]:
                 f"{module_path(aggregate, root)}: direct imports differ from "
                 f"the aggregate contract; expected={sorted(expected_imports)}, "
                 f"actual={sorted(actual_imports)}"
+            )
+        source = module_path(aggregate, root).read_text(encoding="utf-8")
+        if (
+            "canonical aggregate facade" not in source
+            or "owns no declarations" not in source
+        ):
+            errors.append(
+                f"{module_path(aggregate, root)}: controlled aggregate "
+                "module docstring must identify a canonical aggregate facade "
+                "that owns no declarations"
             )
 
     controlled_root = f"{EFG_PREFIX}Observed.Controlled"
@@ -1002,9 +1162,9 @@ def run(root: Path) -> list[str]:
     simulation_count = sum(
         module.startswith(f"{EFG_PREFIX}Simulation.") for module in scoped
     )
-    if simulation_count != 30:
+    if simulation_count != 29:
         errors.append(
-            f"Simulation module count is {simulation_count}; expected governed count 30"
+            f"Simulation module count is {simulation_count}; expected governed count 29"
         )
 
     return errors
@@ -1054,7 +1214,7 @@ def main() -> int:
     }
     print(
         f"EFG governance checks passed: {len(rows)} registered modules, "
-        f"{compatibility_count} import-only compatibility paths, "
+        f"{compatibility_count} temporary compatibility paths, "
         f"root {root_counts[0]}/{root_counts[1]}, "
         f"Simulation {simulation_count}, Controlled hierarchy "
         f"{len(CONTROLLED_MODULE_ROLES)}="
@@ -1064,6 +1224,36 @@ def main() -> int:
         "responsibility owners/"
         f"{controlled_role_counts['aggregate-facade']} facades/"
         f"{controlled_role_counts['payoff-aware-adapter']} adapters."
+    )
+    lifecycle = lean_lifecycle(root)
+    canonical_import_only = (
+        lifecycle.import_only & CANONICAL_IMPORT_ONLY_MODULES
+    )
+    temporary_import_only = (
+        lifecycle.import_only
+        & TEMPORARY_COMPATIBILITY_IMPORT_ONLY_MODULES
+    )
+
+    def names(modules: set[str]) -> str:
+        return ", ".join(sorted(modules)) if modules else "(none)"
+
+    print(
+        f"Zero-byte Lean modules ({len(lifecycle.zero_byte)}): "
+        f"{names(lifecycle.zero_byte)}"
+    )
+    print(
+        f"Comment/namespace-only Lean modules "
+        f"({len(lifecycle.comment_only)}): "
+        f"{names(lifecycle.comment_only)}"
+    )
+    print(
+        f"Canonical import-only modules ({len(canonical_import_only)}): "
+        f"{names(canonical_import_only)}"
+    )
+    print(
+        f"Temporary compatibility import-only modules "
+        f"({len(temporary_import_only)}): "
+        f"{names(temporary_import_only)}"
     )
     return 0
 
