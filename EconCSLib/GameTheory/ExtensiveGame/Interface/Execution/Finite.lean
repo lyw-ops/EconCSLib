@@ -30,6 +30,6 @@ complete-history PMFs while keeping full infinite path measures out of this
 facade.
 
 Measure-valued infinite discrete paths are available from
-`Interface.Execution.Infinite`; the older `Interface.Execution.Discrete`
-import remains a compatibility alias for their union with this tier.
+`Interface.Execution.Infinite`; the former combined
+`Interface.Execution.Discrete` path was deleted before API stability.
 -/
