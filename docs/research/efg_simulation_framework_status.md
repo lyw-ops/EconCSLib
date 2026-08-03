@@ -40,9 +40,9 @@ subgame systems. Non-bijective player changes remain compiler-specific.
 
 The current modules provide:
 
-- `Interface/{Core,Relations,Equilibrium,Compilation}.lean` as stable,
-  dependency-ordered public tiers, with `Interface/SimulationFramework.lean`
-  retained as the complete-stack compatibility import;
+- granular `Interface/{Core,Execution,Relations,Equilibrium,Restart,Compilation}`
+  facades as dependency-ordered public tiers; pre-release broad aggregates
+  were deleted after consumer migration;
 - an explicit public API and deprecation policy in
   `docs/design/efg-public-api.md`;
 - strict observed-EFG isomorphisms preserving observations, public state,
@@ -158,7 +158,7 @@ decision-information types alone suffice for
 concrete local action marginals. It requires neither player decidable equality,
 no-absent-mindedness, nor perfect recall.
 
-[`DeferredSampling.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Observed/DeferredSampling.lean)
+[`DeferredSampling/Realization.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Observed/DeferredSampling/Realization.lean)
 compiles bounded observed chance-EFG execution to this tree. Its
 `FutureDecisionKeysAvailable` invariant is future-closed: chance steps retain
 the available set, while player steps erase the current player/information
@@ -194,7 +194,7 @@ event fallback, and proves exact disintegration.
 proves that conditioning a finite independent dependent product on one
 coordinate updates exactly that coordinate.
 
-[`KuhnConditioning.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Observed/KuhnConditioning.lean)
+[`KuhnConditioning/Realization.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Observed/KuhnConditioning/Realization.lean)
 combines those probability results with perfect recall. For each continuation
 root it conditions an arbitrary mixed contingent plan on the player's own
 post-root information/action records. The following are formal:
@@ -264,37 +264,35 @@ Review the current implementation in dependency order:
 1. `Math/Probability/PMF/`: equivalence pushforwards, finite dependent
    products, couplings, conditioning, and deferred sampling. These modules
    must remain independent of EFG domain structures.
-2. `Execution/`, `Simulation/`, and the core `Observed/{Game,Morphism,
-   Refinement,BehaviorMorphism,BehaviorRefinement}.lean` aggregates: bounded
+2. `Execution/`, `Simulation/`, `Observed/Game.lean`, and the granular
+   `Observed/{Morphism,Refinement,BehaviorRefinement}/` leaves: bounded
    execution semantics and the exact distinctions between isomorphism,
    directional refinement, coupling simulation, and weak/stuttering
    simulation.
-3. `Observed/{PerfectRecall,Kuhn,DeferredSampling,KuhnConditioning}.lean` and
-   `FOSG/FOSGSequentialization.lean`: the two constructive finite Kuhn
-   directions and the exact FOSG micro/macro law. Their implementation is
-   split into dependency-ordered concept modules under
-   `Observed/{Morphism,Refinement,BehaviorRefinement,DeferredSampling,
-   KuhnConditioning}/`,
-   `GameForm/Continuation/`, and `FOSG/Sequentialization/`.
+3. `Observed/{PerfectRecall,Kuhn}.lean`,
+   `Observed/{DeferredSampling,KuhnConditioning}/`, and
+   `FOSG/Sequentialization/`: the two constructive finite Kuhn directions and
+   the exact FOSG micro/macro law. Their implementation is split into
+   dependency-ordered concept modules together with
+   `GameForm/Continuation/`.
 4. `Compiler/` and `Examples/ExtensiveGame/`: concrete representation bridges,
    the N-1 through N-4 guardrail regressions, and the non-atomic analytic-kernel
    boundary.
-5. `Interface/{Core,Relations,Equilibrium,Compilation}.lean`,
-   `Interface/SimulationFramework.lean`, aggregate imports, and these design
-   documents: minimal build surfaces, compatibility, and reviewer handoff.
+5. Granular `Interface/{Core,Execution,Relations,Equilibrium,Restart,Compilation}`
+   facades and these design documents: minimal build surfaces, lifecycle, and
+   reviewer handoff.
 
-The established PascalCase paths remain compatibility aggregates. Large proof
-chains are now split at existing semantic boundaries: continuation
-core/simulation/isomorphism, observed morphism fiber/structure/inverse/
+The removed PascalCase aggregates have no redirect stubs. Large proof chains
+are now split at existing semantic boundaries: continuation
+core/simulation/isomorphism, dependent-fiber/observed-morphism structure/inverse/
 operational/continuation, refinement structure/bounded/termination,
 behavior-refinement structure/execution, deferred-sampling
 core/execution/realization, conditioning posterior/core/execution/realization,
 and FOSG core/policy/macro-law/trajectory/witness/equilibrium. The largest
 restart leaf is currently `Restart/Certificates.lean` at 1,168 lines;
-`ObservedMeasurableKernelRestartCompatibility.lean` is a 37-line compatibility
-aggregate, and the other restart leaves are at most 818 lines. The short EFG-local
-`Probability/` files remain intentional compatibility imports; reusable
-implementations live only under `Math/Probability/PMF/`.
+the other restart leaves are at most 818 lines. The compatibility aggregate
+and the short EFG-local `Probability/` redirects were deleted; reusable
+probability implementations live only under `Math/Probability/PMF/`.
 
 Bounded designated-continuation Nash entry-point consolidation is complete: the shortest relation-local
 strict-Iso theorems remain canonical direct entries, while
