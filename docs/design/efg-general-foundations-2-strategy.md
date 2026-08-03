@@ -27,10 +27,12 @@ Add reusable predicates rather than fields:
 
 - `AllDecisionInfoRepresented`: every declared information state has a
   `DecisionInfoWitness`;
-- `HasSignalPerfectRecall`: the sequence of observations available to a player
-  factors through its current `InfoState`;
-- `HasPublicPerfectRecall`: public-observation history factors through the
-  current public state where required;
+- `HasEventClockSignalPerfectRecall`: the per-transition signal sequence
+  available to a player factors through its current `InfoState`;
+- `HasEventClockPublicPerfectRecall`: the per-transition public-observation
+  history factors through the current public state where required;
+- `SignalTraceBuilder.HasPerfectRecall`: optional asynchronous trace recall
+  when transitions may emit `none` as a silent event;
 - `FiniteReachableInformation`: only represented decision information is
   finite.
 
