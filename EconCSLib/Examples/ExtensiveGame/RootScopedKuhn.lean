@@ -225,8 +225,9 @@ def hypotheses :
     infer_instance
 
 /-- The concrete game contains no chance-controlled decision stage. -/
-theorem base_noChance : observed.base.NoChance := by
-  intro state hnonterminal
+theorem base_noChance : observed.base.NoChanceOnHistories := by
+  intro history hnonterminal
+  rcases history with ⟨state, _path⟩
   cases state with
   | start => exact ⟨(), rfl⟩
   | after first => exact ⟨(), rfl⟩
