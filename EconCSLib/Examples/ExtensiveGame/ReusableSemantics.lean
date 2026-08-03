@@ -91,6 +91,18 @@ noncomputable def controlledMeasureSemantics
   Outcome := Measure ℝ
   evaluate := fun _ _ _ => Measure.dirac 0
 
+/-- The smoke-test evaluator is definitionally independent of all strategy
+coordinates. This remains only an evaluator-relative example; it is not
+advertised as operational EFG execution. -/
+theorem controlledMeasureSemantics_local
+    {N : Type*} (G : ExtensiveGame.ControlledObservedGame N)
+    (horizon : WithTop ℕ)
+    (root : G.base.History)
+    (first second : (controlledMeasureSemantics G).Profile) :
+    (controlledMeasureSemantics G).evaluate horizon root first =
+      (controlledMeasureSemantics G).evaluate horizon root second :=
+  rfl
+
 /-- The state-payoff observed-game spelling is only a compatibility adapter:
 changing or removing its state-payoff type does not change the semantics. -/
 noncomputable def observedMeasureSemantics
