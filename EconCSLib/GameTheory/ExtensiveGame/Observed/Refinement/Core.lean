@@ -156,8 +156,8 @@ history and action equivalences. -/
 theorem map_toHistoryPolicy
     (r : G.InformationRefinement H)
     (profile : G.PureProfile)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (history : G.base.toArena.HistoryFrom G.base.init)
     (hsource : ¬ G.base.isTerminal history.1)
     (htarget :
@@ -198,8 +198,8 @@ theorem map_stoppedHistoryFrom
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
     (profile : G.PureProfile)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init) :
     ∀ fuel,
       r.historyIso.stateEquiv
@@ -281,8 +281,8 @@ theorem map_stoppedPayoffFrom
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
     (profile : G.PureProfile)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init)
     (fuel : ℕ) :
     H.stoppedPayoffFrom
@@ -329,8 +329,8 @@ def continuationGameFormHom
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init)
     (fuel : ℕ) :
     (G.continuationGameForm
@@ -354,8 +354,8 @@ theorem continuationGameFormHom_utilityCompatible
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (utility : Option (N → U) → N → V)
     (current : G.base.toArena.HistoryFrom G.base.init)
     (fuel : ℕ) :
@@ -374,8 +374,8 @@ theorem continuationGameFormHom_strategySurjective
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init)
     (fuel : ℕ)
     (hsurjective : r.StrategySurjective) :
@@ -397,8 +397,8 @@ theorem continuationIsNash_of_map
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (utility : Option (N → U) → N → V)
     (profile : G.PureProfile)
     (current : G.base.toArena.HistoryFrom G.base.init)
@@ -425,8 +425,8 @@ theorem continuationIsNash_iff_of_strategySurjective
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (hsurjective : r.StrategySurjective)
     (utility : Option (N → U) → N → V)
     (profile : G.PureProfile)
@@ -458,8 +458,8 @@ theorem isPureNashOnRootsAtFuel_of_map
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (sourceRoots : G.RootPresentation)
     (targetRoots : H.RootPresentation)
     (hroots :
@@ -493,8 +493,8 @@ theorem isPureNashOnRootsAtFuel_iff_of_strategySurjective
     [(state : H.base.State) →
       Decidable (H.base.isTerminal state)]
     (r : G.InformationRefinement H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (hsurjective : r.StrategySurjective)
     (sourceRoots : G.RootPresentation)
     (targetRoots : H.RootPresentation)
