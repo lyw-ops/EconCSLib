@@ -74,7 +74,7 @@ def PureTerminatesFrom
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     (profile : G.PureProfile)
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init) : Prop :=
   ∃ fuel : ℕ,
     G.base.isTerminal
@@ -84,7 +84,7 @@ def PureTerminatesFrom
 def PureTerminatingAt
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init) : Prop :=
   ∀ profile : G.PureProfile,
     G.PureTerminatesFrom profile hNoChance current
@@ -94,7 +94,7 @@ continuation root. -/
 def PureTerminatingOnRoots
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (roots : G.RootPresentation) : Prop :=
   ∀ current : G.base.toArena.HistoryFrom G.base.init,
     roots.IsRoot current →
@@ -105,7 +105,7 @@ subgame system. -/
 def PureTerminatingOn
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (system : G.SubgameSystem) : Prop :=
   ∀ current : G.base.toArena.HistoryFrom G.base.init,
     system.IsRoot current →
@@ -117,7 +117,7 @@ presentation-visible. -/
 theorem PureTerminatingOnRoots.onSubgameSystem
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (roots : G.RootPresentation)
     (hterminates : G.PureTerminatingOnRoots hNoChance roots)
     (system : G.SubgameSystem)
@@ -132,7 +132,7 @@ noncomputable def terminalFuel
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     (profile : G.PureProfile)
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init)
     (hterminates : G.PureTerminatesFrom profile hNoChance current) : ℕ :=
   hterminates.choose
@@ -142,7 +142,7 @@ theorem terminalFuel_spec
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     (profile : G.PureProfile)
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init)
     (hterminates : G.PureTerminatesFrom profile hNoChance current) :
     G.base.isTerminal
@@ -156,7 +156,7 @@ noncomputable def terminalHistoryFrom
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     (profile : G.PureProfile)
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init)
     (hterminates : G.PureTerminatesFrom profile hNoChance current) :
     G.base.toArena.HistoryFrom G.base.init :=
@@ -168,7 +168,7 @@ theorem terminalHistoryFrom_terminal
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     (profile : G.PureProfile)
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init)
     (hterminates : G.PureTerminatesFrom profile hNoChance current) :
     G.base.isTerminal
@@ -181,7 +181,7 @@ theorem terminalHistoryFrom_eq_of_terminal
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     (profile : G.PureProfile)
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init)
     (hterminates : G.PureTerminatesFrom profile hNoChance current)
     (fuel : ℕ)
@@ -204,7 +204,7 @@ noncomputable def terminalPayoffFrom
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     (profile : G.PureProfile)
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init)
     (hterminates : G.PureTerminatesFrom profile hNoChance current) :
     N → U :=
@@ -250,8 +250,8 @@ theorem pureTerminatesFrom_iff
     [(t : H.base.State) → Decidable (H.base.isTerminal t)]
     (e : G.Iso H)
     (profile : G.PureProfile)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init) :
     G.PureTerminatesFrom profile hNoChanceG current ↔
       H.PureTerminatesFrom (e.mapProfile profile) hNoChanceH
@@ -285,8 +285,8 @@ theorem map_pureTerminatingOnRoots
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     [(t : H.base.State) → Decidable (H.base.isTerminal t)]
     (e : G.Iso H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (sourceRoots : G.RootPresentation)
     (targetRoots : H.RootPresentation)
     (hroots :
@@ -316,8 +316,8 @@ theorem map_pureTerminatingOn
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     [(t : H.base.State) → Decidable (H.base.isTerminal t)]
     (e : G.Iso H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (system : G.SubgameSystem)
     (hterminates : G.PureTerminatingOn hNoChanceG system) :
     H.PureTerminatingOn hNoChanceH (e.mapSubgameSystem system) := by
@@ -340,8 +340,8 @@ theorem pureTerminatingOnRoots_iff
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     [(t : H.base.State) → Decidable (H.base.isTerminal t)]
     (e : G.Iso H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (sourceRoots : G.RootPresentation)
     (targetRoots : H.RootPresentation)
     (hroots :
@@ -372,8 +372,8 @@ theorem map_terminalHistoryFrom
     [(t : H.base.State) → Decidable (H.base.isTerminal t)]
     (e : G.Iso H)
     (profile : G.PureProfile)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init)
     (hterminatesG :
       G.PureTerminatesFrom profile hNoChanceG current)
@@ -421,8 +421,8 @@ theorem map_terminalPayoffFrom
     [(t : H.base.State) → Decidable (H.base.isTerminal t)]
     (e : G.Iso H)
     (profile : G.PureProfile)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init)
     (hterminatesG :
       G.PureTerminatesFrom profile hNoChanceG current)
@@ -450,7 +450,7 @@ given termination of every pure profile from that history. -/
 noncomputable def terminalContinuationGameForm
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init)
     (hterminates : G.PureTerminatingAt hNoChance current) :
     GameForm N where
@@ -470,7 +470,7 @@ noncomputable def IsPureNashOnRoots
     {V : Type uV} [DecidableEq N] [Preorder V]
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (roots : G.RootPresentation)
     (hterminates : G.PureTerminatingOnRoots hNoChance roots)
     (utility : (N → U) → N → V)
@@ -491,7 +491,7 @@ noncomputable def IsPureSubgamePerfectOn
     {V : Type uV} [DecidableEq N] [Preorder V]
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (system : G.SubgameSystem)
     (hterminates : G.PureTerminatingOn hNoChance system)
     (utility : (N → U) → N → V)
@@ -510,7 +510,7 @@ noncomputable def IsPureStandardSubgamePerfect
     {V : Type uV} [DecidableEq N] [Preorder V]
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (system : G.CompleteSubgameSystem)
     (hterminates :
       G.PureTerminatingOn hNoChance system.toSubgameSystem)
@@ -525,7 +525,7 @@ theorem IsPureSubgamePerfectOn.isNashAtInit
     {V : Type uV} [DecidableEq N] [Preorder V]
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (system : G.SubgameSystem)
     (hterminates : G.PureTerminatingOn hNoChance system)
     (utility : (N → U) → N → V)
@@ -548,7 +548,7 @@ theorem IsPureSubgamePerfectOn.toNashOnSystemRoots
     {V : Type uV} [DecidableEq N] [Preorder V]
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (system : G.SubgameSystem)
     (hterminates : G.PureTerminatingOn hNoChance system)
     (utility : (N → U) → N → V)
@@ -569,7 +569,7 @@ theorem IsPureStandardSubgamePerfect.isNashAtInit
     {V : Type uV} [DecidableEq N] [Preorder V]
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (system : G.CompleteSubgameSystem)
     (hterminates :
       G.PureTerminatingOn hNoChance system.toSubgameSystem)
@@ -592,7 +592,7 @@ theorem IsPureStandardSubgamePerfect.toNashOnLawfulRoots
     {V : Type uV} [DecidableEq N] [Preorder V]
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (system : G.CompleteSubgameSystem)
     (hterminates :
       G.PureTerminatingOn hNoChance system.toSubgameSystem)
@@ -615,7 +615,7 @@ theorem IsPureStandardSubgamePerfect.toSubgamePerfectOn
     {V : Type uV} [DecidableEq N] [Preorder V]
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (system : G.CompleteSubgameSystem)
     (hterminates :
       G.PureTerminatingOn hNoChance system.toSubgameSystem)
@@ -638,8 +638,8 @@ noncomputable def terminalContinuationGameFormIso
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     [(t : H.base.State) → Decidable (H.base.isTerminal t)]
     (e : G.Iso H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init)
     (hterminatesG : G.PureTerminatingAt hNoChanceG current)
     (hterminatesH :
@@ -665,8 +665,8 @@ theorem terminalContinuationGameFormIso_utilityCompatible
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     [(t : H.base.State) → Decidable (H.base.isTerminal t)]
     (e : G.Iso H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (utility : (N → U) → N → V)
     (current : G.base.toArena.HistoryFrom G.base.init)
     (hterminatesG : G.PureTerminatingAt hNoChanceG current)
@@ -688,8 +688,8 @@ theorem isPureNashOnRoots_iff
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     [(t : H.base.State) → Decidable (H.base.isTerminal t)]
     (e : G.Iso H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (sourceRoots : G.RootPresentation)
     (targetRoots : H.RootPresentation)
     (hroots :
@@ -765,8 +765,8 @@ theorem isPureSubgamePerfectOn_iff
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     [(t : H.base.State) → Decidable (H.base.isTerminal t)]
     (e : G.Iso H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (system : G.SubgameSystem)
     (hterminatesG : G.PureTerminatingOn hNoChanceG system)
     (utility : (N → U) → N → V)
@@ -848,8 +848,8 @@ theorem isPureStandardSubgamePerfect_iff
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     [(t : H.base.State) → Decidable (H.base.isTerminal t)]
     (e : G.Iso H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (system : G.CompleteSubgameSystem)
     (hterminatesG :
       G.PureTerminatingOn hNoChanceG system.toSubgameSystem)
