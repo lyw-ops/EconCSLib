@@ -6,7 +6,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -- EconCSLib: stable aggregate import
 
 -- Foundation: abstract vocabulary
-import EconCSLib.Foundation.Player
 import EconCSLib.Foundation.Preference
 import EconCSLib.Foundation.Profile
 import EconCSLib.Foundation.Argmax
