@@ -15,7 +15,10 @@ It stores no payoff, root selection, finiteness, recall, or objective.
 
 `BoundedHistoryLawFamily` is the raw data layer. The dependent history carrier
 already witnesses root reachability, but arbitrary values are not called
-execution semantics.
+execution semantics. `CertifiedBehavioralExecutionLaw` additionally exposes
+normalization, legal reachable support, terminal absorption, and equality with
+the specified chance-kernel/behavioral-profile executor; the concrete
+behavioral executor constructs this certificate.
 
 Full measure-valued path laws and their downstream interpretation hierarchy
 live in `Controlled.Law`, so finite clients do not acquire the infinite
@@ -267,6 +270,71 @@ structure CompleteHistoryLawStrategyIso
 
 end BoundedHistoryLawFamily
 
+/-! ## Certified discrete behavioral execution laws -/
+
+/-- Certified bounded execution law for the declared chance kernel and
+behavioral profiles.
+
+PMF values already carry normalization intrinsically; `normalized` exposes
+that fact as a named certificate. The dependent `History` codomain makes every
+support point a legal root-reachable history. `terminal_absorbing` records
+stopping, while `execution_eq` ties the family to the concrete behavioral
+history-policy executor, including its player and chance branches. -/
+structure CertifiedBehavioralExecutionLaw
+    (G : DiscreteControlledObservedChanceGame N)
+    [(state : G.observed.base.State) →
+      Decidable (G.observed.base.isTerminal state)] where
+  /-- Certified bounded history PMF. -/
+  historyLaw :
+    G.BehavioralProfile →
+      G.observed.base.History → ℕ →
+        PMF G.observed.base.History
+  /-- Each bounded law has total mass one. -/
+  normalized :
+    ∀ (profile : G.BehavioralProfile)
+      (current : G.observed.base.History)
+      (fuel : ℕ),
+      ∑' history, historyLaw profile current fuel history = 1
+  /-- Every support point carries a legal history from the game root. -/
+  support_is_legal_reachable :
+    ∀ (profile : G.BehavioralProfile)
+      (current history : G.observed.base.History)
+      (fuel : ℕ),
+      history ∈ (historyLaw profile current fuel).support →
+        Nonempty
+          (G.observed.base.toArena.History
+            G.observed.base.init history.1)
+  /-- A terminal current history is absorbing at every fuel. -/
+  terminal_absorbing :
+    ∀ (profile : G.BehavioralProfile)
+      (current : G.observed.base.History)
+      (fuel : ℕ),
+      G.observed.base.isTerminal current.1 →
+        historyLaw profile current fuel = PMF.pure current
+  /-- The certified law is exactly the specified behavioral/chance executor. -/
+  execution_eq :
+    ∀ (profile : G.BehavioralProfile)
+      (current : G.observed.base.History)
+      (fuel : ℕ),
+      historyLaw profile current fuel =
+        G.behavioralHistoryLaw profile current fuel
+
+namespace CertifiedBehavioralExecutionLaw
+
+/-- Forget execution certificates and retain the raw history-law family. -/
+def toBoundedHistoryLawFamily
+    {G : DiscreteControlledObservedChanceGame N}
+    {terminalDecidable :
+      (state : G.observed.base.State) →
+        Decidable (G.observed.base.isTerminal state)}
+    (S :
+      @CertifiedBehavioralExecutionLaw N G terminalDecidable) :
+    G.BoundedHistoryLawFamily where
+  Strategy := G.BehavioralStrategy
+  historyLaw := S.historyLaw
+
+end CertifiedBehavioralExecutionLaw
+
 /-- Functional bounded complete-history-law realization across two different
 payoff-free discrete EFG representations. -/
 structure CrossGameBoundedCompleteHistoryLawRealization
@@ -319,16 +387,29 @@ theorem mapProfile_update
 
 end CrossGameBoundedCompleteHistoryLawRealization
 
-/-- Concrete raw bounded history-law family for behavioral strategies and the
+/-- Concrete certified bounded execution law for behavioral strategies and the
 stored discrete chance kernel. -/
-noncomputable def behavioralBoundedHistoryLawFamily
+noncomputable def behavioralCertifiedExecutionLaw
     (G : DiscreteControlledObservedChanceGame N)
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)] :
-    G.BoundedHistoryLawFamily where
-  Strategy := G.BehavioralStrategy
+    G.CertifiedBehavioralExecutionLaw where
   historyLaw := fun profile current fuel =>
     G.behavioralHistoryLaw profile current fuel
+  normalized := by
+    intro profile current fuel
+    exact PMF.tsum_coe _
+  support_is_legal_reachable := by
+    intro profile current history fuel hsupport
+    exact ⟨history.2⟩
+  terminal_absorbing := by
+    intro profile current fuel hterminal
+    exact
+      G.observed.base.toArena.stochasticHistoryPMFFrom_of_terminal
+        (profile.toHistoryPolicy G) current hterminal fuel
+  execution_eq := by
+    intro profile current fuel
+    rfl
 
 end DiscreteControlledObservedChanceGame
 
