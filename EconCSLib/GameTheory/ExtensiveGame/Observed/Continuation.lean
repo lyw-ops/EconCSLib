@@ -84,7 +84,7 @@ def pureContinuationFamilyOnRoots
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
     (roots : G.RootPresentation)
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (fuel : ℕ) :
     ContinuationGameForm N where
   Strategy := G.PureStrategy
@@ -101,7 +101,7 @@ theorem pureContinuationFamilyOnRoots_toGameForm
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
     (roots : G.RootPresentation)
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (fuel : ℕ)
     (current :
       G.base.toArena.HistoryFrom G.base.init) :
@@ -119,7 +119,7 @@ theorem isPureNashOnRootsAtFuel_iff_continuationFamily
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
     (roots : G.RootPresentation)
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (utility : Option (N → U) → N → V)
     (profile : G.PureProfile)
     (fuel : ℕ) :
@@ -147,8 +147,8 @@ def pureContinuationFamilyIso
     (targetRoots : H.RootPresentation)
     (hroots :
       e.PreservesRootPresentations sourceRoots targetRoots)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (fuel : ℕ) :
     (G.pureContinuationFamilyOnRoots
       sourceRoots hNoChanceG fuel).Iso
@@ -181,8 +181,8 @@ theorem pureContinuationFamilyIso_utilityCompatible
     (targetRoots : H.RootPresentation)
     (hroots :
       e.PreservesRootPresentations sourceRoots targetRoots)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (utility : Option (N → U) → N → V)
     (fuel : ℕ) :
     (e.pureContinuationFamilyIso
@@ -211,8 +211,8 @@ private theorem isPureNashOnRootsAtFuel_iff_viaContinuationFamily
     (targetRoots : H.RootPresentation)
     (hroots :
       e.PreservesRootPresentations sourceRoots targetRoots)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (utility : Option (N → U) → N → V)
     (profile : G.PureProfile)
     (fuel : ℕ) :
@@ -260,8 +260,8 @@ def pureContinuationFamilyHom
     (targetRoots : H.RootPresentation)
     (hroots :
       r.PreservesRootPresentations sourceRoots targetRoots)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (fuel : ℕ) :
     (G.pureContinuationFamilyOnRoots
       sourceRoots hNoChanceG fuel).Hom
@@ -293,8 +293,8 @@ theorem pureContinuationFamilyHom_utilityCompatible
     (targetRoots : H.RootPresentation)
     (hroots :
       r.PreservesRootPresentations sourceRoots targetRoots)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (utility : Option (N → U) → N → V)
     (fuel : ℕ) :
     (r.pureContinuationFamilyHom
@@ -318,8 +318,8 @@ theorem pureContinuationFamilyHom_declaredRootSurjective
     (targetRoots : H.RootPresentation)
     (hroots :
       r.PreservesRootPresentations sourceRoots targetRoots)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (fuel : ℕ) :
     (r.pureContinuationFamilyHom
       sourceRoots targetRoots hroots
@@ -352,8 +352,8 @@ theorem pureContinuationFamilyHom_declaredRootReflecting
     (targetRoots : H.RootPresentation)
     (hroots :
       r.PreservesRootPresentations sourceRoots targetRoots)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (fuel : ℕ) :
     (r.pureContinuationFamilyHom
       sourceRoots targetRoots hroots
@@ -378,8 +378,8 @@ def pureContinuationFamilySimulation
     (targetRoots : H.RootPresentation)
     (hroots :
       r.PreservesRootPresentations sourceRoots targetRoots)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (fuel : ℕ) :
     (G.pureContinuationFamilyOnRoots
       sourceRoots hNoChanceG fuel).Simulation
@@ -404,8 +404,8 @@ theorem pureContinuationFamilySimulation_sourceRootTotal
     (targetRoots : H.RootPresentation)
     (hroots :
       r.PreservesRootPresentations sourceRoots targetRoots)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (fuel : ℕ) :
     (r.pureContinuationFamilySimulation
       sourceRoots targetRoots hroots
@@ -427,8 +427,8 @@ theorem pureContinuationFamilySimulation_targetRootTotal
     (targetRoots : H.RootPresentation)
     (hroots :
       r.PreservesRootPresentations sourceRoots targetRoots)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (fuel : ℕ) :
     (r.pureContinuationFamilySimulation
       sourceRoots targetRoots hroots
@@ -454,8 +454,8 @@ theorem pureContinuationFamilyHom_strategySurjective
     (targetRoots : H.RootPresentation)
     (hroots :
       r.PreservesRootPresentations sourceRoots targetRoots)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (fuel : ℕ)
     (hsurjective : r.StrategySurjective) :
     (r.pureContinuationFamilyHom
