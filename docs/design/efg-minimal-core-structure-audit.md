@@ -1,6 +1,6 @@
 # EFG Minimal-Core Structure Audit
 
-**Snapshot:** 2026-08-02 · **Scope:** payoff-free foundations and their
+**Snapshot:** 2026-08-03 · **Scope:** payoff-free foundations and their
 immediate public boundary · **Authority:** current Lean source and source
 import graph
 
@@ -21,7 +21,9 @@ Arena { State, Action, next }
 No payoff, probability, objective, recall, finiteness, root selection, or
 solution concept was added to these records. The architecture work in this
 snapshot changes declaration ownership, orthogonal adapters, and facade
-accuracy, not the mathematical carrier.
+accuracy, not the mathematical carrier. This three-record line is now frozen:
+new semantic fields require a demonstrated representation failure that cannot
+be handled by an external certificate, adapter, relation, or compiler.
 
 | Property | Verdict | Source-based reason |
 |---|---|---|
@@ -30,9 +32,9 @@ accuracy, not the mathematical carrier.
 | Infrastructure cohesion | Pass, F2 resolved | Six responsibility leaves separate execution, general well-formedness, subgames, finite certificates, quasistrategies, and recall; their aggregate is a declaration-free canonical facade. |
 | Morphism layering | Pass, F7 resolved | Structural, lawful-subgame, and recall transport have separate exact closures; their aggregate is a declaration-free canonical facade. |
 | Foundation-facade accuracy | Pass | `Interface.Core` is documented and governed as a Foundation Facade, not as the literal core. |
-| Objective/payoff neutrality | Pass through generic continuation/SPE semantics | Core reaches neither `Execution.Objective` nor `Winning.*` nor payoff-aware `Observed.Game`; `ContinuationSemantics` and its generic standard-SPE theorem are owned by `ControlledObservedGame`. |
+| Objective/payoff neutrality | Pass through evaluator-relative semantics | Core reaches neither `Execution.Objective` nor `Winning.*` nor payoff-aware `Observed.Game`; `ControlledObservedGame` owns only evaluator-relative continuation equilibrium, while operational standard-SPE definitions remain in concrete execution layers. |
 | Probability neutrality | Pass at StructuralCore; bounded PMF is intentional in Core | StructuralCore has no PMF module; Core intentionally imports `StochasticExecution`. |
-| Assumption generality | Pass | Finiteness, decidability, recall, termination, and measurability remain external. |
+| Assumption generality | Pass | Finiteness, decidability, recall, termination, measurability, and ambient-state no-chance remain external. Canonical pure execution needs only reachable no-chance. |
 | Player-label compatibility | Pass for bijections | `relabelPlayers` reindexes mover, observation, information, actions, presentations, profiles, and lawful/complete subgame systems without changing Arena histories. |
 | Representation compatibility | Pass with explicit preservation claims | Compilers and relations retain their existing preservation packages; absence from a package is not inferred. |
 | Controlled module-family clarity | Pass, F12 resolved | The complete `Observed.Controlled` hierarchy has one carrier, five semantic owners, nine responsibility owners, two declaration-free facades, and three payoff-aware adapters; flat siblings are forbidden. |
@@ -269,7 +271,7 @@ No internal Lean source imports either controlled aggregate facade.
 Governance checks the exact leaf closures, exact facade imports,
 declaration-free status, and the absence of an in-scope import cycle.
 
-## 6. Dependency direction and compatibility
+## 6. Dependency direction and payoff-aware adapters
 
 The governed direction remains:
 
@@ -287,9 +289,11 @@ This snapshot does not claim that every legacy payoff-aware API has migrated.
 Payoff-aware `ObservedGame` carriers and adapters remain supported.
 `Observed.WellFormed` still owns legacy payoff-aware finite-certificate
 spellings alongside the payoff-free owners, while `Observed.Quasi`,
-`SignalRecall`, `PerfectRecall`, and the controlled compatibility modules
-provide downstream compatibility. The completed work removes reverse imports
-and mixed physical ownership; it does not delete those supported surfaces.
+`SignalRecall`, `PerfectRecall`, and the controlled `.Compat` adapter modules
+provide downstream payoff-aware projections. These files contain declarations
+and are not import-only lifecycle compatibility wrappers. The completed work
+removes reverse imports and mixed physical ownership; it does not delete those
+payoff-aware surfaces.
 
 Lawful-subgame semantics no longer have two mathematical owners.
 `ObservedGame.IsContinuationOf`, `IsLawfulSubgameRoot`, `SubgameSystem`, and
@@ -366,26 +370,28 @@ Preservation strength remains axis-specific. A theorem about histories does
 not silently prove information, chance, law, objective, deviation, recall,
 root, termination, or equilibrium preservation.
 
-The generic preservation boundary is payoff-free and explicit. The theorem
-`ControlledObservedGame.ContinuationSemantics.isStandardSubgamePerfectAt_iff_of_surjective`
-gives standard-SPE equivalence between two controlled observed continuation
-semantics under:
+The generic preservation boundary is payoff-free and explicit.
+`isEvaluatorContinuationEquilibriumAt_iff_of_surjective` gives abstract
+evaluator-relative equilibrium equivalence. It deliberately makes no claim
+that its evaluator is generated by legal execution from a root-local strategy.
+A short-lived generic execution certificate was removed after audit showed
+that every evaluator semantics could satisfy it by taking continuation
+strategies to be whole strategies, restriction to be the identity, execution
+to be the evaluator, and legality to be `True`. Such a certificate did not
+separate operational EFG semantics from an arbitrary normal-form evaluator.
 
-- complete lawful source and target subgame systems;
-- a continuation-game-form homomorphism;
-- utility compatibility;
-- target strategy/deviation surjectivity; and
-- target declared-root surjectivity.
-
-This is a conditional framework theorem, not a claim that an existing
-compiler supplies those premises. The explicit FOSG limitations therefore
-remain:
+Operational standard SPE therefore remains owned by concrete execution modes,
+including pure standard SPE in `Observed.SPE`. A future generic standard-SPE
+interface must first supply canonical root-local strategies, a compatible
+lift/update operation for local deviations, canonical legal complete
+plays or path laws, and locality strong enough to recover the concrete
+definitions. The explicit FOSG limitations therefore remain:
 
 1. declared continuation roots are not automatically standard EFG subgames;
 2. the principal transfer result is finite-horizon behavioral Nash transfer;
 3. the serializer does not yet provide complete lawful-root coverage,
    termination-certified whole-continuation outcome compatibility, and the
-   target-deviation coverage needed to instantiate the generic theorem.
+   target-deviation coverage needed by a future operational theorem.
 
 In particular, the serializer relation connects augmented source macro
 histories to target macro boundaries. A target
@@ -395,7 +401,7 @@ additional theorem premise, not a consequence of the current relation.
 No serializer-specific placeholder or falsely unconditional flagship theorem
 was added for these compiler obligations.
 
-`ObservedGame.ContinuationSemantics` is now only a compatibility abbreviation
+`ObservedGame.ContinuationSemantics` is a payoff-aware abbreviation
 to the controlled carrier. Its compatibility theorem permits source and target
 `ObservedGame`s with different state-payoff types, because neither state
 payoff participates in the evaluator, external utility square, strategy
@@ -412,28 +418,68 @@ definitionally equal compatibility wrapper, with
 checking the old and new surfaces. This removes the former phantom argument
 without changing the serialized game, root semantics, or downstream types.
 
-## 10. Module census
+## 10. Semantic contract and lifecycle closeout
 
-The governed in-scope register now contains **183 modules**:
+The hard migration preserved the carrier line while tightening external
+contracts:
+
+- `ControlledGame.NoChanceOnHistories` quantifies only over legal histories
+  from `init`; global `NoChance` implies it. Pure execution, total pure
+  continuation/SPE, winning, and determinacy use the reachable certificate.
+  `Examples.ExtensiveGame.ReachableNoChance` proves an ambient unreachable
+  nonterminal nature state can violate global no-chance while canonical pure
+  execution and the total continuation game form still elaborate.
+- `PureStrategyAvailabilityCertificate` packages represented decision
+  information plus mover coherence, while
+  `ReachablePureStrategyModelCertificate` adds reachable no-chance. No
+  finiteness, probability, payoff, recall, or termination field was added.
+- `BoundedHistoryLawFamily` is raw PMF data.
+  `CertifiedBehavioralExecutionLaw` adds normalization, legal reachable
+  support, terminal absorption, and equality with the concrete behavioral
+  executor. Execution-facing finite unfolding uses the certified projection.
+- `HistoryTransformLawEquivalentAt` is the generic transform relation.
+  `TerminalHistoryLawEquivalentAt` has a terminal-history-subtype codomain.
+  `CompletePathLawSemantics` remains a family of lawful per-root marginals and
+  does not by itself supply a common causal process; operational,
+  restart/conditioning, and coherence claims require separate certificates.
+- signal/public recall is explicitly event-clock recall.
+  `SignalTraceBuilder` permits `Option Signal`, including silent events; the
+  always-emitting builder recovers the event-clock trace, with no claimed
+  equivalence for arbitrary silent traces.
+
+All 19 registered compatibility wrappers were deleted after the four
+historical broad-import boundary consumers and the wrapper chain were removed.
+The declaration-free `Observed.Morphism.Fiber` forwarding path and the
+comment-only `Foundation.Player` shell were also removed. The canonical
+`Controlled.Infrastructure` and `Controlled.Morphism` aggregate facades remain
+because they have explicit navigation responsibilities, exact import sets,
+module documentation, and no declarations.
+
+Governance now scans the full Lean source tree for zero-byte,
+comment/namespace-only, and import-only files. Import-only modules must appear
+in the explicit canonical or temporary-compatibility registry; the current
+inventory is 20 canonical façades/aggregates and zero temporary compatibility
+paths. Removed paths may not be recreated or imported.
+
+## 11. Module census
+
+The governed in-scope register now contains **163 modules**:
 
 | Status | Modules |
 |---|---:|
 | Canonical | 86 |
 | Frontend | 13 |
 | Historical | 7 |
-| Compatibility | 19 |
+| Compatibility | 0 |
 | Experimental | 0 |
-| Internal | 58 |
-| **Total** | **183** |
+| Internal | 57 |
+| **Total** | **163** |
 
-Relative to the pre-refactor 178-module snapshot, this orthogonalization adds
-five defining modules: `Controlled.Infrastructure.WellFormed`, the three
-`Controlled.Morphism.*` leaves, and the payoff-free
-`Controlled.Semantics` owner. The later pre-stability hierarchy migration
-placed every controlled responsibility below `Observed.Controlled` and
-classified both declaration-free aggregates as canonical facades.
+The controlled orthogonalization added defining responsibility owners, then
+the pre-stability lifecycle closeout removed redirect-only paths without
+moving implementation back into aggregates.
 
-## 11. Findings
+## 12. Findings
 
 ### F1 — Literal structural import boundary
 
@@ -490,11 +536,12 @@ the reachable certificate rather than strengthening `ControlledGame`.
 resolved; serializer theorem track separate
 
 Only source-relative fidelity statements are meaningful. The generic
-surjective standard-SPE equivalence theorem now states every required axis,
-but FOSG declared roots and finite-horizon Nash transfer do not establish its
-lawful-root, total-outcome, and deviation-coverage premises. Those premises
-cannot be inferred from macro-boundary simulation alone and are not part of
-minimal-core completion.
+evaluator-relative equivalence theorem states its game-form assumptions
+explicitly, but it is not a standard-SPE theorem. FOSG declared roots and
+finite-horizon Nash transfer do not establish lawful-root, canonical
+total-execution, and deviation-coverage premises for a future operational
+standard-SPE interface. Those premises cannot be inferred from macro-boundary
+simulation alone and are not part of minimal-core completion.
 
 ### F7 — Split Controlled.Morphism by semantic layer
 
@@ -504,13 +551,14 @@ Acceptance evidence:
 
 - structural, lawful-subgame, and recall declarations have separate owners;
 - their exact closures are 8 / 8, 10 / 10, and 11 / 11;
-- the old path is import-only and preserves its declarations;
+- the old broad path is deleted after consumers migrated;
+- the canonical aggregate remains import-only with exact leaf imports;
 - internal consumers import only the leaves they use; and
 - governance rejects cross-leaf leaks and import cycles.
 
 ### F8 — Separate FOSG game construction from root selection
 
-**Priority:** medium · **Status:** resolved compatibly
+**Priority:** medium · **Status:** resolved
 
 Acceptance evidence:
 
@@ -522,7 +570,7 @@ Acceptance evidence:
 - the discrete compilation boundary checks both entry points and the equality
   theorem.
 
-### F9 — Move generic continuation/SPE semantics below state payoffs
+### F9 — Move generic evaluator-relative continuation semantics below state payoffs
 
 **Priority:** high · **Status:** resolved
 
@@ -530,23 +578,32 @@ Acceptance evidence:
 
 - `ControlledObservedGame.ContinuationSemantics` owns the strategy, horizon,
   outcome, and complete-history evaluator data;
-- its Nash-on-presentation, subgame-perfection-on, complete standard-SPE, and
-  surjective transfer theorem use only payoff-free lawful-subgame systems;
-- source and target games in the generic theorem carry no payoff parameter;
+- its Nash-on-presentation and evaluator-relative continuation equilibrium use
+  only payoff-free lawful-subgame systems;
+- no generic operational standard-SPE name is exported: the attempted
+  certificate was constructible for every arbitrary evaluator and was removed
+  before API stability;
+- source and target games in the evaluator-relative theorem carry no payoff
+  parameter;
 - `check_efg_governance.py` treats `Controlled.Semantics` as a payoff-free
   boundary and rejects any future closure edge to `ObservedGame`,
   payoff-aware adapters, equilibrium implementations, or simulations;
-- `ObservedGame.ContinuationSemantics` is a compatibility abbreviation, and
+- `ObservedGame.ContinuationSemantics` is a payoff-aware abbreviation, and
   its transfer wrapper allows different source and target payoff types;
 - `ObservedGame.ofControlledObservedGame` and its two round-trip theorems make
   payoff attachment and erasure a checked two-way adapter rather than a
   one-way projection;
 - `Interface.Equilibrium.Discrete` exports both the controlled owner and the
-  state-payoff compatibility spelling, with an import-boundary regression
-  checking name visibility;
+  state-payoff compatibility spelling of evaluator-relative semantics, with an
+  import-boundary regression checking name visibility;
 - `Examples.ExtensiveGame.ReusableSemantics` constructs the measure-valued
   semantics first on `ControlledObservedGame` and derives the payoff-aware
   spelling only through projection.
+
+Generic operational standard SPE is intentionally deferred until a
+non-vacuous common execution interface exists. Concrete pure, behavioral, and
+analytic equilibrium layers remain responsible for their own execution
+semantics meanwhile.
 
 ### F10 — Do not call classical backward selection executable
 
@@ -602,55 +659,54 @@ The complete map and import selection guide live in
 modules, rejects a new flat sibling such as `Observed.ControlledFoo`, and
 rejects role/lifecycle mismatches, adapter import changes, adapters reopening a
 payoff-free namespace, or canonical modules reaching an adapter.
-`ControlledCompatibilityImportBoundary` jointly imports all public roles and
+`ControlledApiImportBoundary` jointly imports all public roles and
 checks that canonical and payoff-aware declarations coexist under their
 intended mathematical namespaces. Former flat paths are absent; no forwarding
 stubs remain.
 
-## 12. Validation and environment health
+## 13. Validation and environment health
 
-The final source snapshot was checked from the repository root. The build
-cache was first discarded and regenerated, so the main elaboration evidence
-does not depend on the formerly duplicated numbered artifacts.
+The final source snapshot was checked from the repository root. The commands
+and counts below are the results of this worktree, not inherited CI claims.
 
 | Check | Result | Evidence |
 |---|---|---|
-| Stable library | Pass | Clean `lake build`: 8,641 jobs; repeated after the facade fix with the same successful aggregate. |
-| Opt-in examples and regressions | Pass | Clean `lake build EconCSLib.Examples`: 8,820 jobs; repeated after the facade fix. |
-| Discrete equilibrium facade | Pass | The controlled and compatibility continuation-semantics names elaborate through `Interface.Equilibrium.Discrete`. |
-| EFG governance | Pass | 183 registered modules, 19 import-only compatibility paths, root closure 37 / 165, Simulation 30, and Controlled hierarchy 20 = 1 carrier / 5 semantic owners / 9 responsibility owners / 2 facades / 3 adapters. |
+| Stable library | Pass | `lake build`: 8,639 jobs. |
+| Opt-in examples and regressions | Pass | `lake build EconCSLib.Examples`: 8,809 jobs, including the reachable-no-chance and import-boundary regressions. |
+| Discrete equilibrium facade | Pass | Evaluator-relative transfer elaborates through `Interface.Equilibrium.Discrete`; concrete pure standard SPE remains available from its operational owner. |
+| EFG governance | Pass | 163 registered modules, 0 temporary compatibility paths, root closure 36 / 163, Simulation 29, and Controlled hierarchy 20 = 1 carrier / 5 semantic owners / 9 responsibility owners / 2 facades / 3 adapters. The source scan reports 0 zero-byte modules, 0 comment/namespace-only modules, and exactly 20 registered canonical import-only aggregates. |
 | Lean placeholders | Pass | `check_lean_placeholders.py EconCSLib` reports no forbidden placeholder. |
 | Knowledge checks | Pass | Reference unit tests, reference scan, and `mdblueprint-check` all pass with 0 errors and 0 warnings. |
-| Declaration lifecycle report | Pass, triage remains | 1,682 theorems/lemmas across 183 modules; 478 conservative zero-source-indegree candidates, not an automatic deletion list. |
-| Axiom spot audit | Pass | Generic controlled/compatibility SPE transfer and lawful-root player relabeling have only `propext` and `Quot.sound`; payoff attach/erase round trips and the root coercion are axiom-free; classical choice occurs where documented in Iso transport and finite determinacy; no `sorryAx`. |
-| Git/source integrity | Pass | `git diff --check` and `git fsck --full --no-dangling` pass. |
-| Generated cache hygiene | Pass | Numbered duplicate artifacts are 0; `.lake/build` was regenerated and is about 512 MiB after the library and example builds. |
-| `leanchecker` over the complete dependency cache | Inconclusive, not counted as a pass | The tool produced no output for several minutes while scanning the approximately 7.5 GiB package cache and was terminated; clean elaboration, the placeholder gate, and targeted axiom printing are the reproducible proof checks used here. |
-| Commit-scope CI | Pass | The authorized history was rebuilt from baseline `49f671ad7cfb`; every current commit changes exactly one file and every Lean commit adds at most one `structure` or `class`. The preserved pre-rebuild worktree remains available from backup snapshot tree `666598cfb500`. |
+| Declaration lifecycle report | Pass, triage remains | 1,690 theorems/lemmas across 163 modules; 481 conservative zero-source-indegree candidates split into 68 evidenced endpoints, 263 unexplained Canonical/Frontend endpoints under a no-growth ceiling, 136 Internal/private review items, and 14 Historical/lifecycle review items. None is an automatic deletion candidate. |
+| Axiom spot audit | Pass | The event-clock recall bridge is axiom-free. The concrete reachable-no-chance regression uses `propext`; evaluator-relative transfer uses `propext` and `Quot.sound`; terminal-history selection and finite `GameTree` standard-SPE existence additionally use `Classical.choice`. No audited result depends on `sorryAx`. |
+| EFG warning scan | Pass | Filtered replay of both successful builds reports no warning originating under `GameTheory/ExtensiveGame` or `Examples/ExtensiveGame`. |
+| Git/source integrity | Pass | `git diff --check` passes; final status is reported separately at handoff. |
 
-The full build replays **150 warnings in 40 non-EFG source files**. No warning
-originates under `GameTheory/ExtensiveGame` in this run. Those warnings are
+The builds replay warnings from non-EFG source files. Those warnings are
 repository-wide maintenance debt rather than evidence against the EFG
 semantic changes, but the repository as a whole is not warning-clean.
 
-Consequently, this audit certifies the current EFG source semantics,
-dependency architecture, and local commit-scope history against the checks
-above. Remote-host CI remains a separate external check after publication.
+These checks provide machine-checked evidence for source elaboration, the
+axiom surface, placeholder policy, module boundaries, and the listed formal
+semantic properties. They are not a metamathematically complete certification
+of every intended model meaning. Remote-host CI remains a separate external
+check after publication.
 
-## 13. Audit conclusion
+## 14. Audit conclusion
 
 The data records were already minimal. The source architecture now exposes
 that fact through a genuinely narrow stable facade and a physical
 responsibility split for both infrastructure and morphism transport.
-`Interface.Core` remains compatible and useful under the accurate Foundation
+`Interface.Core` remains useful under the accurate Foundation
 Facade name, while governance prevents the former Objective/Winning and
-Recall-to-finiteness leaks from returning. The generic conditional
-standard-SPE equivalence now lives on the payoff-free controlled carrier, and
+Recall-to-finiteness leaks from returning. Evaluator-relative equilibrium
+transfer now lives on the payoff-free controlled carrier, while operational
+standard-SPE semantics remain in concrete execution layers; and
 the payoff-aware lawful-subgame and Iso surfaces delegate to that single
 owner. State-payoff attachment/erasure is two-way, and bijective player
 renaming transports dependent profiles and complete lawful systems without
-changing Arena histories. The audit still records legacy compatibility
-surfaces and compiler-specific observation-fidelity/FOSG theorem tracks,
+changing Arena histories. The audit still records payoff-aware adapters and
+compiler-specific observation-fidelity/FOSG theorem tracks,
 without treating ambient terminal normalization as a core requirement or
 claiming that an existing serializer discharges compiler-specific premises.
-The source, mathematical, and local commit-history validation gates pass.
+The validation table records only commands actually run for this worktree.
