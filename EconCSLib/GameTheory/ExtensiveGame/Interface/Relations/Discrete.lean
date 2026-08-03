@@ -30,6 +30,6 @@ extension certificate.
 It extends `Interface.Execution.Finite` and deliberately excludes
 measure-valued infinite paths and the `MeasurableKernelArena` implementation
 stack. Continuation/Nash transfer belongs to `Interface.Equilibrium.Discrete`;
-analytic execution remains available through the compatibility aggregate
-`Interface.Relations` or directly through `Interface.Execution.Analytic`.
+analytic execution remains available directly through
+`Interface.Execution.Analytic`.
 -/
