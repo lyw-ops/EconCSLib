@@ -166,8 +166,9 @@ The two foundation entries are now measured separately:
 | pure, behavioral, mixed, finite Kuhn, or termination-certified equilibrium | `EconCSLib.GameTheory.ExtensiveGame.Interface.Equilibrium.Discrete` |
 | measurable-kernel path utility, continuation, and conditioning | `EconCSLib.GameTheory.ExtensiveGame.Interface.Equilibrium.Analytic` |
 | finite compilers and PMF FOSG serialization | `EconCSLib.GameTheory.ExtensiveGame.Interface.Compilation.Discrete` |
-| old complete relation/equilibrium/compiler closure | unchanged `Interface.Relations`, `Interface.Equilibrium`, or `Interface.Compilation` |
+| multiple relation/equilibrium/compiler tiers | import the required granular facades explicitly |
 
-The granular paths remain the supported migration boundary. The 2026-08-01
+The granular paths are the supported migration boundary; former broad paths
+were deleted before API stability. The 2026-08-01
 refactor also moved payoff-aware projections into explicit adapter modules;
 the canonical payoff-free owners are listed in the module register.
