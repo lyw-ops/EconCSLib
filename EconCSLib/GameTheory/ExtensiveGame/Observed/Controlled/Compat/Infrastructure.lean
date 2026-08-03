@@ -68,17 +68,19 @@ theorem hasPerfectRecall_iff_toControlled
       G.toControlledObservedGame.HasPerfectRecall i :=
   Iff.rfl
 
-/-- Private-signal recall is exactly the payoff-free projection predicate. -/
-theorem hasSignalPerfectRecall_iff_toControlled
+/-- Event-clock private-signal recall is exactly the payoff-free projection
+predicate. -/
+theorem hasEventClockSignalPerfectRecall_iff_toControlled
     (i : N) :
-    G.HasSignalPerfectRecall i ↔
-      G.toControlledObservedGame.HasSignalPerfectRecall i :=
+    G.HasEventClockSignalPerfectRecall i ↔
+      G.toControlledObservedGame.HasEventClockSignalPerfectRecall i :=
   Iff.rfl
 
-/-- Public recall is exactly the payoff-free projection predicate. -/
-theorem hasPublicPerfectRecall_iff_toControlled :
-    G.HasPublicPerfectRecall ↔
-      G.toControlledObservedGame.HasPublicPerfectRecall :=
+/-- Event-clock public recall is exactly the payoff-free projection
+predicate. -/
+theorem hasEventClockPublicPerfectRecall_iff_toControlled :
+    G.HasEventClockPublicPerfectRecall ↔
+      G.toControlledObservedGame.HasEventClockPublicPerfectRecall :=
   Iff.rfl
 
 /-- No-absent-mindedness is exactly the payoff-free projection predicate. -/
