@@ -43,6 +43,9 @@ Observed/
 `Controlled.Infrastructure` and `Controlled.Morphism` are canonical,
 declaration-free aggregate facades. They are convenient broad entry points;
 implementation code should still import the narrowest responsibility leaf.
+The `Controlled.Compat.*` directory is not a registry of legacy import-only
+wrappers: those files contain downstream payoff-aware adapter declarations
+and are classified Internal.
 
 ## Module roles
 
@@ -64,7 +67,7 @@ change those mathematical namespaces.
 | Need | Import |
 |---|---|
 | Base payoff-free observation/information record | `Observed.Controlled` |
-| Generic continuation and standard-SPE semantics | `Observed.Controlled.Semantics` |
+| Evaluator-relative continuation equilibrium | `Observed.Controlled.Semantics` |
 | Finite discrete chance/history laws | `Observed.Controlled.Law.Discrete` |
 | Representation-independent complete-path laws | `Observed.Controlled.Law` |
 | Discrete complete-path realization | `Observed.Controlled.Law.DiscretePath` |
@@ -74,6 +77,33 @@ change those mathematical namespaces.
 | Broad payoff-free infrastructure | `Observed.Controlled.Infrastructure` |
 | Broad payoff-free morphism transport | `Observed.Controlled.Morphism` |
 | Payoff-aware bridge only | `Observed.Controlled.Compat.<adapter>` |
+
+## Semantic contract boundaries
+
+- `ControlledGame.NoChance` quantifies over the whole ambient state carrier.
+  `ControlledGame.NoChanceOnHistories` quantifies only over legal complete
+  histories from `init`, and is the certificate used by canonical pure
+  execution, total continuation, winning, and determinacy APIs. Global
+  no-chance implies the reachable form.
+- `PureStrategyAvailabilityCertificate` packages only represented decision
+  information and mover coherence.
+  `ReachablePureStrategyModelCertificate` adds reachable no-chance. Neither
+  bundle contains finiteness, payoff, probability, recall, or termination.
+- `ContinuationSemantics` alone is an arbitrary evaluator. Its generic
+  solution concept is named evaluator-relative. There is intentionally no
+  generic standard-SPE name until concrete execution layers expose a common
+  canonical root-local strategy, deviation, and complete-path interface.
+- `BoundedHistoryLawFamily` is raw per-profile PMF data.
+  `CertifiedBehavioralExecutionLaw` adds normalization, reachable legality,
+  terminal absorption, and equality with the concrete behavioral executor.
+- `CompletePathLawSemantics` is a family of lawful per-root path marginals. It
+  does not by itself construct one common causal process; restart,
+  conditioning, and execution coherence require separate certificates.
+- Signal/public recall is explicitly event-clock recall: every arena
+  transition contributes one signal. `SignalTraceBuilder` is the optional
+  external layer for asynchronous models and permits `none` as a silent
+  event. The always-emitting builder recovers the event-clock trace; no
+  equivalence with arbitrary silent-event builders is claimed.
 
 Application code should normally import a stable `Interface.*` facade rather
 than an implementation module above.
@@ -93,8 +123,13 @@ than an implementation module above.
    transitively;
 6. the infrastructure and morphism leaves retain their exact governed
    closures; and
-7. `ControlledCompatibilityImportBoundary` jointly imports every public role
+7. `ControlledApiImportBoundary` jointly imports every public role
    and checks that canonical and payoff-aware declarations coexist.
+
+The same checker inventories all source modules with no declarations. The two
+controlled aggregates must contain only their exact imports and a module
+docstring identifying the canonical aggregate role; unregistered import-only,
+zero-byte, and comment/namespace-only Lean files are rejected.
 
 No compatibility stub is kept at a former flat path. Any future module-path
 compatibility policy must be introduced deliberately after a stable public API
