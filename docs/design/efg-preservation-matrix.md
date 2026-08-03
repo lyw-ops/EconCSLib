@@ -36,13 +36,30 @@ These four levels are deliberately different:
 3. a lawful complete-path probability is a
    `ControlledObservedGame.CompletePathLawSemantics`, whose `pathLaw` is
    normalized and is almost surely supported on
-   `Arena.IsCompletePlayPathFrom`;
+   `Arena.IsCompletePlayPathFrom`; this is a family of per-root marginals, not
+   by itself one common causal process;
 4. an execution-coherent lawful probability additionally satisfies
    `RealizesExecution` or a caller-supplied `ExecutionCoherent` predicate.
 
 The maximum path-law carrier is payoff-free and stores no local kernel, PMF,
 countability assumption, strategic-mode tag, or chance-semantics tag.
 Discrete PMF and analytic-kernel execution enter through downstream adapters.
+Restart, conditioning, and cross-root coherence are extra certificates rather
+than consequences of the per-root carrier.
+
+Finite discrete history laws have a separate two-level contract:
+
+1. `BoundedHistoryLawFamily` is raw history-valued PMF data. The dependent
+   `History` carrier witnesses root reachability, but the structure does not
+   claim normalization, terminal absorption, or agreement with an executor.
+2. `CertifiedBehavioralExecutionLaw` records normalization, reachable
+   legality, terminal absorption, and equality with the specified behavioral
+   chance-kernel executor. The concrete `behavioralCertifiedExecutionLaw`
+   constructs this level.
+
+Likewise, `HistoryTransformLawEquivalentAt` is the honest name for an
+arbitrary history transform. `TerminalHistoryLawEquivalentAt` is reserved for
+transforms whose codomain is the existing terminal-history subtype.
 
 ## Relation-level matrix
 
@@ -52,6 +69,8 @@ Discrete PMF and analytic-kernel execution enter through downstream adapters.
 | `ControlledObservedGame.Iso` | bijective complete histories | dependent equivalences with concrete-realization square | private/public/info equivalences | not included | structural path equivalence only; stochastic/path-law equality needs a separate naturality premise | payoff-free objectives may be transported by their own theorem | pure-strategy equivalence and update square | classic/private/public recall iff | exact root and lawful-subgame transport theorems | structural certificates transport through the arena equivalence |
 | `ObservedGame.PayoffCompatibleIso` | underlying strict payoff-free iso | inherited | inherited | separate | no law field | adds only the terminal-payoff commuting square | inherited only from the structural iso | inherited | inherited | inherited |
 | `ControlledObservedGame.InformationRefinement` | shared strict controlled dynamics | exact concrete actions | directional fine-to-coarse information map | separate | requires a concrete strategy/law lifting theorem | not included | source pure strategies lift; reverse coverage is extra | not automatic | external | premise |
+| `BoundedHistoryLawFamily` | dependent histories are rooted/reachable by construction | not certified against a policy | arbitrary strategy carrier | not certified | raw bounded PMF family only | not included | profile updates are merely inputs | not included | current history is explicit | not certified |
+| `CertifiedBehavioralExecutionLaw` | rooted history support; legality is explicit | exact through `behavioralHistoryLaw` | behavioral profile | specified normalized chance kernel | normalized, terminal-absorbing, and exactly executor-consistent | downstream only through explicit interpretation | behavioral profiles and chance execution are fixed by the equality field | not included | current history is explicit | absorption field; bounded fuel does not assert eventual termination |
 | strict `Simulation` / `Bisimulation` | related endpoints per step | related actions/policies | presentation-specific premise | kernel relation required | only when an execution/coupling theorem is supplied | relation-respecting objective premise | deviation completeness is extra | not automatic | external | not automatic |
 | `WeakSimulation` / `WeakBisimulation` | visible histories may skip/stutter | macro action versus micro trace | serialization invariant | kernel coupling | visible trajectory law through the stated projection | projection-respecting objective premise | explicit policy/deviation compilation | explicit theorem only | macro-root map, not strict root identity | requires progress/no-divergence certificate |
 | same-game `CompleteHistoryLawRealization` | same occurrence-sensitive history carrier | semantic, through induced histories | arbitrary playerwise strategy carriers | supplied by the concrete semantics, not tagged in the relation | exact bounded complete-history PMF | downstream only through explicit interpretations | source deviations map via the playerwise map; target coverage and strategy isomorphism are separate | not included | not included | bounded fuel only |
@@ -61,7 +80,7 @@ Discrete PMF and analytic-kernel execution enter through downstream adapters.
 | `PathLawCoupling` | paired path carriers related almost surely | encoded in support relation | not included | joint law supplied explicitly | source, target, and joint are certified probability measures; both marginals are exact | relation-respecting observer requires a theorem | not implied | not implied | not implied | not implied |
 | `StrictCompilerPreservation` | strict payoff-free history iso | inherited from strict iso | inherited from strict iso | not included | **not included** | not included | not included | not included | exact chosen-root correspondence | only what the structural iso transports |
 | `WeakCompilerPreservation` | weak source/target state relation with nonempty target progress | macro action versus micro trace | not included | not included | **not included** | not included | not included | not included | related initial states only | progress is stored; no-divergence/law preservation is extra |
-| payoff-free `FiniteEFGHypotheses.toFiniteHistoryGame` / `toFiniteObservedGame` | `historyEquiv` and `toOriginalIso` preserve occurrence-sensitive complete histories; merged endpoints remain distinct | strict dependent equivalence | private/public/info pullback presentation | `pullDiscreteChanceKernel_eq` | `mapBehavioralHistoryLaw` proves exact bounded complete-history PMF pushforward | terminal/path objectives pull back without endpoint quotienting | pure/behavioral strategy equivalences and update squares are proved | `perfectRecall_iff`, `signalPerfectRecall_iff`, `publicPerfectRecall_iff` | `toOriginalIso_preservesRootPresentation`; `pullSubgameSystem_isLawful` | `toFiniteHistoryGame_hasLengthBound` |
+| payoff-free `FiniteEFGHypotheses.toFiniteHistoryGame` / `toFiniteObservedGame` | `historyEquiv` and `toOriginalIso` preserve occurrence-sensitive complete histories; merged endpoints remain distinct | strict dependent equivalence | private/public/info pullback presentation | `pullDiscreteChanceKernel_eq` | `mapBehavioralHistoryLaw` proves exact bounded complete-history PMF pushforward from certified behavioral execution laws | terminal/path objectives pull back without endpoint quotienting | pure/behavioral strategy equivalences and update squares are proved | `perfectRecall_iff`, `eventClockSignalPerfectRecall_iff`, `eventClockPublicPerfectRecall_iff` | `toOriginalIso_preservesRootPresentation`; `pullSubgameSystem_isLawful` | `toFiniteHistoryGame_hasLengthBound` |
 
 ## Declaration anchors
 
@@ -76,11 +95,12 @@ The matrix rows above are backed by the following Lean owners:
   declaration-free canonical facade for all three leaves.
 - `Observed/Controlled/Compat/Morphism.lean`: the orthogonal
   `ObservedGame.PayoffCompatibleIso` and legacy payoff-aware adapters.
-- `Observed/Controlled/Law/Discrete.lean`: discrete chance presentation,
-  payoff-free bounded complete-history semantic realizations, behavioral PMFs,
-  and strict stochastic naturality.
+- `Observed/Controlled/Law/Discrete.lean`: discrete chance presentation, raw
+  `BoundedHistoryLawFamily`, certified behavioral execution laws, bounded
+  semantic realizations, and strict stochastic naturality.
 - `Observed/Controlled/Law.lean`: the normalized, almost-surely lawful common
-  path carrier; measurable history/outcome/payoff interpretations; distinct
+  per-root path-marginal carrier; honest general history-transform and
+  terminal-history laws; measurable history/outcome/payoff interpretations; distinct
   arbitrary-integral and expected-utility theorems; execution coherence;
   same-game and cross-game realizations; identity/strict-Iso bridges; target
   deviation coverage; and strategy-space isomorphisms.
@@ -95,16 +115,42 @@ The matrix rows above are backed by the following Lean owners:
   packages whose constructors prevent a weak serializer from being labelled
   a strict isomorphism.
 
-## Compiler claims
+## Compiler coverage ledger
 
-| Frontend/route | Correct preservation description |
-|---|---|
-| `GameTreeOccurrenceObserved` | Occurrence-sensitive finite tree compiler; may use strict observed structure where its history map is genuinely bijective. |
-| legacy `GameTreeObserved` | Endpoint-observed compatibility compiler. It can forget occurrence distinctions and must not be advertised as a strict history isomorphism. |
-| `StochasticGameTreeObserved` | Occurrence-sensitive chance compiler with exact local PMF laws; global law claims use the chance execution theorems. |
-| `FiniteImperfectObserved` | Finite imperfect-information presentation compiler; information and root claims are those stated by its explicit certificates. |
-| FOSG sequentialization | Weak serialization: one simultaneous macro-step is represented by an ordered micro-trace. Different orders are not strict history isomorphisms; macro-root preservation uses the serialization certificate's explicit external `targetRoots` presentation. |
-| measurable presentation bridges | Preserve the supplied measurable path law through their explicit kernel/presentation maps; they do not turn PMF strategies into non-atomic general strategies. |
+This is the per-compiler review queue. A `proved` cell names a theorem family
+owned by the route. `via` means a generic theorem can be instantiated from the
+listed compiler certificate. `premise` is deliberately not a preservation
+claim. Missing cells are gaps only when a downstream client needs that axis.
+
+| Frontend/route | Representation strength | Information / recall | Chance and execution law | Roots / lawful subgames | Deviations / equilibrium | Termination | Remaining boundary |
+|---|---|---|---|---|---|---|---|
+| `GameTreeOccurrenceObserved` | occurrence-sensitive history construction; endpoint forgetting is a separate information refinement | `toOccurrenceObservedGame_perfectInformation` and `toOccurrenceObservedGame_perfectRecall` proved | deterministic terminal outcome and payoff realization proved | canonical `occurrenceCompleteSubgameSystem` | backward-induction profile and `Kuhn_exists_occurrencePureSPE` proved; endpoint behavioral/pure reflection is directional | pure termination on every continuation proved | no chance or analytic execution claim |
+| legacy `GameTreeObserved` | endpoint compiler and root game-form isomorphism; **not** a strict occurrence-history isomorphism | endpoint information may merge distinct occurrences | deterministic terminal continuation outcome proved | all-continuations presentation only; not a canonical lawful-root certificate | root Nash and legacy endpoint-policy continuation equivalence proved; explicitly not standard EFG SPE | finite tree execution proved terminating | compatibility route; do not grow parallel standard-SPE theory |
+| `StochasticGameTreeObserved` | occurrence-sensitive complete-history observation | full-history information by construction; no separate generic recall package | local chance PMF, bounded endpoint law, and payoff-law equalities proved | root selection and lawful-subgame coverage remain external | `policyToBehavioralProfile_deviate` proved; no compiler-level Nash/SPE theorem | bounded fuel only at the public bridge | total continuation equilibrium and lawful-root coverage |
+| `FiniteImperfectObserved` | structural compiler from compact finite states and declared information labels | action coherence is a compiler premise; generic recall is not claimed (`tinyObserved_perfectRecall` is only a regression instance) | optional normalized chance compiler; no global execution-law package | `initialRoot` is a presentation choice; other roots require external lawfulness | strategy carrier is information-indexed; equilibrium transfer not supplied | premise | add only model-specific certificates actually derivable from the compact source |
+| `FiniteEFGHypotheses` finite unfolding | strict occurrence-history `toOriginalIso` | classic and event-clock private/public recall iff proved | chance-kernel equality and exact bounded complete-history PMF pushforward proved | root presentation, selected systems, and complete systems transport | update squares proved; concrete Iso equilibrium transfer is available via the corresponding pure/behavioral theorem | uniform history-length bound proved | no expressive change; this is a finite re-presentation |
+| FOSG sequentialization | progressing weak serialization from one simultaneous macro-step to an ordered micro-trace | history-augmented target information and observation hiding are constructed; recall is not claimed generically | one-block laws, finite-horizon state/trace couplings, and payoff/utility-law equalities proved | explicit source macro roots and external target-root presentation; not all lawful target micro roots | behavioral deviation square and two-way finite-horizon macro-root Nash proved | finite macro horizon only | complete lawful-root coverage, total continuation execution, target local-deviation coverage, and standard SPE remain open |
+| measurable presentation bridges | semantic embedding/presentation, not one strict EFG compiler | supplied measurable information presentation | exact supplied kernel/path-law transport | premise | only the strategy/deviation packages explicitly constructed by each bridge | finite-horizon or a.s.-termination premise | PMF strategies are not identified with arbitrary non-atomic kernels |
+
+Every new compiler-facing theorem should update exactly one row. A new
+`proved` claim must cite a Lean declaration; prose, a root predicate, or a
+weak simulation alone cannot upgrade another axis.
+
+## Equilibrium and recall contract
+
+`ContinuationSemantics.isEvaluatorContinuationEquilibriumAt_iff_of_surjective`
+is an abstract evaluator-relative game-form transfer. It is not a
+standard-EFG-SPE theorem. Operational standard-SPE preservation remains on
+concrete pure, behavioral, or path-law execution layers. A future common
+theorem must use canonical root-local strategy restriction, local-deviation
+extension, and complete-play/path-law execution; caller-defined execution and
+legality types are not preservation evidence.
+
+Signal/public recall preservation rows refer to event-clock traces, in which
+every arena transition emits one signal. `SignalTraceBuilder` supports
+external asynchronous traces with `Option Signal` and silent events. Only the
+always-emitting builder is proved to recover the event-clock trace; no
+equivalence with arbitrary silent-event recall is asserted.
 
 ## Review rule
 
@@ -114,3 +160,8 @@ bridge—history/path law to outcome law, outcome law to payoff law, or payoff
 law to utility—not asserted by prose. Root visibility, lawful subgames,
 deviation coverage, recall, and termination are independent axes unless the
 declaration explicitly includes them.
+
+These checks provide machine-checked evidence for source elaboration, the
+axiom surface, placeholder policy, module boundaries, and the listed formal
+semantic properties. They are not a metamathematically complete certification
+of every intended model meaning.
