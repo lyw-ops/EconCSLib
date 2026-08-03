@@ -84,7 +84,7 @@ structure FiniteTwoPlayerHypotheses
   /-- The reachable complete-history unfolding is uniformly finite. -/
   finiteEFG : G.FiniteEFGHypotheses
   /-- Every nonterminal history is player controlled. -/
-  noChance : G.base.NoChance
+  noChance : G.base.NoChanceOnHistories
   /-- Decision information determines the complete history. -/
   perfectInformation : G.PerfectInformation
   /-- Exactly one player wins each complete play. -/
@@ -172,7 +172,7 @@ noncomputable def backwardWinner
           else
             let mover :=
               Classical.choose
-                (h.noChance history.1 hterminal)
+                (h.noChance history hterminal)
             if ∃ action : G.base.Action history.1,
                 recurse
                     ⟨G.base.next history.1 action,
@@ -198,7 +198,7 @@ theorem backwardWinner_eq
           else
             let mover :=
               Classical.choose
-                (h.noChance history.1 hterminal)
+                (h.noChance history hterminal)
             if ∃ action : G.base.Action history.1,
                 backwardWinner h
                     ⟨G.base.next history.1 action,
@@ -251,11 +251,11 @@ theorem exists_action_backwardWinner_eq
     exact hterminal.false action
   let mover :=
     Classical.choose
-      (h.noChance history.1 hnonterminal)
+      (h.noChance history hnonterminal)
   have hmoverChosen :
       G.base.mover history.1 = some mover :=
     Classical.choose_spec
-      (h.noChance history.1 hnonterminal)
+      (h.noChance history hnonterminal)
   have hmover_eq :
       mover = backwardWinner h history :=
     Option.some.inj (hmoverChosen.symm.trans hmover)
@@ -295,11 +295,11 @@ theorem backwardWinner_child_eq_of_ne
     fun hterminal => hterminal.false action
   let mover :=
     Classical.choose
-      (h.noChance history.1 hnonterminal)
+      (h.noChance history hnonterminal)
   have hmoverChosen :
       G.base.mover history.1 = some mover :=
     Classical.choose_spec
-      (h.noChance history.1 hnonterminal)
+      (h.noChance history hnonterminal)
   have hmover_eq : mover = i :=
     Option.some.inj (hmoverChosen.symm.trans hmover)
   by_cases hexists :
@@ -590,7 +590,7 @@ theorem backwardWinner_historyAt_eq_root
       · rw [play.at_succ_eq_of_terminal n hterminal]
         exact ih
       · rcases
-          h.noChance (play.historyAt n).1 hterminal with
+          h.noChance (play.historyAt n) hterminal with
         ⟨i, hmover⟩
         by_cases hi :
             i =
@@ -701,7 +701,7 @@ structure WellFoundedPrefixHypotheses
   wellFounded :
     G.base.toArena.IsWellFoundedFrom G.base.init
   /-- Every nonterminal history is player controlled. -/
-  noChance : G.base.NoChance
+  noChance : G.base.NoChanceOnHistories
   /-- Decision information determines the complete history. -/
   perfectInformation : G.PerfectInformation
   /-- Exactly one player wins each complete play. -/
@@ -717,7 +717,7 @@ theorem not_both_havePathwiseWinningStrategy
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
     {W : G.base.WinningCondition}
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (hexclusive : W.IsExclusive) :
     ¬ ((∃ strategy : G.PureStrategy 0,
           G.HasPathwiseWinningStrategy W 0 strategy) ∧
