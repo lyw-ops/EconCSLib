@@ -54,7 +54,7 @@ def pureSemantics
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
     (roots : G.RootPresentation)
-    (hNoChance : G.base.NoChance) :
+    (hNoChance : G.base.NoChanceOnHistories) :
     IndexedContinuationGameForm N where
   Strategy := G.PureStrategy
   Horizon := ℕ
@@ -71,7 +71,7 @@ theorem pureSemantics_atIndex
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
     (roots : G.RootPresentation)
-    (hNoChance : G.base.NoChance) (fuel : ℕ) :
+    (hNoChance : G.base.NoChanceOnHistories) (fuel : ℕ) :
     (pureSemantics G roots hNoChance).atIndex fuel =
       G.pureContinuationFamilyOnRoots roots hNoChance fuel :=
   rfl
@@ -153,8 +153,8 @@ def pureIso
     (targetRoots : H.RootPresentation)
     (hroots :
       e.PreservesRootPresentations sourceRoots targetRoots)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance) :
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories) :
     (pureSemantics G sourceRoots hNoChanceG).Iso
       (pureSemantics H targetRoots hNoChanceH) where
   horizonEquiv := Equiv.refl ℕ
@@ -239,8 +239,8 @@ def pure
     (targetRoots : H.RootPresentation)
     (hroots :
       e.PreservesRootPresentations sourceRoots targetRoots)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (utility : Option (N → U) → N → V)
     (fuel : ℕ) :
     BoundedDesignatedNashBridge
