@@ -23,6 +23,5 @@ that context. Keep declaration names literature-facing and independent of
 physical module paths.
 
 Ordinary users should import the corresponding `Interface.*` facade. Internal
-module paths may be reorganized. The long
-`ObservedMeasurableKernelRestartCompatibility.lean` filename is retained only
-because it preserves an established compatibility import.
+module paths may be reorganized. The former long restart-compatibility
+aggregate was deleted; use `Interface.Restart`.
