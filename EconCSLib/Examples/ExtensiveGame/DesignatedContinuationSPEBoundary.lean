@@ -258,8 +258,9 @@ instance :
   toExtensiveGame_terminalDecidable root
 
 theorem rootOnly_noChance :
-    rootOnlyObserved.base.NoChance := by
-  simpa [rootOnlyObserved] using toExtensiveGame_noChance root
+    rootOnlyObserved.base.NoChanceOnHistories := by
+  simpa [rootOnlyObserved] using
+    toExtensiveGame_noChanceOnHistories root
 
 theorem rootOnly_pureTerminating :
     rootOnlyObserved.PureTerminatingOnRoots
@@ -335,7 +336,7 @@ theorem threat_isPureSubgamePerfectOn_rootOnly :
 ordinary all-history endpoint compiler. -/
 theorem threat_fails_offPath_continuation :
     ¬ ((toObservedGame root).terminalContinuationGameForm
-        (toExtensiveGame_noChance root) offPath
+        (toExtensiveGame_noChanceOnHistories root) offPath
         ((toObservedGame_pureTerminatingOnAllContinuations root)
           offPath trivial)).IsNash
       (fun payoff : Player → ℤ => payoff)
@@ -356,7 +357,7 @@ off-path endpoint continuation would be Nash, contradicting the explicit
 profitable player-`1` deviation above. -/
 theorem occurrenceThreat_not_isPureStandardSubgamePerfect :
     ¬ (toOccurrenceObservedGame root).IsPureStandardSubgamePerfect
-      (toExtensiveGame_noChance root)
+      (toExtensiveGame_noChanceOnHistories root)
       (occurrenceCompleteSubgameSystem root)
       (toOccurrenceObservedGame_pureTerminatingOn root)
       (fun payoff : Player → ℤ => payoff)
@@ -364,7 +365,7 @@ theorem occurrenceThreat_not_isPureStandardSubgamePerfect :
   intro hspe
   have hOccurrenceAllContinuations :
       (toOccurrenceObservedGame root).IsPureNashOnRoots
-          (toExtensiveGame_noChance root)
+          (toExtensiveGame_noChanceOnHistories root)
           (occurrenceAllContinuationRoots root)
           (toOccurrenceObservedGame_pureTerminatingOnAllContinuations root)
           (fun payoff : Player → ℤ => payoff)
@@ -373,7 +374,7 @@ theorem occurrenceThreat_not_isPureStandardSubgamePerfect :
     exact hspe current trivial
   have hEndpointAllContinuations :
       (toObservedGame root).IsPureNashOnRoots
-        (toExtensiveGame_noChance root)
+        (toExtensiveGame_noChanceOnHistories root)
         (endpointAllContinuationRoots root)
         (toObservedGame_pureTerminatingOnAllContinuations root)
         (fun payoff : Player → ℤ => payoff)
