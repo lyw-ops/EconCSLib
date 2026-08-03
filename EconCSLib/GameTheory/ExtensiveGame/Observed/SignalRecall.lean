@@ -109,49 +109,49 @@ theorem publicSignalHistory_length
       history.2.length + 1 :=
   G.toControlledObservedGame.publicSignalHistory_length history
 
-/-- Compatibility spelling for private-signal perfect recall. -/
-abbrev HasSignalPerfectRecall
+/-- Payoff-aware spelling for event-clock private-signal perfect recall. -/
+abbrev HasEventClockSignalPerfectRecall
     (G : ObservedGame N U) (i : N) : Prop :=
-  G.toControlledObservedGame.HasSignalPerfectRecall i
+  G.toControlledObservedGame.HasEventClockSignalPerfectRecall i
 
 /-- Every player has private-signal recall. -/
-abbrev SignalPerfectRecall
+abbrev EventClockSignalPerfectRecall
     (G : ObservedGame N U) : Prop :=
-  G.toControlledObservedGame.SignalPerfectRecall
+  G.toControlledObservedGame.EventClockSignalPerfectRecall
 
-/-- Compatibility spelling for public-signal recall. -/
-abbrev HasPublicPerfectRecall
+/-- Payoff-aware spelling for event-clock public-signal recall. -/
+abbrev HasEventClockPublicPerfectRecall
     (G : ObservedGame N U) : Prop :=
-  G.toControlledObservedGame.HasPublicPerfectRecall
+  G.toControlledObservedGame.HasEventClockPublicPerfectRecall
 
 /-- Singleton decision information implies private-signal recall. -/
-theorem HasSingletonInformation.hasSignalPerfectRecall
+theorem HasSingletonInformation.hasEventClockSignalPerfectRecall
     {i : N}
     (hinformation : G.HasSingletonInformation i) :
-    G.HasSignalPerfectRecall i :=
-  ControlledObservedGame.HasSingletonInformation.hasSignalPerfectRecall
+    G.HasEventClockSignalPerfectRecall i :=
+  ControlledObservedGame.HasSingletonInformation.hasEventClockSignalPerfectRecall
     hinformation
 
 /-- Perfect information implies private-signal recall for every player. -/
-theorem PerfectInformation.signalPerfectRecall
+theorem PerfectInformation.eventClockSignalPerfectRecall
     (hinformation : G.PerfectInformation) :
-    G.SignalPerfectRecall :=
-  ControlledObservedGame.PerfectInformation.signalPerfectRecall
+    G.EventClockSignalPerfectRecall :=
+  ControlledObservedGame.PerfectInformation.eventClockSignalPerfectRecall
     hinformation
 
 /-- Signal recall rules out absent-mindedness. -/
-theorem HasSignalPerfectRecall.hasNoAbsentMindedness
+theorem HasEventClockSignalPerfectRecall.hasNoAbsentMindedness
     {i : N}
-    (hrecall : G.HasSignalPerfectRecall i) :
+    (hrecall : G.HasEventClockSignalPerfectRecall i) :
     G.HasNoAbsentMindedness i :=
-  ControlledObservedGame.HasSignalPerfectRecall.hasNoAbsentMindedness
+  ControlledObservedGame.HasEventClockSignalPerfectRecall.hasNoAbsentMindedness
     hrecall
 
 /-- Playerwise signal recall implies global no absent-mindedness. -/
-theorem SignalPerfectRecall.noAbsentMindedness
-    (hrecall : G.SignalPerfectRecall) :
+theorem EventClockSignalPerfectRecall.noAbsentMindedness
+    (hrecall : G.EventClockSignalPerfectRecall) :
     G.NoAbsentMindedness :=
-  ControlledObservedGame.SignalPerfectRecall.noAbsentMindedness
+  ControlledObservedGame.EventClockSignalPerfectRecall.noAbsentMindedness
     hrecall
 
 /-- Compatibility spelling for a private-signal factorization certificate. -/
@@ -162,10 +162,10 @@ abbrev SignalRecallCertificate
 namespace SignalRecallCertificate
 
 /-- A private-signal factorization certificate proves signal recall. -/
-theorem signalPerfectRecall
+theorem eventClockSignalPerfectRecall
     (certificate : G.SignalRecallCertificate) :
-    G.SignalPerfectRecall :=
-  ControlledObservedGame.SignalRecallCertificate.signalPerfectRecall
+    G.EventClockSignalPerfectRecall :=
+  ControlledObservedGame.SignalRecallCertificate.eventClockSignalPerfectRecall
     certificate
 
 end SignalRecallCertificate
@@ -178,10 +178,10 @@ abbrev PublicRecallCertificate
 namespace PublicRecallCertificate
 
 /-- A public factorization certificate proves public recall. -/
-theorem hasPublicPerfectRecall
+theorem hasEventClockPublicPerfectRecall
     (certificate : G.PublicRecallCertificate) :
-    G.HasPublicPerfectRecall :=
-  ControlledObservedGame.PublicRecallCertificate.hasPublicPerfectRecall
+    G.HasEventClockPublicPerfectRecall :=
+  ControlledObservedGame.PublicRecallCertificate.hasEventClockPublicPerfectRecall
     certificate
 
 end PublicRecallCertificate
