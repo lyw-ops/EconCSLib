@@ -150,8 +150,8 @@ theorem signalHistory_true :
 
 /-- Player `0`'s two current information states coincide although the
 transient signal histories differ. -/
-theorem not_hasSignalPerfectRecall :
-    ¬ game.HasSignalPerfectRecall 0 := by
+theorem not_hasEventClockSignalPerfectRecall :
+    ¬ game.HasEventClockSignalPerfectRecall 0 := by
   intro hrecall
   have heq :=
     hrecall
@@ -232,8 +232,8 @@ theorem controlledPerfectRecall :
 
 /-- Constant public observations forget elapsed public time, so classic
 recall does not imply public recall even on the payoff-free projection. -/
-theorem controlled_not_hasPublicPerfectRecall :
-    ¬ game.toControlledObservedGame.HasPublicPerfectRecall := by
+theorem controlled_not_hasEventClockPublicPerfectRecall :
+    ¬ game.toControlledObservedGame.HasEventClockPublicPerfectRecall := by
   intro hrecall
   have heq := hrecall initial (afterChoice false) rfl
   change [()] = [(), ()] at heq
@@ -356,12 +356,12 @@ def publicRecallCertificate :
 
 /-- Public recall holds in the payoff-free staged presentation. -/
 theorem publicPerfectRecall :
-    publicRecallGame.HasPublicPerfectRecall :=
-  publicRecallCertificate.hasPublicPerfectRecall
+    publicRecallGame.HasEventClockPublicPerfectRecall :=
+  publicRecallCertificate.hasEventClockPublicPerfectRecall
 
 /-- Even with public recall, player `0` forgets the transient private bit. -/
-theorem publicRecallGame_not_hasSignalPerfectRecall :
-    ¬ publicRecallGame.HasSignalPerfectRecall 0 := by
+theorem publicRecallGame_not_hasEventClockSignalPerfectRecall :
+    ¬ publicRecallGame.HasEventClockSignalPerfectRecall 0 := by
   intro hrecall
   have heq :=
     hrecall
@@ -524,27 +524,27 @@ def signalRecallCertificate :
                 exact action'.elim
 
 /-- Forgetting one's own action need not be signal forgetting. -/
-theorem signalPerfectRecall :
-    game.SignalPerfectRecall :=
-  signalRecallCertificate.signalPerfectRecall
+theorem eventClockSignalPerfectRecall :
+    game.EventClockSignalPerfectRecall :=
+  signalRecallCertificate.eventClockSignalPerfectRecall
 
 /-- This regression is not absent-minded: signal recall already rules out
 repetition of one decision information state along a play. -/
 theorem hasNoAbsentMindedness :
     game.HasNoAbsentMindedness () :=
-  (signalPerfectRecall ()).hasNoAbsentMindedness
+  (eventClockSignalPerfectRecall ()).hasNoAbsentMindedness
 
 /-- The payoff-free projection has private-signal recall. -/
-theorem controlledSignalPerfectRecall :
-    game.toControlledObservedGame.SignalPerfectRecall :=
+theorem controlledEventClockSignalPerfectRecall :
+    game.toControlledObservedGame.EventClockSignalPerfectRecall :=
   fun i =>
-    (game.hasSignalPerfectRecall_iff_toControlled i).mp
-      (signalPerfectRecall i)
+    (game.hasEventClockSignalPerfectRecall_iff_toControlled i).mp
+      (eventClockSignalPerfectRecall i)
 
 /-- Constant public observations forget elapsed public time, so private-signal
 recall does not imply public recall. -/
-theorem controlled_not_hasPublicPerfectRecall :
-    ¬ game.toControlledObservedGame.HasPublicPerfectRecall := by
+theorem controlled_not_hasEventClockPublicPerfectRecall :
+    ¬ game.toControlledObservedGame.HasEventClockPublicPerfectRecall := by
   intro hrecall
   have heq := hrecall initial (atSecond false) rfl
   change [()] = [(), ()] at heq
@@ -642,8 +642,8 @@ def publicRecallCertificate :
 
 /-- Public recall holds in the payoff-free staged presentation. -/
 theorem publicPerfectRecall :
-    publicRecallGame.HasPublicPerfectRecall :=
-  publicRecallCertificate.hasPublicPerfectRecall
+    publicRecallGame.HasEventClockPublicPerfectRecall :=
+  publicRecallCertificate.hasEventClockPublicPerfectRecall
 
 /-- The public-recall presentation still forgets the player's own first
 action, so public recall does not imply classic recall. -/
