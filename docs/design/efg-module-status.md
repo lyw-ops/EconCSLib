@@ -4,8 +4,8 @@ This is the source-based lifecycle register for the extensive-form-game
 implementation.  It covers every Lean module below
 `EconCSLib/GameTheory/ExtensiveGame/`, every module in the representation-neutral
 `GameForm` family, and the directly supporting `Math/Probability/PMF` family.
-The census was taken from the complete worktree and updated on 2026-08-02; it
-contains 183 modules, including 30 modules below
+The census was taken from the complete worktree and updated on 2026-08-03; it
+contains 163 modules, including 29 modules below
 `ExtensiveGame/Simulation/`.
 
 The status describes the role of the module that owns a declaration, not every
@@ -18,21 +18,22 @@ declaration made name-resolvable by transitive imports:
 - **Historical** is mathematically valid but has different or superseded
   semantics. It is retained and build-checked, but is closed to parallel
   general theory.
-- **Compatibility** preserves an established import path. It must remain a thin
-  import wrapper and acquire no implementation.
+- **Compatibility** is reserved for an explicitly temporary import wrapper.
+  There are currently no such modules: the pre-release compatibility paths
+  were removed after their internal consumers were migrated.
 - **Experimental** is opt-in theory whose public contract is not settled.
 - **Internal** is proof or compiler implementation reached through a facade;
   its path and helpers are not individually frozen.
 
 | Status | Modules |
 |---|---:|
-| Canonical | 84 |
+| Canonical | 86 |
 | Frontend | 13 |
 | Historical | 7 |
-| Compatibility | 21 |
+| Compatibility | 0 |
 | Experimental | 0 |
-| Internal | 58 |
-| **Total** | **183** |
+| Internal | 57 |
+| **Total** | **163** |
 
 Recommended-import abbreviations used below are:
 
@@ -57,8 +58,8 @@ Removal-policy codes keep the register readable:
 - `F`: only in a major release after explicit-frontend migration documentation.
 - `H`: only in a major release after a historical-path migration window; never
   invent a false semantic replacement.
-- `W`: a compatibility wrapper may be removed only in a major release after
-  internal consumers are zero and the replacement has been documented.
+- `W`: a temporary compatibility wrapper is removed after internal consumers
+  are zero and the replacement has been documented.
 - `I`: internal paths may be reorganized behind the stable facade; preserve
   documented public declarations and leave a wrapper when downstream path use
   is known.
@@ -97,8 +98,6 @@ Removal-policy codes keep the register readable:
 | `EconCSLib.GameTheory.ExtensiveGame.GameTreeStrategicForm` | Historical | Endpoint-plan strategic-form extraction | explicit module | occurrence observed-game pure profiles for occurrence plans | Bugfix only | Keep | H |
 | `EconCSLib.GameTheory.ExtensiveGame.Strategy` | Historical | State-indexed Arena strategies without observed information | explicit module | `ObservedGame.PureStrategy`; semantics differ | Bugfix only | Documentation only | H |
 | `EconCSLib.GameTheory.ExtensiveGame.Subgame` | Historical | State re-rooting and reachable-state restriction | `Core` | `ObservedGame.SubgameSystem` for lawful subgames; semantics differ | Bugfix only | Documentation only | H |
-| `EconCSLib.GameTheory.ExtensiveGame.Play` | Compatibility | Former play path forwarding to stopped execution | `Finite` or `Execution.StoppedExecution` | `Arena.stoppedHistory[From]` | No implementation | Thin wrapper | W |
-| `EconCSLib.GameTheory.ExtensiveGame.BehaviorStrategy` | Compatibility | Former invalid state-behavior path forwarding to observed behavior | `Finite`/`EqD` | information-indexed behavioral profiles plus chance kernel | No implementation | Thin wrapper | W |
 
 ## FOSG frontend
 
@@ -107,7 +106,6 @@ Removal-policy codes keep the register readable:
 | `EconCSLib.GameTheory.ExtensiveGame.FOSG.FOSG` | Frontend | Compact simultaneous stochastic game and weak-serialization contract | `Compile` | compile/serialize to observed chance EFG | Yes, frontend only | Keep | F |
 | `EconCSLib.GameTheory.ExtensiveGame.FOSG.FOSGBehavioralSerialization` | Frontend | Reusable strategic bridge for weak serializers | `Compile` | canonical continuation simulation is its target | Yes, preservation only | Keep | F |
 | `EconCSLib.GameTheory.ExtensiveGame.FOSG.FOSGContinuation` | Frontend | Macro-root continuation and Nash transfer | `Compile` | canonical declared-root continuation semantics | Yes, FOSG transfer only | Keep | F |
-| `EconCSLib.GameTheory.ExtensiveGame.FOSG.FOSGSequentialization` | Compatibility | Established sequentialization aggregate | `Compile` | `FOSG.Sequentialization.*` leaves | No implementation | Thin wrapper | W |
 | `EconCSLib.GameTheory.ExtensiveGame.FOSG.Sequentialization.Core` | Internal | Serialized micro-state/game construction | `Compile` | facade | Yes, implementation | Keep | I |
 | `EconCSLib.GameTheory.ExtensiveGame.FOSG.Sequentialization.Policy` | Internal | Source and target policy compilation | `Compile` | facade | Yes, implementation | Keep | I |
 | `EconCSLib.GameTheory.ExtensiveGame.FOSG.Sequentialization.MacroLaw` | Internal | Exact one-macro-step law | `Compile` | facade | Yes, implementation | Keep | I |
@@ -128,38 +126,38 @@ forming alternative canonical owners.
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Game` | Canonical | State-payoff observed-game information, two-way payoff attachment/erasure, bijective player/payoff reindexing, external root presentations, and compatibility names for controlled lawful systems | `Finite` | `Controlled`/`Controlled.Infrastructure.Subgame` for payoff-free clients | Yes, payoff-aware structure and adapters | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled` | Canonical | Payoff-free observed control, bijective player relabeling, pure-profile reindexing, and external root presentations | `Core` | — | Yes, objective-free information only | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure` | Canonical | Declaration-free aggregate facade for controlled execution, well-formedness, subgame, finite, quasistrategy, recall, and winning infrastructure | narrowest defining `Controlled.Infrastructure.*` leaf | responsibility leaves | No declarations | Aggregate facade | C |
-| `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Core` | Canonical | No-chance mover helpers, pure-profile history execution, and player-strategy play compatibility | `Core` | — | Yes, execution helpers only | Keep | C |
-| `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.WellFormed` | Canonical | General represented-information and mover-coherence certificates without finite, length, or execution assumptions | `Core` | — | Yes, general well-formedness only | Keep | C |
+| `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Core` | Canonical | Reachable no-chance mover helpers, pure-profile history execution, and player-strategy play compatibility | `Core` | — | Yes, execution helpers only | Keep | C |
+| `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.WellFormed` | Canonical | General represented-information and mover-coherence predicates plus narrow pure-strategy-availability and reachable-execution bundles | `Core` | — | Yes, general well-formedness only; no finite/payoff/probability/recall/termination fields | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Subgame` | Canonical | Occurrence-sensitive continuations, lawful/complete subgame systems, and bijective player-relabel transport | `Core` | — | Yes, subgame structure only | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Finite` | Canonical | Uniform history-length, finite reachable-action/information, and finite-EFG certificate package | `Core` | — | Yes, finite certificates only | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Quasi` | Canonical | Objective-free quasistrategy permissions, refinement, and play compatibility | `Core` | — | Yes, quasistrategy structure only | Keep | C |
-| `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Recall` | Canonical | Personal decisions, own-decision histories, classic/signal/public recall, no-absent-mindedness, and recall certificates | `Core` | — | Yes, recall only | Keep | C |
+| `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Recall` | Canonical | Personal decisions, own-decision histories, classic recall, event-clock signal/public recall, optional silent-event trace builders, no-absent-mindedness, and recall certificates | `Core` | — | Yes, recall only | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Compat.Infrastructure` | Internal | `ObservedGame` projection and legacy recall/quasistrategy compatibility lemmas | downstream compatibility modules | payoff-free declarations in `Controlled.Infrastructure` | Adapter declarations only | Keep | I |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism` | Canonical | Declaration-free aggregate facade for payoff-free structural, lawful-subgame, and recall morphism leaves | `Relations` or the narrowest `Controlled.Morphism.*` leaf | responsibility leaves | No declarations | Aggregate facade | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism.Core` | Canonical | Payoff-free Hom, information refinement, strict Iso, carrier/history/action/strategy maps, root-presentation comparison, inverse, and Iso algebra | `Relations` | — | Yes, structural morphisms only | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism.Subgame` | Canonical | Strict-Iso preservation of occurrence-sensitive continuation, lawful roots, and selected/complete subgame systems | `Relations` | — | Yes, subgame transport only | Keep | C |
-| `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism.Recall` | Canonical | Strict-Iso preservation of personal decisions, own-decision histories, signal histories, and classic/private/public recall | `Relations` | — | Yes, recall transport only | Keep | C |
+| `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism.Recall` | Canonical | Strict-Iso preservation of personal decisions, own-decision histories, event-clock signal histories, and classic/event-clock private/public recall | `Relations` | — | Yes, recall transport only | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Compat.Morphism` | Internal | Payoff-aware strict-isomorphism commuting square and legacy-Iso projection | `Relations` | `ControlledObservedGame.Iso` plus an external payoff square | Adapter declarations only | Keep | I |
-| `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Law.Discrete` | Canonical | Payoff-free discrete chance kernels and exact bounded complete-history PMF semantics | `Finite` | — | Yes, finite discrete laws only | Keep | C |
+| `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Law.Discrete` | Canonical | Payoff-free discrete chance kernels, raw `BoundedHistoryLawFamily`, and normalized/legal/absorbing/executor-consistent `CertifiedBehavioralExecutionLaw` | `Finite` | — | Yes, finite discrete laws only | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Compat.DiscreteLaw` | Internal | Forget-payoff adapter from `ObservedChanceGame` to discrete controlled chance | `Finite` | `DiscreteControlledObservedChanceGame` | Adapter declarations only | Keep | I |
-| `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Law` | Canonical | Lawful complete-path probability semantics, measurable interpretations, same/cross-game realizations, and strict-Iso bridges | `Interface.Relations` | — | Yes, representation-independent law semantics only | Keep | C |
+| `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Law` | Canonical | Per-root lawful complete-path marginals, measurable interpretations, honest history-transform/terminal-history laws, execution-coherence certificates, realizations, and strict-Iso bridges | `Relations` plus `Analytic` when needed | — | Yes, representation-independent law semantics only; no implicit common causal process | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Law.DiscretePath` | Canonical | Discrete behavioral/PMF implementation of the common lawful complete-path probability carrier | `Infinite` | — | Yes, discrete constructor only | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Law.Analytic` | Canonical | Measurable-kernel adapter to the common lawful complete-path probability carrier | `Analytic` | — | Yes, analytic adapter only | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.WellFormed` | Canonical | Full information representation, decision coherence, and structural finite-EFG certificates | `Core` | — | Yes, hypothesis packages only | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.FiniteUnfolding` | Canonical | Finite occurrence-sensitive reachable-history extraction with strict structural, root/subgame, recall, chance, strategy/update, and bounded-history-law preservation | `Finite` | — | Yes, extraction/preservation only | Keep | C |
-| `EconCSLib.GameTheory.ExtensiveGame.Observed.SignalRecall` | Internal | Legacy `ObservedGame` names projected from the payoff-free private/public recall implementation | downstream legacy modules | `Controlled.Infrastructure` | Adapter declarations only | Keep | I |
+| `EconCSLib.GameTheory.ExtensiveGame.Observed.SignalRecall` | Internal | Payoff-aware `ObservedGame` projections of event-clock signal/public recall and recall certificates | downstream payoff-aware modules | `Controlled.Infrastructure.Recall` | Adapter declarations only | Keep | I |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.SemanticMode` | Canonical | Lightweight strategy/chance semantic classification tags | `Relations` | — | Yes, classification only | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Quasi` | Internal | Legacy `ObservedGame` quasistrategy names projected from the payoff-free implementation | downstream legacy modules | `Controlled.Infrastructure` | Adapter declarations only | Keep | I |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Chance` | Canonical | Normalized chance kernels and chance isomorphisms | `Finite` | — | Yes, chance semantics | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Behavior` | Canonical | Information-indexed behavioral profiles and history policies | `Finite` | — | Yes, finite execution | Keep | C |
-| `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Semantics` | Canonical | Payoff-free horizon/law-parametric continuation semantics and complete standard-SPE transfer boundary | explicit module or `EqD` | — | Yes, generic semantics only | Keep | C |
-| `EconCSLib.GameTheory.ExtensiveGame.Observed.Semantics` | Canonical | State-payoff `ObservedGame` compatibility surface for controlled continuation semantics | `EqD` | `Controlled.Semantics` for payoff-free clients | Adapter declarations only | Keep | C |
+| `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Semantics` | Canonical | Payoff-free evaluator-relative continuation equilibrium and assumption-explicit game-form transfer | explicit module or `EqD` | — | Yes, evaluator-relative semantics only; no generic operational standard-SPE claim | Keep | C |
+| `EconCSLib.GameTheory.ExtensiveGame.Observed.Semantics` | Canonical | State-payoff `ObservedGame` adapter for controlled evaluator-relative continuation semantics | `EqD` | `Controlled.Semantics` for payoff-free clients | Adapter declarations only | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.SPE` | Canonical | Total pure execution, lawful-root and standard SPE | `EqD` | — | Yes, canonical equilibrium | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.PerfectRecall` | Internal | Legacy `ObservedGame` classic-recall names and strict-Iso adapters projected from payoff-free theory | downstream legacy modules | `Controlled.Infrastructure`/`Controlled.Morphism` | Adapter declarations only | Keep | I |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Mixed` | Canonical | Mixed complete plans and bounded mixed execution | `EqD` | — | Yes, mixed semantics | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.General` | Canonical | Countably supported general strategies over behavioral plans | `EqD` | — | Yes, carrier and lawful realization only | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.LawEquivalence` | Canonical | Bounded complete-history-law realizations and terminal/payoff pushforwards | `EqD` | — | Yes, discrete semantic relations | Keep | C |
-| `EconCSLib.GameTheory.ExtensiveGame.Observed.PathLawEquivalence` | Internal | Payoff-aware names projected from the unique controlled complete-path law carrier | `Interface.Relations` | `Controlled.Law` | Adapter declarations only | Keep | I |
+| `EconCSLib.GameTheory.ExtensiveGame.Observed.PathLawEquivalence` | Internal | Payoff-aware names projected from the unique controlled complete-path law carrier | `Relations` plus `Analytic` when needed | `Controlled.Law` | Adapter declarations only | Keep | I |
 | `EconCSLib.GameTheory.ExtensiveGame.Winning.Determinacy` | Canonical | Logical determinacy predicates, imperfect-information boundary, and proved finite perfect-information two-player zero-sum determinacy | `Interface.Winning` | — | Yes, assumption-explicit determinacy only | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Winning.BasicCompat` | Internal | Legacy payoff-aware winning-strategy compatibility layer | `Interface.Winning` | payoff-free declarations in `Winning.Basic` | Adapter declarations only | Keep | I |
 | `EconCSLib.GameTheory.ExtensiveGame.Winning.DeterminacyCompat` | Internal | Legacy `ObservedGame` determinacy packages and well-formedness bridges | `Interface.Winning` | payoff-free declarations in `Winning.Determinacy` | Adapter declarations only | Keep | I |
@@ -170,25 +168,19 @@ forming alternative canonical owners.
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.StrategyBridge` | Canonical | Uniform public navigation across strategy modes | `EqD` | — | Yes, navigation only | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.BehaviorMorphism` | Canonical | Strict behavioral transport and Nash equivalence | `EqD` | — | Yes, strict transfer | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.MorphismHierarchy` | Canonical | Relation hierarchy and agreement regressions | `EqD` | — | Yes, hierarchy only | Keep | C |
-| `EconCSLib.GameTheory.ExtensiveGame.Observed.Morphism` | Compatibility | Established strict-morphism aggregate | `EqD`/`Relations` | split `Observed.Morphism.*` leaves | No implementation | Thin wrapper | W |
-| `EconCSLib.GameTheory.ExtensiveGame.Observed.Morphism.Fiber` | Internal | Legacy forwarding import for neutral dependent-fiber helpers | `Relations` | `Execution.DependentFiber` | No new declarations | Keep | I |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Morphism.Structural` | Canonical | Strict observed-EFG isomorphism structure | `Relations` | — | Yes, structural relation | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Morphism.Inverse` | Internal | Inverse structural transport proofs | `Relations` | facade | Yes, proof helpers | Keep | I |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Morphism.Operational` | Canonical | Exact finite execution transport | `Relations` | — | Yes, transfer only | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Morphism.Continuation` | Canonical | Total continuation and lawful-system transport | `EqD` | — | Yes, transfer only | Keep | C |
-| `EconCSLib.GameTheory.ExtensiveGame.Observed.Refinement` | Compatibility | Established information-refinement aggregate | `EqD`/`Relations` | split `Observed.Refinement.*` leaves | No implementation | Thin wrapper | W |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Refinement.Structural` | Canonical | Information-refinement structure and maps | `Relations` | — | Yes, structural relation | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Refinement.Core` | Canonical | Pure bounded execution and directional Nash transfer | `EqD` | — | Yes, transfer only | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.Refinement.Termination` | Canonical | Termination-certified refinement transfer | `EqD` | — | Yes, transfer only | Keep | C |
-| `EconCSLib.GameTheory.ExtensiveGame.Observed.BehaviorRefinement` | Compatibility | Established behavioral-refinement aggregate | `EqD`/`Relations` | split leaves | No implementation | Thin wrapper | W |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.BehaviorRefinement.Structural` | Canonical | Chance-aware refinement and strategy lifting | `Relations` | — | Yes, structural relation | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.BehaviorRefinement.Execution` | Canonical | Behavioral execution and directional Nash transfer | `EqD` | — | Yes, transfer only | Keep | C |
-| `EconCSLib.GameTheory.ExtensiveGame.Relations.Preservation` | Canonical | Formal preservation-matrix certificate aliases, coupling interfaces, and compiler-specific strict/weak packages | `Interface.Relations` | — | Yes, relation vocabulary and packages only | Keep | C |
-| `EconCSLib.GameTheory.ExtensiveGame.Observed.DeferredSampling` | Compatibility | Established deferred-sampling aggregate | `EqD` | split leaves | No implementation | Thin wrapper | W |
+| `EconCSLib.GameTheory.ExtensiveGame.Relations.Preservation` | Canonical | Formal preservation-matrix certificate aliases, coupling interfaces, and compiler-specific strict/weak packages | `Relations` | — | Yes, relation vocabulary and packages only | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.DeferredSampling.Core` | Internal | Fresh information keys and finite table laws | `EqD` | facade | Yes, proof implementation | Keep | I |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.DeferredSampling.Execution` | Internal | Fresh-query execution equivalence | `EqD` | facade | Yes, proof implementation | Keep | I |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.DeferredSampling.Realization` | Internal | Deferred behavioral/mixed continuation transfer | `EqD` | facade | Yes, proof implementation | Keep | I |
-| `EconCSLib.GameTheory.ExtensiveGame.Observed.KuhnConditioning` | Compatibility | Established conditioning aggregate | `EqD` | split leaves | No implementation | Thin wrapper | W |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.KuhnConditioning.Posterior` | Internal | Posterior conditioning of complete plans | `EqD` | facade | Yes, proof implementation | Keep | I |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.KuhnConditioning.Core` | Internal | Posterior products and recall identities | `EqD` | facade | Yes, proof implementation | Keep | I |
 | `EconCSLib.GameTheory.ExtensiveGame.Observed.KuhnConditioning.Execution` | Internal | Sequential posterior execution equality | `EqD` | facade | Yes, proof implementation | Keep | I |
@@ -211,11 +203,6 @@ forming alternative canonical owners.
 | `EconCSLib.GameTheory.ExtensiveGame.Interface.Equilibrium.Analytic` | Canonical | Stable measurable outcome and continuation-equilibrium facade | `EqA` | — | Yes, no restart/compiler | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Interface.Restart` | Canonical | Stable fresh-restart compatibility facade | `Restart` | — | Yes, canonical routes only | Keep | C |
 | `EconCSLib.GameTheory.ExtensiveGame.Interface.Compilation.Discrete` | Canonical | Stable finite compiler and FOSG serialization facade | `Compile` | — | Yes, compilers only | Keep | C |
-| `EconCSLib.GameTheory.ExtensiveGame.Interface.Execution.Discrete` | Compatibility | Historical finite-plus-infinite discrete aggregate | `Finite` or `Infinite` | choose by horizon/law need | No implementation | Thin wrapper | W |
-| `EconCSLib.GameTheory.ExtensiveGame.Interface.Relations` | Compatibility | Historical relations plus analytic-execution aggregate | `Relations` and optionally `Analytic` | granular facades | No implementation | Thin wrapper | W |
-| `EconCSLib.GameTheory.ExtensiveGame.Interface.Equilibrium` | Compatibility | Historical discrete-plus-analytic equilibrium aggregate | `EqD` or `EqA` | granular facade | No implementation | Thin wrapper | W |
-| `EconCSLib.GameTheory.ExtensiveGame.Interface.Compilation` | Compatibility | Historical compiler plus analytic-equilibrium aggregate | `Compile` and optionally `EqA` | granular facades | No implementation | Thin wrapper | W |
-| `EconCSLib.GameTheory.ExtensiveGame.Interface.SimulationFramework` | Compatibility | Complete historical EFG stack aggregate | smallest granular facade | granular facades | No implementation | Thin wrapper | W |
 
 ## Simulation implementation
 
@@ -255,7 +242,6 @@ public import path.
 | `EconCSLib.GameTheory.ExtensiveGame.Simulation.Restart.Assembly` | Internal | Baseline-and-deviation compatibility assembly | `Restart` | facade | Yes, restart proof | Keep | I |
 | `EconCSLib.GameTheory.ExtensiveGame.Simulation.Restart.Equilibrium` | Internal | Canonical restart/continuation equilibrium transfer | `Restart` | facade | Yes, canonical route only | Keep | I |
 | `EconCSLib.GameTheory.ExtensiveGame.Simulation.Restart.Factorization` | Internal | Statistic and information-rebase certificate constructors | `Restart` | facade | Yes, constructors only | Keep | I |
-| `EconCSLib.GameTheory.ExtensiveGame.Simulation.ObservedMeasurableKernelRestartCompatibility` | Compatibility | Established complete restart implementation aggregate | `Restart` | restart leaves/facade | No implementation | Thin wrapper | W |
 
 ## Discrete execution and relation implementations
 
@@ -274,10 +260,6 @@ not change; only non-promised implementation import paths changed.
 
 | Module | Status | Responsibility | Recommended import | Replacement | May grow | Action | Removal policy |
 |---|---|---|---|---|---|---|---|
-| `EconCSLib.GameTheory.ExtensiveGame.Probability.ConditionalSampling` | Compatibility | Former EFG-local conditioning path | `PMF` or `PMF.ConditionalSampling` | Math probability module | No implementation | Thin wrapper | W |
-| `EconCSLib.GameTheory.ExtensiveGame.Probability.ConditionalProduct` | Compatibility | Former EFG-local conditional-product path | `PMF` or `PMF.ConditionalProduct` | Math probability module | No implementation | Thin wrapper | W |
-| `EconCSLib.GameTheory.ExtensiveGame.Probability.DeferredSampling` | Compatibility | Former EFG-local deferred-sampling path | `PMF` or `PMF.DeferredSampling` | Math probability module | No implementation | Thin wrapper | W |
-| `EconCSLib.GameTheory.ExtensiveGame.Probability.FiniteProductCoupling` | Compatibility | Former EFG-local finite-product/coupling aggregate | focused `PMF.*` module | Math probability modules | No implementation | Thin wrapper | W |
 | `EconCSLib.Math.Probability.PMF` | Canonical | Stable reusable PMF aggregate | `PMF` | — | Yes, aggregate imports only | Keep | C |
 | `EconCSLib.Math.Probability.PMF.Equiv` | Canonical | PMF pushforward equivalences | `PMF` or focused module | — | Yes, probability only | Keep | C |
 | `EconCSLib.Math.Probability.PMF.FiniteProduct` | Canonical | Finite dependent independent products | `PMF` or focused module | — | Yes, probability only | Keep | C |
@@ -294,7 +276,6 @@ not change; only non-promised implementation import paths changed.
 | `EconCSLib.GameTheory.GameForm` | Canonical | Stable aggregate for representation-neutral semantics | `GF` | — | Yes, aggregate imports only | Keep | C |
 | `EconCSLib.GameTheory.GameForm.Basic` | Canonical | Deterministic game forms, morphisms, and Nash transfer | `GF` | — | Yes, representation-neutral | Keep | C |
 | `EconCSLib.GameTheory.GameForm.Law` | Canonical | Law-valued game forms and exact realization | `GF` | — | Yes, representation-neutral | Keep | C |
-| `EconCSLib.GameTheory.GameForm.Continuation` | Compatibility | Established continuation-form aggregate | `GF` | split continuation leaves | No implementation | Thin wrapper | W |
 | `EconCSLib.GameTheory.GameForm.Continuation.Core` | Canonical | Continuation forms and functional transfer | `GF` | — | Yes, representation-neutral | Keep | C |
 | `EconCSLib.GameTheory.GameForm.Continuation.Simulation` | Canonical | Relational-root continuation simulation | `GF` | — | Yes, representation-neutral | Keep | C |
 | `EconCSLib.GameTheory.GameForm.Continuation.Iso` | Canonical | Invertible continuation semantics | `GF` | — | Yes, representation-neutral | Keep | C |
