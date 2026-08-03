@@ -31,7 +31,7 @@ reached. -/
 def continuationGameForm
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init)
     (fuel : ℕ) :
     GameForm N where
@@ -53,7 +53,7 @@ def IsPureNashOnRootsAtFuel
     {V : Type uV} [DecidableEq N] [Preorder V]
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (roots : G.RootPresentation)
     (utility : Option (N → U) → N → V)
     (profile : G.PureProfile)
@@ -69,7 +69,7 @@ def IsPureSubgamePerfectOnAtFuel
     {V : Type uV} [DecidableEq N] [Preorder V]
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (system : G.SubgameSystem)
     (utility : Option (N → U) → N → V)
     (profile : G.PureProfile)
@@ -85,7 +85,7 @@ def IsPureStandardSubgamePerfectAtFuel
     {V : Type uV} [DecidableEq N] [Preorder V]
     (G : ObservedGame N U)
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
-    (hNoChance : G.base.NoChance)
+    (hNoChance : G.base.NoChanceOnHistories)
     (system : G.CompleteSubgameSystem)
     (utility : Option (N → U) → N → V)
     (profile : G.PureProfile)
@@ -103,8 +103,8 @@ def continuationGameFormIso
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     [(t : H.base.State) → Decidable (H.base.isTerminal t)]
     (e : G.Iso H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init)
     (fuel : ℕ) :
     (G.continuationGameForm hNoChanceG current fuel).Iso
@@ -125,8 +125,8 @@ theorem continuationGameFormIso_utilityCompatible
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     [(t : H.base.State) → Decidable (H.base.isTerminal t)]
     (e : G.Iso H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (utility : Option (N → U) → N → V)
     (current : G.base.toArena.HistoryFrom G.base.init)
     (fuel : ℕ) :
@@ -147,8 +147,8 @@ theorem isPureNashOnRootsAtFuel_iff
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     [(t : H.base.State) → Decidable (H.base.isTerminal t)]
     (e : G.Iso H)
-    (hNoChanceG : G.base.NoChance)
-    (hNoChanceH : H.base.NoChance)
+    (hNoChanceG : G.base.NoChanceOnHistories)
+    (hNoChanceH : H.base.NoChanceOnHistories)
     (sourceRoots : G.RootPresentation)
     (targetRoots : H.RootPresentation)
     (hroots :
