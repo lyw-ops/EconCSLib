@@ -59,7 +59,7 @@ theorem noChance :
 behavioral API. -/
 def game : _root_.ExtensiveGame.ObservedChanceGame (Fin 1) ℤ :=
   _root_.ExtensiveGame.ObservedChanceGame.ofNoChance
-    absentMindedGame noChance
+    absentMindedGame noChance.noChanceOnHistories
 
 instance terminalDecidable
     (state : game.observed.base.State) :
