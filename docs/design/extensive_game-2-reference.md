@@ -89,9 +89,9 @@ GameTheory/ExtensiveGame/
     Compilation/Discrete.lean
 ```
 
-`Interface.SimulationFramework` is a compatibility-only complete-stack import,
-not the preferred stable entry point. New code imports the smallest granular
-facade above. The complete lifecycle register is
+The former complete-stack aggregate was deleted before API stability. New
+code imports the smallest granular facade above and combines sibling branches
+explicitly. The complete lifecycle register is
 [`efg-module-status.md`](efg-module-status.md), and the supported declaration
 surface is documented in [`efg-public-api.md`](efg-public-api.md).
 
