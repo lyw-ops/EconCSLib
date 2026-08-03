@@ -153,6 +153,12 @@ theorem toExtensiveGame_noChance (root : GameTree N U) :
   | Node mover head tail =>
       exact ⟨mover, rfl⟩
 
+/-- Reachable specialization of the compiled tree's ambient no-chance
+certificate for canonical pure execution and equilibrium APIs. -/
+theorem toExtensiveGame_noChanceOnHistories (root : GameTree N U) :
+    (toExtensiveGame root).NoChanceOnHistories :=
+  (toExtensiveGame_noChance root).noChanceOnHistories
+
 /-! ### Histories and designated continuation roots -/
 
 /-- The endpoint of every compiled Arena history is a subtree of the original
@@ -317,7 +323,7 @@ tree strategy. -/
 def strategyHistoryPolicy (root : GameTree N U) (σ : Strategy N U) :
     (toExtensiveGame root).toArena.HistoryPolicy root :=
   (strategyToObservedProfile root σ).toHistoryPolicy
-    (toObservedGame root) (toExtensiveGame_noChance root)
+    (toObservedGame root) (toExtensiveGame_noChanceOnHistories root)
 
 /-- The terminal-aware base-history policy induced by a translated
 strategic-form player profile. -/
@@ -325,7 +331,7 @@ def playerProfileHistoryPolicy (root : GameTree N U)
     (σ : N → PlayerStrategy N U) :
     (toExtensiveGame root).toArena.HistoryPolicy root :=
   (playerProfileToObservedProfile root σ).toHistoryPolicy
-    (toObservedGame root) (toExtensiveGame_noChance root)
+    (toObservedGame root) (toExtensiveGame_noChanceOnHistories root)
 
 /-- At a concrete node history, translating a global tree strategy prescribes
 exactly its original child choice. -/
@@ -446,7 +452,7 @@ theorem stoppedPayoff_strategy_eq_outcome
     @ExtensiveGame.ObservedGame.stoppedPayoff N U
         (toObservedGame root) (toExtensiveGame_terminalDecidable root)
         (strategyToObservedProfile root σ)
-        (toExtensiveGame_noChance root) root.size =
+        (toExtensiveGame_noChanceOnHistories root) root.size =
       some (outcome σ root) := by
   obtain ⟨payoff, hendpoint, hpayoff⟩ :=
     stoppedHistory_strategy_reaches_outcome root σ
@@ -480,7 +486,7 @@ theorem stoppedPayoff_playerProfile_eq_outcome
     @ExtensiveGame.ObservedGame.stoppedPayoff N U
         (toObservedGame root) (toExtensiveGame_terminalDecidable root)
         (playerProfileToObservedProfile root σ)
-        (toExtensiveGame_noChance root) root.size =
+        (toExtensiveGame_noChanceOnHistories root) root.size =
       some (outcome (profileStrategy σ) root) := by
   have hreaches :
       ∃ payoff : N → U,
@@ -564,7 +570,7 @@ theorem stoppedHistoryFrom_observedProfile_reaches_outcome
     (fuel : ℕ) (hsize : current.1.size ≤ fuel) :
     ∃ payoff : N → U,
       ((toObservedGame root).stoppedHistoryFrom profile
-        (toExtensiveGame_noChance root) current fuel).1 =
+        (toExtensiveGame_noChanceOnHistories root) current fuel).1 =
           GameTree.Leaf payoff ∧
       payoff =
         outcome
@@ -587,7 +593,7 @@ every admissible history root. -/
 theorem toObservedGame_pureTerminatingOnAllContinuations
     (root : GameTree N U) :
     (toObservedGame root).PureTerminatingOnRoots
-      (toExtensiveGame_noChance root)
+      (toExtensiveGame_noChanceOnHistories root)
       (ExtensiveGame.ObservedGame.ContinuationRootPresentation.allHistories
         (toObservedGame root).base) := by
   intro current _hroot profile
@@ -608,9 +614,9 @@ theorem terminalPayoffFrom_observedProfile_eq_outcome
       (toExtensiveGame root).toArena.HistoryFrom root)
     (hterminates :
       (toObservedGame root).PureTerminatesFrom profile
-        (toExtensiveGame_noChance root) current) :
+        (toExtensiveGame_noChanceOnHistories root) current) :
     (toObservedGame root).terminalPayoffFrom profile
-        (toExtensiveGame_noChance root) current hterminates =
+        (toExtensiveGame_noChanceOnHistories root) current hterminates =
       outcome
         (profileStrategy
           (observedProfileToPlayerProfile root profile))
@@ -622,17 +628,17 @@ theorem terminalPayoffFrom_observedProfile_eq_outcome
   have hterminal :
       (toExtensiveGame root).isTerminal
         ((toObservedGame root).stoppedHistoryFrom profile
-          (toExtensiveGame_noChance root) current root.size).1 := by
+          (toExtensiveGame_noChanceOnHistories root) current root.size).1 := by
     rw [hendpoint]
     exact toExtensiveGame_isTerminal_leaf root payoff
   rw [ExtensiveGame.ObservedGame.terminalPayoffFrom,
     (toObservedGame root).terminalHistoryFrom_eq_of_terminal
-      profile (toExtensiveGame_noChance root) current
+      profile (toExtensiveGame_noChanceOnHistories root) current
       hterminates root.size hterminal]
   calc
     (toExtensiveGame root).payoff
         ((toObservedGame root).stoppedHistoryFrom profile
-          (toExtensiveGame_noChance root) current root.size).1 =
+          (toExtensiveGame_noChanceOnHistories root) current root.size).1 =
         (toExtensiveGame root).payoff (.Leaf payoff) :=
       congrArg (toExtensiveGame root).payoff hendpoint
     _ = payoff := toExtensiveGame_payoff_leaf root payoff
@@ -649,7 +655,7 @@ noncomputable def terminalContinuationGameFormIso
       (toExtensiveGame root).toArena.HistoryFrom root) :
     (toGameForm current.1).Iso
       ((toObservedGame root).terminalContinuationGameForm
-        (toExtensiveGame_noChance root) current
+        (toExtensiveGame_noChanceOnHistories root) current
         ((toObservedGame_pureTerminatingOnAllContinuations root)
           current trivial)) where
   strategyEquiv := fun i => (playerStrategyEquiv root i).symm
@@ -660,7 +666,7 @@ noncomputable def terminalContinuationGameFormIso
       outcome (profileStrategy profile) current.1 =
         (toObservedGame root).terminalPayoffFrom
           (playerProfileToObservedProfile root profile)
-          (toExtensiveGame_noChance root) current _
+          (toExtensiveGame_noChanceOnHistories root) current _
     rw [terminalPayoffFrom_observedProfile_eq_outcome,
       observedProfileToPlayerProfile_toObserved]
 
@@ -685,7 +691,7 @@ theorem terminalContinuationGameForm_isNash_iff_isNashAt
     (current :
       (toExtensiveGame root).toArena.HistoryFrom root) :
     ((toObservedGame root).terminalContinuationGameForm
-        (toExtensiveGame_noChance root) current
+        (toExtensiveGame_noChanceOnHistories root) current
         ((toObservedGame_pureTerminatingOnAllContinuations root)
           current trivial)).IsNash
         (fun payoff : N → U => payoff)
@@ -693,7 +699,7 @@ theorem terminalContinuationGameForm_isNash_iff_isNashAt
       IsNashAt (profileStrategy profile) current.1 := by
   calc
     ((toObservedGame root).terminalContinuationGameForm
-        (toExtensiveGame_noChance root) current
+        (toExtensiveGame_noChanceOnHistories root) current
         ((toObservedGame_pureTerminatingOnAllContinuations root)
           current trivial)).IsNash
         (fun payoff : N → U => payoff)
@@ -722,7 +728,7 @@ theorem observed_isPureNashOnAllContinuations_iff_isGlobalEndpointSubgamePerfect
     (root : GameTree N U)
     (profile : N → PlayerStrategy N U) :
     (toObservedGame root).IsPureNashOnRoots
-        (toExtensiveGame_noChance root)
+        (toExtensiveGame_noChanceOnHistories root)
         (ExtensiveGame.ObservedGame.ContinuationRootPresentation.allHistories
           (toObservedGame root).base)
         (toObservedGame_pureTerminatingOnAllContinuations root)
@@ -778,7 +784,7 @@ theorem stoppedPayoff_observedProfile_eq_gameFormOutcome
     (σ : (toObservedGame root).PureProfile) :
     @ExtensiveGame.ObservedGame.stoppedPayoff N U
         (toObservedGame root) (toExtensiveGame_terminalDecidable root)
-        σ (toExtensiveGame_noChance root) root.size =
+        σ (toExtensiveGame_noChanceOnHistories root) root.size =
       some ((observedToGameForm root).outcome σ) := by
   rw [← playerProfileToObservedProfile_toPlayer root σ]
   exact stoppedPayoff_playerProfile_eq_outcome root
