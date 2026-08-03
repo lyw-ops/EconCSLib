@@ -16,8 +16,9 @@ The canonical carrier and theorem layer live in
 `Observed.Controlled.Semantics` and depend only on `ControlledObservedGame`.
 This module preserves the established `ObservedGame.ContinuationSemantics`
 spelling by projecting through `toControlledObservedGame`. It does not inspect
-or store state payoffs. Its cross-game standard-SPE wrapper permits different
-source and target state-payoff types.
+or store state payoffs. Evaluator-relative equilibrium remains distinct from
+operational standard SPE, which remains owned by concrete execution layers.
+Cross-game wrappers permit different source and target state-payoff types.
 -/
 
 namespace ExtensiveGame.ObservedGame
@@ -80,9 +81,9 @@ def IsNashOnPresentationAt
   (S.toIndexedGameFormOnPresentation roots).IsNashOnRootsAt
     utility horizon profile
 
-/-- Compatibility definition of subgame perfection on a selected lawful
-payoff-free subgame system. -/
-def IsSubgamePerfectOnAt
+/-- Compatibility definition of evaluator-relative continuation equilibrium
+on a selected lawful payoff-free subgame system. -/
+def IsEvaluatorContinuationEquilibriumOnAt
     {V : Type uV} [DecidableEq N] [Preorder V]
     (S : G.ContinuationSemantics)
     (system : G.SubgameSystem)
@@ -90,12 +91,12 @@ def IsSubgamePerfectOnAt
       G.base.toArena.HistoryFrom G.base.init →
         S.Outcome → N → V)
     (horizon : S.Horizon) (profile : S.Profile) : Prop :=
-  ControlledObservedGame.ContinuationSemantics.IsSubgamePerfectOnAt
+  ControlledObservedGame.ContinuationSemantics.IsEvaluatorContinuationEquilibriumOnAt
     S system utility horizon profile
 
-/-- Compatibility definition of standard SPE on every lawful payoff-free
-subgame root. -/
-def IsStandardSubgamePerfectAt
+/-- Compatibility definition of evaluator-relative continuation equilibrium
+on every lawful payoff-free subgame root. -/
+def IsEvaluatorContinuationEquilibriumAt
     {V : Type uV} [DecidableEq N] [Preorder V]
     (S : G.ContinuationSemantics)
     (system : G.CompleteSubgameSystem)
@@ -103,7 +104,7 @@ def IsStandardSubgamePerfectAt
       G.base.toArena.HistoryFrom G.base.init →
         S.Outcome → N → V)
     (horizon : S.Horizon) (profile : S.Profile) : Prop :=
-  ControlledObservedGame.ContinuationSemantics.IsStandardSubgamePerfectAt
+  ControlledObservedGame.ContinuationSemantics.IsEvaluatorContinuationEquilibriumAt
     S system utility horizon profile
 
 /-- The compatibility presentation adapter introduces no new equilibrium
@@ -121,11 +122,11 @@ theorem isNashOnPresentationAt_iff
         utility horizon profile :=
   Iff.rfl
 
-/-- Compatibility form of the payoff-free standard-SPE transfer theorem.
+/-- Compatibility form of the payoff-free abstract game-form transfer theorem.
 
 Source and target state-payoff types may differ because neither payoff field
 participates in continuation evaluation or utility compatibility. -/
-theorem isStandardSubgamePerfectAt_iff_of_surjective
+theorem isEvaluatorContinuationEquilibriumAt_iff_of_surjective
     {W : Type uW} {H : ObservedGame N W}
     {V : Type uV} [DecidableEq N] [Preorder V]
     (S : G.ContinuationSemantics)
@@ -151,13 +152,13 @@ theorem isStandardSubgamePerfectAt_iff_of_surjective
     (hroot : f.DeclaredRootSurjective)
     (horizon : S.Horizon)
     (profile : S.Profile) :
-    S.IsStandardSubgamePerfectAt sourceSystem
+    S.IsEvaluatorContinuationEquilibriumAt sourceSystem
         (sourceUtility horizon) horizon profile ↔
-      T.IsStandardSubgamePerfectAt targetSystem
+      T.IsEvaluatorContinuationEquilibriumAt targetSystem
         (targetUtility (f.horizonMap horizon))
         (f.horizonMap horizon) (f.mapProfile profile) := by
   exact
-    ExtensiveGame.ControlledObservedGame.ContinuationSemantics.isStandardSubgamePerfectAt_iff_of_surjective
+    ExtensiveGame.ControlledObservedGame.ContinuationSemantics.isEvaluatorContinuationEquilibriumAt_iff_of_surjective
         S T sourceSystem targetSystem f
         sourceUtility targetUtility hutility hstrategy hroot horizon profile
 
