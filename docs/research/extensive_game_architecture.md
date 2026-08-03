@@ -43,7 +43,7 @@ The first transfer layer is now implemented:
 - [`GameForm/Basic.lean`](../../EconCSLib/GameTheory/GameForm/Basic.lean)
   defines deterministic strategy/outcome forms, composable morphisms,
   deviation-sensitive Nash reflection, and game-form isomorphisms;
-- [`GameForm/Continuation.lean`](../../EconCSLib/GameTheory/GameForm/Continuation.lean)
+- [`GameForm/Continuation/Core.lean`](../../EconCSLib/GameTheory/GameForm/Continuation/Core.lean)
   defines representation-neutral families of continuation game forms with one
   shared complete strategy space, declared roots, composable semantic
   morphisms/isomorphisms, and generic Nash-on-declared-roots reflection/two-way transfer;
@@ -62,9 +62,11 @@ The first transfer layer is now implemented:
   decision information, transports declared abstract actions through explicit
   concrete equivalences, and compiles the result to `ObservedGame` with explicit
   admitted-root data.
-- [`Morphism.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Observed/Morphism.lean)
+- [`Morphism/Structural.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Observed/Morphism/Structural.lean)
   defines strict structural observed-EFG isomorphisms and proves exact
-  continuation and bounded pure Nash transfer on presentation-designated continuations; strict isomorphisms compose.
+  mapping and composition; operational and continuation transfer are split
+  into neighboring `Morphism/Operational.lean` and
+  `Morphism/Continuation.lean` leaves.
 - [`PerfectRecall.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Observed/PerfectRecall.lean)
   defines personal information/action histories, singleton information, and
   perfect recall; adds compiler-facing recall factorization certificates
@@ -74,7 +76,7 @@ The first transfer layer is now implemented:
   turns existential pure termination into a choice-independent total outcome
   and proves standard pure-SPE transfer relative to an explicit lawful
   `SubgameSystem`.
-- [`Refinement.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Observed/Refinement.lean)
+- [`Refinement/Core.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Observed/Refinement/Core.lean)
   defines composable information refinements, exact strategy lifting and
   execution, directional Nash-on-designated-continuations reflection, and two-way transfer under an
   explicit strategy-surjectivity condition.
@@ -88,7 +90,7 @@ The first transfer layer is now implemented:
   transports those profiles through strict observed chance-EFG
   isomorphisms, proves exact bounded history and payoff-law naturality, and
   transfers behavioral Nash on presentation-designated continuations in both directions.
-- [`BehaviorRefinement.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Observed/BehaviorRefinement.lean)
+- [`BehaviorRefinement/Execution.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Observed/BehaviorRefinement/Execution.lean)
   extends information refinements with exact chance-kernel naturality, lifts
   behavioral profiles, preserves complete bounded history and payoff `PMF`s,
   reflects behavioral Nash on presentation-designated continuations from fine to coarse information, and gives
@@ -130,7 +132,7 @@ The first transfer layer is now implemented:
   [`ConditionalProduct.lean`](../../EconCSLib/Math/Probability/PMF/ConditionalProduct.lean)
   prove total discrete fiber conditioning, exact disintegration, and
   coordinate conditioning for finite independent dependent products.
-- [`KuhnConditioning.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Observed/KuhnConditioning.lean)
+- [`KuhnConditioning/Realization.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Observed/KuhnConditioning/Realization.lean)
   constructs the root-scoped mixed-to-behavioral map by conditioning on
   continuation-relative personal decisions. It proves exact bounded
   history/payoff-law realization, semantic unilateral-deviation coverage,
@@ -144,7 +146,7 @@ The first transfer layer is now implemented:
   coordinate splitting, PMF bind commutativity, and structural freshness give
   exact equality between full-table presampling and adaptive on-demand
   sampling.
-- [`DeferredSampling.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Observed/DeferredSampling.lean)
+- [`DeferredSampling/Realization.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Observed/DeferredSampling/Realization.lean)
   compiles bounded observed chance-EFG execution to the fresh-query tree.
   No-absent-mindedness propagates a future-closed set of available
   player/information keys. Under finite information, the resulting theorem
@@ -181,7 +183,7 @@ The first transfer layer is now implemented:
 - [`FOSG.lean`](../../EconCSLib/GameTheory/ExtensiveGame/FOSG/FOSG.lean)
   defines FOSG macro dynamics, history-augmented observations, and the
   chance-consistent weak-serialization boundary.
-- [`FOSGSequentialization.lean`](../../EconCSLib/GameTheory/ExtensiveGame/FOSG/FOSGSequentialization.lean)
+- [`Sequentialization/Equilibrium.lean`](../../EconCSLib/GameTheory/ExtensiveGame/FOSG/Sequentialization/Equilibrium.lean)
   implements that boundary for `Fin (n + 1)` players and proves exact initial
   and one-macro-step distributional coupling, a macro-boundary kernel
   simulation, compilation of arbitrary history-level randomized joint-action
