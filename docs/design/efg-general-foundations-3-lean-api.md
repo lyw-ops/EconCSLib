@@ -63,19 +63,19 @@ honestly.
 | `Observed/Controlled/Compat/Morphism.lean` | Internal adapter, implemented | payoff commuting square and legacy `ObservedGame.Iso` projection | compatibility consumers |
 | `Observed/Controlled/Law/Discrete.lean` | Canonical, implemented | payoff-free discrete chance and bounded complete-history PMFs | `Interface.Execution.Finite` |
 | `Observed/Controlled/Law/DiscretePath.lean` | Canonical adapter, implemented | actual PMF behavioral executor packaged as the common lawful path probability | `Interface.Execution.Infinite` |
-| `Observed/Controlled/Law.lean` | Canonical, implemented | payoff-free normalized/lawful path carrier, measurable interpretation hierarchy, execution coherence, and same/cross-game realizations | `Interface.Relations` |
+| `Observed/Controlled/Law.lean` | Canonical, implemented | payoff-free normalized/lawful per-root path marginals, measurable interpretation hierarchy, execution coherence, and same/cross-game realizations | `Interface.Relations.Discrete` plus `Interface.Execution.Analytic` as needed |
 | `Observed/Controlled/Law/Analytic.lean` | Canonical adapter, implemented | actual measurable-kernel state/history path law packaged in the common carrier under explicit legality | `Interface.Execution.Analytic` |
 | `Observed/FiniteUnfolding.lean` | Canonical, implemented | finite occurrence-sensitive carrier with strict structural, recall, root/subgame, chance, deviation, and bounded-law preservation | `Interface.Execution.Finite` |
 | `Observed/SignalRecall.lean` | Internal adapter, implemented | legacy payoff-aware private/public recall names projected from `Controlled.Infrastructure` | downstream compatibility |
 | `Observed/LawEquivalence.lean` | Canonical, implemented | bounded history/terminal/payoff-law hierarchy and concrete Kuhn realizations | `Interface.Equilibrium.Discrete` |
-| `Observed/PathLawEquivalence.lean` | Internal adapter, implemented | payoff-aware names projected from the unique controlled path-law carrier | `Interface.Relations` |
+| `Observed/PathLawEquivalence.lean` | Internal adapter, implemented | payoff-aware names projected from the unique controlled path-law carrier | `Interface.Relations.Discrete` plus `Interface.Execution.Analytic` as needed |
 | `Observed/Quasi.lean` | Internal adapter, implemented | legacy payoff-aware quasistrategy names projected from `Controlled.Infrastructure` | downstream compatibility |
 | `Observed/General.lean` | Canonical, implemented | discrete general-strategy carriers and embeddings | discrete equilibrium facade |
 | `Simulation/Equilibrium/General.lean` | Internal | measurable mixed/general strategy laws and expected utility | analytic equilibrium facade |
 | `Winning/Basic.lean` | Canonical, implemented | winning conditions, totality, exclusivity, prefix decisions, and strategy compatibility | `Interface.Objective` |
 | `Winning/Topology.lean` | Canonical, implemented | finite agreement cylinders, prefix topology, open/closed/measurable objectives | `Interface.Objective` |
 | `Winning/Determinacy.lean` | Canonical, finite theorem implemented | determinacy predicates and finite/well-founded hypothesis packages; finite perfect-information existence is proved, while well-founded/Gale--Stewart existence remains pending | `Interface.Winning` |
-| `Relations/Preservation.lean` | Canonical, implemented | formal preservation-matrix certificates and compiler-specific packages | `Interface.Relations` |
+| `Relations/Preservation.lean` | Canonical, implemented | formal preservation-matrix certificates and compiler-specific packages | `Interface.Relations.Discrete` |
 | `Winning/Chance.lean` | Canonical, implemented for discrete path laws | almost-sure winning under a fixed stochastic law, separate from robust winning | `Interface.Winning.Stochastic` |
 | `Interface/Winning.lean` | Canonical, implemented | stable probability-free logical-game facade | explicit opt-in |
 | `Interface/Winning/Stochastic.lean` | Canonical, implemented | discrete infinite almost-sure-winning facade | explicit opt-in |
