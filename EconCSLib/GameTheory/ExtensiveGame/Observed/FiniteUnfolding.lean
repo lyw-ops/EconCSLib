@@ -828,19 +828,19 @@ theorem perfectRecall_iff
 
 /-- Private-signal perfect recall is preserved and reflected by finite
 occurrence unfolding. -/
-theorem signalPerfectRecall_iff
+theorem eventClockSignalPerfectRecall_iff
     (h : G.FiniteEFGHypotheses) :
-    h.toFiniteObservedGame.SignalPerfectRecall ↔
-      G.SignalPerfectRecall :=
-  h.toOriginalIso.signalPerfectRecall_iff
+    h.toFiniteObservedGame.EventClockSignalPerfectRecall ↔
+      G.EventClockSignalPerfectRecall :=
+  h.toOriginalIso.eventClockSignalPerfectRecall_iff
 
 /-- Public-signal perfect recall is preserved and reflected by finite
 occurrence unfolding. -/
-theorem publicPerfectRecall_iff
+theorem eventClockPublicPerfectRecall_iff
     (h : G.FiniteEFGHypotheses) :
-    h.toFiniteObservedGame.HasPublicPerfectRecall ↔
-      G.HasPublicPerfectRecall :=
-  h.toOriginalIso.hasPublicPerfectRecall_iff
+    h.toFiniteObservedGame.HasEventClockPublicPerfectRecall ↔
+      G.HasEventClockPublicPerfectRecall :=
+  h.toOriginalIso.hasEventClockPublicPerfectRecall_iff
 
 /-- Private observation is evaluated on the represented original complete
 history. -/
@@ -1345,13 +1345,13 @@ noncomputable def boundedHistoryLawPreservation
         G.base.isChanceState history.1 →
           PMF (G.base.Action history.1)) :
     DiscreteControlledObservedChanceGame.CrossGameBoundedCompleteHistoryLawRealization
-      (@DiscreteControlledObservedChanceGame.behavioralBoundedCompleteHistoryLawSemantics
+      ((@DiscreteControlledObservedChanceGame.behavioralCertifiedExecutionLaw
           _ (h.toFiniteObservedChanceGame chanceKernel)
-          finiteTerminalDecidable)
-      (@DiscreteControlledObservedChanceGame.behavioralBoundedCompleteHistoryLawSemantics
+          finiteTerminalDecidable).toBoundedHistoryLawFamily)
+      ((@DiscreteControlledObservedChanceGame.behavioralCertifiedExecutionLaw
           _ (DiscreteControlledObservedChanceGame.withChanceKernel
             G chanceKernel)
-          originalTerminalDecidable) where
+          originalTerminalDecidable).toBoundedHistoryLawFamily) where
   mapStrategy := fun i =>
     h.behavioralStrategyEquiv chanceKernel i
   mapHistory :=
