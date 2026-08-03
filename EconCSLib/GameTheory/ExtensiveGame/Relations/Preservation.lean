@@ -84,7 +84,7 @@ strategy maps and exact occurrence-sensitive PMF equality. -/
 abbrev CompleteHistoryLawRealization
     {N : Type uN}
     (G : DiscreteControlledObservedChanceGame N)
-    (S T : G.BoundedCompleteHistoryLawSemantics) :=
+    (S T : G.BoundedHistoryLawFamily) :=
   S.CompleteHistoryLawRealization T
 
 /-- A coupling of two path laws supported almost surely on a relation.
