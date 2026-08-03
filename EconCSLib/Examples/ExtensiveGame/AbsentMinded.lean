@@ -39,7 +39,7 @@ at `s0` and again at `s1`, on one history.
   information set crosses the continuation boundary.
 * `Examples.AbsentMinded.not_hasNoAbsentMindedness` and
   `not_noAbsentMindedness` — `HasNoAbsentMindedness`/`NoAbsentMindedness` fail.
-* `not_signalPerfectRecall` — signal recall fails as a consequence, without
+* `not_eventClockSignalPerfectRecall` — event-clock signal recall fails as a consequence, without
   conflating it with classic perfect recall.
 * `Examples.AbsentMinded.futureDecisionKeysAvailable_firstDecision` — the
   non-freshness premises are genuinely satisfied before the first move.
@@ -218,8 +218,8 @@ theorem not_noAbsentMindedness :
 /-- The absent-minded presentation cannot satisfy signal perfect recall,
 because signal recall would rule out recurrence of the same decision
 information state along one play. -/
-theorem not_signalPerfectRecall :
-    ¬ absentMindedGame.SignalPerfectRecall :=
+theorem not_eventClockSignalPerfectRecall :
+    ¬ absentMindedGame.EventClockSignalPerfectRecall :=
   fun h =>
     not_noAbsentMindedness h.noAbsentMindedness
 
