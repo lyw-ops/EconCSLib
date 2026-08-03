@@ -635,8 +635,13 @@ def strip_lean_comments_and_strings(text: str) -> str:
 def local_import_graph(root: Path) -> tuple[dict[str, set[str]], list[str]]:
     graph: dict[str, set[str]] = {}
     errors: list[str] = []
-    for path in root.rglob("*.lean"):
-        if ".lake" in path.parts:
+    # Traverse only repository-owned Lean sources. Filtering `.lake` after a
+    # repository-wide `rglob` is too late: the glob has already descended into
+    # Mathlib and every cached dependency before the filter sees each path.
+    paths = [root / "EconCSLib.lean"]
+    paths.extend((root / "EconCSLib").rglob("*.lean"))
+    for path in paths:
+        if not path.is_file():
             continue
         module = module_name(path, root)
         if module is None:
