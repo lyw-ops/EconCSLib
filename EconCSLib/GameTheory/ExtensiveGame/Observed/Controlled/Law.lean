@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
 import EconCSLib.GameTheory.ExtensiveGame.Execution.InfiniteTrajectory
+import EconCSLib.GameTheory.ExtensiveGame.Execution.Objective
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism.Core
 
 /-!
@@ -18,6 +19,11 @@ Every stored law is certified to be a probability measure and to satisfy the
 canonical terminal-absorbing complete-play predicate almost surely.  Local
 execution or chance-kernel coherence is deliberately orthogonal and is
 expressed by `RealizesExecution` or `ExecutionCoherent`.
+
+The carrier is a family of lawful path marginals, one for each starting
+history. It does not by itself assert that those marginals are versions of one
+joint causal process. Restart, conditioning, and cross-root coherence require
+an additional named certificate.
 
 Same-game strategy realization and cross-game functional realization are
 separate structures.  A cross-game realization records measurable history and
@@ -164,14 +170,32 @@ theorem BoundedCompleteHistoryLawEquivalentAt.interpreted
 
 /-! ## Downstream measurable interpretations -/
 
-/-- Terminal-history law equality under an explicitly measurable
-terminalization map. -/
-def TerminalHistoryLawEquivalentAt
+/-- History-law equality under an arbitrary explicitly measurable history
+transform.
+
+No terminality claim is attached to this generic transform. -/
+def HistoryTransformLawEquivalentAt
     (S T : G.CompletePathLawSemantics)
     (source : S.Profile) (target : T.Profile)
     (current : G.base.History)
     (time : ℕ)
     (terminalize : G.base.History → G.base.History)
+    (hterminalize : Measurable terminalize) : Prop :=
+  S.interpretedHistoryLaw
+      source current time terminalize hterminalize =
+    T.interpretedHistoryLaw
+      target current time terminalize hterminalize
+
+/-- Terminal-history law equality under an explicitly measurable map whose
+codomain carries a proof that every result is terminal. -/
+def TerminalHistoryLawEquivalentAt
+    (S T : G.CompletePathLawSemantics)
+    (source : S.Profile) (target : T.Profile)
+    (current : G.base.History)
+    (time : ℕ)
+    (terminalize :
+      G.base.History →
+        G.base.toArena.TerminalHistoryFrom G.base.init)
     (hterminalize : Measurable terminalize) : Prop :=
   S.interpretedHistoryLaw
       source current time terminalize hterminalize =
@@ -206,8 +230,9 @@ abbrev PayoffLawEquivalentAt
   S.OutcomeLawEquivalentAt
     T source target current time payoff hpayoff
 
-/-- Bounded history equality implies terminal-history equality. -/
-theorem BoundedCompleteHistoryLawEquivalentAt.terminalHistory
+/-- Bounded history equality is preserved by an arbitrary measurable history
+transform. -/
+theorem BoundedCompleteHistoryLawEquivalentAt.historyTransform
     {S T : G.CompletePathLawSemantics}
     {source : S.Profile} {target : T.Profile}
     {current : G.base.History}
@@ -216,6 +241,24 @@ theorem BoundedCompleteHistoryLawEquivalentAt.terminalHistory
       S.BoundedCompleteHistoryLawEquivalentAt
         T source target current time)
     (terminalize : G.base.History → G.base.History)
+    (hterminalize : Measurable terminalize) :
+    S.HistoryTransformLawEquivalentAt
+      T source target current time terminalize hterminalize :=
+  hhistory.interpreted terminalize hterminalize
+
+/-- Bounded history equality implies equality after any measurable transform
+into the terminal-history subtype. -/
+theorem BoundedCompleteHistoryLawEquivalentAt.terminalHistory
+    {S T : G.CompletePathLawSemantics}
+    {source : S.Profile} {target : T.Profile}
+    {current : G.base.History}
+    {time : ℕ}
+    (hhistory :
+      S.BoundedCompleteHistoryLawEquivalentAt
+        T source target current time)
+    (terminalize :
+      G.base.History →
+        G.base.toArena.TerminalHistoryFrom G.base.init)
     (hterminalize : Measurable terminalize) :
     S.TerminalHistoryLawEquivalentAt
       T source target current time terminalize hterminalize :=
