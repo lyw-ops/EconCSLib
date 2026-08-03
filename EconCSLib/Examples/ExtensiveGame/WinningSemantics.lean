@@ -108,6 +108,10 @@ theorem noChance : base.NoChance := by
   | terminal first second =>
       exact (hnonterminal (terminal_terminal first second)).elim
 
+/-- Reachable no-chance certificate consumed by strategic execution. -/
+theorem noChanceOnHistories : base.NoChanceOnHistories :=
+  noChance.noChanceOnHistories
+
 def zeroStrategy : game.PureStrategy 0 :=
   fun _ => false
 
@@ -127,17 +131,17 @@ def winning :
 the generated play is in player `0`'s winning set. -/
 theorem zero_strategic :
     game.HasStrategicWinningStrategy
-      noChance winning 0 zeroStrategy := by
+      noChanceOnHistories winning 0 zeroStrategy := by
   constructor
   · exact ⟨fun _ _ => false, rfl⟩
   · intro profile _hprofile
     change ∃ strategy : game.PureStrategy 1,
       game.IsCompatibleWithPlayerStrategy 1 strategy
-        ((profile.toHistoryPolicy game noChance).completePlay)
+        ((profile.toHistoryPolicy game noChanceOnHistories).completePlay)
     exact
       ⟨profile 1,
         profile.completePlay_isCompatibleWithPlayerStrategy
-          noChance 1⟩
+          noChanceOnHistories 1⟩
 
 def initial : arena.HistoryFrom .root :=
   Arena.HistoryFrom.nil arena .root
