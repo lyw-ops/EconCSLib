@@ -183,19 +183,20 @@ designated continuation is not a complete subgame system.
 
 ### Compatibility
 
-A compatibility module:
+A temporary compatibility module, if introduced after API stability:
 
-- preserves its import path;
+- must be explicitly listed in both the module-status register and governance
+  temporary registry;
 - contains only imports and a module docstring;
 - names the granular or canonical replacement;
 - must not define new implementation; and
-- may be removed only in a major release after internal users are zero and the
-  migration window is documented.
+- is removed after internal users are zero and the migration window is
+  documented.
 
-The broad `Interface.Execution.Discrete`, `Relations`, `Equilibrium`,
-`Compilation`, and `SimulationFramework` imports preserve their historical
-closures.  New code imports a granular facade and may not rely on accidental
-transitive declarations.
+There are currently zero temporary compatibility modules. The pre-release
+broad Interface, implementation aggregate, former EFG-local probability, and
+other redirect-only paths were hard-deleted after internal consumers
+migrated. New code imports a granular facade or defining leaf.
 
 ### Internal and experimental
 
@@ -291,11 +292,11 @@ EFG theorem.
 
 | Path or family | Decision | Replacement or distinction |
 |---|---|---|
-| `BehaviorStrategy` | Keep as import-only wrapper; never restore removed declarations | `ObservedGame.BehavioralStrategy`, normalized chance kernels, and `Finite`/`EqD` |
-| `Play` | Keep as import-only wrapper | terminal-aware `Execution.StoppedExecution` / `Finite` |
-| `ExtensiveGame.Probability.*` | Keep as import-only wrappers | `Math.Probability.PMF.*` |
-| broad Interface aggregates | Keep through the current major version | smallest granular facade |
-| split implementation aggregates | Keep import-only; implementation modules now import defining leaves directly | corresponding subdirectory leaves; downstream users prefer facades |
+| `BehaviorStrategy` | Deleted after consumer migration; no redirect stub | `ObservedGame.BehavioralStrategy`, normalized chance kernels, and `Finite`/`EqD` |
+| `Play` | Deleted after consumer migration; no redirect stub | terminal-aware `Execution.StoppedExecution` / `Finite` |
+| `ExtensiveGame.Probability.*` | Deleted after consumer migration; no redirect stubs | `Math.Probability.PMF.*` |
+| broad Interface aggregates | Deleted before external API stability | smallest granular facade |
+| split implementation aggregates | Deleted after consumers imported defining leaves | corresponding subdirectory leaves; downstream users prefer facades |
 | `Observed.Controlled.Infrastructure` | Canonical declaration-free aggregate facade | defining `Controlled.Infrastructure.*` leaf; winning predicates are in `Winning.Basic` |
 | `Observed.Controlled.Morphism` | Canonical declaration-free aggregate facade | `Controlled.Morphism.Core`, `.Subgame`, or `.Recall` according to the declarations used |
 | former flat `Observed.ControlledFoo` paths | Removed before API stability | corresponding module below `Observed.Controlled`; no forwarding stubs |
@@ -308,27 +309,66 @@ EFG theorem.
 | `ZeroSumChance.GameTree` | Supported specialized frontend | exact rational algorithm has no equivalent replacement |
 | `GameForm.LimitSPE` | Historical path with a correct, explicit convergence theorem | indexed continuation Nash on declared roots; it does not certify standard SPE |
 
-Canonical implementation files were audited for compatibility imports.  The
+Canonical implementation files were audited for obsolete imports. The
 governance closeout replaced direct aggregate imports with defining leaves in
 the continuation, behavioral-refinement, deferred-sampling,
 Kuhn-conditioning, FOSG-sequentialization, and restart-certificate chains.
-Compatibility aggregates remain intentionally imported only by other
-Compatibility paths and explicit boundary regressions. Historical imports from
+The four historical broad-aggregate boundary regressions were removed with the
+aggregates. Historical imports from
 Canonical, Frontend, or Internal modules are rejected unless an exact
 importer/imported pair with a reason is present in the governance checker.
 The current exceptions are the occurrence-to-endpoint compiler preservation
 bridge and the endpoint-policy results used by `FiniteArenaExtraction` and
 `Zermelo`.
 
+## Semantic contract rules
+
+- The minimal carrier line
+  `Arena -> ControlledGame -> ControlledObservedGame` is frozen. New payoff,
+  probability, objective, recall, finiteness, root-selection, termination, or
+  solution-concept fields are rejected unless a concrete representation
+  failure is demonstrated and cannot be expressed by an external certificate,
+  adapter, relation, or compiler. The freeze governs carrier data, not the
+  addition of honest downstream theorems.
+- Ambient `ControlledGame.NoChance` and reachable
+  `NoChanceOnHistories` are distinct. Pure execution, total pure
+  continuation/SPE, winning, and determinacy use the reachable certificate;
+  only theorems that inspect arbitrary ambient states should require the
+  global predicate.
+- An arbitrary `ContinuationSemantics.evaluate` supports only
+  evaluator-relative continuation equilibrium.
+  No generic standard-EFG-SPE declaration may be added until its strategy
+  restriction, deviation extension, and execution carrier are anchored to
+  canonical EFG histories or path laws. Caller-defined execution types or
+  legality predicates are insufficient. Concrete pure, behavioral, and
+  analytic execution layers own their operational equilibrium claims.
+- `BoundedHistoryLawFamily` is raw data.
+  Execution claims use `CertifiedBehavioralExecutionLaw` or an equally strong
+  certificate covering normalization, reachable legality, terminal
+  absorption, and agreement with the specified executor.
+  `CompletePathLawSemantics` is a per-root lawful marginal family; common
+  causal-process, restart, conditioning, and coherence claims remain separate.
+- Arbitrary history transforms use `HistoryTransformLawEquivalentAt`.
+  Terminal-history terminology requires the terminal-history subtype or an
+  equivalent termination proof.
+- Signal/public recall is event-clock recall unless an external
+  `SignalTraceBuilder` is supplied. Silent-event builders are not identified
+  with always-emitting event-clock traces without an explicit hypothesis and
+  theorem.
+- Optional well-formed bundles remain layered. They may combine represented
+  information, mover coherence, and reachable no-chance where repeatedly
+  needed, but must not accumulate unrelated finite, payoff, probability,
+  recall, or termination assumptions.
+
 ## Root aggregate lifecycle
 
-The root was narrowed on 2026-07-30 and re-audited on 2026-08-01. Its current
-closure is 37 EFG modules and 165 local `EconCSLib` modules. It exposes
+The root was narrowed on 2026-07-30 and re-audited on 2026-08-03. Its current
+closure is 36 EFG modules and 163 local `EconCSLib` modules. It exposes
 measure-free complete plays, structural termination, reusable finite-EFG
 certificates, finite/PMF execution, finite `GameTree` syntax and
 backward-induction values, but no infinite path law,
 historical endpoint-policy equilibrium, Arena extraction, Zermelo theorem,
-analytic execution, Restart, FOSG, compiler, Historical, or Compatibility
+analytic execution, Restart, FOSG, compiler, or Historical
 module.
 
 The governed direct-import closure budgets are recalculated from the current
@@ -336,7 +376,7 @@ source graph:
 
 | Entry | EFG modules / all local modules |
 |---|---:|
-| `EconCSLib` | 37 / 165 |
+| `EconCSLib` | 36 / 163 |
 | `Interface.StructuralCore` | 5 / 5 |
 | `Interface.Core` | 14 / 14 |
 | `Interface.Objective` | 32 / 37 |
@@ -347,9 +387,9 @@ source graph:
 | `Interface.Execution.Analytic` | 58 / 66 |
 | `Interface.Relations.Discrete` | 39 / 46 |
 | `Interface.Equilibrium.Discrete` | 66 / 82 |
-| `Interface.Equilibrium.Analytic` | 96 / 113 |
-| `Interface.Restart` | 104 / 121 |
-| `Interface.Compilation.Discrete` | 87 / 105 |
+| `Interface.Equilibrium.Analytic` | 95 / 112 |
+| `Interface.Restart` | 103 / 120 |
+| `Interface.Compilation.Discrete` | 86 / 104 |
 
 | Path | Class | Root decision | Explicit import for opt-in use |
 |---|---|---|---|
@@ -358,7 +398,7 @@ source graph:
 | `GameTree` | stable specialized frontend | retained | same path |
 | `BackwardInduction` | stable specialized frontend algorithm | retained | same path |
 | `ZeroSumGameTreeWithChance` | stable specialized exact solver | retained | same path |
-| `Interface.Execution.Discrete` | compatibility aggregate | removed from root | `Interface.Execution.Infinite` for path laws, or the old aggregate |
+| `Interface.Execution.Discrete` | deleted pre-release aggregate | removed from source | `Interface.Execution.Finite` or `Interface.Execution.Infinite` according to need |
 | `GameTreeSPE` | historical endpoint semantics | removed from root | `EconCSLib.GameTheory.ExtensiveGame.GameTreeSPE` |
 | `GameTreeNE` | historical endpoint semantics | removed from root | `EconCSLib.GameTheory.ExtensiveGame.GameTreeNE` |
 | `GameTreeStrategicForm` | historical endpoint semantics | removed from root | explicit module import |
@@ -371,7 +411,7 @@ remain available and receive no false `deprecated` replacement.
 
 ## Simulation responsibility matrix
 
-All 30 modules currently under `Simulation/` have one primary responsibility
+All 29 modules currently under `Simulation/` have one primary responsibility
 below.
 “Partial” means the name is historically broader or narrower than the current
 role; it is not evidence that the declarations are mathematically mixed.
@@ -407,7 +447,6 @@ role; it is not evidence that the declarations are mathematically mixed.
 | `Restart/Assembly` | restart | baseline and all-deviation compatibility | Yes | observed certificate → deviations | Grouped |
 | `Restart/Equilibrium` | restart | canonical compatibility-to-equilibrium route | Yes | assembly → equilibrium | Grouped |
 | `Restart/Factorization` | restart | statistic/rebase sufficient constructors | Yes | raw certificates → constructors | Grouped |
-| `ObservedMeasurableKernelRestartCompatibility` | compatibility aggregate | preserve the complete old restart import | Yes | imports final restart leaf | Thin wrapper |
 
 ### Implemented physical-layout changes
 
@@ -426,9 +465,9 @@ The 29 Internal analytic modules were subsequently regrouped below
 `Kernel/`, `Presentation/`, `Equilibrium/`, `Continuation/`, and `Restart/`.
 This was a path-only cleanup: declaration names and public facades did not
 change. Repeated semantic prefixes now live in directory names instead of
-every filename. The established
-`ObservedMeasurableKernelRestartCompatibility` import remains as the sole
-long compatibility filename.
+every filename. The former
+`ObservedMeasurableKernelRestartCompatibility` aggregate was deleted; clients
+use `Interface.Restart`.
 
 ## Large-file audit
 
@@ -485,6 +524,30 @@ chain or add wrappers without reducing facade closure.
 This queue is intentionally part of the governance document rather than a new
 collection of one-off audit files.
 
+## Declaration lifecycle triage
+
+CI generates a conservative theorem/lemma usage report with:
+
+```bash
+python3 scripts/report_efg_declaration_usage.py \
+  --check --output /tmp/efg-declaration-usage.md
+```
+
+The report is not a dead-code oracle. It classifies zero-source-indegree
+declarations into documented/example/test-backed endpoints, unexplained
+Canonical/Frontend endpoints, Internal/private review, and lifecycle-specific
+review. A declaration is removed or privatized only after manual confirmation
+that it has no mathematical endpoint role, downstream compatibility role,
+documentation role, example/test role, or external consumer.
+
+The current unexplained public-endpoint triage ceiling is **263**. This number
+is a no-growth baseline, not evidence that those declarations have already
+been mathematically reviewed and not a target for bulk deletion. A new
+Canonical or Frontend endpoint must add endpoint evidence, gain a source
+consumer, or be accompanied by an explicit reduction elsewhere so that the
+queue does not grow. Changes that reduce the queue are reviewed normally; the
+ceiling is lowered only after the reduction is intentional and stable.
+
 ## Enforceable invariants
 
 The source-graph portion of this policy is checked in CI with:
@@ -497,7 +560,12 @@ The check makes closure changes deliberate: a facade or root dependency change
 must update its boundary regression and the audited count in this policy,
 rather than remaining an invisible transitive import. Review and CI maintain:
 
-- canonical implementation modules do not import compatibility wrappers;
+- zero-byte and comment/namespace-only Lean files are rejected;
+- every import-only Lean module is explicitly registered as a canonical
+  facade/aggregate or temporary compatibility path;
+- the current inventory is 20 canonical import-only modules and zero
+  temporary compatibility modules;
+- deleted module paths cannot be recreated or imported;
 - `Interface.StructuralCore` has exactly the five structural EFG dependencies
   and `Interface.Core` cannot regain Objective/Winning;
 - every payoff-free `Controlled.Infrastructure.*` leaf obeys the existing
@@ -513,8 +581,6 @@ rather than remaining an invisible transitive import. Review and CI maintain:
   map, and flat `Observed.ControlledFoo` siblings are forbidden;
 - canonical controlled modules cannot reach the three `.Compat` payoff-aware
   adapters, whose exact imports and namespaces are fixed;
-- compatibility aggregates are imported only by other compatibility paths or
-  intentional compatibility-boundary regressions;
 - the governed EFG/GameForm/PMF source graph is acyclic;
 - Canonical, Frontend, and Internal modules do not directly import Historical
   modules except for exact, reasoned importer/imported allowlist pairs;
@@ -522,15 +588,22 @@ rather than remaining an invisible transitive import. Review and CI maintain:
   import `GameTreeSPE`;
 - `Core`, `Finite`, `Infinite`, `Analytic`, relations, equilibrium, Restart,
   and Compilation keep their documented negative sentinels;
-- root does not gain Historical or Compatibility paths, infinite path,
+- root does not gain Historical paths, infinite path,
   analytic, restart, FOSG, or compiler modules transitively;
 - Restart and Compilation remain sibling branches;
 - `Math/Probability/PMF` imports no game theory;
 - `Examples` and `OpenProblem` do not enter stable aggregates;
-- all compatibility modules appear in the module register and name a
-  replacement;
+- any future temporary compatibility module must appear in both explicit
+  registries and name a replacement;
 - every `@[deprecated]` EFG declaration appears in
   [`efg-api-migration.md`](efg-api-migration.md);
+- the unexplained zero-source-indegree Canonical/Frontend endpoint queue does
+  not grow beyond its recorded baseline;
 - no ordinary `sorry` or `admit` appears below `EconCSLib/`; and
 - no compatibility, historical, or internal status is inferred solely from a
   filename: the source responsibility is checked.
+
+These checks provide machine-checked evidence for source elaboration, the
+axiom surface, placeholder policy, module boundaries, and the listed formal
+semantic properties. They are not a metamathematically complete certification
+of every intended model meaning.
