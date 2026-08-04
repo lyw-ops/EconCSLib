@@ -40,7 +40,11 @@ Arena
 - `Arena.CompletePlayFromHistory` represents both infinite play and finite play
   by stuttering after a terminal history.
 - `ControlledObservedGame` adds public/private observations, decision
-  information, information-indexed actions, and pure strategies.
+  information, information-indexed actions, and raw pure strategies.
+  `AllDecisionInfoRepresented` is the optional no-junk certificate asserting
+  that every declared strategy coordinate comes from a concrete nonterminal
+  player decision; the carrier does not bake this modelling assumption into
+  its data.
 
 Its universe mapping is
 `base : ControlledGame.{uN, uA, uS} N`: both the concrete action fiber and
@@ -67,9 +71,10 @@ The import boundary is physical rather than documentary:
 Structural/Basic.lean
   → Structural/Reachability.lean
   → Structural/History.lean
-  → Execution/CompletePlay.lean
-  → Observed/Controlled.lean
-  → Interface/StructuralCore.lean
+      ├→ Execution/CompletePlay.lean
+      └→ Observed/Controlled.lean
+            → Observed/Controlled/Infrastructure/WellFormed.lean
+  → Interface/StructuralCore.lean  (facade over both branches)
 ```
 
 The compatibility modules `Basic.lean`, `Execution/Reachability.lean`, and
@@ -78,10 +83,34 @@ carrier and its projections, but are not imported by the structural facade.
 The import-boundary regression checks that `ExtensiveGame` and
 `ExtensiveGame.payoff` remain unavailable through the narrow facade.
 
+The compatibility migration is closed by explicit definitional bridges:
+
+- `ExtensiveGame.ofControlledGame_toControlledGame_self` is the
+  forget-payoff/reattach-payoff round-trip;
+- `ExtensiveGame.isReachable_iff_toControlledGame` identifies historical root
+  reachability with the canonical controlled predicate;
+- `ExtensiveGame.unfold_toControlledGame` and `unfold_toArena` show that the
+  historical payoff-aware unfolding delegates to the canonical controlled
+  and Arena unfoldings.
+
+`Examples.ExtensiveGame.LegacyApiMigration` compiles these bridges through the
+historical import path. Bounded `Play`, behavioral strategies, and
+payoff-aware subgame operations remain higher semantic layers rather than
+members of the structural core; this PR does not delete those APIs.
+
 `ExtensiveGame N U` remains as the state-payoff compatibility layer over
 `ControlledGame N`. Its state payoff is convenient for the existing API but
 is not the authoritative semantics for general terminal-history or infinite
 play objectives.
+
+This parent-structure migration is intentionally **not source-compatible at
+the generated-constructor boundary**. Field projections and most named
+structure literals remain compatible, but positional calls to
+`ExtensiveGame.mk` and pattern matches on the old generated constructor must
+be migrated. Downstream code should construct games with
+`ExtensiveGame.ofArena arena init mover payoff`, or wrap existing controlled
+dynamics with `ExtensiveGame.ofControlledGame base payoff`; neither API exposes
+the parent-record layout.
 
 `Arena.unfoldEndpoint` is the canonical projection from an unfolded history
 state back to its compact Arena endpoint. Its transition theorem records that

@@ -3,7 +3,7 @@ Copyright (c) 2026 EconCSLib contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
-import EconCSLib.GameTheory.ExtensiveGame.Execution.CompletePlay
+import EconCSLib.GameTheory.ExtensiveGame.Structural.History
 
 /-!
 # Payoff-free observed controlled games
@@ -26,7 +26,8 @@ independent payoff-free certificate that can be added by a higher layer.
 * `ControlledObservedGame`.
 * `ControlledObservedGame.relabelPlayers` and `relabelPureProfileEquiv`.
 * `ControlledObservedGame.ContinuationRootPresentation`.
-* `ControlledObservedGame.PureStrategy` and `PureProfile`.
+* `ControlledObservedGame.PureStrategy` and `PureProfile` (raw declared
+  information-coordinate plans).
 * `ControlledObservedGame.completeInformation`.
 -/
 
@@ -223,7 +224,13 @@ theorem allHistories_isRoot
 
 end ContinuationRootPresentation
 
-/-- A deterministic contingent plan indexed only by decision information. -/
+/-- A deterministic contingent plan over every declared decision-information
+coordinate.
+
+This raw carrier deliberately does not claim that every `InfoState` value is
+realized by a concrete decision history. Standard EFG models should separately
+supply `AllDecisionInfoRepresented`; this keeps model data and well-formedness
+assumptions independent. -/
 def PureStrategy (i : N) : Type _ :=
   (information : G.InfoState i) → G.InfoAction i information
 

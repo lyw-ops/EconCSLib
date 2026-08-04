@@ -25,6 +25,7 @@ history/play types, root presentations, and pure strategies.
 #check ExtensiveGame.ControlledObservedGame.ContinuationRootPresentation
 #check ExtensiveGame.ControlledObservedGame.PureStrategy
 #check ExtensiveGame.ControlledObservedGame.PureProfile
+#check ExtensiveGame.ControlledObservedGame.AllDecisionInfoRepresented
 #check ExtensiveGame.ControlledObservedGame.relabelPlayers
 #check ExtensiveGame.ControlledObservedGame.relabelPureProfileEquiv
 

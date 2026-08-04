@@ -8,6 +8,7 @@ import EconCSLib.GameTheory.ExtensiveGame.Structural.Reachability
 import EconCSLib.GameTheory.ExtensiveGame.Structural.History
 import EconCSLib.GameTheory.ExtensiveGame.Execution.CompletePlay
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.WellFormed
 
 /-!
 # Structural core facade
@@ -15,7 +16,8 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled
 The narrow canonical pre-stability import for the payoff-free structural
 semantics of extensive games. It exposes only the Arena dynamics, controlled
 dynamics, finite reachability, typed histories, measure-free complete plays,
-and the payoff-free controlled information/strategy carrier.
+the payoff-free controlled information/strategy carrier, and optional
+represented-information well-formedness certificates.
 
 Structural termination, bounded execution, PMF or measurable execution,
 objectives, winning predicates, lawful-subgame and recall certificates,
