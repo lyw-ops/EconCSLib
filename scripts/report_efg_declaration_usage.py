@@ -16,6 +16,11 @@ from pathlib import Path
 import re
 import sys
 
+try:
+    from check_efg_governance import strip_lean_comments_and_strings
+except ModuleNotFoundError:
+    from scripts.check_efg_governance import strip_lean_comments_and_strings
+
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTER = ROOT / "docs/design/efg-module-status.md"
@@ -47,11 +52,20 @@ PRIVATE_ROUTE_MARKERS = (
     "_viaContinuationSimulation",
 )
 PUBLIC_ENDPOINT_LIFECYCLES = ("Canonical", "Frontend")
-# Current triage ceiling. The baseline does not claim that every item has
-# already received mathematical review. New zero-source-indegree public
-# endpoints must either have documentation/example/test evidence or avoid
-# growing the manual review queue.
-MAX_PUBLIC_ENDPOINT_REVIEW = 263
+# Current conservative ceiling for public declarations that lack repository
+# evidence for their endpoint role. This is not permission to delete any
+# declaration: textual indegree cannot decide mathematical endpoint value.
+MAX_UNCLASSIFIED_PUBLIC_REVIEW = 0
+TRAILING_ATTRIBUTE_RE = re.compile(
+    r"@\[(?P<attributes>[^\]]*)\]\s*$",
+    re.MULTILINE,
+)
+GUARDED_COMMAND_RE = re.compile(
+    r"^[ \t]*#guard_msgs\b[^\n]*\n"
+    r".*?(?=^[ \t]*\n|\Z)",
+    re.MULTILINE | re.DOTALL,
+)
+IMPORT_LINE_RE = re.compile(r"^[ \t]*import\b[^\n]*$", re.MULTILINE)
 
 
 @dataclass(frozen=True)
@@ -63,6 +77,8 @@ class Declaration:
     name: str
     line: int
     is_private: bool
+    has_simp_attribute: bool
+    has_doc_comment: bool
 
 
 @dataclass(frozen=True)
@@ -70,6 +86,7 @@ class Usage:
     declaration: Declaration
     source_references: int
     example_references: int
+    facade_contract_references: int
     documentation_references: int
     test_references: int
 
@@ -82,25 +99,35 @@ class Usage:
         return (
             self.documentation_references
             + self.example_references
+            + self.facade_contract_references
             + self.test_references
         ) > 0
 
     @property
-    def triage_queue(self) -> str:
-        """Conservative review queue; never an automatic deletion decision."""
+    def review_class(self) -> str:
+        """Deterministic first-pass role; never an automatic deletion rule."""
 
         if not self.zero_indegree:
             return "source-used"
-        if self.has_endpoint_evidence:
-            return "evidenced-endpoint"
-        if self.declaration.is_private:
-            return "private-review"
-        if self.declaration.lifecycle == "Internal":
-            return "internal-review"
+        if self.declaration.is_private or self.declaration.lifecycle == "Internal":
+            return "proof-helper-only"
         if self.declaration.lifecycle == "Historical":
-            return "historical-review"
+            return "historical-only"
+        if self.declaration.has_simp_attribute:
+            return "simp-normalization-api"
+        if (
+            ".Compiler." in self.declaration.module
+            or ".FOSG." in self.declaration.module
+        ):
+            return "compiler-preservation-endpoint"
+        if self.facade_contract_references:
+            return "facade-contract-declaration"
+        if self.has_endpoint_evidence:
+            return "intentional-public-endpoint"
+        if self.declaration.has_doc_comment:
+            return "source-documented-public-endpoint"
         if self.declaration.lifecycle in PUBLIC_ENDPOINT_LIFECYCLES:
-            return "public-endpoint-review"
+            return "unclassified-public-endpoint"
         return "lifecycle-review"
 
 
@@ -142,6 +169,9 @@ def declarations(
         for match in DECL_RE.finditer(text):
             name = match.group("name")
             prefix = match.group("prefix").split()
+            has_doc_comment, attributes = declaration_leading_metadata(
+                text, match.start()
+            )
             found.append(
                 Declaration(
                     module=module,
@@ -151,6 +181,11 @@ def declarations(
                     name=name,
                     line=text.count("\n", 0, match.start()) + 1,
                     is_private="private" in prefix,
+                    has_simp_attribute=any(
+                        re.search(r"\bsimp\b", attribute) is not None
+                        for attribute in attributes
+                    ),
+                    has_doc_comment=has_doc_comment,
                 )
             )
             declaration_names[name.rsplit(".", 1)[-1]] += 1
@@ -165,6 +200,46 @@ def token_counts(paths: list[Path]) -> Counter[str]:
     return counts
 
 
+def declaration_leading_metadata(
+    text: str, declaration_start: int
+) -> tuple[bool, list[str]]:
+    """Return adjacent doc-comment and attribute evidence for a declaration."""
+
+    prefix = text[:declaration_start].rstrip()
+    attributes: list[str] = []
+    while attribute_match := TRAILING_ATTRIBUTE_RE.search(prefix):
+        attributes.append(attribute_match.group("attributes"))
+        prefix = prefix[: attribute_match.start()].rstrip()
+    if not prefix.endswith("-/"):
+        return False, attributes
+    comment_start = prefix.rfind("/-")
+    has_doc_comment = (
+        comment_start >= 0
+        and prefix.startswith("/--", comment_start)
+    )
+    return has_doc_comment, attributes
+
+
+def facade_contract_token_counts(paths: list[Path]) -> Counter[str]:
+    """Count positive boundary witnesses, excluding imports and negative guards.
+
+    Import-boundary files use `#guard_msgs` to assert that a name is absent.
+    Such an occurrence is evidence against facade exposure, not evidence that
+    the declaration is a positive facade contract.
+    """
+
+    counts: Counter[str] = Counter()
+    for path in paths:
+        if not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8")
+        text = strip_lean_comments_and_strings(text)
+        text = GUARDED_COMMAND_RE.sub("", text)
+        text = IMPORT_LINE_RE.sub("", text)
+        counts.update(TOKEN_RE.findall(text))
+    return counts
+
+
 def repository_usage(
     rows: list[tuple[str, str, Path]],
     found: list[Declaration],
@@ -172,9 +247,14 @@ def repository_usage(
 ) -> list[Usage]:
     registered_paths = [path for _module, _lifecycle, path in rows]
     source_counts = token_counts(registered_paths)
+    all_example_paths = sorted((ROOT / "EconCSLib/Examples").rglob("*.lean"))
+    facade_contract_paths = [
+        path for path in all_example_paths if path.name.endswith("ImportBoundary.lean")
+    ]
     example_counts = token_counts(
-        sorted((ROOT / "EconCSLib/Examples").rglob("*.lean"))
+        [path for path in all_example_paths if path not in facade_contract_paths]
     )
+    facade_contract_counts = facade_contract_token_counts(facade_contract_paths)
     documentation_counts = token_counts(sorted((ROOT / "docs").rglob("*.md")))
     test_counts = token_counts(
         sorted((ROOT / "tests").rglob("*.py"))
@@ -191,6 +271,7 @@ def repository_usage(
                     0, source_counts[name] - declaration_names[name]
                 ),
                 example_references=example_counts[name],
+                facade_contract_references=facade_contract_counts[name],
                 documentation_references=documentation_counts[name],
                 test_references=test_counts[name],
             )
@@ -230,17 +311,22 @@ def render_report(usage: list[Usage]) -> str:
         "",
         "## Summary",
         "",
-        "| Lifecycle | Theorems/lemmas | Zero source indegree | Evidenced endpoints | Public endpoint review | Internal/private review |",
-        "|---|---:|---:|---:|---:|---:|",
+        "| Lifecycle | Theorems/lemmas | Zero source indegree | Intentional endpoint | Source-doc endpoint | `[simp]`/normalization | Facade contract | Compiler preservation | Proof helper | Historical only | Unclassified public review |",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for lifecycle in LIFECYCLES:
         items = by_lifecycle.get(lifecycle, [])
         lines.append(
             f"| {lifecycle} | {len(items)} | "
             f"{sum(item.zero_indegree for item in items)} | "
-            f"{sum(item.triage_queue == 'evidenced-endpoint' for item in items)} | "
-            f"{sum(item.triage_queue == 'public-endpoint-review' for item in items)} | "
-            f"{sum(item.triage_queue in ('internal-review', 'private-review') for item in items)} |"
+            f"{sum(item.review_class == 'intentional-public-endpoint' for item in items)} | "
+            f"{sum(item.review_class == 'source-documented-public-endpoint' for item in items)} | "
+            f"{sum(item.review_class == 'simp-normalization-api' for item in items)} | "
+            f"{sum(item.review_class == 'facade-contract-declaration' for item in items)} | "
+            f"{sum(item.review_class == 'compiler-preservation-endpoint' for item in items)} | "
+            f"{sum(item.review_class == 'proof-helper-only' for item in items)} | "
+            f"{sum(item.review_class == 'historical-only' for item in items)} | "
+            f"{sum(item.review_class == 'unclassified-public-endpoint' for item in items)} |"
         )
 
     zero_items = sorted(
@@ -256,8 +342,8 @@ def render_report(usage: list[Usage]) -> str:
             "",
             "## Zero-source-indegree declarations",
             "",
-            "| Queue | Lifecycle | Visibility | Declaration | Owner | Docs | Examples | Tests |",
-            "|---|---|---|---|---|---:|---:|---:|",
+            "| Review class | Lifecycle | Visibility | Declaration | Owner | Docs | Examples | Positive facade checks | Tests |",
+            "|---|---|---|---|---|---:|---:|---:|---:|",
         ]
     )
     for item in zero_items:
@@ -265,9 +351,10 @@ def render_report(usage: list[Usage]) -> str:
         visibility = "private" if declaration.is_private else "name-resolvable"
         owner = f"`{rel(declaration.path)}:{declaration.line}`"
         lines.append(
-            f"| {item.triage_queue} | {declaration.lifecycle} | {visibility} | "
+            f"| {item.review_class} | {declaration.lifecycle} | {visibility} | "
             f"`{declaration.name}` | {owner} | "
             f"{item.documentation_references} | {item.example_references} | "
+            f"{item.facade_contract_references} | "
             f"{item.test_references} |"
         )
 
@@ -279,9 +366,13 @@ def render_report(usage: list[Usage]) -> str:
             "A declaration is a deletion or privatization candidate only after",
             "confirming that it has no source consumer, documentation role,",
             "example/test role, or intended public-endpoint role. Lifecycle",
-            "policy remains authoritative. `public-endpoint-review` means the",
-            "declaration needs an explicit endpoint role or a downstream",
-            "consumer; it does not mean the declaration is dead code.",
+            "policy remains authoritative. `unclassified-public-endpoint` is",
+            "only the residual manual-review bucket after the listed syntactic",
+            "and repository-evidence classes; it does not mean the declaration",
+            "is dead code. Source docstrings count as explicit endpoint evidence,",
+            "while names occurring only in negative `#guard_msgs` checks do not.",
+            "In particular, no theorem may be deleted solely from this textual",
+            "report.",
             "",
         ]
     )
@@ -298,7 +389,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--check",
         action="store_true",
-        help="fail when a route-regression theorem leaks from private/Internal scope",
+        help=(
+            "fail on a public route-regression leak or growth of the "
+            "unclassified-public review queue"
+        ),
     )
     return parser.parse_args()
 
@@ -315,8 +409,8 @@ def main() -> int:
 
     report = render_report(usage)
     zero_count = sum(item.zero_indegree for item in usage)
-    public_review_count = sum(
-        item.triage_queue == "public-endpoint-review" for item in usage
+    unclassified_public_count = sum(
+        item.review_class == "unclassified-public-endpoint" for item in usage
     )
     route_leaks = public_route_regressions(usage)
 
@@ -333,7 +427,7 @@ def main() -> int:
     print(
         f"EFG declaration usage: {len(rows)} modules, {len(usage)} "
         f"theorems/lemmas, {zero_count} zero-source-indegree candidates, "
-        f"{public_review_count} public-endpoint-review"
+        f"{unclassified_public_count} unclassified-public-review candidates"
     )
     if route_leaks:
         print(
@@ -346,16 +440,17 @@ def main() -> int:
                 f"{declaration.name}",
                 file=sys.stderr,
             )
-    public_review_growth = (
-        public_review_count > MAX_PUBLIC_ENDPOINT_REVIEW
+    unclassified_public_growth = (
+        unclassified_public_count > MAX_UNCLASSIFIED_PUBLIC_REVIEW
     )
-    if public_review_growth:
+    if unclassified_public_growth:
         print(
-            "Unexplained public endpoint review queue grew beyond the "
-            f"{MAX_PUBLIC_ENDPOINT_REVIEW} baseline: {public_review_count}",
+            "Unclassified-public review queue grew beyond the "
+            f"{MAX_UNCLASSIFIED_PUBLIC_REVIEW} baseline: "
+            f"{unclassified_public_count}",
             file=sys.stderr,
         )
-    if args.check and (route_leaks or public_review_growth):
+    if args.check and (route_leaks or unclassified_public_growth):
         return 1
     return 0
 
