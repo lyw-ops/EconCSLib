@@ -14,6 +14,12 @@ recall certificates are implemented once on `ControlledObservedGame`.
 This module retains the historical `ObservedGame` API as definitional
 payoff-forgetting adapters and delegates strict-isomorphism preservation to
 `ControlledObservedGame.Iso`.
+
+The classic condition follows [MFoGT, Def. 6.3.3]: equal current information
+must determine the same ordered sequence of the player's earlier information
+states and own actions. `RecallCertificate` is EconCSLib's factorized
+history-indexed representation of that condition, not an additional
+literature theorem.
 -/
 
 namespace ExtensiveGame.ObservedGame
@@ -40,13 +46,14 @@ theorem personalDecisionAt_actionEquiv
     (G : ObservedGame N U) (i : N)
     (history : G.base.toArena.HistoryFrom G.base.init)
     (hmover : G.base.mover history.1 = some i)
+    (hnonterminal : ¬ G.base.isTerminal history.1)
     (action :
-      G.InfoAction i (G.infoAt history i hmover)) :
+      G.InfoAction i (G.infoAt history i hmover hnonterminal)) :
     G.personalDecisionAt i history hmover
-        (G.actionEquiv history i hmover action) =
-      ⟨G.infoAt history i hmover, action⟩ :=
+        (G.actionEquiv history i hmover hnonterminal action) =
+      ⟨G.infoAt history i hmover hnonterminal, action⟩ :=
   ControlledObservedGame.personalDecisionAt_actionEquiv
-    G.toControlledObservedGame i history hmover action
+    G.toControlledObservedGame i history hmover hnonterminal action
 
 /-- Compatibility spelling for the path-recursive remembered-decision
 extractor. -/
@@ -184,11 +191,12 @@ theorem HasNoAbsentMindedness.info_ne_of_mem_ownDecisionHistory
     (hnoAbsent : G.HasNoAbsentMindedness i)
     (history : G.base.toArena.HistoryFrom G.base.init)
     (hmover : G.base.mover history.1 = some i)
+    (hnonterminal : ¬ G.base.isTerminal history.1)
     (decision : G.PersonalDecision i)
     (hmem : decision ∈ G.ownDecisionHistory i history) :
-    decision.1 ≠ G.infoAt history i hmover :=
+    decision.1 ≠ G.infoAt history i hmover hnonterminal :=
   ControlledObservedGame.HasNoAbsentMindedness.info_ne_of_mem_ownDecisionHistory
-    hnoAbsent history hmover decision hmem
+    hnoAbsent history hmover hnonterminal decision hmem
 
 /-- No player is absent-minded. -/
 abbrev NoAbsentMindedness (G : ObservedGame N U) : Prop :=
@@ -230,11 +238,12 @@ theorem remembered_infoAt [DecidableEq N]
     (certificate : G.RecallCertificate)
     (i : N)
     (history : G.base.toArena.HistoryFrom G.base.init)
-    (hmover : G.base.mover history.1 = some i) :
-    certificate.remembered i (G.infoAt history i hmover) =
+    (hmover : G.base.mover history.1 = some i)
+    (hnonterminal : ¬ G.base.isTerminal history.1) :
+    certificate.remembered i (G.infoAt history i hmover hnonterminal) =
       G.ownDecisionHistory i history :=
   ControlledObservedGame.RecallCertificate.remembered_infoAt
-    certificate i history hmover
+    certificate i history hmover hnonterminal
 
 /-- A factorization certificate proves perfect recall. -/
 theorem perfectRecall [DecidableEq N]
