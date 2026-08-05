@@ -1,10 +1,11 @@
 # EFG Downstream Migration
 
 This note records the source-level changes made while converging the EFG
-public facade. No theorem or mathematical construction was deleted; the main
-source impact is that clients must use granular imports, honest semantic names,
-or updated pre-release record-field labels. Redirect-only modules were
-deleted because no external EFG API stability had been promised.
+canonical facades. The current EFG layer is pre-stability: there is no
+external source-compatibility guarantee, and evidence-backed hard migration is
+allowed when internal consumers, regressions, lifecycle rows, design notes,
+and audits are updated together. Redirect-only and zero-consumer duplicate
+spellings are not retained for hypothetical users.
 
 ## Import migration
 
@@ -15,11 +16,35 @@ deleted because no external EFG API stability had been promised.
 | infinite discrete `Arena.pathLaw`, almost-sure termination, or payoff convergence | `Interface.Execution.Infinite` |
 | measurable-kernel execution obtained transitively | `Interface.Execution.Analytic` |
 | strict representation morphisms, information refinements, PMF couplings, or weak simulations | `Interface.Relations.Discrete` |
+| strict/refinement/weak preservation vocabulary, complete-path realizations, law couplings, or compiler preservation packages | `Interface.Preservation` |
 | bounded pure/behavioral/mixed Nash, termination, or finite Kuhn transfer | `Interface.Equilibrium.Discrete` |
 | measurable path utility, constructive kernel Nash, absolute-prefix continuation, or conditioning | `Interface.Equilibrium.Analytic` |
 | fresh-clock restart declarations | `Interface.Restart` |
 | finite observed-EFG compilers or PMF FOSG serialization | `Interface.Compilation.Discrete` |
 | both restart and compiler branches from one legacy import | import both `Interface.Restart` and `Interface.Compilation.Discrete` explicitly |
+
+### Payoff-free structural ownership and terminal decisions
+
+The canonical minimal carrier/import spine moved to:
+
+```lean
+import EconCSLib.GameTheory.ExtensiveGame.Structural.Basic
+import EconCSLib.GameTheory.ExtensiveGame.Structural.Reachability
+import EconCSLib.GameTheory.ExtensiveGame.Structural.History
+```
+
+`ExtensiveGame.Basic` and
+`ExtensiveGame.Execution.{Reachability,History}` remain only for the
+state-payoff `ExtensiveGame` carrier and its payoff-aware projections. New
+payoff-free code should use the `Structural.*` owners or
+`Interface.StructuralCore`.
+
+Constructors and maps for `ControlledObservedGame` must now supply
+nonterminality to `infoAt`, `infoAt_observe`, and `actionEquiv`, in addition
+to the mover equality. The extra proof is a semantic repair: terminal mover
+labels are permitted by `ControlledGame`, but they no longer generate
+information states or strategy coordinates. Internal complete-information,
+morphism, subgame, and recall constructors were migrated in the same change.
 
 The root aggregate exports finite/PMF execution and the standalone finite
 `GameTree`/backward-induction and exact zero-sum chance-tree tracks. Infinite
@@ -32,6 +57,31 @@ The old `Interface.Execution.Discrete`, `Interface.Relations`,
 `Interface.SimulationFramework` paths were deleted. Callers must replace them
 with the smallest rows above; no same-name redirect stubs remain.
 
+### Payoff-aware definitions now project to controlled owners
+
+The state-payoff `ObservedGame` carrier remains supported, but its pure
+strategy/profile, decision-witness, represented-information,
+mover-coherence, and finite-EFG types are now definitional projections of the
+corresponding `ControlledObservedGame` owners. Discrete behavioral
+strategy/profile types likewise project to the payoff-free declarations in
+`Observed.Controlled.Law.Discrete`.
+
+Existing type-directed code remains definitionally compatible. New general
+theorems should be stated on the controlled owner and specialized through
+`toControlledObservedGame`; only payoff evaluation stays under
+`ObservedGame`.
+
+The discrete chance adapter is now bidirectional:
+
+```lean
+ObservedChanceGame.toDiscreteControlledObservedChanceGame
+ObservedChanceGame.ofDiscreteControlledObservedChanceGame
+```
+
+Forgetting after attaching a payoff recovers the payoff-free game, while
+reattaching an observed chance game's existing payoff after forgetting
+recovers the original payoff-aware game.
+
 ### Deleted redirect-only paths
 
 The hard migration also deleted:
@@ -39,6 +89,8 @@ The hard migration also deleted:
 - `ExtensiveGame.Play` and `ExtensiveGame.BehaviorStrategy`;
 - `FOSG.FOSGSequentialization`;
 - `Observed.{Morphism,Refinement,BehaviorRefinement,DeferredSampling,KuhnConditioning}`;
+- `Observed.PathLawEquivalence`, whose zero-consumer payoff-aware spellings
+  duplicated the authoritative controlled path-law carrier;
 - `Simulation.ObservedMeasurableKernelRestartCompatibility`;
 - `ExtensiveGame.Probability.{ConditionalSampling,ConditionalProduct,DeferredSampling,FiniteProductCoupling}`;
 - `GameForm.Continuation`;
@@ -53,7 +105,7 @@ navigation roles are governed.
 
 ### Controlled infrastructure and morphism import paths
 
-Before EFG API stability, the flat paths
+During EFG pre-stability, the flat paths
 
 ```lean
 import EconCSLib.GameTheory.ExtensiveGame.Observed.ControlledInfrastructure
@@ -125,9 +177,15 @@ Direct record literals must now provide:
 `pathLaw_ae_legal` uses the canonical initial-coordinate, legal-step, and
 terminal-absorption predicate. Local-kernel agreement is no longer inferred
 or stored in the maximum carrier; prove `RealizesExecution` or
-`ExecutionCoherent` separately. Any former downstream
-`ObservedChanceGame.CompletePathLawSemantics` spelling is an abbreviation to
-this controlled carrier through `Observed/PathLawEquivalence.lean`.
+`ExecutionCoherent` separately. The former downstream
+`ObservedChanceGame.CompletePathLawSemantics` compatibility spelling was
+hard-deleted after a source/docs/test consumer audit found no client. Use the
+authoritative `ControlledObservedGame.CompletePathLawSemantics`,
+`CompletePathLawEquivalentAt`, and `CompletePathLawRealization` declarations
+directly. The
+`DiscreteControlledObservedChanceGame.behavioralCompletePathLawSemantics`
+constructor supplies the discrete behavioral instance without introducing a
+second payoff-aware semantic owner.
 The carrier is only a family of lawful per-root marginals; it does not
 automatically define one common causal process. Restart, conditioning, and
 cross-root coherence remain additional certificates.
@@ -175,7 +233,7 @@ surface.
   `IsEvaluatorContinuationEquilibriumOnAt` and
   `IsEvaluatorContinuationEquilibriumAt`.
   A short-lived `EvaluatorExecutionCertificate` /
-  `IsStandardEFGSubgamePerfectAt` experiment was removed before API stability:
+  `IsStandardEFGSubgamePerfectAt` experiment was removed during pre-stability:
   its execution carrier and legality predicate were caller-defined and thus
   did not certify canonical EFG execution. Operational standard-SPE names
   remain on concrete execution layers.
@@ -286,11 +344,14 @@ complete-play/path-law execution rather than caller-defined legality.
 A caller-declared or presentation-designated root predicate is not, by itself,
 a standard-subgame certificate. New code must pass roots explicitly.
 
-## Declaration deprecations
+## Completed declaration migrations
 
-The finite imperfect-information frontend has one exact declaration alias:
+The following former names have explicit replacements. During the 2026-08-03
+pre-stability API-debt closeout, every remaining exact deprecated alias in
+this table had zero repository source consumers and was hard-deleted. The
+table remains as a migration map, not as an inventory of live aliases.
 
-| Deprecated declaration | Replacement | Since | Semantics |
+| Removed declaration | Replacement | Since | Semantics |
 |---|---|---|---|
 | `FiniteImperfectGame.actionAt_same_info_label` | `FiniteImperfectGame.actionAt_same_info` | 2026-07-29 | Identical transport-aware information-consistency statement |
 | `PathOutcomeFromHistory.continueAt` | `PathOutcomeFromHistory.rebaseTailAt` | 2026-07-31 | Same absolute-tail rebasing operation; root objectives now use `PathOutcome.afterHistory` |
@@ -325,10 +386,27 @@ The finite imperfect-information frontend has one exact declaration alias:
 | `GeneralProfile.deviate_same` | `DiscreteGeneralProfile.deviate_same` | 2026-07-31 | Same update-at-player theorem |
 | `GeneralProfile.deviate_of_ne` | `DiscreteGeneralProfile.deviate_of_ne` | 2026-07-31 | Same update-away-from-player theorem |
 
-This alias is eligible for `@[deprecated replacement]` because its theorem
-statement is unchanged.  Endpoint versus occurrence strategies, state
-re-rooting versus lawful subgames, and designated-root versus complete-system
-solution concepts do not receive such aliases: their semantics differ.
+The exact aliases once qualified for `@[deprecated replacement]` because
+their statements were unchanged. They are no longer retained because no
+external EFG compatibility period has begun. Endpoint versus occurrence
+strategies, state re-rooting versus lawful subgames, and designated-root
+versus complete-system solution concepts never received aliases because
+their semantics differ.
+
+## Example-placement migration
+
+Regression declarations are opt-in examples, not reusable EFG API:
+
+| Former owner | Opt-in module / current namespace |
+|---|---|
+| `Execution.History` (`Examples.HistoryDiamond.*`) | `EconCSLib.Examples.ExtensiveGame.HistoryDiamond`; declaration names unchanged |
+| `Execution.StoppedExecution` (`Examples.TerminalStoppedExecution.*`) | `EconCSLib.Examples.ExtensiveGame.TerminalStoppedExecution`; declaration names unchanged |
+| `ImperfectInformation` and `Compiler.FiniteImperfectObserved` (`Examples.ImperfectInformation.*`) | `EconCSLib.Examples.ExtensiveGame.FiniteImperfectCompilation`; declaration names unchanged |
+| `StochasticGameTree` (`StochasticGameTree.fairCoin*`) | `EconCSLib.Examples.ExtensiveGame.StochasticTreeCompilation`; names now live under `Examples.ExtensiveGame.StochasticTreeCompilation` |
+
+The recommended library root and granular compilation facade do not import these
+examples. Negative import regressions enforce that the former core-namespace
+spellings stay absent.
 
 ## Completed root migration
 
@@ -343,8 +421,11 @@ The historical endpoint `GameTreeSPE`, `GameTreeNE`, and
 Existing examples now import the implementation paths they use, and
 `RootImportBoundary` checks both the retained finite surface and the removed
 transitive names. The granular facade and examples builds are the migration
-regressions. The later lifecycle closeout deleted redirect-only module paths
-but no mathematical declaration.
+regressions. The later lifecycle closeout deleted redirect-only module paths.
+The 2026-08-03 audit additionally removed the zero-consumer
+`Observed.PathLawEquivalence` compatibility declarations; the canonical
+controlled carrier and its realization theory remain the sole mathematical
+owner.
 
 These checks provide machine-checked evidence for source elaboration, the
 axiom surface, placeholder policy, module boundaries, and the listed formal
