@@ -3,14 +3,16 @@ Copyright (c) 2026 EconCSLib contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
-import EconCSLib.GameTheory.ExtensiveGame.Relations.Discrete.Morphism
+import Mathlib.Logic.Equiv.Basic
 
 /-!
 # Dependent-fiber equivalences
 
-This neutral execution helper supplies cast-stable equivalences between
-dependent fibers.  It is shared by payoff-free and payoff-aware observed-game
-morphisms, so neither layer needs to own a duplicate cast calculus.
+Game-independent cast-stable equivalences between dependent fibers.
+
+This module deliberately depends only on Mathlib.  Game-theory morphism and
+refinement layers reuse it without forcing neutral dependent type calculus to
+depend on any extensive-game relation hierarchy.
 -/
 
 namespace Equiv
@@ -135,3 +137,15 @@ theorem piCongr_apply_of_eq
   simp
 
 end Equiv
+
+/-- Evaluating a dependent function after changing its index agrees with
+transporting the value at the original index. -/
+theorem dependent_apply_eq_cast
+    {α : Type*} {fiber : α → Type*}
+    (function : (index : α) → fiber index)
+    {source target : α}
+    (hindex : source = target) :
+    function target =
+      cast (congrArg fiber hindex) (function source) := by
+  subst target
+  rfl
