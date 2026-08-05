@@ -403,9 +403,11 @@ presentation chose to designate it. -/
 theorem rootOnlyOccurrence_offPath_isLawful :
     rootOnlyOccurrenceObserved.IsLawfulSubgameRoot offPath := by
   constructor
-  · intro _hproper i hmover other hother hsame
+  · intro _hproper i hmover hnonterminal other hother
+      hother_nonterminal hsame
     exact (congrArg Subtype.val hsame).symm
-  · intro current hcurrent i hmover other hother hsame
+  · intro current hcurrent i hmover hnonterminal other hother
+      hother_nonterminal hsame
     have hotherCurrent : other = current :=
       (congrArg Subtype.val hsame).symm
     simpa [hotherCurrent] using hcurrent
