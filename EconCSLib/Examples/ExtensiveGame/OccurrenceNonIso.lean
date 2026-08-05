@@ -108,13 +108,19 @@ def directHistory : (toExtensiveGame root).toArena.History root repeated :=
 def viaMiddleHistory : (toExtensiveGame root).toArena.History root repeated :=
   ((Arena.History.nil).snoc rootToMiddle).snoc middleToRepeated
 
+/-- The repeated node has the legal action selecting `win`. -/
+theorem repeated_nonterminal :
+    ¬ (toExtensiveGame root).isTerminal repeated :=
+  toExtensiveGame_not_isTerminal_node root 0
+    (.Leaf leafPayoff) [.Leaf alternativePayoff]
+
 /-- The direct occurrence of player `0`'s decision at `repeated`. -/
 def firstOcc : (toOccurrenceObservedGame root).InfoState (0 : Player) :=
-  ⟨⟨repeated, directHistory⟩, rfl⟩
+  ⟨⟨repeated, directHistory⟩, rfl, repeated_nonterminal⟩
 
 /-- The occurrence of player `0`'s decision at `repeated` reached via `middle`. -/
 def secondOcc : (toOccurrenceObservedGame root).InfoState (0 : Player) :=
-  ⟨⟨repeated, viaMiddleHistory⟩, rfl⟩
+  ⟨⟨repeated, viaMiddleHistory⟩, rfl, repeated_nonterminal⟩
 
 /-- The two occurrences are genuinely distinct occurrence information states:
 their underlying histories differ in length. -/
@@ -187,9 +193,11 @@ theorem separatingOccurrenceStrategy_first :
       (⟨.Leaf leafPayoff, List.mem_cons_self⟩ :
         (toOccurrenceObservedGame root).InfoAction
           (0 : Player) firstOcc) := by
-  rw [separatingOccurrenceStrategy,
-    dif_neg firstOcc_ne_secondOcc]
-  rfl
+  rw [separatingOccurrenceStrategy]
+  split
+  · rename_i hsame
+    exact (firstOcc_ne_secondOcc hsame).elim
+  · rfl
 
 @[simp]
 theorem separatingOccurrenceStrategy_second :
@@ -241,7 +249,11 @@ theorem not_nonempty_iso_toOccurrenceObservedGame_of_merged_histories
     (first second :
       (toExtensiveGame treeRoot).toArena.HistoryFrom treeRoot)
     (hfirst : (toExtensiveGame treeRoot).mover first.1 = some i)
+    (hfirst_nonterminal :
+      ¬ (toExtensiveGame treeRoot).isTerminal first.1)
     (hsecond : (toExtensiveGame treeRoot).mover second.1 = some i)
+    (hsecond_nonterminal :
+      ¬ (toExtensiveGame treeRoot).isTerminal second.1)
     (hendpoint : first.1 = second.1)
     (hdifferent : first ≠ second) :
     ¬ Nonempty
@@ -256,22 +268,38 @@ theorem not_nonempty_iso_toOccurrenceObservedGame_of_merged_histories
       (toOccurrenceObservedGame treeRoot).base.mover
           (e.historyIso.stateEquiv second).1 = some i :=
     (e.map_mover second).trans hsecond
+  have htfirst_nonterminal :
+      ¬ (toOccurrenceObservedGame treeRoot).base.isTerminal
+        (e.historyIso.stateEquiv first).1 :=
+    (not_congr (e.isTerminal_iff first)).mp hfirst_nonterminal
+  have htsecond_nonterminal :
+      ¬ (toOccurrenceObservedGame treeRoot).base.isTerminal
+        (e.historyIso.stateEquiv second).1 :=
+    (not_congr (e.isTerminal_iff second)).mp hsecond_nonterminal
   have hinfo :
-      (toObservedGame treeRoot).infoAt first i hfirst =
-        (toObservedGame treeRoot).infoAt second i hsecond :=
+      (toObservedGame treeRoot).infoAt first i hfirst
+          hfirst_nonterminal =
+        (toObservedGame treeRoot).infoAt second i hsecond
+          hsecond_nonterminal :=
     forgetOccurrenceInfo_eq_of_endpoint_eq treeRoot i
-      ⟨first, hfirst⟩ ⟨second, hsecond⟩ hendpoint
+      ⟨first, hfirst, hfirst_nonterminal⟩
+      ⟨second, hsecond, hsecond_nonterminal⟩ hendpoint
   have hmapped :
       (toOccurrenceObservedGame treeRoot).infoAt
-          (e.historyIso.stateEquiv first) i htfirst =
+          (e.historyIso.stateEquiv first) i htfirst
+            htfirst_nonterminal =
         (toOccurrenceObservedGame treeRoot).infoAt
-          (e.historyIso.stateEquiv second) i htsecond := by
-    rw [← e.map_infoAt first i hfirst htfirst,
-      ← e.map_infoAt second i hsecond htsecond, hinfo]
+          (e.historyIso.stateEquiv second) i htsecond
+            htsecond_nonterminal := by
+    rw [← e.map_infoAt first i hfirst hfirst_nonterminal
+        htfirst htfirst_nonterminal,
+      ← e.map_infoAt second i hsecond hsecond_nonterminal
+        htsecond htsecond_nonterminal, hinfo]
   exact hdifferent
     (e.historyIso.stateEquiv.injective
       (toOccurrenceObservedGame_hasSingletonInformation treeRoot i
-        _ _ htfirst htsecond hmapped))
+        _ _ htfirst htfirst_nonterminal htsecond
+          htsecond_nonterminal hmapped))
 
 /-- **N-1B.** No strict observed-game isomorphism from the endpoint compiler to
 the occurrence compiler exists for this concrete tree.
@@ -288,7 +316,7 @@ theorem not_nonempty_iso :
           (toOccurrenceObservedGame root)) :=
   not_nonempty_iso_toOccurrenceObservedGame_of_merged_histories
     root 0 ⟨repeated, directHistory⟩ ⟨repeated, viaMiddleHistory⟩
-    rfl rfl rfl
+    rfl repeated_nonterminal rfl repeated_nonterminal rfl
     (fun heq => firstOcc_ne_secondOcc (Subtype.ext heq))
 
 /-- The endpoint compiler is concretely certified as the information-coarsened
