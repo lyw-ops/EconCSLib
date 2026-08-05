@@ -14,8 +14,15 @@ non-atomic kernels.
 -/
 
 #check Arena.WeakSimulation
+#check ExtensiveGame.Arena.Iso.map_stochasticHistoryPMFFrom
 #check ExtensiveGame.ObservedGame.InformationRefinement
 #check KernelArena.Simulation.PolicyMatch
+
+/--
+error: Unknown constant `ExtensiveGame.Preservation.StrictIso`
+-/
+#guard_msgs in
+#check ExtensiveGame.Preservation.StrictIso
 
 /--
 error: Unknown constant `Arena.pathLaw`
