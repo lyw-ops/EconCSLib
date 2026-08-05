@@ -18,6 +18,10 @@ It does not import stochastic path laws or analytic kernels.
 #check ExtensiveGame.ControlledObservedGame.IsTwoPlayerDetermined
 #check ExtensiveGame.ControlledObservedGame.FiniteTwoPlayerHypotheses
 #check ExtensiveGame.ControlledObservedGame.FiniteTwoPlayerHypotheses.isTwoPlayerDetermined
+#check ExtensiveGame.ControlledObservedGame.WellFoundedTwoPlayerHypotheses
+#check ExtensiveGame.ControlledObservedGame.WellFoundedTwoPlayerHypotheses.isTwoPlayerDetermined
+#check ExtensiveGame.ControlledObservedGame.WellFoundedPrefixHypotheses
+#check ExtensiveGame.ControlledObservedGame.WellFoundedPrefixHypotheses.isTwoPlayerDetermined
 #check ExtensiveGame.ObservedGame.HasPathwiseWinningStrategy
 #check ExtensiveGame.ObservedGame.HasPureProfileExtension
 #check ExtensiveGame.ObservedGame.HasStrategicWinningStrategy
@@ -27,6 +31,42 @@ It does not import stochastic path laws or analytic kernels.
 #check ExtensiveGame.ObservedGame.IsTwoPlayerDetermined
 #check ExtensiveGame.ObservedGame.FiniteTwoPlayerHypotheses
 #check ExtensiveGame.ObservedGame.WellFoundedPrefixHypotheses
+
+/--
+error: Unknown constant `ExtensiveGame.ObservedGame.HasWinningStrategy`
+-/
+#guard_msgs in
+#check ExtensiveGame.ObservedGame.HasWinningStrategy
+
+/--
+error: Unknown constant `ExtensiveGame.ObservedGame.WinningStrategies`
+-/
+#guard_msgs in
+#check ExtensiveGame.ObservedGame.WinningStrategies
+
+/--
+error: Unknown constant `ExtensiveGame.ObservedGame.IsDetermined`
+-/
+#guard_msgs in
+#check ExtensiveGame.ObservedGame.IsDetermined
+
+/--
+error: Unknown constant `ExtensiveGame.ObservedGame.isDetermined_of_hasWinningStrategy`
+-/
+#guard_msgs in
+#check ExtensiveGame.ObservedGame.isDetermined_of_hasWinningStrategy
+
+/--
+error: Unknown constant `ExtensiveGame.ObservedGame.isDetermined_iff_isTwoPlayerDetermined`
+-/
+#guard_msgs in
+#check ExtensiveGame.ObservedGame.isDetermined_iff_isTwoPlayerDetermined
+
+/--
+error: Unknown constant `ExtensiveGame.ObservedGame.not_both_haveWinningStrategy`
+-/
+#guard_msgs in
+#check ExtensiveGame.ObservedGame.not_both_haveWinningStrategy
 
 /--
 error: Unknown constant `Arena.pathLaw`
