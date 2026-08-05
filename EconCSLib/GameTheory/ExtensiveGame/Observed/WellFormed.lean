@@ -3,8 +3,8 @@ Copyright (c) 2026 EconCSLib contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
-import EconCSLib.GameTheory.ExtensiveGame.Execution.Length
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Game
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Finite
 
 /-!
 # Structural well-formedness and finite-EFG certificates
@@ -41,10 +41,9 @@ variable {N U : Type*} {G : ObservedGame N U}
 
 /-- Every declared decision information state is represented by an actual
 player-controlled complete history. -/
-def AllDecisionInfoRepresented
+abbrev AllDecisionInfoRepresented
     (G : ObservedGame N U) : Prop :=
-  ∀ (i : N) (information : G.InfoState i),
-    Nonempty (G.DecisionInfoWitness i information)
+  G.toControlledObservedGame.AllDecisionInfoRepresented
 
 /-- Every player-labeled complete history is a genuine decision history with
 at least one legal action.
@@ -52,13 +51,9 @@ at least one legal action.
 This condition is deliberately not a field of `ExtensiveGame`: terminal
 execution ignores mover labels. It is needed when all declared decision
 information states are used to form total contingent plans. -/
-def DecisionMoverCoherent
+abbrev DecisionMoverCoherent
     (G : ObservedGame N U) : Prop :=
-  ∀ (history :
-      G.base.toArena.HistoryFrom G.base.init)
-    (i : N),
-    G.base.mover history.1 = some i →
-      Nonempty (G.base.Action history.1)
+  G.toControlledObservedGame.DecisionMoverCoherent
 
 /-- The canonical decision-history complete-information presentation has no
 ghost decision-information states. -/
@@ -69,7 +64,8 @@ theorem completeInformation_allDecisionInfoRepresented
   intro i information
   refine ⟨
     { history := information.1
-      mover := information.2
+      mover := information.2.1
+      nonterminal := information.2.2
       infoAt_eq := ?_ }⟩
   cases information
   rfl
@@ -82,18 +78,9 @@ theorem nonempty_infoAction
     (hrepresented : G.AllDecisionInfoRepresented)
     (hcoherent : G.DecisionMoverCoherent)
     (i : N) (information : G.InfoState i) :
-    Nonempty (G.InfoAction i information) := by
-  rcases hrepresented i information with ⟨witness⟩
-  have hconcrete :
-      Nonempty (G.base.Action witness.history.1) :=
-    hcoherent witness.history i witness.mover
-  have habstract :
-      Nonempty
-        (G.InfoAction i
-          (G.infoAt witness.history i witness.mover)) :=
-    hconcrete.map
-      (G.actionEquiv witness.history i witness.mover).symm
-  simpa [witness.infoAt_eq] using habstract
+    Nonempty (G.InfoAction i information) :=
+  ControlledObservedGame.AllDecisionInfoRepresented.nonempty_infoAction
+    hrepresented hcoherent i information
 
 /-- Full representation and mover coherence make every player's total pure
 contingent-plan type inhabited. -/
@@ -101,25 +88,18 @@ theorem nonempty_pureStrategy
     (hrepresented : G.AllDecisionInfoRepresented)
     (hcoherent : G.DecisionMoverCoherent)
     (i : N) :
-    Nonempty (G.PureStrategy i) := by
-  classical
-  exact
-    ⟨fun information =>
-      Classical.choice
-        (hrepresented.nonempty_infoAction
-          hcoherent i information)⟩
+    Nonempty (G.PureStrategy i) :=
+  ControlledObservedGame.AllDecisionInfoRepresented.nonempty_pureStrategy
+    hrepresented hcoherent i
 
 /-- Full representation and mover coherence make the pure-profile type
 inhabited, without requiring a finite player type. -/
 theorem nonempty_pureProfile
     (hrepresented : G.AllDecisionInfoRepresented)
     (hcoherent : G.DecisionMoverCoherent) :
-    Nonempty G.PureProfile := by
-  classical
-  exact
-    ⟨fun i =>
-      Classical.choice
-        (hrepresented.nonempty_pureStrategy hcoherent i)⟩
+    Nonempty G.PureProfile :=
+  ControlledObservedGame.AllDecisionInfoRepresented.nonempty_pureProfile
+    hrepresented hcoherent
 
 end AllDecisionInfoRepresented
 
@@ -145,28 +125,9 @@ the compact state space. `finiteAction` and `finiteInfoState` are typeclass
 certificates stored propositionally and can be installed locally by an
 algorithm. Player finiteness, perfect recall, chance laws, preference orders,
 and decidable comparisons are intentionally separate. -/
-structure FiniteEFGHypotheses
-    (G : ObservedGame N U) where
-  /-- Explicit uniform bound on the number of legal action occurrences. -/
-  lengthBound : ℕ
-  /-- Every legal continuation of that length has terminated. -/
-  hasLengthBound :
-    G.base.toArena.HasLengthBoundFrom
-      G.base.init lengthBound
-  /-- Legal actions are finite at every represented complete history. -/
-  finiteAction :
-    ∀ history :
-      G.base.toArena.HistoryFrom G.base.init,
-      Finite (G.base.Action history.1)
-  /-- Every declared player decision-information carrier is finite. -/
-  finiteInfoState :
-    ∀ i : N, Finite (G.InfoState i)
-  /-- No ghost decision-information states occur in the strategy carrier. -/
-  allDecisionInfoRepresented :
-    G.AllDecisionInfoRepresented
-  /-- Player mover labels denote genuine nonempty decision nodes. -/
-  decisionMoverCoherent :
-    G.DecisionMoverCoherent
+abbrev FiniteEFGHypotheses
+    (G : ObservedGame N U) :=
+  G.toControlledObservedGame.FiniteEFGHypotheses
 
 namespace FiniteEFGHypotheses
 
@@ -175,8 +136,7 @@ complete-history unfolding. -/
 theorem isWellFoundedFrom
     (h : G.FiniteEFGHypotheses) :
     G.base.toArena.IsWellFoundedFrom G.base.init :=
-  Arena.HasLengthBoundFrom.isWellFoundedFrom
-    h.hasLengthBound
+  ControlledObservedGame.FiniteEFGHypotheses.isWellFoundedFrom h
 
 /-- Every complete legal play of a finite-EFG certificate eventually
 terminates. -/
@@ -185,8 +145,7 @@ theorem eventuallyTerminates
     (play :
       G.base.toArena.CompletePlayFrom G.base.init) :
     play.EventuallyTerminates :=
-  Arena.HasLengthBoundAt.eventuallyTerminates
-    h.hasLengthBound play
+  ControlledObservedGame.FiniteEFGHypotheses.eventuallyTerminates h play
 
 /-- The certificate makes every player's total pure contingent-plan type
 inhabited. -/
@@ -200,8 +159,7 @@ theorem nonempty_pureStrategy
 theorem nonempty_pureProfile
     (h : G.FiniteEFGHypotheses) :
     Nonempty G.PureProfile :=
-  h.allDecisionInfoRepresented.nonempty_pureProfile
-    h.decisionMoverCoherent
+  ControlledObservedGame.FiniteEFGHypotheses.nonempty_pureProfile h
 
 end FiniteEFGHypotheses
 
