@@ -40,8 +40,10 @@ def personalDecisionAt
     (hmover : G.base.mover history.1 = some i)
     (action : G.base.Action history.1) :
     G.PersonalDecision i :=
-  ⟨G.infoAt history i hmover,
-    (G.actionEquiv history i hmover).symm action⟩
+  let hnonterminal : ¬ G.base.isTerminal history.1 :=
+    fun hterminal => hterminal.false action
+  ⟨G.infoAt history i hmover hnonterminal,
+    (G.actionEquiv history i hmover hnonterminal).symm action⟩
 
 /-- Packaging an action just realized from the information fiber recovers
 that information/action pair. -/
@@ -50,11 +52,12 @@ theorem personalDecisionAt_actionEquiv
     (G : ControlledObservedGame N) (i : N)
     (history : G.base.History)
     (hmover : G.base.mover history.1 = some i)
+    (hnonterminal : ¬ G.base.isTerminal history.1)
     (action :
-      G.InfoAction i (G.infoAt history i hmover)) :
+      G.InfoAction i (G.infoAt history i hmover hnonterminal)) :
     G.personalDecisionAt i history hmover
-        (G.actionEquiv history i hmover action) =
-      ⟨G.infoAt history i hmover, action⟩ := by
+        (G.actionEquiv history i hmover hnonterminal action) =
+      ⟨G.infoAt history i hmover hnonterminal, action⟩ := by
   simp [personalDecisionAt]
 
 /-- Path-recursive worker extracting one player's past decisions. -/
@@ -258,8 +261,11 @@ def HasPerfectRecall [DecidableEq N]
     (G : ControlledObservedGame N) (i : N) : Prop :=
   ∀ (first second : G.base.History)
     (hfirst : G.base.mover first.1 = some i)
-    (hsecond : G.base.mover second.1 = some i),
-    G.infoAt first i hfirst = G.infoAt second i hsecond →
+    (hfirst_nonterminal : ¬ G.base.isTerminal first.1)
+    (hsecond : G.base.mover second.1 = some i)
+    (hsecond_nonterminal : ¬ G.base.isTerminal second.1),
+    G.infoAt first i hfirst hfirst_nonterminal =
+        G.infoAt second i hsecond hsecond_nonterminal →
       G.ownDecisionHistory i first =
         G.ownDecisionHistory i second
 
@@ -273,8 +279,11 @@ def HasSingletonInformation
     (G : ControlledObservedGame N) (i : N) : Prop :=
   ∀ (first second : G.base.History)
     (hfirst : G.base.mover first.1 = some i)
-    (hsecond : G.base.mover second.1 = some i),
-    G.infoAt first i hfirst = G.infoAt second i hsecond →
+    (hfirst_nonterminal : ¬ G.base.isTerminal first.1)
+    (hsecond : G.base.mover second.1 = some i)
+    (hsecond_nonterminal : ¬ G.base.isTerminal second.1),
+    G.infoAt first i hfirst hfirst_nonterminal =
+        G.infoAt second i hsecond hsecond_nonterminal →
       first = second
 
 /-- Every player has singleton decision information. -/
@@ -286,9 +295,11 @@ def PerfectInformation
 theorem HasSingletonInformation.hasPerfectRecall [DecidableEq N]
     {i : N} (h : G.HasSingletonInformation i) :
     G.HasPerfectRecall i := by
-  intro first second hfirst hsecond hsame
+  intro first second hfirst hfirst_nonterminal hsecond
+    hsecond_nonterminal hsame
   exact congrArg (G.ownDecisionHistory i)
-    (h first second hfirst hsecond hsame)
+    (h first second hfirst hfirst_nonterminal
+      hsecond hsecond_nonterminal hsame)
 
 /-- A player never revisits the same decision information after acting. -/
 def HasNoAbsentMindedness
@@ -300,11 +311,13 @@ def HasNoAbsentMindedness
     (suffix :
       G.base.toArena.History
         (G.base.next first.1 action) finish)
-    (hsecond : G.base.mover finish = some i),
-    G.infoAt first i hfirst ≠
+    (hsecond : G.base.mover finish = some i)
+    (hsecond_nonterminal : ¬ G.base.isTerminal finish),
+    G.infoAt first i hfirst
+        (fun hterminal => hterminal.false action) ≠
       G.infoAt
         ⟨finish, (first.2.snoc action).append suffix⟩
-        i hsecond
+        i hsecond hsecond_nonterminal
 
 /-- Under no absent-mindedness, an earlier remembered information state
 differs from the current decision information state. -/
@@ -314,9 +327,10 @@ theorem HasNoAbsentMindedness.info_ne_of_mem_ownDecisionHistory
     (hnoAbsent : G.HasNoAbsentMindedness i)
     (history : G.base.History)
     (hmover : G.base.mover history.1 = some i)
+    (hnonterminal : ¬ G.base.isTerminal history.1)
     (decision : G.PersonalDecision i)
     (hmem : decision ∈ G.ownDecisionHistory i history) :
-    decision.1 ≠ G.infoAt history i hmover := by
+    decision.1 ≠ G.infoAt history i hmover hnonterminal := by
   obtain ⟨occurrence⟩ :=
     G.exists_personalDecisionOccurrence_of_mem
       i history decision hmem
@@ -324,14 +338,17 @@ theorem HasNoAbsentMindedness.info_ne_of_mem_ownDecisionHistory
     hnoAbsent
       ⟨occurrence.state, occurrence.before⟩
       occurrence.mover occurrence.action
-      history.1 occurrence.after hmover
+      history.1 occurrence.after hmover hnonterminal
   rw [occurrence.path_eq] at hdistinct
   have hfirst :
       G.infoAt
           ⟨occurrence.state, occurrence.before⟩
-          i occurrence.mover =
+          i occurrence.mover
+          (fun hterminal => hterminal.false occurrence.action) =
         decision.1 :=
-    congrArg Sigma.fst occurrence.decision_eq
+    by
+      simpa [personalDecisionAt] using
+        congrArg Sigma.fst occurrence.decision_eq
   intro hequal
   exact hdistinct (hfirst.trans hequal)
 
@@ -344,7 +361,8 @@ def NoAbsentMindedness
 theorem HasPerfectRecall.hasNoAbsentMindedness [DecidableEq N]
     {i : N} (hrecall : G.HasPerfectRecall i) :
     G.HasNoAbsentMindedness i := by
-  intro first hfirst action finish suffix hsecond hsame
+  intro first hfirst action finish suffix hsecond
+    hsecond_nonterminal hsame
   let afterFirst : G.base.History :=
     ⟨G.base.next first.1 action, first.2.snoc action⟩
   let second : G.base.History :=
@@ -366,7 +384,9 @@ theorem HasPerfectRecall.hasNoAbsentMindedness [DecidableEq N]
     rw [hstep] at htail
     simpa using htail
   have hequal :=
-    hrecall first second hfirst hsecond hsame
+    hrecall first second hfirst
+      (fun hterminal => hterminal.false action)
+      hsecond hsecond_nonterminal hsame
   rw [hequal] at hstrict
   exact Nat.lt_irrefl _ hstrict
 
@@ -499,8 +519,11 @@ def HasPerfectRecall
     (builder : G.SignalTraceBuilder) (i : N) : Prop :=
   ∀ (first second : G.base.History)
     (hfirst : G.base.mover first.1 = some i)
-    (hsecond : G.base.mover second.1 = some i),
-    G.infoAt first i hfirst = G.infoAt second i hsecond →
+    (hfirst_nonterminal : ¬ G.base.isTerminal first.1)
+    (hsecond : G.base.mover second.1 = some i)
+    (hsecond_nonterminal : ¬ G.base.isTerminal second.1),
+    G.infoAt first i hfirst hfirst_nonterminal =
+        G.infoAt second i hsecond hsecond_nonterminal →
       builder.trace i first = builder.trace i second
 
 end SignalTraceBuilder
@@ -544,8 +567,11 @@ def HasEventClockSignalPerfectRecall
     (G : ControlledObservedGame N) (i : N) : Prop :=
   ∀ (first second : G.base.History)
     (hfirst : G.base.mover first.1 = some i)
-    (hsecond : G.base.mover second.1 = some i),
-    G.infoAt first i hfirst = G.infoAt second i hsecond →
+    (hfirst_nonterminal : ¬ G.base.isTerminal first.1)
+    (hsecond : G.base.mover second.1 = some i)
+    (hsecond_nonterminal : ¬ G.base.isTerminal second.1),
+    G.infoAt first i hfirst hfirst_nonterminal =
+        G.infoAt second i hsecond hsecond_nonterminal →
       G.signalHistory i first =
         G.signalHistory i second
 
@@ -557,14 +583,18 @@ theorem hasEventClockSignalPerfectRecall_iff
     G.HasEventClockSignalPerfectRecall i ↔
       G.eventClockSignalTraceBuilder.HasPerfectRecall i := by
   constructor
-  · intro hrecall first second hfirst hsecond hsame
+  · intro hrecall first second hfirst hfirst_nonterminal
+      hsecond hsecond_nonterminal hsame
     rw [G.eventClockSignalTraceBuilder_trace i first,
       G.eventClockSignalTraceBuilder_trace i second]
-    exact hrecall first second hfirst hsecond hsame
-  · intro hrecall first second hfirst hsecond hsame
+    exact hrecall first second hfirst hfirst_nonterminal
+      hsecond hsecond_nonterminal hsame
+  · intro hrecall first second hfirst hfirst_nonterminal
+      hsecond hsecond_nonterminal hsame
     rw [← G.eventClockSignalTraceBuilder_trace i first,
       ← G.eventClockSignalTraceBuilder_trace i second]
-    exact hrecall first second hfirst hsecond hsame
+    exact hrecall first second hfirst hfirst_nonterminal
+      hsecond hsecond_nonterminal hsame
 
 /-- Every player has private-signal recall. -/
 def EventClockSignalPerfectRecall
@@ -585,9 +615,11 @@ def HasEventClockPublicPerfectRecall
 theorem HasSingletonInformation.hasEventClockSignalPerfectRecall
     {i : N} (hinformation : G.HasSingletonInformation i) :
     G.HasEventClockSignalPerfectRecall i := by
-  intro first second hfirst hsecond hsame
+  intro first second hfirst hfirst_nonterminal hsecond
+    hsecond_nonterminal hsame
   exact congrArg (G.signalHistory i)
-    (hinformation first second hfirst hsecond hsame)
+    (hinformation first second hfirst hfirst_nonterminal
+      hsecond hsecond_nonterminal hsame)
 
 /-- Private signal histories have one more coordinate than action histories. -/
 theorem signalHistory_length
@@ -626,11 +658,14 @@ signal coordinate. -/
 theorem HasEventClockSignalPerfectRecall.hasNoAbsentMindedness
     {i : N} (hrecall : G.HasEventClockSignalPerfectRecall i) :
     G.HasNoAbsentMindedness i := by
-  intro first hfirst action finish suffix hsecond hsame
+  intro first hfirst action finish suffix hsecond
+    hsecond_nonterminal hsame
   let second : G.base.History :=
     ⟨finish, (first.2.snoc action).append suffix⟩
   have hsignals :=
-    hrecall first second hfirst hsecond hsame
+    hrecall first second hfirst
+      (fun hterminal => hterminal.false action)
+      hsecond hsecond_nonterminal hsame
   have hfirstLength := G.signalHistory_length i first
   have hsecondLength := G.signalHistory_length i second
   have hpathLength :
@@ -664,17 +699,21 @@ structure RecallCertificate [DecidableEq N]
   /-- The assigned trace agrees at every represented decision. -/
   remembered_infoAt :
     ∀ (i : N) (history : G.base.History)
-      (hmover : G.base.mover history.1 = some i),
-      remembered i (G.infoAt history i hmover) =
+      (hmover : G.base.mover history.1 = some i)
+      (hnonterminal : ¬ G.base.isTerminal history.1),
+      remembered i (G.infoAt history i hmover hnonterminal) =
         G.ownDecisionHistory i history
 
 /-- A recall factorization certificate proves perfect recall. -/
 theorem RecallCertificate.perfectRecall [DecidableEq N]
     (certificate : G.RecallCertificate) :
     G.PerfectRecall := by
-  intro i first second hfirst hsecond hsame
-  rw [← certificate.remembered_infoAt i first hfirst]
-  rw [← certificate.remembered_infoAt i second hsecond]
+  intro i first second hfirst hfirst_nonterminal hsecond
+    hsecond_nonterminal hsame
+  rw [← certificate.remembered_infoAt i first hfirst
+    hfirst_nonterminal]
+  rw [← certificate.remembered_infoAt i second hsecond
+    hsecond_nonterminal]
   rw [hsame]
 
 /-- Perfect recall canonically yields a factorization certificate by choosing
@@ -693,22 +732,24 @@ noncomputable def PerfectRecall.toRecallCertificate
       else
         []
   remembered_infoAt := by
-    intro i history hmover
+    intro i history hmover hnonterminal
     classical
     let witness :
         G.DecisionInfoWitness i
-          (G.infoAt history i hmover) :=
-      ⟨history, hmover, rfl⟩
+          (G.infoAt history i hmover hnonterminal) :=
+      ⟨history, hmover, hnonterminal, rfl⟩
     have hexists :
         Nonempty
           (G.DecisionInfoWitness i
-            (G.infoAt history i hmover)) :=
+            (G.infoAt history i hmover hnonterminal)) :=
       ⟨witness⟩
     rw [dif_pos hexists]
     exact
       hrecall i
         (Classical.choice hexists).history history
-        (Classical.choice hexists).mover hmover
+        (Classical.choice hexists).mover
+        (Classical.choice hexists).nonterminal
+        hmover hnonterminal
         (Classical.choice hexists).infoAt_eq
 
 /-- Perfect recall is equivalent to the existence of a factorization
@@ -733,8 +774,10 @@ structure SignalRecallCertificate
   /-- The assigned sequence agrees with every represented decision history. -/
   rememberedSignals_infoAt :
     ∀ (i : N) (history : G.base.History)
-      (hmover : G.base.mover history.1 = some i),
-      rememberedSignals i (G.infoAt history i hmover) =
+      (hmover : G.base.mover history.1 = some i)
+      (hnonterminal : ¬ G.base.isTerminal history.1),
+      rememberedSignals i
+        (G.infoAt history i hmover hnonterminal) =
         G.signalHistory i history
 
 /-- A payoff-free private-signal factorization certificate proves signal
@@ -742,9 +785,12 @@ recall. -/
 theorem SignalRecallCertificate.eventClockSignalPerfectRecall
     (certificate : G.SignalRecallCertificate) :
     G.EventClockSignalPerfectRecall := by
-  intro i first second hfirst hsecond hsame
-  rw [← certificate.rememberedSignals_infoAt i first hfirst]
-  rw [← certificate.rememberedSignals_infoAt i second hsecond]
+  intro i first second hfirst hfirst_nonterminal hsecond
+    hsecond_nonterminal hsame
+  rw [← certificate.rememberedSignals_infoAt i first hfirst
+    hfirst_nonterminal]
+  rw [← certificate.rememberedSignals_infoAt i second hsecond
+    hsecond_nonterminal]
   rw [hsame]
 
 /-- Factorization certificate for payoff-free public recall. -/
