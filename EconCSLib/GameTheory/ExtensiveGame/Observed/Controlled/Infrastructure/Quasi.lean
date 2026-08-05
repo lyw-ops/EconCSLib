@@ -56,23 +56,26 @@ def IsCompatibleWithQuasiStrategyFrom
     (i : N) (strategy : G.QuasiStrategy i)
     (play : G.base.CompletePlayFromHistory current) : Prop :=
   ∀ (n : ℕ)
-    (_hnonterminal :
+    (hnonterminal :
       ¬ G.base.isTerminal (play.historyAt n).1)
     (hmover :
       G.base.mover (play.historyAt n).1 = some i),
     ∃ abstractAction :
         G.InfoAction i
-          (G.infoAt (play.historyAt n) i hmover),
+          (G.infoAt (play.historyAt n) i hmover hnonterminal),
       abstractAction ∈
           (strategy
-            (G.infoAt (play.historyAt n) i hmover)).allowed ∧
+            (G.infoAt (play.historyAt n) i hmover
+              hnonterminal)).allowed ∧
         play.historyAt (n + 1) =
           ⟨G.base.next (play.historyAt n).1
               (G.actionEquiv
-                (play.historyAt n) i hmover abstractAction),
+                (play.historyAt n) i hmover hnonterminal
+                abstractAction),
             (play.historyAt n).2.snoc
               (G.actionEquiv
-                (play.historyAt n) i hmover abstractAction)⟩
+                (play.historyAt n) i hmover hnonterminal
+                abstractAction)⟩
 
 /-- Root-started quasistrategy compatibility. -/
 abbrev IsCompatibleWithQuasiStrategy
@@ -97,13 +100,15 @@ theorem isCompatibleWithQuasiStrategy_ofPure_iff
       ⟨action, hallowed, hnext⟩
     have ha :
         action =
-          strategy (G.infoAt (play.historyAt n) i hmover) := by
+          strategy
+            (G.infoAt (play.historyAt n) i hmover hterminal) := by
       simpa [QuasiStrategy.ofPure] using hallowed
     subst action
     exact hnext
   · intro h n hterminal hmover
     exact
-      ⟨strategy (G.infoAt (play.historyAt n) i hmover),
+      ⟨strategy
+          (G.infoAt (play.historyAt n) i hmover hterminal),
         Set.mem_singleton _,
         h n hterminal hmover⟩
 
