@@ -554,16 +554,18 @@ theorem HasNoAbsentMindedness.info_ne_of_mem_relativeOwnDecisionHistories
       G.base.toArena.HistoryFrom G.base.init)
     (hmover :
       G.base.mover current.1 = some i)
+    (hnonterminal :
+      ¬ G.base.isTerminal current.1)
     (decision : G.PersonalDecision i)
     (hmem :
       decision ∈
         G.relativeOwnDecisionHistories
           root current i) :
     decision.1 ≠
-      G.infoAt current i hmover := by
+      G.infoAt current i hmover hnonterminal := by
   apply
     hnoAbsent.info_ne_of_mem_ownDecisionHistory
-      current hmover decision
+      current hmover hnonterminal decision
   exact
     (List.drop_sublist
       (G.ownDecisionHistory i root).length
