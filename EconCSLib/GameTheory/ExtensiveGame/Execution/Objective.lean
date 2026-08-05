@@ -3,6 +3,7 @@ Copyright (c) 2026 EconCSLib contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
+import EconCSLib.GameTheory.ExtensiveGame.Basic
 import EconCSLib.GameTheory.ExtensiveGame.Execution.CompletePlay
 import Mathlib.Data.Nat.Find
 
@@ -82,13 +83,6 @@ theorem rebaseTailAt_apply
       outcome
         (CompletePlayFromHistory.splice current future) :=
   rfl
-
-/-- Compatibility alias for the former tail-rebasing name.
-
-This operation accepts an objective already rooted at `current`; it is not the
-restriction of an arbitrary root objective. -/
-@[deprecated rebaseTailAt (since := "2026-07-31")]
-abbrev continueAt := @rebaseTailAt
 
 end PathOutcomeFromHistory
 
