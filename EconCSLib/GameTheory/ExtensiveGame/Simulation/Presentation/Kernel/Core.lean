@@ -77,14 +77,18 @@ structure MeasurableKernelPresentation
         G.base.mover
             (MeasurableKernelArena.latestEventState
               time events).1 =
-          some i),
+          some i)
+      (hnonterminal :
+        ¬ G.base.isTerminal
+          (MeasurableKernelArena.latestEventState
+            time events).1),
       information.informationAt time events =
         playerInformation time
           ⟨i,
             G.infoAt
               (MeasurableKernelArena.latestEventState
                 time events)
-              i hmover⟩
+              i hmover hnonterminal⟩
   /-- Fixed realized chance-action law.  Values away from chance prefixes are
   semantically irrelevant. -/
   chanceKernel :
@@ -272,26 +276,34 @@ theorem abstractKernel_eq_of_player_infoAt_eq
           (MeasurableKernelArena.latestEventState
             time events₁).1 =
         some i)
+    (hnonterminal₁ :
+      ¬ G.base.isTerminal
+        (MeasurableKernelArena.latestEventState time events₁).1)
     (hmover₂ :
       G.base.mover
           (MeasurableKernelArena.latestEventState
             time events₂).1 =
         some i)
+    (hnonterminal₂ :
+      ¬ G.base.isTerminal
+        (MeasurableKernelArena.latestEventState time events₂).1)
     (hsame :
       G.infoAt
           (MeasurableKernelArena.latestEventState time events₁)
-          i hmover₁ =
+          i hmover₁ hnonterminal₁ =
         G.infoAt
           (MeasurableKernelArena.latestEventState time events₂)
-          i hmover₂) :
+          i hmover₂ hnonterminal₂) :
     profile.policy.abstractKernel time
         (presentation.information.informationAt time events₁) =
       profile.policy.abstractKernel time
         (presentation.information.informationAt time events₂) := by
   apply profile.policy.abstractKernel_eq_of_informationAt_eq
   rw [
-    presentation.player_informationAt time events₁ i hmover₁,
-    presentation.player_informationAt time events₂ i hmover₂,
+    presentation.player_informationAt time events₁ i hmover₁
+      hnonterminal₁,
+    presentation.player_informationAt time events₂ i hmover₂
+      hnonterminal₂,
     hsame]
 
 /-- `after` is a unilateral deviation by `who` when every other player's
