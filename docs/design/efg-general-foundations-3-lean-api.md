@@ -6,9 +6,10 @@ Section numbering continues from the foundation documents. The theorem and
 delivery roadmap continues in
 [`efg-general-foundations-4-theorem-roadmap.md`](efg-general-foundations-4-theorem-roadmap.md).
 
-Status: Phase A, the foundational Phase B/D carriers, and finite
-perfect-information logical determinacy are implemented; later analytic and
-well-founded theorem modules remain target architecture. Names marked as
+Status: Phase A, the foundational Phase B/D carriers, and finite plus
+structurally well-founded perfect-information logical determinacy are
+implemented; later arbitrary infinite/topological determinacy and analytic
+theorem modules remain target architecture. Names marked as
 proposed may be adjusted during implementation. No listed theorem is
 considered formalized until a placeholder-free Lean declaration exists.
 
@@ -52,7 +53,7 @@ honestly.
 | `Execution/CompletePlay.lean` | Canonical, implemented | measure-free terminal-absorbing legal plays and prefix/splice operations | `Interface.Core` |
 | `Execution/Length.lean` | Canonical, implemented | uniform length and `Acc`-based well-foundedness certificates | `Interface.Core` |
 | `Execution/Objective.lean` | Canonical, implemented | terminal histories and deterministic terminal/path outcomes | `Interface.Objective` |
-| `Interface/Objective.lean` | Canonical, implemented | stable measure-free objective facade | explicit opt-in |
+| `Interface/Objective.lean` | Canonical, implemented | governed pre-stability measure-free objective facade | explicit opt-in |
 | `Observed/WellFormed.lean` | Canonical, implemented | represented-information and finite-EFG hypothesis packages | `Interface.Core` |
 | `Observed/Controlled.lean` | Canonical, implemented | payoff-free observations/information, bijective player/profile reindexing, and external root presentation | `Interface.Core` |
 | `Observed/Controlled/Infrastructure.lean` | Canonical facade, implemented | declaration-free access to the focused infrastructure leaves | broad controlled infrastructure clients |
@@ -63,29 +64,28 @@ honestly.
 | `Observed/Controlled/Compat/Morphism.lean` | Internal adapter, implemented | payoff commuting square and legacy `ObservedGame.Iso` projection | compatibility consumers |
 | `Observed/Controlled/Law/Discrete.lean` | Canonical, implemented | payoff-free discrete chance and bounded complete-history PMFs | `Interface.Execution.Finite` |
 | `Observed/Controlled/Law/DiscretePath.lean` | Canonical adapter, implemented | actual PMF behavioral executor packaged as the common lawful path probability | `Interface.Execution.Infinite` |
-| `Observed/Controlled/Law.lean` | Canonical, implemented | payoff-free normalized/lawful per-root path marginals, measurable interpretation hierarchy, execution coherence, and same/cross-game realizations | `Interface.Relations.Discrete` plus `Interface.Execution.Analytic` as needed |
+| `Observed/Controlled/Law.lean` | Canonical, implemented | payoff-free normalized/lawful per-root path marginals, measurable interpretation hierarchy, execution coherence, and same/cross-game realizations | `Interface.Preservation`; add `Interface.Execution.Analytic` for analytic execution |
 | `Observed/Controlled/Law/Analytic.lean` | Canonical adapter, implemented | actual measurable-kernel state/history path law packaged in the common carrier under explicit legality | `Interface.Execution.Analytic` |
 | `Observed/FiniteUnfolding.lean` | Canonical, implemented | finite occurrence-sensitive carrier with strict structural, recall, root/subgame, chance, deviation, and bounded-law preservation | `Interface.Execution.Finite` |
 | `Observed/SignalRecall.lean` | Internal adapter, implemented | legacy payoff-aware private/public recall names projected from `Controlled.Infrastructure` | downstream compatibility |
 | `Observed/LawEquivalence.lean` | Canonical, implemented | bounded history/terminal/payoff-law hierarchy and concrete Kuhn realizations | `Interface.Equilibrium.Discrete` |
-| `Observed/PathLawEquivalence.lean` | Internal adapter, implemented | payoff-aware names projected from the unique controlled path-law carrier | `Interface.Relations.Discrete` plus `Interface.Execution.Analytic` as needed |
 | `Observed/Quasi.lean` | Internal adapter, implemented | legacy payoff-aware quasistrategy names projected from `Controlled.Infrastructure` | downstream compatibility |
 | `Observed/General.lean` | Canonical, implemented | discrete general-strategy carriers and embeddings | discrete equilibrium facade |
 | `Simulation/Equilibrium/General.lean` | Internal | measurable mixed/general strategy laws and expected utility | analytic equilibrium facade |
 | `Winning/Basic.lean` | Canonical, implemented | winning conditions, totality, exclusivity, prefix decisions, and strategy compatibility | `Interface.Objective` |
 | `Winning/Topology.lean` | Canonical, implemented | finite agreement cylinders, prefix topology, open/closed/measurable objectives | `Interface.Objective` |
-| `Winning/Determinacy.lean` | Canonical, finite theorem implemented | determinacy predicates and finite/well-founded hypothesis packages; finite perfect-information existence is proved, while well-founded/Gale--Stewart existence remains pending | `Interface.Winning` |
-| `Relations/Preservation.lean` | Canonical, implemented | formal preservation-matrix certificates and compiler-specific packages | `Interface.Relations.Discrete` |
+| `Winning/Determinacy.lean` | Canonical, finite and well-founded theorems implemented | determinacy predicates and finite/well-founded hypothesis packages; structurally well-founded perfect-information existence is proved, while arbitrary infinite Gale--Stewart existence remains out of scope | `Interface.Winning` |
+| `Relations/Preservation.lean` | Canonical, implemented | formal preservation-matrix certificates and compiler-specific packages | `Interface.Preservation` |
 | `Winning/Chance.lean` | Canonical, implemented for discrete path laws | almost-sure winning under a fixed stochastic law, separate from robust winning | `Interface.Winning.Stochastic` |
-| `Interface/Winning.lean` | Canonical, implemented | stable probability-free logical-game facade | explicit opt-in |
+| `Interface/Winning.lean` | Canonical, implemented | governed pre-stability probability-free logical-game facade | explicit opt-in |
 | `Interface/Winning/Stochastic.lean` | Canonical, implemented | discrete infinite almost-sure-winning facade | explicit opt-in |
 `Winning` is justified as a new family because it records objective data and
 solution concepts that neither utility-valued `ExtensiveGame` nor
 representation-neutral `GameForm` can express without loss.
 
 The initial root import should remain unchanged. `Interface.Objective` and
-`Interface.Winning` are opt-in until their dependency closure and API are
-stable. Analytic general strategies remain opt-in permanently unless a later
+`Interface.Winning` are opt-in governed boundaries during pre-stability.
+Analytic general strategies remain opt-in permanently unless a later
 root-policy review decides otherwise.
 
 Each implemented module must be added to `efg-module-status.md`, and the
