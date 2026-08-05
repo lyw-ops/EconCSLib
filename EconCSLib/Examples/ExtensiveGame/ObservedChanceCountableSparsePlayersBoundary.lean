@@ -86,7 +86,8 @@ history. -/
 def sparseInformationAt
     (history : base.toArena.HistoryFrom base.init)
     (i : Player)
-    (hmover : base.mover history.1 = some i) :
+    (hmover : base.mover history.1 = some i)
+    (_hnonterminal : ¬ base.isTerminal history.1) :
     sparseInfoState i := by
   change nodeMover history.1 = some i at hmover
   cases hstate : history.1 with
@@ -104,8 +105,10 @@ the only player-controlled history. -/
 def sparseActionEquiv
     (history : base.toArena.HistoryFrom base.init)
     (i : Player)
-    (hmover : base.mover history.1 = some i) :
-    sparseInfoAction i (sparseInformationAt history i hmover) ≃
+    (hmover : base.mover history.1 = some i)
+    (hnonterminal : ¬ base.isTerminal history.1) :
+    sparseInfoAction i
+        (sparseInformationAt history i hmover hnonterminal) ≃
       base.Action history.1 := by
   change nodeMover history.1 = some i at hmover
   cases hstate : history.1 with
@@ -131,7 +134,7 @@ def observed : ObservedGame Player Unit where
   InfoState := sparseInfoState
   infoObserve := fun _ _ => ()
   infoAt := sparseInformationAt
-  infoAt_observe := fun _ _ _ => rfl
+  infoAt_observe := fun _ _ _ _ => rfl
   InfoAction := sparseInfoAction
   actionEquiv := sparseActionEquiv
 
