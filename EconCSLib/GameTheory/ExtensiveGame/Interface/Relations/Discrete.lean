@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 
 import EconCSLib.GameTheory.ExtensiveGame.Interface.Execution.Finite
 import EconCSLib.GameTheory.ExtensiveGame.Relations.Discrete.Morphism
+import EconCSLib.GameTheory.ExtensiveGame.Relations.Discrete.StochasticNaturality
 import EconCSLib.GameTheory.ExtensiveGame.Execution.Discrete.KernelTrajectory
 import EconCSLib.GameTheory.ExtensiveGame.Relations.Discrete.KernelWeakSimulation
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Morphism.Operational
@@ -19,8 +20,8 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.BehaviorRefinement.Structural
 /-!
 # Discrete and structural EFG relations
 
-Stable public import for strict structural representation changes,
-information refinements, PMF-kernel trajectory couplings, and
+Recommended pre-stability import for strict structural representation
+changes, information refinements, PMF-kernel trajectory couplings, and
 weak/stuttering simulations. The strict structural tier includes the
 payoff-free `ControlledObservedGame.Hom`/`Iso` hierarchy and external root,
 recall, and lawful-subgame transport; payoff compatibility is a separate
