@@ -15,8 +15,8 @@ import EconCSLib.GameTheory.ExtensiveGame.Compiler.FiniteImperfectObserved
 /-!
 # Discrete EFG compilation
 
-Stable public import for the PMF-valued FOSG serializers and finite reference
-observed-EFG compilers.
+Recommended pre-stability import for the PMF-valued FOSG serializers and
+finite reference observed-EFG compilers.
 
 It extends `Interface.Equilibrium.Discrete` and does not import the analytic
 measurable-kernel execution/equilibrium stack. Clients needing that sibling
