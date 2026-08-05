@@ -13,12 +13,13 @@ import EconCSLib.GameTheory.ExtensiveGame.Winning.Topology
 /-!
 # EconCSLib.GameTheory.ExtensiveGame.Interface.Objective
 
-Granular public facade for measure-free complete plays, structural length and
-well-foundedness certificates, history-sensitive terminal/path outcomes, and
-complete-play winning conditions. It also exposes finite agreement cylinders,
-prefix-open/closed events, finite-prefix decision witnesses, and the generated
-prefix topology/measurable space. Information-consistent quasistrategies
-provide a probability-free nondeterministic permission layer.
+Recommended pre-stability facade for measure-free complete plays, structural
+length and well-foundedness certificates, history-sensitive terminal/path
+outcomes, and complete-play winning conditions. It also exposes finite
+agreement cylinders, prefix-open/closed events, finite-prefix decision
+witnesses, and the generated prefix topology/measurable space.
+Information-consistent quasistrategies provide a probability-free
+nondeterministic permission layer.
 
 This tier does not import probability laws, equilibrium, compilers, analytic
 kernels, or determinacy theorems. It is suitable for defining a new EFG
