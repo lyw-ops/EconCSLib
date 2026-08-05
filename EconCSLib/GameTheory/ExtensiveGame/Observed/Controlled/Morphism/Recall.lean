@@ -56,35 +56,52 @@ theorem map_personalDecisionAt
         (e.historyIso.actionEquiv history action) =
       e.personalDecisionEquiv i
         (G.personalDecisionAt i history hsource action) := by
-  let sourceInformation := G.infoAt history i hsource
+  let hsource_nonterminal : ¬ G.base.isTerminal history.1 :=
+    fun hterminal => hterminal.false action
+  let htarget_nonterminal :
+      ¬ H.base.isTerminal
+        (e.historyIso.stateEquiv history).1 :=
+    fun hterminal =>
+      hterminal.false (e.historyIso.actionEquiv history action)
+  let sourceInformation :=
+    G.infoAt history i hsource hsource_nonterminal
   let sourceAction :=
-    (G.actionEquiv history i hsource).symm action
+    (G.actionEquiv history i hsource
+      hsource_nonterminal).symm action
   have hinfo :
       e.infoStateEquiv i sourceInformation =
-        H.infoAt (e.historyIso.stateEquiv history) i htarget :=
-    e.map_infoAt history i hsource htarget
+        H.infoAt (e.historyIso.stateEquiv history) i htarget
+          htarget_nonterminal :=
+    e.map_infoAt history i hsource hsource_nonterminal
+      htarget htarget_nonterminal
   let mappedAction :=
     e.infoActionEquiv i sourceInformation sourceAction
   let transportedAction :=
     cast (congrArg (H.InfoAction i) hinfo) mappedAction
   have haction :
       (H.actionEquiv
-          (e.historyIso.stateEquiv history) i htarget).symm
+          (e.historyIso.stateEquiv history) i htarget
+          htarget_nonterminal).symm
           (e.historyIso.actionEquiv history action) =
         transportedAction := by
     apply
       (H.actionEquiv
-        (e.historyIso.stateEquiv history) i htarget).injective
+        (e.historyIso.stateEquiv history) i htarget
+        htarget_nonterminal).injective
     rw [(H.actionEquiv
-      (e.historyIso.stateEquiv history) i htarget).apply_symm_apply]
+      (e.historyIso.stateEquiv history) i htarget
+      htarget_nonterminal).apply_symm_apply]
     simpa [sourceAction, sourceInformation, mappedAction,
       transportedAction] using
-      (e.map_infoActionAt history i hsource htarget sourceAction).symm
+      (e.map_infoActionAt history i hsource hsource_nonterminal
+        htarget htarget_nonterminal sourceAction).symm
   change
     (⟨H.infoAt
-        (e.historyIso.stateEquiv history) i htarget,
+        (e.historyIso.stateEquiv history) i htarget
+        htarget_nonterminal,
       (H.actionEquiv
-        (e.historyIso.stateEquiv history) i htarget).symm
+        (e.historyIso.stateEquiv history) i htarget
+        htarget_nonterminal).symm
         (e.historyIso.actionEquiv history action)⟩ :
       H.PersonalDecision i) =
     e.personalDecisionEquiv i
@@ -93,7 +110,8 @@ theorem map_personalDecisionAt
   rw [haction]
   change
     (⟨H.infoAt
-        (e.historyIso.stateEquiv history) i htarget,
+        (e.historyIso.stateEquiv history) i htarget
+        htarget_nonterminal,
       transportedAction⟩ :
       H.PersonalDecision i) =
     ⟨e.infoStateEquiv i sourceInformation, mappedAction⟩
@@ -188,9 +206,11 @@ private theorem infoAt_eq_of_history_eq
     {first second : K.base.History}
     (hhistory : first = second)
     (hfirst : K.base.mover first.1 = some i)
-    (hsecond : K.base.mover second.1 = some i) :
-    K.infoAt first i hfirst =
-      K.infoAt second i hsecond := by
+    (hfirst_nonterminal : ¬ K.base.isTerminal first.1)
+    (hsecond : K.base.mover second.1 = some i)
+    (hsecond_nonterminal : ¬ K.base.isTerminal second.1) :
+    K.infoAt first i hfirst hfirst_nonterminal =
+      K.infoAt second i hsecond hsecond_nonterminal := by
   subst second
   rfl
 
@@ -201,7 +221,8 @@ theorem hasPerfectRecall_iff [DecidableEq N]
     G.HasPerfectRecall i ↔ H.HasPerfectRecall i := by
   constructor
   · intro hrecall targetFirst targetSecond
-      htargetFirst htargetSecond hsame
+      htargetFirst htargetFirst_nonterminal
+      htargetSecond htargetSecond_nonterminal hsame
     let sourceFirst :=
       e.historyIso.stateEquiv.symm targetFirst
     let sourceSecond :=
@@ -230,9 +251,29 @@ theorem hasPerfectRecall_iff [DecidableEq N]
         simpa [hmapSecond] using htargetSecond
       rw [e.map_mover sourceSecond] at hmapped
       exact hmapped
+    have hmappedFirst_nonterminal :
+        ¬ H.base.isTerminal
+          (e.historyIso.stateEquiv sourceFirst).1 := by
+      simpa [hmapFirst] using htargetFirst_nonterminal
+    have hmappedSecond_nonterminal :
+        ¬ H.base.isTerminal
+          (e.historyIso.stateEquiv sourceSecond).1 := by
+      simpa [hmapSecond] using htargetSecond_nonterminal
+    have hsourceFirst_nonterminal :
+        ¬ G.base.isTerminal sourceFirst.1 :=
+      (not_congr
+        (e.historyIso.isTerminal_iff sourceFirst)).mpr
+          hmappedFirst_nonterminal
+    have hsourceSecond_nonterminal :
+        ¬ G.base.isTerminal sourceSecond.1 :=
+      (not_congr
+        (e.historyIso.isTerminal_iff sourceSecond)).mpr
+          hmappedSecond_nonterminal
     have hsourceInfo :
-        G.infoAt sourceFirst i hsourceFirst =
-          G.infoAt sourceSecond i hsourceSecond := by
+        G.infoAt sourceFirst i hsourceFirst
+            hsourceFirst_nonterminal =
+          G.infoAt sourceSecond i hsourceSecond
+            hsourceSecond_nonterminal := by
       have hmappedFirst :
           H.base.mover
               (e.historyIso.stateEquiv sourceFirst).1 =
@@ -248,38 +289,50 @@ theorem hasPerfectRecall_iff [DecidableEq N]
       have hfirstInfo :
           H.infoAt
               (e.historyIso.stateEquiv sourceFirst)
-              i hmappedFirst =
-            H.infoAt targetFirst i htargetFirst :=
+              i hmappedFirst hmappedFirst_nonterminal =
+            H.infoAt targetFirst i htargetFirst
+              htargetFirst_nonterminal :=
         infoAt_eq_of_history_eq H i hmapFirst
-          hmappedFirst htargetFirst
+          hmappedFirst hmappedFirst_nonterminal
+          htargetFirst htargetFirst_nonterminal
       have hsecondInfo :
           H.infoAt
               (e.historyIso.stateEquiv sourceSecond)
-              i hmappedSecond =
-            H.infoAt targetSecond i htargetSecond :=
+              i hmappedSecond hmappedSecond_nonterminal =
+            H.infoAt targetSecond i htargetSecond
+              htargetSecond_nonterminal :=
         infoAt_eq_of_history_eq H i hmapSecond
-          hmappedSecond htargetSecond
+          hmappedSecond hmappedSecond_nonterminal
+          htargetSecond htargetSecond_nonterminal
       apply (e.infoStateEquiv i).injective
       calc
         e.infoStateEquiv i
-            (G.infoAt sourceFirst i hsourceFirst) =
+            (G.infoAt sourceFirst i hsourceFirst
+              hsourceFirst_nonterminal) =
           H.infoAt
             (e.historyIso.stateEquiv sourceFirst)
-            i hmappedFirst :=
+            i hmappedFirst hmappedFirst_nonterminal :=
             e.map_infoAt sourceFirst i
-              hsourceFirst hmappedFirst
-        _ = H.infoAt targetFirst i htargetFirst := hfirstInfo
-        _ = H.infoAt targetSecond i htargetSecond := hsame
+              hsourceFirst hsourceFirst_nonterminal
+              hmappedFirst hmappedFirst_nonterminal
+        _ = H.infoAt targetFirst i htargetFirst
+            htargetFirst_nonterminal := hfirstInfo
+        _ = H.infoAt targetSecond i htargetSecond
+            htargetSecond_nonterminal := hsame
         _ = H.infoAt
             (e.historyIso.stateEquiv sourceSecond)
-            i hmappedSecond := hsecondInfo.symm
+            i hmappedSecond hmappedSecond_nonterminal :=
+              hsecondInfo.symm
         _ = e.infoStateEquiv i
-            (G.infoAt sourceSecond i hsourceSecond) :=
+            (G.infoAt sourceSecond i hsourceSecond
+              hsourceSecond_nonterminal) :=
               (e.map_infoAt sourceSecond i
-                hsourceSecond hmappedSecond).symm
+                hsourceSecond hsourceSecond_nonterminal
+                hmappedSecond hmappedSecond_nonterminal).symm
     have hsourceHistory :=
       hrecall sourceFirst sourceSecond
-        hsourceFirst hsourceSecond hsourceInfo
+        hsourceFirst hsourceFirst_nonterminal
+        hsourceSecond hsourceSecond_nonterminal hsourceInfo
     have hfirstMap :=
       e.map_ownDecisionHistory i sourceFirst
     have hsecondMap :=
@@ -298,7 +351,8 @@ theorem hasPerfectRecall_iff [DecidableEq N]
       _ = H.ownDecisionHistory i targetSecond := by
             rw [hmapSecond]
   · intro hrecall sourceFirst sourceSecond
-      hsourceFirst hsourceSecond hsame
+      hsourceFirst hsourceFirst_nonterminal
+      hsourceSecond hsourceSecond_nonterminal hsame
     have htargetFirst :
         H.base.mover
             (e.historyIso.stateEquiv sourceFirst).1 =
@@ -311,23 +365,38 @@ theorem hasPerfectRecall_iff [DecidableEq N]
           some i := by
       rw [e.map_mover sourceSecond]
       exact hsourceSecond
+    have htargetFirst_nonterminal :
+        ¬ H.base.isTerminal
+          (e.historyIso.stateEquiv sourceFirst).1 :=
+      (not_congr
+        (e.historyIso.isTerminal_iff sourceFirst)).mp
+          hsourceFirst_nonterminal
+    have htargetSecond_nonterminal :
+        ¬ H.base.isTerminal
+          (e.historyIso.stateEquiv sourceSecond).1 :=
+      (not_congr
+        (e.historyIso.isTerminal_iff sourceSecond)).mp
+          hsourceSecond_nonterminal
     have htargetInfo :
         H.infoAt
             (e.historyIso.stateEquiv sourceFirst)
-            i htargetFirst =
+            i htargetFirst htargetFirst_nonterminal =
           H.infoAt
             (e.historyIso.stateEquiv sourceSecond)
-            i htargetSecond := by
+            i htargetSecond htargetSecond_nonterminal := by
       rw [← e.map_infoAt sourceFirst i
-        hsourceFirst htargetFirst]
+        hsourceFirst hsourceFirst_nonterminal
+        htargetFirst htargetFirst_nonterminal]
       rw [← e.map_infoAt sourceSecond i
-        hsourceSecond htargetSecond]
+        hsourceSecond hsourceSecond_nonterminal
+        htargetSecond htargetSecond_nonterminal]
       exact congrArg (e.infoStateEquiv i) hsame
     have htargetHistory :=
       hrecall
         (e.historyIso.stateEquiv sourceFirst)
         (e.historyIso.stateEquiv sourceSecond)
-        htargetFirst htargetSecond htargetInfo
+        htargetFirst htargetFirst_nonterminal
+        htargetSecond htargetSecond_nonterminal htargetInfo
     rw [e.map_ownDecisionHistory i sourceFirst,
       e.map_ownDecisionHistory i sourceSecond] at htargetHistory
     exact
@@ -472,7 +541,8 @@ theorem hasEventClockSignalPerfectRecall_of
     (hrecall : G.HasEventClockSignalPerfectRecall i) :
     H.HasEventClockSignalPerfectRecall i := by
   intro targetFirst targetSecond
-    htargetFirst htargetSecond hsame
+    htargetFirst htargetFirst_nonterminal
+    htargetSecond htargetSecond_nonterminal hsame
   let sourceFirst :=
     e.historyIso.stateEquiv.symm targetFirst
   let sourceSecond :=
@@ -501,6 +571,24 @@ theorem hasEventClockSignalPerfectRecall_of
       simpa [hmapSecond] using htargetSecond
     rw [e.map_mover sourceSecond] at hmapped
     exact hmapped
+  have hmappedFirst_nonterminal :
+      ¬ H.base.isTerminal
+        (e.historyIso.stateEquiv sourceFirst).1 := by
+    simpa [hmapFirst] using htargetFirst_nonterminal
+  have hmappedSecond_nonterminal :
+      ¬ H.base.isTerminal
+        (e.historyIso.stateEquiv sourceSecond).1 := by
+    simpa [hmapSecond] using htargetSecond_nonterminal
+  have hsourceFirst_nonterminal :
+      ¬ G.base.isTerminal sourceFirst.1 :=
+    (not_congr
+      (e.historyIso.isTerminal_iff sourceFirst)).mpr
+        hmappedFirst_nonterminal
+  have hsourceSecond_nonterminal :
+      ¬ G.base.isTerminal sourceSecond.1 :=
+    (not_congr
+      (e.historyIso.isTerminal_iff sourceSecond)).mpr
+        hmappedSecond_nonterminal
   have hmappedFirst :
       H.base.mover
           (e.historyIso.stateEquiv sourceFirst).1 =
@@ -514,32 +602,44 @@ theorem hasEventClockSignalPerfectRecall_of
     rw [e.map_mover sourceSecond]
     exact hsourceSecond
   have hsourceInfo :
-      G.infoAt sourceFirst i hsourceFirst =
-        G.infoAt sourceSecond i hsourceSecond := by
+      G.infoAt sourceFirst i hsourceFirst
+          hsourceFirst_nonterminal =
+        G.infoAt sourceSecond i hsourceSecond
+          hsourceSecond_nonterminal := by
     apply (e.infoStateEquiv i).injective
     calc
       e.infoStateEquiv i
-          (G.infoAt sourceFirst i hsourceFirst) =
+          (G.infoAt sourceFirst i hsourceFirst
+            hsourceFirst_nonterminal) =
         H.infoAt
           (e.historyIso.stateEquiv sourceFirst)
-          i hmappedFirst :=
-          e.map_infoAt sourceFirst i hsourceFirst hmappedFirst
-      _ = H.infoAt targetFirst i htargetFirst :=
+          i hmappedFirst hmappedFirst_nonterminal :=
+          e.map_infoAt sourceFirst i hsourceFirst
+            hsourceFirst_nonterminal hmappedFirst
+            hmappedFirst_nonterminal
+      _ = H.infoAt targetFirst i htargetFirst
+          htargetFirst_nonterminal :=
         infoAt_eq_of_history_eq H i hmapFirst
-          hmappedFirst htargetFirst
-      _ = H.infoAt targetSecond i htargetSecond := hsame
+          hmappedFirst hmappedFirst_nonterminal
+          htargetFirst htargetFirst_nonterminal
+      _ = H.infoAt targetSecond i htargetSecond
+          htargetSecond_nonterminal := hsame
       _ = H.infoAt
           (e.historyIso.stateEquiv sourceSecond)
-          i hmappedSecond :=
+          i hmappedSecond hmappedSecond_nonterminal :=
         (infoAt_eq_of_history_eq H i hmapSecond
-          hmappedSecond htargetSecond).symm
+          hmappedSecond hmappedSecond_nonterminal
+          htargetSecond htargetSecond_nonterminal).symm
       _ = e.infoStateEquiv i
-          (G.infoAt sourceSecond i hsourceSecond) :=
+          (G.infoAt sourceSecond i hsourceSecond
+            hsourceSecond_nonterminal) :=
         (e.map_infoAt sourceSecond i
-          hsourceSecond hmappedSecond).symm
+          hsourceSecond hsourceSecond_nonterminal
+          hmappedSecond hmappedSecond_nonterminal).symm
   have hsourceSignals :=
     hrecall sourceFirst sourceSecond
-      hsourceFirst hsourceSecond hsourceInfo
+      hsourceFirst hsourceFirst_nonterminal
+      hsourceSecond hsourceSecond_nonterminal hsourceInfo
   calc
     H.signalHistory i targetFirst =
         H.signalHistory i
