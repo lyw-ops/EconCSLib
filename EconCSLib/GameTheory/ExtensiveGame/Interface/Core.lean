@@ -18,12 +18,12 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Rec
 /-!
 # EconCSLib.GameTheory.ExtensiveGame.Interface.Core
 
-Stable Foundation Facade for typed histories, measure-free complete plays,
-structural termination certificates, bounded deterministic and PMF execution,
-and the payoff-free controlled history-indexed information structure. It also
-includes represented information, mover coherence, finite-EFG certificates,
-recall predicates, quasistrategies, and external lawful subgame systems
-without introducing another game record.
+Canonical pre-stability Foundation Facade for typed histories, measure-free
+complete plays, structural termination certificates, bounded deterministic
+and PMF execution, and the payoff-free controlled history-indexed information
+structure. It also includes represented information, mover coherence,
+finite-EFG certificates, recall predicates, quasistrategies, and external
+lawful subgame systems without introducing another game record.
 
 `ControlledObservedGame.completeInformation` uses exactly each player's
 mover-labeled decision-history subtype, so chance and other-player histories
@@ -32,11 +32,12 @@ under terminal-mover normalization; the general carrier instead exposes
 `DecisionMoverCoherent` as the explicit obligation. Public projection and
 designated-root selection remain explicit orthogonal arguments.
 
-This facade promises the declaration families above, not every declaration
-that might become visible through an implementation import. It intentionally
+This governed facade documents the declaration families above, not every
+declaration that might become visible through an implementation import. There
+is currently no external source-compatibility guarantee. It intentionally
 excludes payoff-aware `ObservedGame`, objectives and winning conditions,
 measure-valued path laws, representation relations, equilibrium, simulation,
 serialization, and compilers. The genuinely narrow structural entry is
-`Interface.StructuralCore`; compatibility clients must import payoff-aware
-adapters explicitly.
+`Interface.StructuralCore`; payoff-aware clients must import adapters
+explicitly.
 -/
