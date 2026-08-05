@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Chance
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Law.Discrete
 
 /-!
 # EconCSLib.GameTheory.ExtensiveGame.Observed.Behavior
@@ -43,31 +44,33 @@ variable {N U : Type*} (G : ObservedGame N U)
 /-- A behavioral strategy for player `i`, indexed only by that player's
 decision information state. -/
 abbrev BehavioralStrategy (i : N) :=
-  (information : G.InfoState i) →
-    PMF (G.InfoAction i information)
+  G.toControlledObservedGame.BehavioralStrategy i
 
 /-- One information-indexed behavioral strategy for every player. -/
 abbrev BehavioralProfile :=
-  (i : N) → G.BehavioralStrategy i
+  G.toControlledObservedGame.BehavioralProfile
 
 /-- The concrete legal-action law induced by a behavioral strategy at a
 history controlled by its player. -/
 noncomputable def BehavioralStrategy.actionLawAt {i : N}
     (strategy : G.BehavioralStrategy i)
     (history : G.base.toArena.HistoryFrom G.base.init)
-    (hmover : G.base.mover history.1 = some i) :
+    (hmover : G.base.mover history.1 = some i)
+    (hnonterminal : ¬ G.base.isTerminal history.1) :
     PMF (G.base.Action history.1) :=
-  (strategy (G.infoAt history i hmover)).map
-    (G.actionEquiv history i hmover)
+  (strategy (G.infoAt history i hmover hnonterminal)).map
+    (G.actionEquiv history i hmover hnonterminal)
 
 /-- The concrete legal-action law induced by a behavioral profile at a
 player-controlled history. -/
 noncomputable def BehavioralProfile.actionLawAt
     (profile : G.BehavioralProfile)
     (history : G.base.toArena.HistoryFrom G.base.init)
-    (i : N) (hmover : G.base.mover history.1 = some i) :
+    (i : N) (hmover : G.base.mover history.1 = some i)
+    (hnonterminal : ¬ G.base.isTerminal history.1) :
     PMF (G.base.Action history.1) :=
-  (profile i).actionLawAt G history hmover
+  ObservedGame.BehavioralStrategy.actionLawAt
+    G (profile i) history hmover hnonterminal
 
 /-- Equal information states force a behavioral profile to choose the same
 packaged abstract action law. -/
@@ -76,43 +79,52 @@ theorem BehavioralProfile.actionLaw_eq_of_infoState_eq
     (history₁ history₂ :
       G.base.toArena.HistoryFrom G.base.init)
     (hmover₁ : G.base.mover history₁.1 = some i)
+    (hnonterminal₁ : ¬ G.base.isTerminal history₁.1)
     (hmover₂ : G.base.mover history₂.1 = some i)
+    (hnonterminal₂ : ¬ G.base.isTerminal history₂.1)
     (hsame :
-      G.infoAt history₁ i hmover₁ =
-        G.infoAt history₂ i hmover₂) :
-    (⟨G.infoAt history₁ i hmover₁,
-        profile i (G.infoAt history₁ i hmover₁)⟩ :
+      G.infoAt history₁ i hmover₁ hnonterminal₁ =
+        G.infoAt history₂ i hmover₂ hnonterminal₂) :
+    (⟨G.infoAt history₁ i hmover₁ hnonterminal₁,
+        profile i
+          (G.infoAt history₁ i hmover₁ hnonterminal₁)⟩ :
       Σ information : G.InfoState i,
         PMF (G.InfoAction i information)) =
-      ⟨G.infoAt history₂ i hmover₂,
-        profile i (G.infoAt history₂ i hmover₂)⟩ :=
-  congrArg
-    (fun information : G.InfoState i =>
-      (⟨information, profile i information⟩ :
-        Σ state : G.InfoState i, PMF (G.InfoAction i state)))
-    hsame
+      ⟨G.infoAt history₂ i hmover₂ hnonterminal₂,
+        profile i
+          (G.infoAt history₂ i hmover₂ hnonterminal₂)⟩ :=
+  ControlledObservedGame.BehavioralProfile.actionLaw_eq_of_infoState_eq
+    G.toControlledObservedGame profile i history₁ history₂
+      hmover₁ hnonterminal₁ hmover₂ hnonterminal₂ hsame
 
 /-- Unilateral deviation of an information-indexed behavioral profile. -/
-def BehavioralProfile.deviate [DecidableEq N]
+abbrev BehavioralProfile.deviate [DecidableEq N]
     (profile : G.BehavioralProfile) (who : N)
     (deviation : G.BehavioralStrategy who) :
     G.BehavioralProfile :=
-  Function.update profile who deviation
+  ControlledObservedGame.BehavioralProfile.deviate
+    G.toControlledObservedGame profile who deviation
 
 @[simp]
 theorem BehavioralProfile.deviate_same [DecidableEq N]
     (profile : G.BehavioralProfile) (who : N)
     (deviation : G.BehavioralStrategy who) :
-    profile.deviate G who deviation who = deviation := by
-  simp [BehavioralProfile.deviate]
+    ObservedGame.BehavioralProfile.deviate
+        G profile who deviation who =
+      deviation := by
+  simp [ObservedGame.BehavioralProfile.deviate,
+    ControlledObservedGame.BehavioralProfile.deviate]
 
 @[simp]
 theorem BehavioralProfile.deviate_of_ne [DecidableEq N]
     (profile : G.BehavioralProfile) (who : N)
     (deviation : G.BehavioralStrategy who)
     {other : N} (hne : other ≠ who) :
-    profile.deviate G who deviation other = profile other := by
-  simp [BehavioralProfile.deviate, hne]
+    ObservedGame.BehavioralProfile.deviate
+        G profile who deviation other =
+      profile other := by
+  simp [ObservedGame.BehavioralProfile.deviate,
+    ControlledObservedGame.BehavioralProfile.deviate, hne]
 
 end ExtensiveGame.ObservedGame
 
@@ -132,6 +144,7 @@ noncomputable def toHistoryPolicy
     match hmover : G.observed.base.mover history.1 with
     | some i =>
         profile.actionLawAt G.observed history i hmover
+          hnonterminal
     | none =>
         G.chanceKernel history ⟨hmover, hnonterminal⟩
 
@@ -146,7 +159,8 @@ theorem toHistoryPolicy_of_mover
     (i : N)
     (hmover : G.observed.base.mover history.1 = some i) :
     toHistoryPolicy G profile history hnonterminal =
-      profile.actionLawAt G.observed history i hmover := by
+      profile.actionLawAt G.observed history i hmover
+        hnonterminal := by
   rw [toHistoryPolicy]
   split
   · rename_i j hj
