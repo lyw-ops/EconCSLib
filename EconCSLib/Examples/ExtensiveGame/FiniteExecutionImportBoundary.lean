@@ -27,6 +27,44 @@ kernel layers.
 #check ExtensiveGame.DiscreteControlledObservedChanceGame.behavioralCertifiedExecutionLaw
 #check KernelArena
 
+namespace CertifiedContinuationSupportBoundary
+
+open ExtensiveGame
+
+variable {N : Type*}
+  {G : DiscreteControlledObservedChanceGame N}
+  [terminalDecidable :
+    (state : G.observed.base.State) →
+      Decidable (G.observed.base.isTerminal state)]
+
+/-- Downstream code obtains a legal continuation suffix from the certificate
+without unfolding `behavioralHistoryLaw` or the stochastic executor. -/
+example
+    (S : G.CertifiedBehavioralExecutionLaw)
+    (profile : G.BehavioralProfile)
+    (current endpoint : G.observed.base.History)
+    (fuel : ℕ)
+    (hsupport : endpoint ∈ (S.historyLaw profile current fuel).support) :
+    ∃ suffix :
+        G.observed.base.toArena.History current.1 endpoint.1,
+      endpoint.2 = current.2.append suffix :=
+  S.exists_suffix_of_mem_support profile current endpoint fuel hsupport
+
+/-- Terminal absorption can likewise be consumed through the certificate:
+every supported endpoint is the current history itself. -/
+example
+    (S : G.CertifiedBehavioralExecutionLaw)
+    (profile : G.BehavioralProfile)
+    (current endpoint : G.observed.base.History)
+    (fuel : ℕ)
+    (hterminal : G.observed.base.isTerminal current.1)
+    (hsupport : endpoint ∈ (S.historyLaw profile current fuel).support) :
+    endpoint = current :=
+  S.eq_current_of_terminal_of_mem_support
+    profile current endpoint fuel hterminal hsupport
+
+end CertifiedContinuationSupportBoundary
+
 /--
 error: Unknown constant `Arena.pathLaw`
 -/
