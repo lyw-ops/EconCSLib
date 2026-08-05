@@ -63,6 +63,15 @@ behavioral execution.
 
 The concrete conditional construction and the resulting unconditional
 bounded Kuhn Nash-on-designated-continuations theorems are in `KuhnConditioning`.
+
+## Source boundary
+
+The finite perfect-recall realization target is [Kuhn 1953, §4, Thm. 4] and
+[MFoGT, Thm. 6.3.4]. The Lean certificates below use discrete `PMF` laws and
+terminal-aware bounded complete-history execution. Root-scoped conditioning,
+deviation-complete law morphisms, and continuation-family transport are
+EconCSLib representation theorems; the citations do not justify an
+arbitrary-measure or infinite-path equivalence.
 -/
 
 namespace ExtensiveGame.ObservedGame
@@ -144,8 +153,15 @@ strictly weaker property consumed there. -/
 noncomputable def toMixed {i : N}
     [Fintype (G.InfoState i)]
     (strategy : G.BehavioralStrategy i) :
-    G.MixedStrategy i :=
-  PMF.fintypePi strategy
+    G.MixedStrategy i := by
+  change
+    (information : G.InfoState i) →
+      PMF (G.InfoAction i information) at strategy
+  change
+    PMF
+      ((information : G.InfoState i) →
+        G.InfoAction i information)
+  exact PMF.fintypePi strategy
 
 /-- The sampled pure plan has exactly the declared behavioral action law at
 each information state. -/
@@ -156,8 +172,16 @@ theorem toMixed_actionMarginal {i : N}
     (toMixed G strategy).map
         (fun pureStrategy =>
           pureStrategy information) =
-      strategy information :=
-  PMF.fintypePi_map_apply
+      strategy information := by
+  change
+    (information : G.InfoState i) →
+      PMF (G.InfoAction i information) at strategy
+  change
+    (PMF.fintypePi strategy).map
+        (fun pureStrategy =>
+          pureStrategy information) =
+      strategy information
+  exact PMF.fintypePi_map_apply
     strategy information
 
 end BehavioralStrategy
@@ -217,42 +241,52 @@ theorem behavioralToMixedStrategy_actionLawAt
     (history :
       G.base.toArena.HistoryFrom G.base.init)
     (hmover :
-      G.base.mover history.1 = some i) :
+      G.base.mover history.1 = some i)
+    (hnonterminal :
+      ¬ G.base.isTerminal history.1) :
     (h.behavioralToMixedStrategy
       i strategy).map
         (fun pureStrategy =>
           pureStrategy.actionAt
-            G history hmover) =
+            G history hmover hnonterminal) =
       strategy.actionLawAt
-        G history hmover := by
+        G history hmover hnonterminal := by
   unfold PureStrategy.actionAt
     BehavioralStrategy.actionLawAt
   calc
     (h.behavioralToMixedStrategy
         i strategy).map
           (fun pureStrategy =>
-            G.actionEquiv history i hmover
+            G.actionEquiv history i hmover hnonterminal
               (pureStrategy
-                (G.infoAt history i hmover))) =
+                (G.infoAt history i hmover hnonterminal))) =
         ((h.behavioralToMixedStrategy
             i strategy).map
               (fun pureStrategy =>
                 pureStrategy
-                  (G.infoAt history i hmover))).map
-            (G.actionEquiv history i hmover) := by
+                  (G.infoAt history i hmover hnonterminal))).map
+            (G.actionEquiv history i hmover hnonterminal) := by
       exact
         (PMF.map_comp
           (fun pureStrategy =>
             pureStrategy
-              (G.infoAt history i hmover))
+              (G.infoAt history i hmover hnonterminal))
           (h.behavioralToMixedStrategy
             i strategy)
-          (G.actionEquiv history i hmover)).symm
+          (G.actionEquiv history i hmover hnonterminal)).symm
     _ = (strategy
-          (G.infoAt history i hmover)).map
-            (G.actionEquiv history i hmover) := by
-      rw [h.behavioralToMixedStrategy_actionMarginal
-        i strategy (G.infoAt history i hmover)]
+          (G.infoAt history i hmover hnonterminal)).map
+            (G.actionEquiv history i hmover hnonterminal) := by
+      exact congrArg
+        (fun law :
+          PMF
+            (G.InfoAction i
+              (G.infoAt history i hmover hnonterminal)) =>
+          law.map
+            (G.actionEquiv history i hmover hnonterminal))
+        (h.behavioralToMixedStrategy_actionMarginal
+          i strategy
+          (G.infoAt history i hmover hnonterminal))
 
 /-- The independently sampled complete pure profile has the same current
 concrete-action marginal as the source behavioral profile. -/
@@ -264,28 +298,30 @@ theorem behavioralToMixedProfile_actionLawAt
       G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hmover :
-      G.base.mover history.1 = some i) :
+      G.base.mover history.1 = some i)
+    (hnonterminal :
+      ¬ G.base.isTerminal history.1) :
     ((h.behavioralToMixedProfile
         profile).pureProfileLaw G).map
         (fun pureProfile =>
           pureProfile.actionAt
-            G history i hmover) =
+            G history i hmover hnonterminal) =
       profile.actionLawAt
-        G history i hmover := by
+        G history i hmover hnonterminal := by
   unfold MixedProfile.pureProfileLaw
   calc
     (PMF.fintypePi
         (h.behavioralToMixedProfile profile)).map
           (fun pureProfile =>
             PureProfile.actionAt
-              G pureProfile history i hmover) =
+              G pureProfile history i hmover hnonterminal) =
         ((PMF.fintypePi
           (h.behavioralToMixedProfile profile)).map
             (fun pureProfile =>
               pureProfile i)).map
           (fun pureStrategy =>
             PureStrategy.actionAt
-              G pureStrategy history hmover) := by
+              G pureStrategy history hmover hnonterminal) := by
       exact
         (PMF.map_comp
           (fun pureProfile => pureProfile i)
@@ -293,18 +329,18 @@ theorem behavioralToMixedProfile_actionLawAt
             (h.behavioralToMixedProfile profile))
           (fun pureStrategy =>
             PureStrategy.actionAt
-              G pureStrategy history hmover)).symm
+              G pureStrategy history hmover hnonterminal)).symm
     _ = (h.behavioralToMixedStrategy
           i (profile i)).map
             (fun pureStrategy =>
               PureStrategy.actionAt
-                G pureStrategy history hmover) := by
+                G pureStrategy history hmover hnonterminal) := by
       rw [PMF.fintypePi_map_apply]
       rfl
     _ = profile.actionLawAt
-          G history i hmover :=
+          G history i hmover hnonterminal :=
       h.behavioralToMixedStrategy_actionLawAt
-        i (profile i) history hmover
+        i (profile i) history hmover hnonterminal
 
 end FiniteInformationHypotheses
 
@@ -354,13 +390,15 @@ theorem behavioralToMixedStrategy_actionLawAt
     (history :
       G.base.toArena.HistoryFrom G.base.init)
     (hmover :
-      G.base.mover history.1 = some i) :
+      G.base.mover history.1 = some i)
+    (hnonterminal :
+      ¬ G.base.isTerminal history.1) :
     (h.behavioralToMixedStrategy i strategy).map
         (fun pureStrategy =>
-          pureStrategy.actionAt G history hmover) =
-      strategy.actionLawAt G history hmover :=
+          pureStrategy.actionAt G history hmover hnonterminal) =
+      strategy.actionLawAt G history hmover hnonterminal :=
   h.toFiniteInformationHypotheses.behavioralToMixedStrategy_actionLawAt
-    i strategy history hmover
+    i strategy history hmover hnonterminal
 
 /-- Compatibility wrapper for the complete-profile concrete marginal. -/
 theorem behavioralToMixedProfile_actionLawAt
@@ -371,13 +409,15 @@ theorem behavioralToMixedProfile_actionLawAt
       G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hmover :
-      G.base.mover history.1 = some i) :
+      G.base.mover history.1 = some i)
+    (hnonterminal :
+      ¬ G.base.isTerminal history.1) :
     ((h.behavioralToMixedProfile profile).pureProfileLaw G).map
         (fun pureProfile =>
-          pureProfile.actionAt G history i hmover) =
-      profile.actionLawAt G history i hmover :=
+          pureProfile.actionAt G history i hmover hnonterminal) =
+      profile.actionLawAt G history i hmover hnonterminal :=
   h.toFiniteInformationHypotheses.behavioralToMixedProfile_actionLawAt
-    profile history i hmover
+    profile history i hmover hnonterminal
 
 end FiniteNoAbsentMindednessHypotheses
 
@@ -458,17 +498,19 @@ theorem behavioralToMixedStrategy_actionLawAt
     (history :
       G.base.toArena.HistoryFrom G.base.init)
     (hmover :
-      G.base.mover history.1 = some i) :
+      G.base.mover history.1 = some i)
+    (hnonterminal :
+      ¬ G.base.isTerminal history.1) :
     (h.behavioralToMixedStrategy
       i strategy).map
         (fun pureStrategy =>
           pureStrategy.actionAt
-            G history hmover) =
+            G history hmover hnonterminal) =
       strategy.actionLawAt
-        G history hmover :=
+        G history hmover hnonterminal :=
   FiniteNoAbsentMindednessHypotheses.behavioralToMixedStrategy_actionLawAt
     h.toFiniteNoAbsentMindednessHypotheses
-    i strategy history hmover
+    i strategy history hmover hnonterminal
 
 /-- The independently sampled complete pure profile has the same current
 concrete-action marginal as the source behavioral profile. -/
@@ -480,17 +522,19 @@ theorem behavioralToMixedProfile_actionLawAt
       G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hmover :
-      G.base.mover history.1 = some i) :
+      G.base.mover history.1 = some i)
+    (hnonterminal :
+      ¬ G.base.isTerminal history.1) :
     ((h.behavioralToMixedProfile
         profile).pureProfileLaw G).map
         (fun pureProfile =>
           pureProfile.actionAt
-            G history i hmover) =
+            G history i hmover hnonterminal) =
       profile.actionLawAt
-        G history i hmover :=
+        G history i hmover hnonterminal :=
   FiniteNoAbsentMindednessHypotheses.behavioralToMixedProfile_actionLawAt
     h.toFiniteNoAbsentMindednessHypotheses
-    profile history i hmover
+    profile history i hmover hnonterminal
 
 end FiniteKuhnHypotheses
 
