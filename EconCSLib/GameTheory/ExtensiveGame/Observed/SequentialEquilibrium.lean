@@ -120,4 +120,172 @@ def TendsTo
 
 end BehavioralProfile
 
+/-- Structural hypotheses for the first finite sequential-equilibrium layer.
+
+Player finiteness is a typeclass parameter. The finite-EFG certificate
+supplies a bounded, locally finite history unfolding, finite information
+carriers, representation of every declared information state, and mover
+coherence. Chance is part of `ObservedChanceGame`; the recall certificate
+proves perfect recall. Decidability of terminality is stored only because the
+existing executable bounded stochastic semantics requires it. -/
+structure FiniteSequentialHypotheses
+    [Fintype N] [DecidableEq N] where
+  /-- Finite occurrence-sensitive observed-EFG presentation. -/
+  finiteEFG : G.observed.FiniteEFGHypotheses
+  /-- Factorized perfect-recall certificate. -/
+  recallCertificate : G.observed.RecallCertificate
+  /-- Executable terminal test used by bounded stochastic execution. -/
+  terminalDecidable :
+    (state : G.observed.base.State) →
+      Decidable (G.observed.base.isTerminal state)
+
+namespace FiniteSequentialHypotheses
+
+variable [Fintype N] [DecidableEq N]
+
+/-- The stored recall certificate proves classic perfect recall. -/
+theorem perfectRecall (h : G.FiniteSequentialHypotheses) :
+    G.observed.PerfectRecall :=
+  h.recallCertificate.perfectRecall
+
+/-- The complete legal-history carrier is finite under the structural
+finite-EFG certificate, even if the compact state carrier is infinite. -/
+@[implicit_reducible]
+noncomputable def finiteHistory
+    (h : G.FiniteSequentialHypotheses) :
+    Finite G.observed.base.History := by
+  letI : Finite
+      (G.observed.base.toArena.BoundedHistoryFrom
+        G.observed.base.init h.finiteEFG.lengthBound) :=
+    Arena.finiteBoundedHistoryFrom
+      h.finiteEFG.finiteAction h.finiteEFG.lengthBound
+  exact
+    Finite.of_injective
+      (fun history =>
+        (⟨history,
+          Arena.History.length_le_of_hasLengthBoundFrom
+            h.finiteEFG.hasLengthBound history.2⟩ :
+          G.observed.base.toArena.BoundedHistoryFrom
+            G.observed.base.init h.finiteEFG.lengthBound))
+      (by
+        intro first second heq
+        exact congrArg Subtype.val heq)
+
+/-- Every information state has finitely many occurrence-sensitive decision
+history witnesses. -/
+@[implicit_reducible]
+noncomputable def finiteDecisionInfoWitness
+    (h : G.FiniteSequentialHypotheses)
+    (i : N) (information : G.observed.InfoState i) :
+    Finite (G.observed.DecisionInfoWitness i information) := by
+  letI : Finite G.observed.base.History := finiteHistory G h
+  exact
+    Finite.of_injective
+      (fun occurrence => occurrence.history)
+      (by
+        intro first second heq
+        cases first
+        cases second
+        simp_all)
+
+/-- Probability of reaching one occurrence-sensitive decision history under
+a behavioral profile and the game's declared chance kernels. -/
+noncomputable def reachWeight
+    (h : G.FiniteSequentialHypotheses)
+    (profile : G.observed.BehavioralProfile)
+    {i : N} {information : G.observed.InfoState i}
+    (occurrence : G.observed.DecisionInfoWitness i information) :
+    ℝ≥0∞ := by
+  letI :
+      (state : G.observed.base.State) →
+        Decidable (G.observed.base.isTerminal state) :=
+    h.terminalDecidable
+  exact
+    (G.observed.base.toArena.stochasticHistoryPMFFrom
+      (BehavioralProfile.toHistoryPolicy G profile)
+      (Arena.HistoryFrom.nil
+        G.observed.base.toArena G.observed.base.init)
+      occurrence.history.2.length)
+      occurrence.history
+
+/-- Total reach weight of one information state. -/
+noncomputable def informationReachWeight
+    (h : G.FiniteSequentialHypotheses)
+    (profile : G.observed.BehavioralProfile)
+    (i : N) (information : G.observed.InfoState i) :
+    ℝ≥0∞ :=
+  ∑' occurrence,
+    reachWeight G h profile
+      (occurrence :
+        G.observed.DecisionInfoWitness i information)
+
+/-- The information state is reached with positive total probability by the
+given behavioral profile. -/
+def HasPositiveInformationReach
+    (h : G.FiniteSequentialHypotheses)
+    (profile : G.observed.BehavioralProfile)
+    (i : N) (information : G.observed.InfoState i) : Prop :=
+  informationReachWeight G h profile i information ≠ 0
+
+/-- The finite information-set reach denominator is never infinite. -/
+theorem informationReachWeight_ne_top
+    (h : G.FiniteSequentialHypotheses)
+    (profile : G.observed.BehavioralProfile)
+    (i : N) (information : G.observed.InfoState i) :
+    informationReachWeight G h profile i information ≠ ∞ := by
+  letI : Finite
+      (G.observed.DecisionInfoWitness i information) :=
+    finiteDecisionInfoWitness G h i information
+  letI : Fintype
+      (G.observed.DecisionInfoWitness i information) :=
+    Fintype.ofFinite _
+  rw [informationReachWeight, tsum_fintype]
+  exact ENNReal.sum_ne_top.2 fun occurrence _ =>
+    PMF.apply_ne_top _ occurrence.history
+
+/-- Bayes' rule at a positively reached information state, obtained by
+normalizing the occurrence reach weights. -/
+noncomputable def bayesBelief
+    (h : G.FiniteSequentialHypotheses)
+    (profile : G.observed.BehavioralProfile)
+    (i : N) (information : G.observed.InfoState i)
+    (hpositive :
+      HasPositiveInformationReach G h profile i information) :
+    PMF (G.observed.DecisionInfoWitness i information) :=
+  PMF.normalize
+    (fun occurrence => reachWeight G h profile occurrence)
+    hpositive
+    (informationReachWeight_ne_top G h profile i information)
+
+/-- The finite Bayes belief is the node reach weight divided by the total
+information-state reach weight. -/
+@[simp]
+theorem bayesBelief_apply
+    (h : G.FiniteSequentialHypotheses)
+    (profile : G.observed.BehavioralProfile)
+    (i : N) (information : G.observed.InfoState i)
+    (hpositive :
+      HasPositiveInformationReach G h profile i information)
+    (occurrence :
+      G.observed.DecisionInfoWitness i information) :
+    bayesBelief G h profile i information hpositive occurrence =
+      reachWeight G h profile occurrence *
+        (informationReachWeight G h profile i information)⁻¹ :=
+  rfl
+
+/-- Bayes-normalized beliefs have total mass one. -/
+@[simp]
+theorem bayesBelief_tsum
+    (h : G.FiniteSequentialHypotheses)
+    (profile : G.observed.BehavioralProfile)
+    (i : N) (information : G.observed.InfoState i)
+    (hpositive :
+      HasPositiveInformationReach G h profile i information) :
+    ∑' occurrence,
+        bayesBelief G h profile i information hpositive occurrence =
+      1 :=
+  PMF.tsum_coe _
+
+end FiniteSequentialHypotheses
+
 end ExtensiveGame.ObservedChanceGame
