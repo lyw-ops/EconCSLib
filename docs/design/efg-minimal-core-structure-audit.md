@@ -1,12 +1,18 @@
 # EFG Minimal-Core Structure Audit
 
-**Snapshot:** 2026-08-03 · **Scope:** payoff-free foundations and their
-immediate public boundary · **Authority:** current Lean source and source
-import graph
+**Audit role:** historical rationale for the payoff-free foundation review
+**Current authority:** Lean source,
+[`efg-minimal-core-freeze.md`](efg-minimal-core-freeze.md),
+[`efg-governance.md`](efg-governance.md), and
+[`efg-module-status.md`](efg-module-status.md)
+
+This document preserves the findings and representation arguments that led to
+the current layout. It is not a live census, facade-budget table, freeze
+contract, or validation report.
 
 ## 1. Executive verdict
 
-The mathematical data line remains unchanged:
+The mathematical data line remains structurally minimal:
 
 ```text
 Arena { State, Action, next }
@@ -19,26 +25,38 @@ Arena { State, Action, next }
 ```
 
 No payoff, probability, objective, recall, finiteness, root selection, or
-solution concept was added to these records. The architecture work in this
-snapshot changes declaration ownership, orthogonal adapters, and facade
-accuracy, not the mathematical carrier. This three-record line is now frozen:
-new semantic fields require a demonstrated representation failure that cannot
-be handled by an external certificate, adapter, relation, or compiler.
+solution concept was added to these records. The decision-information
+operations of `ControlledObservedGame` were narrowed to genuine nonterminal
+player decisions: `infoAt`, `infoAt_observe`, and `actionEquiv` now take an
+explicit nonterminal proof. This changes a structural contract, not stored
+game data, and prevents an arbitrary mover label on a terminal endpoint from
+creating a strategy coordinate. New semantic fields still require a
+demonstrated representation failure that cannot be handled by an external
+certificate, adapter, relation, or compiler.
+
+As of 2026-08-04 this data line is governed by
+[`efg-minimal-core-freeze.md`](efg-minimal-core-freeze.md). Governance checks
+the corrected action/state universe mapping of `ControlledObservedGame` and
+the current exact `StructuralCore` import closure. The compatibility freeze is
+deferred: all three carriers and the facade boundary remain reviewable, with
+explicit architectural and regression evidence required for changes.
 
 | Property | Verdict | Source-based reason |
 |---|---|---|
-| Data-record minimality | Pass | The three records and their fields are unchanged. |
+| Data-record minimality | Pass after semantic repair | No data family was added. The controlled-observation decision operations now explicitly require nonterminality, matching their documented domain and excluding terminal strategy coordinates. |
 | Literal structural import boundary | Pass, F1 resolved | `Interface.StructuralCore` has the exact five-module EFG/local closure enforced by governance. |
 | Infrastructure cohesion | Pass, F2 resolved | Six responsibility leaves separate execution, general well-formedness, subgames, finite certificates, quasistrategies, and recall; their aggregate is a declaration-free canonical facade. |
 | Morphism layering | Pass, F7 resolved | Structural, lawful-subgame, and recall transport have separate exact closures; their aggregate is a declaration-free canonical facade. |
 | Foundation-facade accuracy | Pass | `Interface.Core` is documented and governed as a Foundation Facade, not as the literal core. |
-| Objective/payoff neutrality | Pass through evaluator-relative semantics | Core reaches neither `Execution.Objective` nor `Winning.*` nor payoff-aware `Observed.Game`; `ControlledObservedGame` owns only evaluator-relative continuation equilibrium, while operational standard-SPE definitions remain in concrete execution layers. |
+| Objective/payoff neutrality | Pass at StructuralCore; layered at Core | StructuralCore reaches no payoff carrier. The broader Core reaches the endpoint-payoff `ExtensiveGame` adapter through bounded stopped execution but reaches neither `Execution.Objective` nor `Winning.*` nor payoff-aware `Observed.Game`; `ControlledObservedGame` itself remains payoff-free. |
 | Probability neutrality | Pass at StructuralCore; bounded PMF is intentional in Core | StructuralCore has no PMF module; Core intentionally imports `StochasticExecution`. |
 | Assumption generality | Pass | Finiteness, decidability, recall, termination, measurability, and ambient-state no-chance remain external. Canonical pure execution needs only reachable no-chance. |
 | Player-label compatibility | Pass for bijections | `relabelPlayers` reindexes mover, observation, information, actions, presentations, profiles, and lawful/complete subgame systems without changing Arena histories. |
 | Representation compatibility | Pass with explicit preservation claims | Compilers and relations retain their existing preservation packages; absence from a package is not inferred. |
-| Controlled module-family clarity | Pass, F12 resolved | The complete `Observed.Controlled` hierarchy has one carrier, five semantic owners, nine responsibility owners, two declaration-free facades, and three payoff-aware adapters; flat siblings are forbidden. |
-| Current validation health | Source, mathematical, and local branch-history gates pass | Clean aggregate/example builds and semantic/governance checks pass; the rewritten branch and all subsequent changes pass the repository's commit-scope checker. |
+| Controlled module-family clarity | Pass, F12 resolved | The complete `Observed.Controlled` hierarchy has one carrier, five semantic owners, ten responsibility owners, two declaration-free facades, and three payoff-aware adapters; flat siblings are forbidden. |
+| Example placement | Pass, F14 resolved | Reusable EFG modules contain no `namespace Examples`; history, stopped-execution, finite-imperfect, and fair-coin regressions are opt-in `EconCSLib.Examples` modules and are absent from library facades. |
+| Pre-stability API debt | Pass, F15 resolved | Exact deprecated aliases with zero repository source consumers were hard-deleted; canonical replacements remain documented and negative facade guards prevent accidental reintroduction. |
+| Validation policy | Delegated | Current required commands live in `AGENTS.md` and the governance document; this audit does not preserve a dated pass/fail snapshot. |
 
 There remains no architectural reason to replace `Arena`.
 
@@ -46,7 +64,7 @@ There remains no architectural reason to replace `Arena`.
 
 ### 2.1 `Arena`
 
-Owner: `EconCSLib.GameTheory.ExtensiveGame.Basic`.
+Owner: `EconCSLib.GameTheory.ExtensiveGame.Structural.Basic`.
 
 ```lean
 structure Arena where
@@ -62,7 +80,7 @@ deterministic transition carrier.
 
 ### 2.2 `ControlledGame N`
 
-Owner: `EconCSLib.GameTheory.ExtensiveGame.Basic`.
+Owner: `EconCSLib.GameTheory.ExtensiveGame.Structural.Basic`.
 
 ```lean
 structure ControlledGame (N) extends Arena where
@@ -80,8 +98,25 @@ Owner: `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled`.
 
 The record adds private and public observations, decision information,
 information-indexed actions, and the structural laws `observe_public`,
-`infoAt_observe`, and `actionEquiv`. It stores no payoff, chance law,
-objective, root selection, recall, termination, or finiteness assumption.
+`infoAt_observe`, and `actionEquiv`. Decision information and its action
+equivalence are defined only when the history is nonterminal and controlled by
+the named player. It stores no payoff, chance law, objective, root selection,
+recall, termination, or finiteness assumption.
+
+Its universe mapping is deliberately
+`base : ControlledGame.{uN, uA, uS} N`: `ControlledGame` exposes
+player/action/state universes in that order, so `InfoAction : Type uA` and the
+base action fiber share a universe while the base state remains independently
+in `uS`. The former reversed instantiation
+`ControlledGame.{uN, uS, uA}` tied information actions to the state universe,
+made the payoff-aware projection collapse otherwise independent levels, and
+forced an artificial action `ULift` in finite unfolding. The correction
+removes those constraints without adding carrier data.
+
+During the current design review no carrier has a whole-structure freeze
+fingerprint. Governance checks the corrected `ControlledObservedGame`
+universe mapping separately because it is a specific mathematical regression,
+not a compatibility freeze.
 
 `ContinuationRootPresentation G` remains a separate caller-selected
 presentation. A declared root is not thereby a standard EFG subgame.
@@ -106,7 +141,8 @@ plays. That statement has four intentional limits:
    equivalence and unchanged Arena/history carrier. Adding, deleting, or
    merging players remains an explicit non-bijective compiler operation.
 4. `ControlledObservedGame` deliberately permits unrepresented information
-   states and terminal endpoints carrying a player label.
+   states and terminal endpoints carrying a player label, but terminal
+   endpoints are excluded from `infoAt` and pure-strategy coordinates.
    `AllDecisionInfoRepresented` and `DecisionMoverCoherent` are external
    certificates, so the data record does not confuse a model obligation with
    universal structure.
@@ -117,15 +153,15 @@ boundary must add an adapter or a named certificate instead of strengthening
 
 ## 3. Exact StructuralCore boundary
 
-Stable facade:
+Recommended pre-stability facade:
 `EconCSLib.GameTheory.ExtensiveGame.Interface.StructuralCore`.
 
 The facade itself is excluded from both counts. Its exact transitive closure is
 **5 EFG / 5 local `EconCSLib` modules**:
 
-1. `EconCSLib.GameTheory.ExtensiveGame.Basic`
-2. `EconCSLib.GameTheory.ExtensiveGame.Execution.Reachability`
-3. `EconCSLib.GameTheory.ExtensiveGame.Execution.History`
+1. `EconCSLib.GameTheory.ExtensiveGame.Structural.Basic`
+2. `EconCSLib.GameTheory.ExtensiveGame.Structural.Reachability`
+3. `EconCSLib.GameTheory.ExtensiveGame.Structural.History`
 4. `EconCSLib.GameTheory.ExtensiveGame.Execution.CompletePlay`
 5. `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled`
 
@@ -139,35 +175,40 @@ The positive regression
 The governance checker compares the complete EFG closure with the exact set
 above. Therefore any new source edge to `Execution.Length`,
 `StoppedExecution`, `StochasticExecution`, `Objective`, `Winning.*`,
-payoff-aware observed games, PMF/path-law or measurable-kernel
+the payoff-aware `Basic`/execution compatibility adapters, payoff-aware
+observed games, PMF/path-law or measurable-kernel
 implementations, morphisms, equilibrium, simulation/restart, or compilers
 fails the check. This is stronger than a finite list of comment-based negative
 name tests.
 
 ## 4. Interface.Core is the Foundation Facade
 
-Stable facade: `EconCSLib.GameTheory.ExtensiveGame.Interface.Core`.
+Recommended pre-stability facade:
+`EconCSLib.GameTheory.ExtensiveGame.Interface.Core`.
 
 The facade itself is excluded from both counts. Its exact transitive closure is
-**14 EFG / 14 local `EconCSLib` modules**:
+**17 EFG / 17 local `EconCSLib` modules**:
 
-1. `EconCSLib.GameTheory.ExtensiveGame.Basic`
-2. `EconCSLib.GameTheory.ExtensiveGame.Execution.Reachability`
-3. `EconCSLib.GameTheory.ExtensiveGame.Execution.History`
-4. `EconCSLib.GameTheory.ExtensiveGame.Execution.CompletePlay`
-5. `EconCSLib.GameTheory.ExtensiveGame.Execution.Length`
-6. `EconCSLib.GameTheory.ExtensiveGame.Execution.StoppedExecution`
-7. `EconCSLib.GameTheory.ExtensiveGame.Execution.StochasticExecution`
-8. `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled`
-9. `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Core`
-10. `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.WellFormed`
-11. `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Subgame`
-12. `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Finite`
-13. `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Quasi`
-14. `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Recall`
+1. `EconCSLib.GameTheory.ExtensiveGame.Structural.Basic`
+2. `EconCSLib.GameTheory.ExtensiveGame.Structural.Reachability`
+3. `EconCSLib.GameTheory.ExtensiveGame.Structural.History`
+4. `EconCSLib.GameTheory.ExtensiveGame.Basic`
+5. `EconCSLib.GameTheory.ExtensiveGame.Execution.Reachability`
+6. `EconCSLib.GameTheory.ExtensiveGame.Execution.History`
+7. `EconCSLib.GameTheory.ExtensiveGame.Execution.CompletePlay`
+8. `EconCSLib.GameTheory.ExtensiveGame.Execution.Length`
+9. `EconCSLib.GameTheory.ExtensiveGame.Execution.StoppedExecution`
+10. `EconCSLib.GameTheory.ExtensiveGame.Execution.StochasticExecution`
+11. `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled`
+12. `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Core`
+13. `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.WellFormed`
+14. `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Subgame`
+15. `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Finite`
+16. `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Quasi`
+17. `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Recall`
 
 Core contains the five StructuralCore implementation modules but does not
-import the `Interface.StructuralCore` facade module itself. Its stable
+import the `Interface.StructuralCore` facade module itself. Its governed
 responsibility includes structural length/well-foundedness, bounded
 terminal-aware deterministic execution, bounded PMF execution, represented
 information and mover coherence, finite-EFG packages, quasistrategies, recall,
@@ -206,7 +247,7 @@ The exact source-graph change for `Controlled.Infrastructure.Recall` is:
 | Snapshot | Exact EFG closure, excluding `Recall` itself |
 |---|---|
 | Before | `Basic`, `Execution.{Reachability,History,CompletePlay,Length}`, `Observed.Controlled`, `Controlled.Infrastructure.Finite` |
-| After | `Basic`, `Execution.{Reachability,History,CompletePlay}`, `Observed.Controlled`, `Controlled.Infrastructure.WellFormed` |
+| After | `Structural.{Basic,Reachability,History}`, `Execution.CompletePlay`, `Observed.Controlled`, `Controlled.Infrastructure.WellFormed` |
 
 The closure shrank from **7 to 6 EFG/local modules**. The governance checker
 compares the complete post-refactor set exactly; the
@@ -252,16 +293,16 @@ The exact post-refactor EFG closures, excluding each entry itself, are:
 
 | Entry | EFG/local closure | Forbidden higher leaves absent |
 |---|---:|---|
-| `Controlled.Morphism.Core` | 8 / 8 | `Controlled.Infrastructure.{Subgame,Recall,Finite}`, `Controlled.Morphism.{Subgame,Recall}`, and `Execution.Length` |
-| `Controlled.Morphism.Subgame` | 10 / 10 | both recall leaves, `Finite`, and `Execution.Length` |
-| `Controlled.Morphism.Recall` | 11 / 11 | both subgame leaves, `Finite`, and `Execution.Length` |
-| aggregate facade | 14 / 14 | re-exports all three leaves by design |
+| `Controlled.Morphism.Core` | 9 / 9 | `Controlled.Infrastructure.{Subgame,Recall,Finite}`, `Controlled.Morphism.{Subgame,Recall}`, and `Execution.Length` |
+| `Controlled.Morphism.Subgame` | 11 / 11 | both recall leaves, `Finite`, and `Execution.Length` |
+| `Controlled.Morphism.Recall` | 12 / 12 | both subgame leaves, `Finite`, and `Execution.Length` |
+| aggregate facade | 15 / 15 | re-exports all three leaves by design |
 
 Before the split, `Controlled.Morphism` had a 12-module closure containing
 `Controlled.Infrastructure.{Subgame,Recall,Finite}` and `Execution.Length`.
-The aggregate facade has a 14-module closure because three
+The aggregate facade has a 15-module closure because three
 declaration owners replace one and `WellFormed` replaces `Finite`/`Length`;
-the useful structural leaf is the materially smaller 8-module boundary.
+the useful structural leaf is the materially smaller 9-module boundary.
 
 Internal imports are now narrow: `Controlled.Compat.Morphism`, `Controlled.Law`,
 and `Observed.Refinement.Structural` use `Core`; `FiniteUnfolding` uses the
@@ -285,7 +326,7 @@ The complete closures of every new payoff-free leaf are checked against the
 same reverse-dependency exclusions as the older payoff-free owners.
 StructuralCore is additionally checked against its exact closure.
 
-This snapshot does not claim that every legacy payoff-aware API has migrated.
+The completed audit did not claim that every legacy payoff-aware API migrated.
 Payoff-aware `ObservedGame` carriers and adapters remain supported.
 `Observed.WellFormed` still owns legacy payoff-aware finite-certificate
 spellings alongside the payoff-free owners, while `Observed.Quasi`,
@@ -323,13 +364,15 @@ this certificate is equivalent to saying every reachable terminal complete
 history has mover `none`. Thus the existing certificate already supplies
 the relevant normalization without a duplicate well-formedness predicate.
 
-An unreachable terminal Arena state may still carry `some i`. This is not an
-outstanding semantic obligation: `Basic` specifies that terminal mover labels
-are ignored, because the action fiber is empty. The reachable-history
-certificate is available when a compiler or theorem wants a normalized
-presentation. Strengthening the data record globally would reject
-observationally irrelevant ambient encodings without improving play
-semantics.
+An unreachable or reachable terminal Arena state may still carry `some i`.
+`Structural.Basic` specifies that terminal mover labels are semantically
+ignored, and the controlled-observation record enforces that policy by
+requiring nonterminality before constructing decision information or mapping
+an information action. Thus no terminal endpoint creates a pure-strategy
+coordinate. The reachable-history certificate remains available when a
+compiler or theorem wants a normalized `mover = none` presentation;
+normalization is no longer needed merely to make strategies mathematically
+well-scoped.
 
 ## 8. Observation fidelity
 
@@ -353,6 +396,19 @@ semantics continues to hide partial actions; this audit does not promote that
 fact into a universal record field.
 
 ## 9. Preservation and compiler theorem boundary
+
+`Relations.Preservation` is a declaration owner, not a facade: it defines
+formal aliases for strict/refinement/weak relation strengths, same- and
+cross-game law realizations, probability couplings, and the strict/weak
+compiler packages. Its zero direct Lean consumers therefore did not justify
+deletion; these are reusable contract declarations with documentary consumers
+in the preservation matrix. The recommended pre-stability entry point is now
+the declaration-free
+`EconCSLib.GameTheory.ExtensiveGame.Interface.Preservation` facade. Excluding
+the facade itself, governance fixes its closure at **21 EFG / 26 local
+modules**. The import-boundary regression resolves the advertised contracts
+and also proves that the distinct discrete-relations facade does not
+accidentally expose `StrictCompilerPreservation`.
 
 The following capabilities already exist and are not gaps:
 
@@ -386,6 +442,13 @@ interface must first supply canonical root-local strategies, a compatible
 lift/update operation for local deviations, canonical legal complete
 plays or path laws, and locality strong enough to recover the concrete
 definitions. The explicit FOSG limitations therefore remain:
+
+| Concrete mode | Strategy and chance carrier | Horizon / termination and utility | Deviations and continuation convention |
+|---|---|---|---|
+| pure | information-indexed `ObservedGame.PureProfile`; reachable histories are certified chance-free | total terminal outcome requires `PureTerminatingOn`; terminal state payoffs are interpreted by a caller-supplied utility | full pure-strategy unilateral updates; execution resumes from the supplied accumulated history and a complete system tests every lawful root |
+| behavioral | one local action `PMF` per decision-information state plus the game's external chance kernel | finite fuel only; outcome is `PMF (Option (N → U))`, so fuel-exhaustion mass remains visible to caller utility | full behavioral-plan unilateral updates; bounded execution starts at each accumulated lawful root |
+| mixed | each player independently samples one complete pure contingent plan, then that plan executes against the external chance kernel | finite fuel only with the same optional-terminal-payoff law interpretation | full mixed-strategy unilateral updates; no identification with behavioral strategies, and every complete-system root is tested |
+| analytic measurable-kernel | `ProfileAssembly.PlayerKernelProfile` supplies admitted measurable player kernels and the presentation supplies the path process | bounded path-utility SPE integrates against absolute-prefix continuation laws; expected eventual terminal-payoff SPE separately requires almost-sure termination under the profile and every admitted continuation deviation | unilateral updates range over the assembly's admitted player kernels; continuation keeps the absolute prefix and a complete system supplies all lawful roots |
 
 1. declared continuation roots are not automatically standard EFG subgames;
 2. the principal transfer result is finite-horizon behavioral Nash transfer;
@@ -436,7 +499,16 @@ contracts:
 - `BoundedHistoryLawFamily` is raw PMF data.
   `CertifiedBehavioralExecutionLaw` adds normalization, legal reachable
   support, terminal absorption, and equality with the concrete behavioral
-  executor. Execution-facing finite unfolding uses the certified projection.
+  executor. Its derived
+  `exists_suffix_of_mem_support` theorem rewrites only through `execution_eq`
+  and applies the generic stochastic-execution support theorem: at finite
+  fuel, every supported endpoint is the current occurrence-sensitive history
+  appended with a legal typed suffix. The terminal specialization rewrites
+  through `terminal_absorbing` and the support of `PMF.pure`. Neither theorem
+  claims total execution, termination, or an infinite path law.
+  `FiniteExecutionImportBoundary` consumes both conclusions without unfolding
+  the behavioral executor. Execution-facing finite unfolding uses the
+  certified projection.
 - `HistoryTransformLawEquivalentAt` is the generic transform relation.
   `TerminalHistoryLawEquivalentAt` has a terminal-history-subtype codomain.
   `CompletePathLawSemantics` remains a family of lawful per-root marginals and
@@ -455,29 +527,38 @@ comment-only `Foundation.Player` shell were also removed. The canonical
 because they have explicit navigation responsibilities, exact import sets,
 module documentation, and no declarations.
 
+The four orphan candidates examined in this audit have distinct dispositions:
+
+| Candidate | Evidence | Disposition |
+|---|---|---|
+| `Relations.Preservation` | declaration-bearing reusable contract owner; preservation-matrix documentation; facade-boundary regression | retain as Canonical owner and expose through new `Interface.Preservation` |
+| `Observed.PathLawEquivalence` | zero-consumer payoff-aware compatibility spellings with no independent semantics; the authoritative carrier and realization contracts already live in `Observed.Controlled.Law` | hard-delete during pre-stability; use `ControlledObservedGame.CompletePathLawSemantics` and its nested equivalence/realization contracts |
+| state-indexed `Strategy` | semantically valid Arena policy, but not equivalent to information-indexed observed pure strategy | retain as Historical, exclude from root, and build from the lifecycle register |
+| state-rooted `Subgame` | valid re-root/restriction tool, but not a presentation root or lawful/complete observed subgame system | retain as Historical, exclude from root, and build from the lifecycle register |
+
 Governance now scans the full Lean source tree for zero-byte,
 comment/namespace-only, and import-only files. Import-only modules must appear
 in the explicit canonical or temporary-compatibility registry; the current
-inventory is 20 canonical façades/aggregates and zero temporary compatibility
+inventory is 21 canonical façades/aggregates and zero temporary compatibility
 paths. Removed paths may not be recreated or imported.
+
+Build coverage is generated from that same lifecycle register by
+`scripts/build_efg_modules.py`; there is no second handwritten module list.
+`--fresh` removes the exact registered and governed obsolete `.olean`
+artifacts, builds every registered target, and verifies a nonempty artifact for
+each. Thus Historical modules such as `Strategy` and `Subgame` remain
+continuously elaborated even though they are intentionally absent from the
+root aggregate. CI runs this fresh coverage check after the ordinary library
+and example builds.
 
 ## 11. Module census
 
-The governed in-scope register now contains **163 modules**:
-
-| Status | Modules |
-|---|---:|
-| Canonical | 86 |
-| Frontend | 13 |
-| Historical | 7 |
-| Compatibility | 0 |
-| Experimental | 0 |
-| Internal | 57 |
-| **Total** | **163** |
-
-The controlled orthogonalization added defining responsibility owners, then
-the pre-stability lifecycle closeout removed redirect-only paths without
-moving implementation back into aggregates.
+The complete current census and status totals live only in
+[`efg-module-status.md`](efg-module-status.md); governance checks exact parity
+between that register and the in-scope source tree. Historically, the
+controlled orthogonalization added defining responsibility owners, then the
+pre-stability lifecycle closeout removed redirect-only paths without moving
+implementation back into aggregates.
 
 ## 12. Findings
 
@@ -506,7 +587,7 @@ Acceptance evidence:
 
 ### F3 — Keep compatibility adapters one-way
 
-**Priority:** high, continuous · **Status:** satisfied in this snapshot
+**Priority:** high, continuous · **Status:** enforced by current governance
 
 Every new payoff-free leaf is covered by the reverse-dependency governance
 check. Legacy payoff-aware APIs remain downstream and are not declared fully
@@ -550,7 +631,7 @@ simulation alone and are not part of minimal-core completion.
 Acceptance evidence:
 
 - structural, lawful-subgame, and recall declarations have separate owners;
-- their exact closures are 8 / 8, 10 / 10, and 11 / 11;
+- their exact closures are 9 / 9, 11 / 11, and 12 / 12;
 - the old broad path is deleted after consumers migrated;
 - the canonical aggregate remains import-only with exact leaf imports;
 - internal consumers import only the leaves they use; and
@@ -582,7 +663,7 @@ Acceptance evidence:
   only payoff-free lawful-subgame systems;
 - no generic operational standard-SPE name is exported: the attempted
   certificate was constructible for every arbitrary evaluator and was removed
-  before API stability;
+  during pre-stability review;
 - source and target games in the evaluator-relative theorem carry no payoff
   parameter;
 - `check_efg_governance.py` treats `Controlled.Semantics` as a payoff-free
@@ -642,13 +723,13 @@ Acceptance evidence:
 
 **Priority:** medium · **Status:** resolved
 
-There is no duplicate declaration owner or old/new namespace collision. Before
-the EFG module paths became stable, the implementation was hard-migrated into
+There is no duplicate declaration owner or old/new namespace collision. During
+the current pre-stability period, the implementation was hard-migrated into
 one physical hierarchy:
 
 - `Controlled` is the canonical carrier;
 - five law/semantics modules are canonical semantic owners;
-- nine infrastructure/morphism leaves are canonical responsibility owners;
+- ten infrastructure/morphism leaves are canonical responsibility owners;
 - `Controlled.Infrastructure` and `Controlled.Morphism` are declaration-free
   canonical aggregate facades; and
 - the three `Controlled.Compat.*` modules are downstream payoff-aware adapters
@@ -664,27 +745,66 @@ checks that canonical and payoff-aware declarations coexist under their
 intended mathematical namespaces. Former flat paths are absent; no forwarding
 stubs remain.
 
+### F13 — Derive complete build coverage from the lifecycle register
+
+**Priority:** high · **Status:** resolved
+
+`scripts/build_efg_modules.py` reads the authoritative lifecycle table through
+the governance parser, checks exact source/register parity, and passes every
+registered module target to one Lake build. In fresh mode it first removes precisely
+those registered `.olean` files plus the governed obsolete-path artifacts,
+then requires a nonempty artifact for every registered module. CI invokes the
+fresh mode. This makes an unregistered new in-scope source a governance/build
+failure, keeps Historical modules under compilation, and avoids maintaining a
+second target list.
+
+### F14 — Keep examples out of reusable modules
+
+**Priority:** medium · **Status:** resolved
+
+Four regression families formerly lived inside reusable library modules:
+merged-endpoint histories, terminal-aware stopped execution, the compact
+finite-imperfect compiler witness, and the stochastic-tree fair-coin data.
+They now live under `EconCSLib/Examples/ExtensiveGame/` and are imported only
+by the opt-in examples aggregate.
+
+Acceptance evidence:
+
+- governed reusable EFG/GameForm/PMF modules contain no
+  `namespace Examples`;
+- `StochasticGameTree` no longer owns the example-only `fairCoin*`
+  declarations;
+- root and discrete-compilation negative guards show that importing a library
+  facade does not expose the migrated example names; and
+- the four example modules elaborate through `EconCSLib.Examples`.
+
+### F15 — Close exact-alias debt before external stability
+
+**Priority:** medium · **Status:** resolved
+
+The remaining `@[deprecated replacement]` declarations were exact aliases,
+but the repository had no source consumers and the project has not begun an
+external EFG compatibility period. They were therefore hard-deleted instead
+of extending a compatibility surface that nobody relies on.
+
+Acceptance evidence:
+
+- canonical replacements are unchanged;
+- the complete removed-name map remains in
+  [`efg-api-migration.md`](efg-api-migration.md);
+- equilibrium, objective, winning, and compilation facade regressions
+  negatively check the removed spellings; and
+- governance rejects any new EFG `@[deprecated]` declaration until a future
+  external-stability policy explicitly authorizes compatibility shims.
+
 ## 13. Validation and environment health
 
-The final source snapshot was checked from the repository root. The commands
-and counts below are the results of this worktree, not inherited CI claims.
-
-| Check | Result | Evidence |
-|---|---|---|
-| Stable library | Pass | `lake build`: 8,639 jobs. |
-| Opt-in examples and regressions | Pass | `lake build EconCSLib.Examples`: 8,809 jobs, including the reachable-no-chance and import-boundary regressions. |
-| Discrete equilibrium facade | Pass | Evaluator-relative transfer elaborates through `Interface.Equilibrium.Discrete`; concrete pure standard SPE remains available from its operational owner. |
-| EFG governance | Pass | 163 registered modules, 0 temporary compatibility paths, root closure 36 / 163, Simulation 29, and Controlled hierarchy 20 = 1 carrier / 5 semantic owners / 9 responsibility owners / 2 facades / 3 adapters. The source scan reports 0 zero-byte modules, 0 comment/namespace-only modules, and exactly 20 registered canonical import-only aggregates. |
-| Lean placeholders | Pass | `check_lean_placeholders.py EconCSLib` reports no forbidden placeholder. |
-| Knowledge checks | Pass | Reference unit tests, reference scan, and `mdblueprint-check` all pass with 0 errors and 0 warnings. |
-| Declaration lifecycle report | Pass, triage remains | 1,690 theorems/lemmas across 163 modules; 481 conservative zero-source-indegree candidates split into 68 evidenced endpoints, 263 unexplained Canonical/Frontend endpoints under a no-growth ceiling, 136 Internal/private review items, and 14 Historical/lifecycle review items. None is an automatic deletion candidate. |
-| Axiom spot audit | Pass | The event-clock recall bridge is axiom-free. The concrete reachable-no-chance regression uses `propext`; evaluator-relative transfer uses `propext` and `Quot.sound`; terminal-history selection and finite `GameTree` standard-SPE existence additionally use `Classical.choice`. No audited result depends on `sorryAx`. |
-| EFG warning scan | Pass | Filtered replay of both successful builds reports no warning originating under `GameTheory/ExtensiveGame` or `Examples/ExtensiveGame`. |
-| Git/source integrity | Pass | `git diff --check` passes; final status is reported separately at handoff. |
-
-The builds replay warnings from non-EFG source files. Those warnings are
-repository-wide maintenance debt rather than evidence against the EFG
-semantic changes, but the repository as a whole is not warning-clean.
+This audit no longer records worktree-specific job counts or pass/fail
+snapshots. Run the current validation commands from `AGENTS.md`, including the
+stable and examples builds, placeholder check, EFG governance check, knowledge
+checks, and `git diff --check`. Fresh complete module coverage remains
+`python3 scripts/build_efg_modules.py --fresh`; its target list is generated
+from the lifecycle register.
 
 These checks provide machine-checked evidence for source elaboration, the
 axiom surface, placeholder policy, module boundaries, and the listed formal
@@ -695,8 +815,10 @@ check after publication.
 ## 14. Audit conclusion
 
 The data records were already minimal. The source architecture now exposes
-that fact through a genuinely narrow stable facade and a physical
+that fact through a genuinely narrow governed pre-stability facade and a physical
 responsibility split for both infrastructure and morphism transport.
+Regression data now lives behind the opt-in examples aggregate, and exact
+zero-consumer compatibility aliases no longer enlarge the pre-stability API.
 `Interface.Core` remains useful under the accurate Foundation
 Facade name, while governance prevents the former Objective/Winning and
 Recall-to-finiteness leaks from returning. Evaluator-relative equilibrium
