@@ -275,12 +275,12 @@ def toObservedGame (root : GameTree N U) :
     rfl
   InfoState := fun _ => NodeInfo N U
   infoObserve := fun _ info => info.tree
-  infoAt := fun history i hmover =>
+  infoAt := fun history i hmover _hnonterminal =>
     nodeInfoAt root history.1 i hmover
-  infoAt_observe := fun history i hmover =>
+  infoAt_observe := fun history i hmover _hnonterminal =>
     nodeInfoAt_tree root history.1 i hmover
   InfoAction := fun _ info => info.Action
-  actionEquiv := fun history i hmover =>
+  actionEquiv := fun history i hmover _hnonterminal =>
     nodeActionEquiv root history.1 i hmover
 
 instance toObservedGame.instTerminalDecidable (root : GameTree N U) :
@@ -348,6 +348,9 @@ theorem strategyHistoryPolicy_node (root : GameTree N U)
   rw [strategyHistoryPolicy,
     ExtensiveGame.ObservedGame.PureProfile.toHistoryPolicy_of_mover
       (toObservedGame root) _ _ _ _ mover rfl]
+  simp only [ExtensiveGame.ObservedGame.PureProfile.actionAt,
+    ExtensiveGame.ObservedGame.PureStrategy.actionAt,
+    strategyToObservedProfile, toObservedGame, nodeActionEquiv, nodeInfoAt]
   rfl
 
 /-- At a concrete node history, translating a player profile prescribes the
@@ -365,6 +368,10 @@ theorem playerProfileHistoryPolicy_node (root : GameTree N U)
   rw [playerProfileHistoryPolicy,
     ExtensiveGame.ObservedGame.PureProfile.toHistoryPolicy_of_mover
       (toObservedGame root) _ _ _ _ mover rfl]
+  simp only [ExtensiveGame.ObservedGame.PureProfile.actionAt,
+    ExtensiveGame.ObservedGame.PureStrategy.actionAt,
+    playerProfileToObservedProfile, profileStrategy, toObservedGame,
+    nodeActionEquiv, nodeInfoAt]
   rfl
 
 /-! ### Result correspondence -/
@@ -602,6 +609,10 @@ theorem toObservedGame_pureTerminatingOnAllContinuations
     stoppedHistoryFrom_observedProfile_reaches_outcome
       root profile current root.size
         (arenaHistory_subtree current.2).size_le
+  change
+    (toExtensiveGame root).isTerminal
+      ((toObservedGame root).stoppedHistoryFrom profile
+        (toExtensiveGame_noChanceOnHistories root) current root.size).1
   rw [hendpoint]
   exact toExtensiveGame_isTerminal_leaf root payoff
 
@@ -629,12 +640,26 @@ theorem terminalPayoffFrom_observedProfile_eq_outcome
       (toExtensiveGame root).isTerminal
         ((toObservedGame root).stoppedHistoryFrom profile
           (toExtensiveGame_noChanceOnHistories root) current root.size).1 := by
+    change
+      (toExtensiveGame root).isTerminal
+        ((toObservedGame root).stoppedHistoryFrom profile
+          (toExtensiveGame_noChanceOnHistories root) current root.size).1
     rw [hendpoint]
     exact toExtensiveGame_isTerminal_leaf root payoff
-  rw [ExtensiveGame.ObservedGame.terminalPayoffFrom,
-    (toObservedGame root).terminalHistoryFrom_eq_of_terminal
-      profile (toExtensiveGame_noChanceOnHistories root) current
-      hterminates root.size hterminal]
+  change
+    (toExtensiveGame root).payoff
+        ((toObservedGame root).toControlledObservedGame.terminalHistoryFrom
+          profile (toExtensiveGame_noChanceOnHistories root) current
+          hterminates).1 =
+      outcome
+        (profileStrategy
+          (observedProfileToPlayerProfile root profile))
+        current.1
+  rw [
+    (toObservedGame root).toControlledObservedGame
+      |>.terminalHistoryFrom_eq_of_terminal
+        profile (toExtensiveGame_noChanceOnHistories root) current
+        hterminates root.size hterminal]
   calc
     (toExtensiveGame root).payoff
         ((toObservedGame root).stoppedHistoryFrom profile
