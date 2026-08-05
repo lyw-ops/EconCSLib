@@ -39,15 +39,21 @@ theorem inverseInfoAt (e : G.Iso H)
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource : G.base.mover history.1 = some i)
+    (hsource_nonterminal : ¬ G.base.isTerminal history.1)
     (htarget :
-      H.base.mover (e.historyIso.stateEquiv history).1 = some i) :
+      H.base.mover (e.historyIso.stateEquiv history).1 = some i)
+    (htarget_nonterminal :
+      ¬ H.base.isTerminal
+        (e.historyIso.stateEquiv history).1) :
     (e.infoStateEquiv i).symm
         (H.infoAt
-          (e.historyIso.stateEquiv history) i htarget) =
-      G.infoAt history i hsource := by
+          (e.historyIso.stateEquiv history) i htarget
+          htarget_nonterminal) =
+      G.infoAt history i hsource hsource_nonterminal := by
   apply (e.infoStateEquiv i).injective
   simpa using
-    (e.map_infoAt history i hsource htarget).symm
+    (e.map_infoAt history i hsource hsource_nonterminal
+      htarget htarget_nonterminal).symm
 
 private theorem cast_inverseFiber
     {α β : Type*} {W : α → Type*} {Z : β → Type*}
@@ -115,18 +121,27 @@ private theorem actionEquiv_heq_of_history_eq
       G.base.toArena.HistoryFrom G.base.init}
     (hhistory : first = second)
     (hfirst : G.base.mover first.1 = some i)
+    (hfirst_nonterminal : ¬ G.base.isTerminal first.1)
     (hsecond : G.base.mover second.1 = some i)
+    (hsecond_nonterminal : ¬ G.base.isTerminal second.1)
     (firstAction :
-      G.InfoAction i (G.infoAt first i hfirst))
+      G.InfoAction i
+        (G.infoAt first i hfirst hfirst_nonterminal))
     (secondAction :
-      G.InfoAction i (G.infoAt second i hsecond))
+      G.InfoAction i
+        (G.infoAt second i hsecond hsecond_nonterminal))
     (haction : firstAction ≍ secondAction) :
-    G.actionEquiv first i hfirst firstAction ≍
-      G.actionEquiv second i hsecond secondAction := by
+    G.actionEquiv first i hfirst hfirst_nonterminal
+        firstAction ≍
+      G.actionEquiv second i hsecond hsecond_nonterminal
+        secondAction := by
   subst second
   have hmover : hsecond = hfirst :=
     Subsingleton.elim _ _
   cases hmover
+  have hnonterminal : hsecond_nonterminal = hfirst_nonterminal :=
+    Subsingleton.elim _ _
+  cases hnonterminal
   cases haction
   rfl
 
@@ -135,19 +150,26 @@ private theorem inverse_infoActionAt
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource : G.base.mover history.1 = some i)
+    (hsource_nonterminal : ¬ G.base.isTerminal history.1)
     (htarget :
       H.base.mover (e.historyIso.stateEquiv history).1 = some i)
+    (htarget_nonterminal :
+      ¬ H.base.isTerminal
+        (e.historyIso.stateEquiv history).1)
     (action :
       H.InfoAction i
         (H.infoAt
-          (e.historyIso.stateEquiv history) i htarget)) :
-    G.actionEquiv history i hsource
+          (e.historyIso.stateEquiv history) i htarget
+          htarget_nonterminal)) :
+    G.actionEquiv history i hsource hsource_nonterminal
         (cast
           (congrArg (G.InfoAction i)
-            (e.inverseInfoAt history i hsource htarget))
+            (e.inverseInfoAt history i hsource
+              hsource_nonterminal htarget htarget_nonterminal))
           (e.inverseInfoActionEquiv i
             (H.infoAt
-              (e.historyIso.stateEquiv history) i htarget)
+              (e.historyIso.stateEquiv history) i htarget
+              htarget_nonterminal)
             action)) =
       cast
         (congrArg G.base.unfold.Action
@@ -155,25 +177,33 @@ private theorem inverse_infoActionAt
         (e.historyIso.inverseActionEquiv
             (e.historyIso.stateEquiv history)
           (H.actionEquiv
-            (e.historyIso.stateEquiv history) i htarget action)) := by
+            (e.historyIso.stateEquiv history) i htarget
+            htarget_nonterminal action)) := by
   have hinfo :
-      e.infoStateEquiv i (G.infoAt history i hsource) =
+      e.infoStateEquiv i
+          (G.infoAt history i hsource hsource_nonterminal) =
         H.infoAt
-          (e.historyIso.stateEquiv history) i htarget :=
-    e.map_infoAt history i hsource htarget
+          (e.historyIso.stateEquiv history) i htarget
+          htarget_nonterminal :=
+    e.map_infoAt history i hsource hsource_nonterminal
+      htarget htarget_nonterminal
   rw [cast_inverseInfoActionEquiv e i
-    (G.infoAt history i hsource)
+    (G.infoAt history i hsource hsource_nonterminal)
     (H.infoAt
-      (e.historyIso.stateEquiv history) i htarget)
-    hinfo (e.inverseInfoAt history i hsource htarget)]
+      (e.historyIso.stateEquiv history) i htarget
+      htarget_nonterminal)
+    hinfo
+    (e.inverseInfoAt history i hsource hsource_nonterminal
+      htarget htarget_nonterminal)]
   rw [cast_inverseHistoryActionEquiv e.historyIso
     history (e.historyIso.stateEquiv history)
     rfl (e.historyIso.stateEquiv.symm_apply_apply history)]
   apply (e.historyIso.actionEquiv history).injective
   simpa using
-      (e.map_infoActionAt history i hsource htarget
+      (e.map_infoActionAt history i hsource hsource_nonterminal
+        htarget htarget_nonterminal
         ((e.infoActionEquiv i
-          (G.infoAt history i hsource)).symm
+          (G.infoAt history i hsource hsource_nonterminal)).symm
             (cast
               (congrArg (H.InfoAction i) hinfo).symm
               action))).symm
@@ -238,28 +268,40 @@ def symm (e : G.Iso H) : H.Iso G where
     intro history
     obtain ⟨sourceHistory, rfl⟩ :=
       e.historyIso.stateEquiv.surjective history
-    intro i hsource htarget
+    intro i hsource hsource_nonterminal
+      htarget htarget_nonterminal
     have htarget' :
         G.base.mover sourceHistory.1 = some i := by
       simpa [Arena.Iso.symm] using htarget
+    have htarget_nonterminal' :
+        ¬ G.base.isTerminal sourceHistory.1 := by
+      simpa [Arena.Iso.symm] using htarget_nonterminal
     simpa [Arena.Iso.symm] using
-      e.inverseInfoAt sourceHistory i htarget' hsource
+      e.inverseInfoAt sourceHistory i
+        htarget' htarget_nonterminal'
+        hsource hsource_nonterminal
   map_infoActionAt := by
     intro history
     obtain ⟨sourceHistory, rfl⟩ :=
       e.historyIso.stateEquiv.surjective history
-    intro i hsource htarget action
+    intro i hsource hsource_nonterminal
+      htarget htarget_nonterminal action
     have htarget' :
         G.base.mover sourceHistory.1 = some i := by
       simpa [Arena.Iso.symm] using htarget
+    have htarget_nonterminal' :
+        ¬ G.base.isTerminal sourceHistory.1 := by
+      simpa [Arena.Iso.symm] using htarget_nonterminal
     have hcore :=
       e.inverse_infoActionAt
-        sourceHistory i htarget' hsource action
+        sourceHistory i htarget' htarget_nonterminal'
+        hsource hsource_nonterminal action
     apply eq_of_heq
     refine HEq.trans ?_ ((heq_iff_eq.mpr hcore).trans ?_)
     · apply actionEquiv_heq_of_history_eq G i
         (e.historyIso.stateEquiv.symm_apply_apply sourceHistory)
-        htarget htarget'
+        htarget htarget_nonterminal
+        htarget' htarget_nonterminal'
       exact
         (cast_heq _ _).trans
           (cast_heq _ _).symm
