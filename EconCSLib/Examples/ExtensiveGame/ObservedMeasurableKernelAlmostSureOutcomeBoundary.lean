@@ -82,11 +82,11 @@ def observed : ObservedGame Unit ℝ where
   observe_public := fun _ _ => rfl
   InfoState := fun _ => Unit
   infoObserve := fun _ _ => ()
-  infoAt := fun _ _ _ => ()
-  infoAt_observe := fun _ _ _ => rfl
+  infoAt := fun _ _ _ _ => ()
+  infoAt_observe := fun _ _ _ _ => rfl
   InfoAction := fun _ _ => Unit
   actionEquiv := by
-    intro history i hmover
+    intro history i hmover _hnonterminal
     change nodeMover history.1 = some i at hmover
     change none = some i at hmover
     contradiction
