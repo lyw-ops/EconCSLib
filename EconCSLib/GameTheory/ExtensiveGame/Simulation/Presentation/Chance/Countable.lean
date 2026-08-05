@@ -36,12 +36,11 @@ one classically chosen legal fallback. Mismatched tags have zero mass under
 the canonical policy; the fallback exists only to keep the fixed realization
 globally normalized at every nonterminal input.
 
-The mover branch is tested before terminality. This matches
-`AnalyticPresentation.player_informationAt` even though the base
-`ExtensiveGame` interface permits a terminal state to retain a player label.
-Such a state makes every behavioral profile impossible—`actionEquiv` would
-turn a PMF-supported abstract action into an inhabitant of the empty concrete
-action type—and the terminal policy proof eliminates that case explicitly.
+Terminality is tested before the mover branch. This matches the core contract
+that information states and abstract actions are available only at genuine
+nonterminal decisions, even though the base `ExtensiveGame` interface permits
+a terminal state to retain a player label. Such labels are ignored by the
+presentation and do not create spurious behavioral-strategy coordinates.
 
 All measurable spaces introduced here are discrete top spaces. Countability
 of the final carriers makes arbitrary maps and measure families from those
@@ -73,8 +72,10 @@ def IsReachablePlayerInformation
   ∃ (history :
       G.observed.base.toArena.HistoryFrom G.observed.base.init)
     (hmover :
-      G.observed.base.mover history.1 = some information.1),
-    G.observed.infoAt history information.1 hmover =
+      G.observed.base.mover history.1 = some information.1)
+    (hnonterminal :
+      ¬ G.observed.base.isTerminal history.1),
+    G.observed.infoAt history information.1 hmover hnonterminal =
       information.2
 
 /-- Proof-carrying carrier of reachable original player-information points. -/
@@ -87,7 +88,9 @@ determined mover. -/
 abbrev PlayerHistory (G : ObservedChanceGame N U) :=
   Σ history :
       G.observed.base.toArena.HistoryFrom G.observed.base.init,
-    {i : N // G.observed.base.mover history.1 = some i}
+    {i : N //
+      G.observed.base.mover history.1 = some i ∧
+        ¬ G.observed.base.isTerminal history.1}
 
 /-- The reachable player-information point represented by one
 player-controlled complete history. -/
@@ -96,10 +99,11 @@ def reachablePlayerInformationAt
     (history :
       G.observed.base.toArena.HistoryFrom G.observed.base.init)
     (i : N)
-    (hmover : G.observed.base.mover history.1 = some i) :
+    (hmover : G.observed.base.mover history.1 = some i)
+    (hnonterminal : ¬ G.observed.base.isTerminal history.1) :
     ReachablePlayerInformation G :=
-  ⟨⟨i, G.observed.infoAt history i hmover⟩,
-    ⟨history, hmover, rfl⟩⟩
+  ⟨⟨i, G.observed.infoAt history i hmover hnonterminal⟩,
+    ⟨history, hmover, hnonterminal, rfl⟩⟩
 
 /-- Canonical disjoint information tags for the countable-discrete
 presentation. -/
@@ -149,16 +153,35 @@ noncomputable instance instCountableReachablePlayerInformation
     [Countable
       (G.observed.base.toArena.HistoryFrom G.observed.base.init)] :
     Countable (ReachablePlayerInformation G) := by
+  let forget :
+      PlayerHistory G →
+        G.observed.base.toArena.HistoryFrom G.observed.base.init :=
+    fun playerHistory => playerHistory.1
+  have forget_injective : Function.Injective forget := by
+    intro first second heq
+    rcases first with
+      ⟨history, ⟨i, hmover, hnonterminal⟩⟩
+    rcases second with
+      ⟨targetHistory, ⟨j, targetMover, targetNonterminal⟩⟩
+    change history = targetHistory at heq
+    cases heq
+    have hij : i = j :=
+      Option.some.inj (hmover.symm.trans targetMover)
+    subst j
+    rfl
+  letI : Countable (PlayerHistory G) :=
+    forget_injective.countable
   let cover :
       PlayerHistory G → ReachablePlayerInformation G
-    | ⟨history, ⟨i, hmover⟩⟩ =>
-        reachablePlayerInformationAt G history i hmover
+    | ⟨history, ⟨i, hmover, hnonterminal⟩⟩ =>
+        reachablePlayerInformationAt G history i hmover hnonterminal
   have hcover : Function.Surjective cover := by
     intro information
     rcases information with
       ⟨⟨i, playerInformation⟩,
-        ⟨history, hmover, hinformation⟩⟩
-    refine ⟨⟨history, ⟨i, hmover⟩⟩, ?_⟩
+        ⟨history, hmover, hnonterminal, hinformation⟩⟩
+    refine
+      ⟨⟨history, ⟨i, hmover, hnonterminal⟩⟩, ?_⟩
     apply Subtype.ext
     exact Sigma.ext rfl (heq_of_eq hinformation)
   exact hcover.countable
@@ -209,11 +232,11 @@ noncomputable instance instCountableCountableInformationAction
   | .player information => by
       rcases information with
         ⟨⟨i, playerInformation⟩,
-          ⟨history, hmover, hinformation⟩⟩
+          ⟨history, hmover, hnonterminal, hinformation⟩⟩
       let transport :
           G.observed.InfoAction i playerInformation ≃
             G.observed.InfoAction i
-              (G.observed.infoAt history i hmover) :=
+              (G.observed.infoAt history i hmover hnonterminal) :=
         Equiv.cast
           (congrArg (G.observed.InfoAction i)
             hinformation.symm)
@@ -222,11 +245,14 @@ noncomputable instance instCountableCountableInformationAction
             (fun action : G.observed.InfoAction i playerInformation =>
               (⟨history,
                 G.observed.actionEquiv history i hmover
+                  hnonterminal
                   (transport action)⟩ :
                 CompleteHistoryAction G)) by
           intro action₁ action₂ heq
           apply transport.injective
-          apply (G.observed.actionEquiv history i hmover).injective
+          apply
+            (G.observed.actionEquiv history i hmover
+              hnonterminal).injective
           exact eq_of_heq (Sigma.mk.inj_iff.mp heq).2).countable
   | .chance history _hchance => by
       exact
@@ -367,44 +393,54 @@ noncomputable def informationAtHistory
     CountableInformation G := by
   classical
   exact
-    match hmover : G.observed.base.mover history.1 with
-    | some i =>
-        .player (reachablePlayerInformationAt G history i hmover)
-    | none =>
-        if hterminal :
-            G.observed.base.isTerminal history.1 then
-          .terminal
-        else
+    if hterminal : G.observed.base.isTerminal history.1 then
+      .terminal
+    else
+      match hmover : G.observed.base.mover history.1 with
+      | some i =>
+          .player
+            (reachablePlayerInformationAt G history i hmover
+              hterminal)
+      | none =>
           .chance history ⟨hmover, hterminal⟩
+
+@[simp]
+theorem informationAtHistory_of_terminal
+    (history :
+      G.observed.base.toArena.HistoryFrom G.observed.base.init)
+    (hterminal : G.observed.base.isTerminal history.1) :
+    informationAtHistory G history = .terminal := by
+  simp [informationAtHistory, hterminal]
 
 @[simp]
 theorem informationAtHistory_of_terminal_of_no_mover
     (history :
       G.observed.base.toArena.HistoryFrom G.observed.base.init)
     (hterminal : G.observed.base.isTerminal history.1)
-    (hmover : G.observed.base.mover history.1 = none) :
+    (_hmover : G.observed.base.mover history.1 = none) :
     informationAtHistory G history = .terminal := by
-  unfold informationAtHistory
-  split
-  · rename_i i hi
-    rw [hmover] at hi
-    contradiction
-  · simp [hterminal]
+  exact informationAtHistory_of_terminal G history hterminal
 
 @[simp]
 theorem informationAtHistory_of_mover
     (history :
       G.observed.base.toArena.HistoryFrom G.observed.base.init)
     (i : N)
-    (hmover : G.observed.base.mover history.1 = some i) :
+    (hmover : G.observed.base.mover history.1 = some i)
+    (hnonterminal : ¬ G.observed.base.isTerminal history.1) :
     informationAtHistory G history =
-      .player (reachablePlayerInformationAt G history i hmover) := by
+      .player
+        (reachablePlayerInformationAt G history i hmover
+          hnonterminal) := by
   unfold informationAtHistory
+  rw [dif_neg hnonterminal]
   split
   · rename_i j hj
     have hji : j = i :=
       Option.some.inj (hj.symm.trans hmover)
     subst j
+    have hmoverProof : hj = hmover := Subsingleton.elim _ _
+    cases hmoverProof
     rfl
   · rename_i hnone
     rw [hmover] at hnone
@@ -420,11 +456,15 @@ theorem informationAtHistory_of_chance
     informationAtHistory G history =
       .chance history ⟨hmover, hnonterminal⟩ := by
   unfold informationAtHistory
+  rw [dif_neg hnonterminal]
   split
   · rename_i i hi
     rw [hmover] at hi
     contradiction
-  · simp [hnonterminal]
+  · rename_i hnone
+    have hmoverProof : hnone = hmover := Subsingleton.elim _ _
+    cases hmoverProof
+    rfl
 
 variable
   [Countable
@@ -503,9 +543,11 @@ noncomputable def realizedAction
       if htag :
           taggedAction.1 =
             CountableInformation.player
-              (reachablePlayerInformationAt G history i hmover) then
+              (reachablePlayerInformationAt G history i hmover
+                hnonterminal) then
         ⟨history,
           G.observed.actionEquiv history i hmover
+            hnonterminal
             (cast
               (congrArg CountableInformation.Action htag)
               taggedAction.2)⟩
@@ -562,17 +604,17 @@ theorem realizedAction_player
       G.observed.InfoAction i
         (G.observed.infoAt
           (MeasurableKernelArena.latestEventState time events)
-          i hmover)) :
+          i hmover hnonterminal)) :
     realizedAction G time events hnonterminal
         (playerAction G
           (reachablePlayerInformationAt G
             (MeasurableKernelArena.latestEventState time events)
-            i hmover)
+            i hmover hnonterminal)
           action) =
       ⟨MeasurableKernelArena.latestEventState time events,
         G.observed.actionEquiv
           (MeasurableKernelArena.latestEventState time events)
-          i hmover action⟩ := by
+          i hmover hnonterminal action⟩ := by
   classical
   unfold realizedAction
   dsimp
@@ -871,13 +913,13 @@ theorem abstractKernel_bind_realization_of_mover
         (.player
           (reachablePlayerInformationAt G
             (MeasurableKernelArena.latestEventState time events)
-            i hmover))).bind
+            i hmover hnonterminal))).bind
         (fun taggedAction =>
           realizationKernel G time (events, taggedAction)) =
       @PMF.toMeasure (AnalyticHistoryArena G).ActionBundle ⊤
         ((profile.actionLawAt G.observed
             (MeasurableKernelArena.latestEventState time events)
-            i hmover).map
+            i hmover hnonterminal).map
           (fun action =>
             (⟨MeasurableKernelArena.latestEventState time events,
               action⟩ :
@@ -889,27 +931,27 @@ theorem abstractKernel_bind_realization_of_mover
           ((profile i
               (G.observed.infoAt
                 (MeasurableKernelArena.latestEventState time events)
-                i hmover)).map
+                i hmover hnonterminal)).map
             (fun action =>
               (⟨MeasurableKernelArena.latestEventState time events,
                 G.observed.actionEquiv
                   (MeasurableKernelArena.latestEventState time events)
-                  i hmover action⟩ :
+                  i hmover hnonterminal action⟩ :
                 (AnalyticHistoryArena G).ActionBundle))) :=
       bind_mapped_realization G time events hnonterminal
         (profile i
           (G.observed.infoAt
             (MeasurableKernelArena.latestEventState time events)
-            i hmover))
+            i hmover hnonterminal))
         (playerAction G
           (reachablePlayerInformationAt G
             (MeasurableKernelArena.latestEventState time events)
-            i hmover))
+            i hmover hnonterminal))
         (fun action =>
           (⟨MeasurableKernelArena.latestEventState time events,
             G.observed.actionEquiv
               (MeasurableKernelArena.latestEventState time events)
-              i hmover action⟩ :
+              i hmover hnonterminal action⟩ :
             (AnalyticHistoryArena G).ActionBundle))
         (realizedAction_player G time events hnonterminal i hmover)
     _ = _ := by
@@ -921,11 +963,11 @@ theorem abstractKernel_bind_realization_of_mover
         (PMF.map_comp
           (G.observed.actionEquiv
             (MeasurableKernelArena.latestEventState time events)
-            i hmover)
+            i hmover hnonterminal)
           (profile i
             (G.observed.infoAt
               (MeasurableKernelArena.latestEventState time events)
-              i hmover))
+              i hmover hnonterminal))
           (fun action =>
             (⟨MeasurableKernelArena.latestEventState time events,
               action⟩ :
@@ -1019,35 +1061,12 @@ noncomputable def policy
     infer_instance
   terminal_zero := by
     intro time events hterminal
-    change
-      abstractKernel G profile
-        (informationAtHistory G
-          (MeasurableKernelArena.latestEventState time events)) = 0
-    cases hmover :
-        G.observed.base.mover
-          (MeasurableKernelArena.latestEventState time events).1 with
-    | some i =>
-        obtain ⟨abstractAction, _haction⟩ :=
-          (profile i
-            (G.observed.infoAt
-              (MeasurableKernelArena.latestEventState time events)
-              i hmover)).support_nonempty
-        letI :
-            IsEmpty
-              (G.observed.base.Action
-                (MeasurableKernelArena.latestEventState time events).1) :=
-          hterminal
-        exact
-          (IsEmpty.false
-            (G.observed.actionEquiv
-              (MeasurableKernelArena.latestEventState time events)
-              i hmover abstractAction)).elim
-    | none =>
-        rw [
-          informationAtHistory_of_terminal_of_no_mover G
-            (MeasurableKernelArena.latestEventState time events)
-            hterminal hmover,
-          abstractKernel_terminal]
+    rw [
+      eventInformation_apply,
+      informationAtHistory_of_terminal G
+        (MeasurableKernelArena.latestEventState time events)
+        hterminal]
+    exact abstractKernel_terminal G profile
   nonterminal_isProbability := by
     intro time events hnonterminal
     change
@@ -1062,7 +1081,7 @@ noncomputable def policy
         rw [
           informationAtHistory_of_mover G
             (MeasurableKernelArena.latestEventState time events)
-            i hmover,
+            i hmover hnonterminal,
           abstractKernel_player]
         infer_instance
     | none =>
@@ -1098,14 +1117,14 @@ noncomputable def policy
           eventInformation_apply G time events,
           informationAtHistory_of_mover G
             (MeasurableKernelArena.latestEventState time events)
-            i hmover]
+            i hmover hnonterminal]
         change
           ∀ᵐ stateAction
               ∂(abstractKernel G profile
                   (.player
                     (reachablePlayerInformationAt G
                       (MeasurableKernelArena.latestEventState time events)
-                      i hmover))).bind
+                      i hmover hnonterminal))).bind
                 (fun taggedAction =>
                   realizationKernel G time (events, taggedAction)),
             stateAction ∈
@@ -1206,7 +1225,7 @@ theorem compiled_kernel
         rw [
           informationAtHistory_of_mover G
             (MeasurableKernelArena.latestEventState time events)
-            i hmover]
+            i hmover hterminal]
         rw [
           KernelArena.Policy.toMeasurable_kernel_apply_nonterminal
             (BehavioralProfile.toHistoryKernelPolicy G profile)
@@ -1278,10 +1297,13 @@ theorem informationOfPlayerInformation_at
     (history :
       G.observed.base.toArena.HistoryFrom G.observed.base.init)
     (i : N)
-    (hmover : G.observed.base.mover history.1 = some i) :
+    (hmover : G.observed.base.mover history.1 = some i)
+    (hnonterminal : ¬ G.observed.base.isTerminal history.1) :
     informationOfPlayerInformation G
-        ⟨i, G.observed.infoAt history i hmover⟩ =
-      .player (reachablePlayerInformationAt G history i hmover) := by
+        ⟨i, G.observed.infoAt history i hmover hnonterminal⟩ =
+      .player
+        (reachablePlayerInformationAt G history i hmover
+          hnonterminal) := by
   classical
   unfold informationOfPlayerInformation
   split
@@ -1289,7 +1311,7 @@ theorem informationOfPlayerInformation_at
   · rename_i hunreachable
     exact
       (hunreachable
-        ⟨history, hmover, rfl⟩).elim
+        ⟨history, hmover, hnonterminal, rfl⟩).elim
 
 /-- Every observed chance game satisfying the stated countability hypotheses
 has a canonical discrete analytic presentation. -/
@@ -1302,15 +1324,15 @@ noncomputable def presentation :
   playerInformation := fun _time playerInformation =>
     informationOfPlayerInformation G playerInformation
   player_informationAt := by
-    intro time events i hmover
+    intro time events i hmover hnonterminal
     rw [
       eventInformation_apply,
       informationAtHistory_of_mover G
         (MeasurableKernelArena.latestEventState time events)
-        i hmover,
+        i hmover hnonterminal,
       informationOfPlayerInformation_at G
         (MeasurableKernelArena.latestEventState time events)
-        i hmover]
+        i hmover hnonterminal]
 
 /-- The canonical countable presentation viewed through the fully explicit
 measurable-history interface. This reuses exactly the same information,
