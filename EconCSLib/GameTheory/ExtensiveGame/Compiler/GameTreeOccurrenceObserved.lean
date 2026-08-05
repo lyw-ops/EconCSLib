@@ -67,7 +67,8 @@ variable {N U : Type*}
 abbrev OccurrenceInfo (root : GameTree N U) (i : N) :=
   { history :
       (toExtensiveGame root).toArena.HistoryFrom root //
-    (toExtensiveGame root).mover history.1 = some i }
+    (toExtensiveGame root).mover history.1 = some i ∧
+      ¬ (toExtensiveGame root).isTerminal history.1 }
 
 namespace OccurrenceInfo
 
@@ -98,12 +99,13 @@ def toOccurrenceObservedGame (root : GameTree N U) :
     rfl
   InfoState := fun i => OccurrenceInfo root i
   infoObserve := fun _ information => information.1
-  infoAt := fun history _ hmover => ⟨history, hmover⟩
+  infoAt := fun history _ hmover hnonterminal =>
+    ⟨history, hmover, hnonterminal⟩
   infoAt_observe := by
-    intro history i hmover
+    intro history i hmover hnonterminal
     rfl
   InfoAction := fun _ information => information.Action
-  actionEquiv := fun _ _ _ => Equiv.refl _
+  actionEquiv := fun _ _ _ _ => Equiv.refl _
 
 instance toOccurrenceObservedGame.instTerminalDecidable
     (root : GameTree N U) :
@@ -116,7 +118,8 @@ instance toOccurrenceObservedGame.instTerminalDecidable
 theorem toOccurrenceObservedGame_hasSingletonInformation
     (root : GameTree N U) (i : N) :
     (toOccurrenceObservedGame root).HasSingletonInformation i := by
-  intro first second hfirst hsecond hsame
+  intro first second hfirst hfirst_nonterminal hsecond
+    hsecond_nonterminal hsame
   exact congrArg Subtype.val hsame
 
 /-- The occurrence-sensitive compiler has perfect information. -/
@@ -215,19 +218,22 @@ theorem toOccurrenceObservedGame_pureTerminatingOnAllContinuations
   obtain ⟨payoff, hendpoint⟩ :=
     stoppedHistoryFrom_policy_reaches_leaf
       root
-      (profile.toHistoryPolicy
-        (toOccurrenceObservedGame root)
-        (toExtensiveGame_noChanceOnHistories root))
+      (ExtensiveGame.ControlledObservedGame.PureProfile.toHistoryPolicy
+        (G := (toOccurrenceObservedGame root).toControlledObservedGame)
+        profile (toExtensiveGame_noChanceOnHistories root))
       current root.size
       (arenaHistory_subtree current.2).size_le
-  have hendpoint' :
+  change
+    (toExtensiveGame root).isTerminal
       ((toOccurrenceObservedGame root).stoppedHistoryFrom
         profile (toExtensiveGame_noChanceOnHistories root)
-        current root.size).1 =
-        .Leaf payoff := by
-    simpa [ExtensiveGame.ObservedGame.stoppedHistoryFrom] using
-      hendpoint
-  rw [hendpoint']
+        current root.size).1
+  rw [show
+    ((toOccurrenceObservedGame root).stoppedHistoryFrom
+      profile (toExtensiveGame_noChanceOnHistories root)
+      current root.size).1 = .Leaf payoff by
+        simpa [ExtensiveGame.ObservedGame.stoppedHistoryFrom] using
+          hendpoint]
   exact
     toExtensiveGame_isTerminal_leaf root payoff
 
@@ -243,12 +249,15 @@ def occurrenceSubgameSystem (root : GameTree N U) :
   lawful := by
     intro subroot _hroot
     constructor
-    · intro _hproper i hmover other hother hsame
+    · intro _hproper i hmover hnonterminal other hother
+        hother_nonterminal hsame
       exact (congrArg Subtype.val hsame).symm
-    · intro current hcurrent i hmover other hother hsame
+    · intro current hcurrent i hmover hnonterminal other hother
+        hother_nonterminal hsame
       have hotherCurrent : other = current :=
         ((toOccurrenceObservedGame_hasSingletonInformation root i)
-          current other hmover hother hsame).symm
+          current other hmover hnonterminal hother
+            hother_nonterminal hsame).symm
       simpa [hotherCurrent] using hcurrent
 
 /-- The all-history occurrence system is complete: every structurally lawful
@@ -450,11 +459,23 @@ theorem terminalPayoffFrom_eq_occurrenceOutcome
         ((toOccurrenceObservedGame root).stoppedHistoryFrom
           profile (toExtensiveGame_noChanceOnHistories root)
           current root.size).1 := by
+    change
+      (toExtensiveGame root).isTerminal
+        ((toOccurrenceObservedGame root).stoppedHistoryFrom
+          profile (toExtensiveGame_noChanceOnHistories root)
+          current root.size).1
     rw [hendpoint]
     exact toExtensiveGame_isTerminal_leaf root payoff
-  rw [ExtensiveGame.ObservedGame.terminalPayoffFrom,
-    (toOccurrenceObservedGame root
-      ).terminalHistoryFrom_eq_of_terminal
+  change
+    (toExtensiveGame root).payoff
+        ((toOccurrenceObservedGame root).toControlledObservedGame
+          |>.terminalHistoryFrom
+            profile (toExtensiveGame_noChanceOnHistories root)
+            current hterminates).1 =
+      occurrenceOutcome root profile current
+  rw [
+    (toOccurrenceObservedGame root).toControlledObservedGame
+      |>.terminalHistoryFrom_eq_of_terminal
         profile (toExtensiveGame_noChanceOnHistories root)
         current hterminates root.size hterminal]
   calc
@@ -492,7 +513,7 @@ def forgetOccurrenceInfo
     (information :
       (toOccurrenceObservedGame root).InfoState i) :
     (toObservedGame root).InfoState i :=
-  nodeInfoAt root information.1.1 i information.2
+  nodeInfoAt root information.1.1 i information.2.1
 
 /-- Occurrence forgetting identifies player decision histories that have the
 same endpoint node. -/
@@ -503,8 +524,12 @@ theorem forgetOccurrenceInfo_eq_of_endpoint_eq
     (hsame : first.1.1 = second.1.1) :
     forgetOccurrenceInfo root i first =
       forgetOccurrenceInfo root i second := by
-  rcases first with ⟨⟨firstEndpoint, firstPath⟩, firstMover⟩
-  rcases second with ⟨⟨secondEndpoint, secondPath⟩, secondMover⟩
+  rcases first with
+    ⟨⟨firstEndpoint, firstPath⟩,
+      ⟨firstMover, firstNonterminal⟩⟩
+  rcases second with
+    ⟨⟨secondEndpoint, secondPath⟩,
+      ⟨secondMover, secondNonterminal⟩⟩
   change firstEndpoint = secondEndpoint at hsame
   change
     nodeInfoAt root firstEndpoint i firstMover =
@@ -576,7 +601,7 @@ theorem forgetOccurrenceInfo_observe
         ((toOccurrenceObservedGame root).infoObserve
           i information) := by
   exact
-    nodeInfoAt_tree root information.1.1 i information.2
+    nodeInfoAt_tree root information.1.1 i information.2.1
 
 /-- Forgetting the occurrence information state at a concrete player history
 gives exactly the endpoint compiler's node information state. -/
@@ -587,11 +612,14 @@ theorem forgetOccurrenceInfo_infoAt
       (toExtensiveGame root).toArena.HistoryFrom root)
     (i : N)
     (hmover :
-      (toExtensiveGame root).mover history.1 = some i) :
+      (toExtensiveGame root).mover history.1 = some i)
+    (hnonterminal :
+      ¬ (toExtensiveGame root).isTerminal history.1) :
     forgetOccurrenceInfo root i
         ((toOccurrenceObservedGame root).infoAt
-          history i hmover) =
-      (toObservedGame root).infoAt history i hmover :=
+          history i hmover hnonterminal) =
+      (toObservedGame root).infoAt history i hmover
+        hnonterminal :=
   rfl
 
 /-- Endpoint abstract actions and occurrence abstract actions are equivalent at
@@ -604,7 +632,7 @@ def forgetOccurrenceInfoActionEquiv
         (forgetOccurrenceInfo root i information) ≃
       (toOccurrenceObservedGame root).InfoAction i
         information :=
-  nodeActionEquiv root information.1.1 i information.2
+  nodeActionEquiv root information.1.1 i information.2.1
 
 /-- The endpoint and occurrence action realizations commute exactly with the
 information-action equivalence. -/
@@ -616,17 +644,20 @@ theorem forgetOccurrenceInfoActionEquiv_at
     (i : N)
     (hmover :
       (toExtensiveGame root).mover history.1 = some i)
+    (hnonterminal :
+      ¬ (toExtensiveGame root).isTerminal history.1)
     (action :
       (toObservedGame root).InfoAction i
-        ((toObservedGame root).infoAt history i hmover)) :
+        ((toObservedGame root).infoAt history i hmover
+          hnonterminal)) :
     (toOccurrenceObservedGame root).actionEquiv
-        history i hmover
+        history i hmover hnonterminal
         (forgetOccurrenceInfoActionEquiv root i
           ((toOccurrenceObservedGame root).infoAt
-            history i hmover)
+            history i hmover hnonterminal)
           action) =
       (toObservedGame root).actionEquiv
-        history i hmover action :=
+        history i hmover hnonterminal action :=
   rfl
 
 /-! ### Information-refinement package -/
@@ -675,12 +706,14 @@ def endpointInformationRefinement
   infoActionEquiv :=
     forgetOccurrenceInfoActionEquiv root
   map_infoAt := by
-    intro history i hsource htarget
+    intro history i hsource hsource_nonterminal
+      htarget htarget_nonterminal
     exact
       (forgetOccurrenceInfo_infoAt
-        root history i hsource).symm
+        root history i hsource hsource_nonterminal).symm
   map_infoActionAt := by
-    intro history i hsource htarget action
+    intro history i hsource hsource_nonterminal
+      htarget htarget_nonterminal action
     rfl
 
 /-- The endpoint compiler's explicit all-continuations analysis roots. -/
@@ -869,13 +902,15 @@ theorem liftEndpointPureStrategy_actionAt
     (history :
       (toExtensiveGame root).toArena.HistoryFrom root)
     (hmover :
-      (toExtensiveGame root).mover history.1 = some i) :
+      (toExtensiveGame root).mover history.1 = some i)
+    (hnonterminal :
+      ¬ (toExtensiveGame root).isTerminal history.1) :
     (liftEndpointPureStrategy root i strategy).actionAt
         (toOccurrenceObservedGame root)
-        history hmover =
+        history hmover hnonterminal =
       strategy.actionAt
         (toObservedGame root)
-        history hmover :=
+        history hmover hnonterminal :=
   rfl
 
 /-- Lifted and endpoint profiles realize exactly the same concrete action at
@@ -887,13 +922,15 @@ theorem liftEndpointPureProfile_actionAt
       (toExtensiveGame root).toArena.HistoryFrom root)
     (i : N)
     (hmover :
-      (toExtensiveGame root).mover history.1 = some i) :
+      (toExtensiveGame root).mover history.1 = some i)
+    (hnonterminal :
+      ¬ (toExtensiveGame root).isTerminal history.1) :
     (liftEndpointPureProfile root profile).actionAt
         (toOccurrenceObservedGame root)
-        history i hmover =
+        history i hmover hnonterminal =
       profile.actionAt
         (toObservedGame root)
-        history i hmover :=
+        history i hmover hnonterminal :=
   rfl
 
 /-- Strategy lifting preserves the complete terminal-aware history policy
@@ -917,6 +954,7 @@ theorem liftEndpointPureProfile_toHistoryPolicy
       ((toObservedGame root).mover_playerAt
         (toExtensiveGame_noChanceOnHistories root)
         history hnonterminal)
+      hnonterminal
 
 /-! ### Canonical occurrence-sensitive SPE -/
 
@@ -1061,7 +1099,8 @@ theorem occurrenceOutcome_deviate_le_value
         have hcanonicalAction :
             (occurrenceBackwardInductionProfile root).actionAt
                 (toOccurrenceObservedGame root)
-                ⟨.Node mover head tail, history⟩ mover rfl =
+                ⟨.Node mover head tail, history⟩ mover rfl
+                hnonterminal =
               (optStrategy : Strategy N U)
                 mover head tail := by
           rw [←
