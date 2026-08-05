@@ -78,3 +78,41 @@ example [Finite (base.toArena.HistoryFrom base.init)] :
   inferInstance
 
 end CompleteInformationInstanceBoundary
+
+namespace TerminalMoverDecisionBoundary
+
+open ExtensiveGame
+
+/-- A terminal one-state game whose irrelevant mover label is deliberately
+left unnormalized. -/
+def terminalPlayerLabeledBase : ControlledGame Unit where
+  State := Unit
+  Action := fun _state => Empty
+  next := fun _state action => nomatch action
+  init := ()
+  mover := fun _state => some ()
+
+/-- Every state of the one-state game is terminal. -/
+theorem terminalPlayerLabeledBase_isTerminal
+    (state : terminalPlayerLabeledBase.State) :
+    terminalPlayerLabeledBase.isTerminal state :=
+  ⟨fun action => nomatch action⟩
+
+/-- Complete information creates no decision coordinate from a terminal
+player label. This is the regression for the nonterminal `infoAt` contract. -/
+theorem decisionHistory_isEmpty :
+    IsEmpty
+      (ControlledObservedGame.CompleteInformation.DecisionHistory
+        terminalPlayerLabeledBase ()) :=
+  ⟨fun information =>
+    information.property.2
+      (terminalPlayerLabeledBase_isTerminal information.1.1)⟩
+
+/-- The resulting strategy is the unique vacuous function on an empty
+decision-information carrier. -/
+def vacuousPureStrategy :
+    (ControlledObservedGame.completeInformation terminalPlayerLabeledBase).PureStrategy
+      () :=
+  fun information => (decisionHistory_isEmpty.false information).elim
+
+end TerminalMoverDecisionBoundary
