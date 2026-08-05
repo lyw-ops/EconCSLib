@@ -8,9 +8,9 @@ Status: target architecture with Phase A complete and the foundational
 Phase B/D carriers implemented. The finite occurrence-sensitive carrier,
 complete-history/path-law comparison interfaces, recall hierarchy, and prefix
 topology are now implemented. Finite perfect-information two-player zero-sum
-logical determinacy is proved on the payoff-free carrier. The well-founded
-prefix and Gale--Stewart existence theorems remain theorem targets. No
-remaining listed theorem is
+logical determinacy and its structurally well-founded generalization are
+proved on the payoff-free carrier. Arbitrary infinite Gale--Stewart existence
+remains a theorem target. No remaining listed theorem is
 considered formalized until a placeholder-free Lean declaration exists.
 
 The following gaps are especially easy to overstate and remain explicit
@@ -20,7 +20,8 @@ theorem targets:
   the individual frontends;
 - a concrete infinite-horizon Kuhn path-law realization theorem;
 - measurable analytic general-strategy spaces and their evaluation maps;
-- `Acc`-recursive, Gale--Stewart open/closed, and Borel determinacy;
+- Gale--Stewart open/closed and Borel determinacy beyond structural
+  well-foundedness;
 - frontend-specific action/information/chance/law/deviation/root transfer
   packages beyond the declarations each compiler currently proves.
 
@@ -44,7 +45,10 @@ winning sets, and singleton decision information:
 
 1. backward determinacy from a uniform finite decision bound — implemented
    as `ControlledObservedGame.FiniteTwoPlayerHypotheses.isTwoPlayerDetermined`;
-2. `Acc`-recursive determinacy from a prefix-decision certificate;
+2. `Acc`-recursive determinacy from structural well-foundedness — implemented
+   as `ControlledObservedGame.WellFoundedTwoPlayerHypotheses.isTwoPlayerDetermined`,
+   with `WellFoundedPrefixHypotheses.isTwoPlayerDetermined` as the
+   prefix-decision specialization;
 3. terminal win/lose specialization;
 4. compatibility with the existing finite `GameTree` Zermelo result.
 
@@ -176,10 +180,11 @@ frontend-specific transfer remain explicit theorem tracks.
 
 Promotion gate: theorem assumptions match counterexample boundaries.
 
-Progress: the finite no-chance perfect-information two-player zero-sum
-determinacy theorem and the strict two-step imperfect-information
-counterexample are complete. `Acc`-recursive prefix determinacy and
-Gale--Stewart/open-closed determinacy remain explicit theorem tracks.
+Progress: the finite and structurally well-founded no-chance
+perfect-information two-player zero-sum determinacy theorems and the strict
+two-step imperfect-information counterexample are complete.
+Gale--Stewart/open-closed determinacy beyond structural well-foundedness
+remains an explicit theorem track.
 
 ### Phase D - strategy completion
 
@@ -245,7 +250,13 @@ assumptions appear explicitly.
 - sequential rationality and sequential equilibrium;
 - refinements only after their finite mathematical definitions are stable.
 
-This phase must not modify the base `ObservedGame` record.
+Progress: an explicit opt-in experimental module now implements
+occurrence-sensitive belief systems, finite Bayes normalization, assessments,
+completely mixed perturbation/consistency certificates, and
+evaluator-relative sequential rationality/equilibrium. It does not yet provide
+the canonical conditional continuation-utility evaluator or the standard Nash
+consequence, so it remains outside equilibrium facades. This phase must not
+modify the base `ObservedGame` record.
 
 ## 18. Verification plan
 
