@@ -1,4 +1,4 @@
-# EFG Public API and Reuse Policy
+# EFG Canonical Facades and Reuse Policy
 
 This note defines the supported import surface for the simulation-oriented
 extensive-game framework. It complements
@@ -7,44 +7,68 @@ authoritative.
 
 Lifecycle and placement decisions are governed by
 [`efg-governance.md`](efg-governance.md).  The status, responsibility,
-recommended import, growth permission, and removal policy for all 163 in-scope
-modules are registered in
+recommended import, growth permission, and removal policy for every in-scope
+module are registered in
 [`efg-module-status.md`](efg-module-status.md).
 
-## Public import classes
+## Pre-stability import classes
 
 The EFG surface has two support classes:
 
-- **Granular stable facade**: `Interface.StructuralCore`, `Interface.Core`,
+- **Canonical pre-stability facade**: `Interface.StructuralCore`,
+  `Interface.Core`,
   `Interface.Objective`,
   `Interface.Winning`, `Interface.Winning.Stochastic`,
   `Interface.Execution.{Finite,Infinite,Analytic}`,
-  `Interface.Relations.Discrete`,
+  `Interface.Relations.Discrete`, `Interface.Preservation`,
   `Interface.Equilibrium.{Discrete,Analytic}`, `Interface.Restart`, and
   `Interface.Compilation.Discrete`. Their import paths, stated
-  responsibilities, and documented canonical declarations require a
-  migration path before an incompatible change.
+  responsibilities, and documented canonical declarations are recommended
+  and machine-governed, but have no current external source-compatibility
+  guarantee.
 - **Experimental/implementation path**: files below `Execution/`,
   `Simulation/`, `Observed/`, `FOSG/`, and `Compiler/`, except for declarations
   explicitly documented as canonical. These files are build-checked and
   placeholder-free, but their individual import paths and proof helpers are
   not frozen.
 
+There is currently no narrower carrier compatibility exception: the freeze
+decision for `Arena`, `ControlledGame`, `ControlledObservedGame`, and the
+five-module `Interface.StructuralCore` boundary is deferred by
+[`efg-minimal-core-freeze.md`](efg-minimal-core-freeze.md). The exact facade
+closure remains a pre-stability import regression that may be deliberately
+revised with its architecture evidence.
+
+Canonical and Frontend API growth is nevertheless frozen. CI snapshots their
+registered module paths and explicit public declarations, so new public
+endpoints, new supported frontends, and new canonical facades are rejected.
+This limits surface area while the existing carrier and usability review
+converges; it does not yet promise source compatibility for existing
+declarations.
+
 Lean visibility is broader than this policy: importing a facade makes every
 declaration in its transitive imports name-resolvable. That does not promote
-those declarations to stable API.
+those declarations to a governed facade contract.
 
-## Granular stable facades
+During pre-stability, an evidence-backed correction or hard migration of the
+existing surface is allowed. It must
+synchronize internal consumers, positive/negative import regressions,
+lifecycle rows, design documentation, and the audit. Compatibility wrappers
+are not retained for hypothetical users. A migration window, deprecation
+period, and major-release-only removal policy begin only if EFG API stability
+is formally announced later.
+
+## Canonical pre-stability facades
 
 Downstream code should import the smallest row that provides the semantics it
 uses. Pre-release broad compatibility aggregates were deleted after internal
 consumers migrated; the final column names the adjacent granular facade when a
 client needs a larger semantic tier.
 
-| Need | Recommended import | Stable responsibility | Adjacent granular facade |
+| Need | Recommended import | Governed responsibility | Adjacent granular facade |
 |---|---|---|---|
 | Structural core | `EconCSLib.GameTheory.ExtensiveGame.Interface.StructuralCore` | exact narrow closure for `Arena`, `ControlledGame`, reachability, typed histories, measure-free complete plays, payoff-free `ControlledObservedGame`, external root presentations, and pure strategies/profiles | same |
-| Foundation | `EconCSLib.GameTheory.ExtensiveGame.Interface.Core` | the broader stable Foundation Facade: StructuralCore semantics plus structural length/well-foundedness, bounded deterministic/PMF execution, lawful subgame systems, represented-information/finite-EFG certificates, quasistrategies, and recall | same |
+| Foundation | `EconCSLib.GameTheory.ExtensiveGame.Interface.Core` | the broader governed Foundation Facade: StructuralCore semantics plus structural length/well-foundedness, bounded deterministic/PMF execution, lawful subgame systems, represented-information/finite-EFG certificates, quasistrategies, and recall | same |
 | Objectives | `EconCSLib.GameTheory.ExtensiveGame.Interface.Objective` | history-sensitive terminal/path outcomes, winning conditions, prefix topology/measurability, signal/public recall, and information-consistent quasistrategies without probability or equilibrium | same |
 | Logical winning | `EconCSLib.GameTheory.ExtensiveGame.Interface.Winning` | robust pure/quasi winning strategies, determinacy predicates, and explicit finite/well-founded hypothesis packages; no arbitrary-set determinacy claim | same |
 | Stochastic logical winning | `EconCSLib.GameTheory.ExtensiveGame.Interface.Winning.Stochastic` | arbitrary-measure `AEWinningUnder` and probability-certified almost-sure winning under the canonical discrete infinite history law, separate from pathwise/profile-based winning | same |
@@ -52,38 +76,22 @@ client needs a larger semantic tier.
 | Infinite discrete execution | `EconCSLib.GameTheory.ExtensiveGame.Interface.Execution.Infinite` | measure-valued infinite histories generated by discrete PMF policies, almost-sure termination, and payoff convergence | same |
 | Analytic execution | `EconCSLib.GameTheory.ExtensiveGame.Interface.Execution.Analytic` | non-atomic measurable-kernel execution, state/history/event/information policies, realization, and observed profile assembly | same |
 | Structural/PMF relations | `EconCSLib.GameTheory.ExtensiveGame.Interface.Relations.Discrete` | strict morphisms/isomorphisms, information refinements, PMF trajectory relations, and weak/stuttering simulations | combine with `Interface.Execution.Analytic` when analytic execution is also needed |
+| Preservation contracts | `EconCSLib.GameTheory.ExtensiveGame.Interface.Preservation` | strict structural iso, directional information refinement, weak simulation, bounded/path-law realization, probability coupling, and strict/weak compiler packages, with their strengths kept distinct | combine with `Interface.Execution.Analytic` only for the non-atomic executor |
 | Discrete equilibrium | `EconCSLib.GameTheory.ExtensiveGame.Interface.Equilibrium.Discrete` | pure, behavioral, mixed, and countably supported general-strategy semantics; finite-fuel equilibrium, bounded complete-history-law realization, event-clock perfect recall, finite Kuhn, and uniform strategy bridges | `Interface.Equilibrium.Analytic` also imports discrete equilibrium |
 | Analytic equilibrium | `EconCSLib.GameTheory.ExtensiveGame.Interface.Equilibrium.Analytic` | measurable path utility/Nash, absolute-prefix continuation, and conditional continuation | same |
 | Restart | `EconCSLib.GameTheory.ExtensiveGame.Interface.Restart` | deviation-complete fresh-clock/absolute-prefix compatibility and equilibrium transfer | same |
 | Discrete compilation | `EconCSLib.GameTheory.ExtensiveGame.Interface.Compilation.Discrete` | PMF FOSG serialization; `GameTree`, `StochasticGameTree`, and chance-certified `FiniteImperfectGame` reference observed-EFG compilers | combine explicitly with `Interface.Equilibrium.Analytic` or `Interface.Restart` when required |
 
-### Audited transitive dependencies
+### Governed transitive dependencies
 
-The following table is a source-import-graph snapshot. “EFG closure” counts
-transitively imported modules under
-`EconCSLib.GameTheory.ExtensiveGame`; “local closure” counts all transitively
-imported `EconCSLib` modules. The facade module itself is not counted.
-The full DAG, classification of relation/equilibrium declarations, audit
-method, and before/after comparison are in
-[`efg-import-granularity.md`](efg-import-granularity.md).
+Exact root/facade EFG and local closure budgets have one current home:
+[`efg-governance.md`](efg-governance.md#root-aggregate-lifecycle). The
+governance checker recomputes every row from the source import graph, excluding
+the entry module itself. The full split rationale and before/after comparison
+remain in [`efg-import-granularity.md`](efg-import-granularity.md), but that
+migration audit is not a second current budget table.
 
-| Facade | EFG / local closure |
-|---|---:|
-| Structural core | 5 / 5 |
-| Foundation Core | 14 / 14 |
-| Objective | 31 / 36 |
-| Winning | 34 / 39 |
-| Stochastic winning | 49 / 56 |
-| Finite execution | 32 / 39 |
-| Infinite discrete execution | 37 / 44 |
-| Analytic execution | 57 / 65 |
-| Discrete relations | 38 / 45 |
-| Discrete equilibrium | 65 / 81 |
-| Analytic equilibrium | 95 / 112 |
-| Restart | 103 / 120 |
-| Discrete compilation | 86 / 104 |
-
-The governance checker enforces StructuralCore's exact five-module EFG
+The checker also enforces StructuralCore's exact five-module EFG
 closure, rejects Objective/Winning in the Foundation Core closure, checks the
 exact Recall and controlled-morphism leaf closures, and verifies that every
 payoff-free infrastructure leaf, finite execution, and discrete relations
@@ -106,23 +114,26 @@ facade.
 Existing code that formerly relied on transitive root imports can migrate by
 importing `Interface.Objective`,
 `Interface.Execution.{Finite,Infinite,Analytic}`,
-`Interface.Relations.Discrete`, `Interface.Equilibrium.{Discrete,Analytic}`,
-`Interface.Restart` or `Interface.Compilation.Discrete` directly.
+`Interface.Relations.Discrete`, `Interface.Preservation`,
+`Interface.Equilibrium.{Discrete,Analytic}`, `Interface.Restart` or
+`Interface.Compilation.Discrete` directly.
 
-At the 2026-08-03 audit snapshot the root has a 36-module EFG closure (163
-local `EconCSLib` dependencies). It contains the finite facade and its
-implementation, `GameTree`, `BackwardInduction`, and
+The current root boundary and its machine-checked closure budget are recorded
+in [`efg-governance.md`](efg-governance.md#root-aggregate-lifecycle). It
+contains the finite facade and its implementation, `GameTree`,
+`BackwardInduction`, and
 `ZeroSumGameTreeWithChance`. It contains no `InfiniteTrajectory`,
 endpoint-policy equilibrium, `FiniteArenaExtraction`, `Zermelo`, non-atomic
 `MeasurableKernelArena`, continuation-equilibrium, restart, FOSG, or compiler
 module.
 
 The granular facade paths and declarations explicitly described as canonical
-in their module documentation are the stable public surface. Proof-local
-helpers and implementation subdirectory paths are experimental and not
-individually frozen.
+in their module documentation are the intended future public surface.
+Proof-local helpers and implementation subdirectory paths are not individual
+pre-stability contracts. Neither category currently creates an external
+source-compatibility guarantee.
 
-`Interface.Core` also exposes the stable, reducible observed-presentation
+`Interface.Core` also exposes the canonical, reducible observed-presentation
 constructors `ExtensiveGame.ofArena`,
 `ObservedGame.historyInformation`,
 `ObservedGame.decisionHistoryInformation`,
@@ -221,7 +232,8 @@ Compatibility:
 - `GameForm.Continuation`.
 
 The declaration-free `Observed.Morphism.Fiber` forwarding import was also
-removed in favor of `Execution.DependentFiber`. The unrelated comment-only
+removed; its game-independent dependent-fiber calculus now lives in
+`EconCSLib.Math.DependentFiber`. The unrelated comment-only
 `Foundation.Player` shell was removed from the root aggregate. No redirect
 stubs remain.
 
@@ -232,7 +244,8 @@ GameForm/Continuation/
   Core → Simulation → Iso
 
 Observed/Morphism/
-  Execution.DependentFiber → Structural → Inverse → Operational → Continuation
+  Math.DependentFiber + Relations.Discrete.Morphism
+    → Structural → Inverse → Operational → Continuation
 
 Observed/Refinement/
   Structural → Core → Termination
@@ -252,6 +265,7 @@ Observed/Controlled/Infrastructure/
 Observed/Controlled/Morphism/
   Core → Subgame
   Core → Recall
+  Core + Semantics → Objective
 
 FOSG/Sequentialization/
   Core → Policy → MacroLaw → Trajectory → Witness → Equilibrium
@@ -280,19 +294,20 @@ navigation modules. There are zero temporary compatibility wrappers.
 | Import boundary | Transitive exposure found by the audit | Disposition |
 |---|---|---|
 | `EconCSLib` | The occurrence compiler previously pulled `Observed.SPE`, pure/behavioral refinement, perfect recall, and continuation transfer into the root aggregate. | Removed the compiler import. Add `Interface.Compilation.Discrete` downstream. |
-| StructuralCore | Its exact EFG/local closure is `Basic`, `Reachability`, `History`, `CompletePlay`, and `Observed.Controlled`; no termination, execution, objective, probability, relation, equilibrium, simulation, or compiler module is reachable. | Enforced by exact source-graph comparison and `StructuralCoreImportBoundary`. |
+| StructuralCore | Its exact EFG/local closure is `Structural.Basic`, `Structural.Reachability`, `Structural.History`, `Execution.CompletePlay`, and `Observed.Controlled`; the payoff-aware compatibility modules `Basic` and `Execution.{Reachability,History}` are absent, as are termination, objective, probability, relation, equilibrium, simulation, and compiler modules. | Enforced by exact source-graph comparison and `StructuralCoreImportBoundary`. |
 | Core | The Foundation Facade reaches structural/finite/recall/subgame leaves and bounded deterministic/PMF execution, but neither `Execution.Objective` nor `Winning.*` nor a payoff-aware observed game. | Enforced by source-graph governance and `CoreImportBoundary`. |
 | Controlled recall leaf | `Controlled.Infrastructure.Recall` reaches general represented-information witnesses through `WellFormed`, but no finite hypothesis, length bound, or controlled executor. | Exact six-module closure plus `RecallImportBoundary`. |
-| Controlled morphism core | `Controlled.Morphism.Core` exposes structural Hom/Iso, information refinement, strategy transport, and Iso algebra without subgame, recall, finite, or length declarations. | Exact 8 / 8 closure plus `ControlledMorphismCoreImportBoundary`; the aggregate facade has a separate import regression. |
+| Controlled morphism core | `Controlled.Morphism.Core` exposes structural Hom/Iso, information refinement, strategy transport, and Iso algebra without subgame, recall, finite, or length declarations. | Exact 9 / 9 closure plus `ControlledMorphismCoreImportBoundary`; the aggregate facade has a separate import regression. |
 | Objective | Complete plays, structural termination certificates, and terminal/path outcomes are reachable, but chance execution, path probability laws, equilibrium, and analytic kernels are absent. | Enforced by `ObjectiveImportBoundary`. |
 | Finite execution | Structural `Arena` and observed isomorphism prerequisites are reachable through chance execution, but no `ProbabilityTheory.Kernel`, `MeasurableKernelArena`, or infinite `Arena.pathLaw` is available. | New shallow finite/PMF boundary, enforced by `FiniteExecutionImportBoundary`. |
 | Infinite discrete execution | `Execution.InfiniteTrajectory` necessarily exposes Mathlib kernels, measures, integration, and hitting-time declarations. | Intrinsic to infinite path laws and enforced separately from non-atomic kernels by `InfiniteExecutionImportBoundary`. |
 | Analytic execution | Discrete `KernelTrajectory` policy/finite-law and coupling declarations are reachable through exact discrete recovery. | Kept as an implementation dependency; equilibrium declarations remain absent. |
-| Discrete relations | Strict structure, PMF couplings, and weak simulation share one non-analytic closure. | Enforced by `DiscreteRelationsImportBoundary`; no empty `Relations.Analytic` symmetry module was added. |
+| Discrete relations | Strict structure, PMF couplings, and weak simulation share one non-analytic closure. Preservation aliases and measure-valued law contracts remain outside it. | Enforced by `DiscreteRelationsImportBoundary`; no empty `Relations.Analytic` symmetry module was added. |
+| Preservation | The independent preservation vocabulary spans strict/refinement/weak relation strengths and measure-valued path-law realization/coupling without importing the non-atomic executor. | Enforced by `PreservationImportBoundary`, which resolves the canonical declarations and rejects analytic-executor and equilibrium sentinels. |
 | Discrete equilibrium | Split Kuhn/PMF conditioning helpers are reachable, but route regressions are private and the path-measure and measurable-kernel layers are absent. | Enforced by `DiscreteEquilibriumImportBoundary`; helpers remain implementation details unless documented as canonical. |
 | Analytic equilibrium | Measurable outcome, continuation, and regular-conditioning implementation helpers are reachable. | `Equilibrium.Analytic` is the explicit analytic entry; Restart and compiler sentinels remain absent. |
-| Restart | Splicing, finite-prefix, partial-step, and certificate-specific proof declarations are reachable. | Name-resolvable implementation API; only the canonical semantics and recommended constructors described below are stable. |
-| Discrete compilation | Compiler proof helpers, FOSG sequentialization internals, finite `GameTree`/`StochasticGameTree` infrastructure, and legacy `ImperfectInformation` are reachable without measurable-kernel execution. | Canonical finite compilers/serializers are stable; enforced by `DiscreteCompilationImportBoundary`. |
+| Restart | Splicing, finite-prefix, partial-step, and certificate-specific proof declarations are reachable. | Name-resolvable implementation surface; only the canonical semantics and recommended constructors described below form the governed contract. |
+| Discrete compilation | Compiler proof helpers, FOSG sequentialization internals, finite `GameTree`/`StochasticGameTree` infrastructure, and legacy `ImperfectInformation` are reachable without measurable-kernel execution. | Canonical finite compilers/serializers form the governed contract; enforced by `DiscreteCompilationImportBoundary`. |
 
 `StructuralCore` also exposes
 `ControlledObservedGame.relabelPlayers`. Thus strict Hom/Iso APIs may retain
@@ -313,7 +328,7 @@ particular, it cannot:
 - hide an implementation declaration once a facade imports the module that
   defines it;
 - stop a downstream user from importing an experimental leaf module directly;
-- encode “stable”, “experimental”, or “compatibility-only” as visibility
+- encode “canonical”, “experimental”, or “compatibility-only” as visibility
   modifiers; or
 - prove that a finite set of negative sentinels covers every future
   declaration.
@@ -329,18 +344,21 @@ python3 scripts/report_efg_declaration_usage.py \
   --check --output /tmp/efg-declaration-usage.md
 ```
 
-The generated artifact separates internal source indegree from documentation,
-example, test, lifecycle, and privacy evidence. Zero indegree is a triage
-signal, not a deletion rule: endpoint theorems are often intended leaves.
-The check does fail if a continuation/refinement route-regression theorem is
-left name-resolvable in a non-Internal lifecycle module, or if the unexplained
-Canonical/Frontend endpoint-review queue grows beyond the recorded no-growth
-baseline. The baseline is not a claim that every queued theorem is already
+The generated artifact separates internal source indegree from source
+docstrings, documentation, ordinary examples, positive facade-contract
+checks, tests, lifecycle, `[simp]` attributes, and privacy evidence. Names
+occurring only in negative `#guard_msgs` checks are not positive facade
+evidence. It classifies zero-indegree declarations as intentional endpoints,
+source-documented endpoints, normalization API, facade contracts, compiler
+preservation endpoints, proof helpers, historical-only declarations, or a
+residual unclassified-public review bucket. Zero indegree is a triage signal,
+not a deletion rule: endpoint theorems are often intended leaves. The
+residual ceiling is not a claim that every queued theorem is dead or already
 reviewed, and it never authorizes automatic deletion.
 
 ## Fresh-restart compatibility
 
-The stable `Interface.Restart` surface is divided into three levels:
+The governed `Interface.Restart` surface is divided into three levels:
 
 1. Canonical semantics:
    `KernelBehavioralProfile.IsFreshRestartStateCompatibleAt`,
@@ -356,10 +374,11 @@ The stable `Interface.Restart` surface is divided into three levels:
    trajectory laws, partial-step recurrence, rooted prefix/path steps, and
    pointwise global strengthenings.
 
-The first two levels are supported API. The third level is necessarily
+The first two levels are the recommended pre-stability contract. The third is
+necessarily
 name-resolvable through Lean's transitive imports, but declarations below
 `Simulation/Restart/` are proof implementation and are
-not individually frozen. Ordinary equilibrium clients do not import the
+not individually governed. Ordinary equilibrium clients do not import the
 restart proof stack transitively.
 
 Choose an entry from the fact the model exposes:
@@ -382,7 +401,7 @@ Certificate-specific equilibrium wrappers are private route regressions.
 Consumers convert the available certificate to
 `FreshRestartDeviationCompatibleAt`/`On` and invoke a canonical
 `_of_compatible` theorem. This prevents every certificate route from becoming
-a parallel stable equilibrium API.
+a parallel governed equilibrium contract.
 The compatibility layer does not claim that fresh restart equals absolute
 continuation automatically, that continuation fixes a conditional version at
 null histories, that transition equality implies action equality, that every
@@ -651,7 +670,7 @@ of arbitrary strategies on an uncountable information space.
 - `Math/Probability/PMF` must not import EFG or other game-theory modules.
 - Concrete compilers and FOSG serializers depend on semantic interfaces, not
   conversely.
-- `Examples` may import every stable tier; stable library modules must not
+- `Examples` may import every facade tier; library modules must not
   import `Examples`.
 - Finiteness, decidable equality, termination, and recall assumptions remain
   local to the declarations that use them.
