@@ -144,10 +144,11 @@ def observed : ObservedGame Bool Unit :=
 private information, trivial public observation, and direct base-action
 fibers definitionally. -/
 example (i : Bool) (history : History)
-    (hmover : base.mover history.1 = some i) :
+    (hmover : base.mover history.1 = some i)
+    (hnonterminal : ¬ base.isTerminal history.1) :
     observed.observe i history = history ∧
       observed.publicObserve history = () ∧
-      observed.infoAt history i hmover = history := by
+      observed.infoAt history i hmover hnonterminal = history := by
   simp [observed]
 
 /-- The established discrete measurable history model is exact here because
@@ -294,7 +295,7 @@ noncomputable def presentation :
   realization := realization
   playerInformation := fun _ input => (input.2, 0)
   player_informationAt := by
-    intro _time _events _i _hmover
+    intro _time _events _i _hmover _hnonterminal
     rfl
   chanceKernel := fun _ => 0
   chanceKernel_isSFinite := by
