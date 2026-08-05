@@ -25,6 +25,11 @@ bounded stopped-payoff laws.
 
 The path coordinate is event time (Nat), not physical clock time. Continuous-
 time path regularity is deliberately outside this interface.
+
+`pathLaw` is an Ionescu--Tulcea trajectory construction delegated to
+Mathlib's `Kernel.trajMeasure`. The finite-marginal identification with the
+bounded PMF executor is EconCSLib-specific and is proved below rather than
+inferred from the name of the construction.
 -/
 
 open MeasureTheory ProbabilityTheory
