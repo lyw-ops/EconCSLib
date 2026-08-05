@@ -219,11 +219,12 @@ theorem historyPath_snoc {root tree : StochasticGameTree N}
     historyPath (history.snoc action) =
       historyPath history ++ [actionIndex tree action] := rfl
 
-/-- A player-controlled complete history occurrence. -/
+/-- A nonterminal player-controlled complete history occurrence. -/
 abbrev OccurrenceInfo (root : StochasticGameTree N) (i : N) :=
   { history :
       (toExtensiveGame root).toArena.HistoryFrom root //
-    (toExtensiveGame root).mover history.1 = some i }
+    (toExtensiveGame root).mover history.1 = some i ∧
+      ¬ (toExtensiveGame root).isTerminal history.1 }
 
 /-- Occurrence-sensitive observed presentation of a stochastic tree before its
 chance kernels are attached. -/
@@ -280,7 +281,8 @@ def policyActionAt (root : StochasticGameTree N)
     (policy : Policy N) (i : N)
     (information : OccurrenceInfo root i) :
     (toExtensiveGame root).Action information.1.1 := by
-  rcases information with ⟨⟨tree, history⟩, hmover⟩
+  rcases information with
+    ⟨⟨tree, history⟩, hmover, _hnonterminal⟩
   cases tree with
   | Leaf payoff =>
       simp [toExtensiveGame] at hmover
@@ -317,11 +319,23 @@ theorem policyHistoryPolicy_player
         (policy (historyPath history) mover arity child) := by
   rw [ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryPolicy_of_mover
     _ _ _ hnonterminal mover rfl]
+  unfold
+    ExtensiveGame.ObservedGame.BehavioralProfile.actionLawAt
+    ExtensiveGame.ObservedGame.BehavioralStrategy.actionLawAt
+    policyToBehavioralProfile
   change
     (PMF.pure
-      (policy (historyPath history) mover arity child)).map id =
-        PMF.pure
-          (policy (historyPath history) mover arity child)
+      (policyActionAt root policy mover
+        ⟨⟨.Player mover arity child, history⟩,
+          rfl, hnonterminal⟩)).map id =
+      PMF.pure
+        (policy (historyPath history) mover arity child)
+  change
+    PMF.map id
+        (PMF.pure
+          (policy (historyPath history) mover arity child)) =
+      PMF.pure
+        (policy (historyPath history) mover arity child)
   exact PMF.map_id _
 
 /-- At a chance occurrence, compiled behavioral execution uses exactly the
@@ -544,13 +558,16 @@ theorem policyToBehavioralProfile_deviate [DecidableEq N]
   funext i
   by_cases hi : i = who
   · subst i
-    simp [ExtensiveGame.ObservedGame.BehavioralProfile.deviate]
+    simp [ExtensiveGame.ObservedGame.BehavioralProfile.deviate,
+      ExtensiveGame.ControlledObservedGame.BehavioralProfile.deviate]
   · simp only [ExtensiveGame.ObservedGame.BehavioralProfile.deviate,
+      ExtensiveGame.ControlledObservedGame.BehavioralProfile.deviate,
       Function.update_of_ne hi]
     funext information
     unfold policyToBehavioralProfile
     congr 1
-    rcases information with ⟨⟨tree, history⟩, hmover⟩
+    rcases information with
+      ⟨⟨tree, history⟩, hmover, _hnonterminal⟩
     cases tree with
     | Leaf payoff =>
         simp [toExtensiveGame] at hmover
