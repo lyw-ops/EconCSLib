@@ -86,14 +86,18 @@ structure MeasurablePresentation
         G.observed.base.mover
             (MeasurableKernelArena.latestEventState
               time events).1 =
-          some i),
+          some i)
+      (hnonterminal :
+        ¬ G.observed.base.isTerminal
+          (MeasurableKernelArena.latestEventState
+            time events).1),
       information.informationAt time events =
         playerInformation time
           ⟨i,
             G.observed.infoAt
               (MeasurableKernelArena.latestEventState
                 time events)
-              i hmover⟩
+              i hmover hnonterminal⟩
   /-- At a nonterminal player prefix, abstract selection followed by
   realization is exactly the original behavioral PMF on concrete legal
   history/action bundles. -/
@@ -101,7 +105,7 @@ structure MeasurablePresentation
     ∀ (profile : G.observed.BehavioralProfile)
       (time : ℕ)
       (events : model.toArena.EventPrefix time)
-      (_hnonterminal :
+      (hnonterminal :
         ¬ G.observed.base.isTerminal
           (MeasurableKernelArena.latestEventState time events).1)
       (i : N)
@@ -115,7 +119,7 @@ structure MeasurablePresentation
           model.historyActionMeasurable
           ((profile.actionLawAt G.observed
               (MeasurableKernelArena.latestEventState time events)
-              i hmover).map
+              i hmover hnonterminal).map
             (fun action =>
               (⟨MeasurableKernelArena.latestEventState time events,
                 action⟩ :
@@ -182,18 +186,24 @@ theorem abstractKernel_eq_of_player_infoAt_eq
           (MeasurableKernelArena.latestEventState
             time events₁).1 =
         some i)
+    (hnonterminal₁ :
+      ¬ G.observed.base.isTerminal
+        (MeasurableKernelArena.latestEventState time events₁).1)
     (hmover₂ :
       G.observed.base.mover
           (MeasurableKernelArena.latestEventState
             time events₂).1 =
         some i)
+    (hnonterminal₂ :
+      ¬ G.observed.base.isTerminal
+        (MeasurableKernelArena.latestEventState time events₂).1)
     (hsame :
       G.observed.infoAt
           (MeasurableKernelArena.latestEventState time events₁)
-          i hmover₁ =
+          i hmover₁ hnonterminal₁ =
         G.observed.infoAt
           (MeasurableKernelArena.latestEventState time events₂)
-          i hmover₂) :
+          i hmover₂ hnonterminal₂) :
     (presentation.toPolicy profile).abstractKernel time
         (presentation.information.informationAt time events₁) =
       (presentation.toPolicy profile).abstractKernel time
@@ -201,8 +211,10 @@ theorem abstractKernel_eq_of_player_infoAt_eq
   apply
     (presentation.toPolicy profile).abstractKernel_eq_of_informationAt_eq
   rw [
-    presentation.player_informationAt time events₁ i hmover₁,
-    presentation.player_informationAt time events₂ i hmover₂,
+    presentation.player_informationAt time events₁ i hmover₁
+      hnonterminal₁,
+    presentation.player_informationAt time events₂ i hmover₂
+      hnonterminal₂,
     hsame]
 
 /-- Exact compiled concrete player-action law. -/
@@ -225,7 +237,7 @@ theorem compiledPolicy_kernel_of_mover
         model.historyActionMeasurable
         ((profile.actionLawAt G.observed
             (MeasurableKernelArena.latestEventState time events)
-            i hmover).map
+            i hmover hnonterminal).map
           (fun action =>
             (⟨MeasurableKernelArena.latestEventState time events,
               action⟩ :
