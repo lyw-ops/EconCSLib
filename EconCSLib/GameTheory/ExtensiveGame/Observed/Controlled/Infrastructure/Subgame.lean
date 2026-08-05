@@ -45,20 +45,24 @@ structure IsLawfulSubgameRoot
   root_information_singleton :
     root ≠ Arena.HistoryFrom.nil G.base.toArena G.base.init →
       ∀ (i : N) (hmover : G.base.mover root.1 = some i)
+      (hnonterminal : ¬ G.base.isTerminal root.1)
       (other : G.base.History)
-      (hother : G.base.mover other.1 = some i),
-      G.infoAt root i hmover =
-          G.infoAt other i hother →
+      (hother : G.base.mover other.1 = some i)
+      (hother_nonterminal : ¬ G.base.isTerminal other.1),
+      G.infoAt root i hmover hnonterminal =
+          G.infoAt other i hother hother_nonterminal →
         other = root
   /-- Every information set encountered after entry stays wholly inside the
   continuation. -/
   information_closed :
     ∀ current, G.IsContinuationOf root current →
       ∀ (i : N) (hmover : G.base.mover current.1 = some i)
+        (hnonterminal : ¬ G.base.isTerminal current.1)
         (other : G.base.History)
-        (hother : G.base.mover other.1 = some i),
-        G.infoAt current i hmover =
-            G.infoAt other i hother →
+        (hother : G.base.mover other.1 = some i)
+        (hother_nonterminal : ¬ G.base.isTerminal other.1),
+        G.infoAt current i hmover hnonterminal =
+            G.infoAt other i hother hother_nonterminal →
           G.IsContinuationOf root other
 
 /-- Bijective player relabeling preserves and reflects structural subgame
@@ -76,7 +80,8 @@ theorem isLawfulSubgameRoot_relabelPlayers_iff
   constructor
   · intro h
     constructor
-    · intro hproper i hmover other hother hinfo
+    · intro hproper i hmover hnonterminal other hother
+        hother_nonterminal hinfo
       have hmover' :
           (G.relabelPlayers e).base.mover root.1 =
             some (e.symm i) := by
@@ -86,10 +91,11 @@ theorem isLawfulSubgameRoot_relabelPlayers_iff
             some (e.symm i) := by
         simp [hother]
       apply h.root_information_singleton hproper
-        (e.symm i) hmover' other hother'
+        (e.symm i) hmover' hnonterminal other hother'
+        hother_nonterminal
       change
-        G.infoAt root (e (e.symm i)) _ =
-          G.infoAt other (e (e.symm i)) _
+        G.infoAt root (e (e.symm i)) _ _ =
+          G.infoAt other (e (e.symm i)) _ _
       convert hinfo using 1
       · exact congrArg G.InfoState (e.apply_symm_apply i)
       · congr
@@ -98,7 +104,8 @@ theorem isLawfulSubgameRoot_relabelPlayers_iff
       · congr
         · exact e.apply_symm_apply i
         · apply proof_irrel_heq
-    · intro current hcurrent i hmover other hother hinfo
+    · intro current hcurrent i hmover hnonterminal other hother
+        hother_nonterminal hinfo
       have hmover' :
           (G.relabelPlayers e).base.mover current.1 =
             some (e.symm i) := by
@@ -108,10 +115,11 @@ theorem isLawfulSubgameRoot_relabelPlayers_iff
             some (e.symm i) := by
         simp [hother]
       apply h.information_closed current hcurrent
-        (e.symm i) hmover' other hother'
+        (e.symm i) hmover' hnonterminal other hother'
+        hother_nonterminal
       change
-        G.infoAt current (e (e.symm i)) _ =
-          G.infoAt other (e (e.symm i)) _
+        G.infoAt current (e (e.symm i)) _ _ =
+          G.infoAt other (e (e.symm i)) _ _
       convert hinfo using 1
       · exact congrArg G.InfoState (e.apply_symm_apply i)
       · congr
@@ -122,7 +130,8 @@ theorem isLawfulSubgameRoot_relabelPlayers_iff
         · apply proof_irrel_heq
   · intro h
     constructor
-    · intro hproper i hmover other hother hinfo
+    · intro hproper i hmover hnonterminal other hother
+        hother_nonterminal hinfo
       have hmover' : G.base.mover root.1 = some (e i) := by
         have mapped := congrArg (Option.map e) hmover
         simpa using mapped
@@ -130,9 +139,11 @@ theorem isLawfulSubgameRoot_relabelPlayers_iff
         have mapped := congrArg (Option.map e) hother
         simpa using mapped
       apply h.root_information_singleton hproper
-        (e i) hmover' other hother'
+        (e i) hmover' hnonterminal other hother'
+        hother_nonterminal
       simpa using hinfo
-    · intro current hcurrent i hmover other hother hinfo
+    · intro current hcurrent i hmover hnonterminal other hother
+        hother_nonterminal hinfo
       have hmover' : G.base.mover current.1 = some (e i) := by
         have mapped := congrArg (Option.map e) hmover
         simpa using mapped
@@ -140,7 +151,8 @@ theorem isLawfulSubgameRoot_relabelPlayers_iff
         have mapped := congrArg (Option.map e) hother
         simpa using mapped
       apply h.information_closed current hcurrent
-        (e i) hmover' other hother'
+        (e i) hmover' hnonterminal other hother'
+        hother_nonterminal
       simpa using hinfo
 
 /-- An explicit selection of payoff-free lawful subgame roots. -/
@@ -190,10 +202,12 @@ theorem root_information_singleton
     (hproper :
       root ≠ Arena.HistoryFrom.nil G.base.toArena G.base.init) :
     ∀ (i : N) (hmover : G.base.mover root.1 = some i)
+      (hnonterminal : ¬ G.base.isTerminal root.1)
       (other : G.base.History)
-      (hother : G.base.mover other.1 = some i),
-      G.infoAt root i hmover =
-          G.infoAt other i hother →
+      (hother : G.base.mover other.1 = some i)
+      (hother_nonterminal : ¬ G.base.isTerminal other.1),
+      G.infoAt root i hmover hnonterminal =
+          G.infoAt other i hother hother_nonterminal →
         other = root :=
   (system.isLawful hroot).root_information_singleton hproper
 
@@ -204,10 +218,12 @@ theorem information_closed
     (hroot : system.IsRoot root) :
     ∀ current, G.IsContinuationOf root current →
       ∀ (i : N) (hmover : G.base.mover current.1 = some i)
+        (hnonterminal : ¬ G.base.isTerminal current.1)
         (other : G.base.History)
-        (hother : G.base.mover other.1 = some i),
-        G.infoAt current i hmover =
-            G.infoAt other i hother →
+        (hother : G.base.mover other.1 = some i)
+        (hother_nonterminal : ¬ G.base.isTerminal other.1),
+        G.infoAt current i hmover hnonterminal =
+            G.infoAt other i hother hother_nonterminal →
           G.IsContinuationOf root other :=
   (system.isLawful hroot).information_closed
 
@@ -223,7 +239,8 @@ theorem init_isLawfulSubgameRoot
     intro hproper
     exact (hproper rfl).elim
   information_closed := by
-    intro _current _hcurrent i _hmover other _hother _hsame
+    intro _current _hcurrent i _hmover _hnonterminal
+      other _hother _hother_nonterminal _hsame
     exact other.2.reachableInUnfolding G.base.toArena G.base.init
 
 /-- The smallest payoff-free lawful subgame system selects only the initial
