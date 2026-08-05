@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 
 import EconCSLib.GameTheory.ExtensiveGame.Interface.Relations.Discrete
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Morphism.Continuation
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism.Objective
 import EconCSLib.GameTheory.ExtensiveGame.Observed.BehaviorMorphism
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Refinement.Termination
 import EconCSLib.GameTheory.ExtensiveGame.Observed.BehaviorRefinement.Execution
@@ -25,8 +26,8 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.StrategyBridge
 /-!
 # Discrete EFG equilibrium
 
-Stable public import for pure, behavioral, mixed, and discrete-general
-finite-fuel strategy semantics and the available structural
+Recommended pre-stability import for pure, behavioral, mixed, and
+discrete-general finite-fuel strategy semantics and the available structural
 representation-transfer theorems.
 
 It extends `Interface.Relations.Discrete` with bounded and
