@@ -9,11 +9,16 @@ import EconCSLib.GameTheory.ExtensiveGame.Interface.Equilibrium.Analytic
 # Analytic equilibrium import boundary
 
 The analytic equilibrium layer reuses the discrete equilibrium surface and
-adds measurable-kernel path utility and continuation semantics, while Restart
-and Compilation remain independent branches.
+adds arbitrary-measure pure-strategy laws, measurable-kernel path utility, and
+continuation semantics, while Restart and Compilation remain independent
+branches.
 -/
 
 #check ExtensiveGame.ObservedChanceGame.finiteKuhn_isNash_iff
+#check ExtensiveGame.ObservedGame.PureProfileMeasurableModel
+#check ExtensiveGame.ObservedGame.ArbitraryMeasurePureStrategy
+#check ExtensiveGame.ObservedGame.ArbitraryMeasurePureProfileLaw
+#check ExtensiveGame.ObservedGame.ArbitraryMeasurePureProfileLaw.outcomeLaw_ofPMF
 #check ExtensiveGame.ObservedGame.MeasurableHistoryModel.PathUtility
 #check ExtensiveGame.ObservedGame.MeasurableHistoryModel.BoundedPathUtility.IsNashOnPresentation
 
