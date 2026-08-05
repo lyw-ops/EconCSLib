@@ -109,7 +109,8 @@ theorem allDecisionInfoRepresented :
   intro i information
   refine ⟨
     { history := information.1
-      mover := information.2
+      mover := information.2.1
+      nonterminal := information.2.2
       infoAt_eq := rfl }⟩
 
 /-- Every reachable player-labelled history is the nonterminal root. -/
@@ -137,7 +138,8 @@ noncomputable def profile : game.PureProfile :=
 policy; the unreachable nature state is never queried. -/
 noncomputable def pureHistoryPolicy :
     game.base.toArena.HistoryPolicy game.base.init :=
-  profile.toHistoryPolicy game noChanceOnHistories
+  ExtensiveGame.ControlledObservedGame.PureProfile.toHistoryPolicy
+    (G := game.toControlledObservedGame) profile noChanceOnHistories
 
 /-- Every pure profile terminates from the initial history after one step. -/
 theorem pureTerminatesInitially :
@@ -155,7 +157,9 @@ theorem pureTerminatesInitially :
     (game.stoppedHistoryFrom arbitraryProfile noChanceOnHistories current 1).1
   rw [ExtensiveGame.ObservedGame.stoppedHistoryFrom]
   rw [Arena.stoppedHistoryFrom_succ_of_not_terminal
-    (arbitraryProfile.toHistoryPolicy game noChanceOnHistories)
+    (ExtensiveGame.ControlledObservedGame.PureProfile.toHistoryPolicy
+      (G := game.toControlledObservedGame)
+      arbitraryProfile noChanceOnHistories)
     current 0 hnonterminal]
   rw [Arena.stoppedHistoryFrom_zero]
   change IsEmpty Empty
