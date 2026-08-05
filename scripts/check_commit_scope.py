@@ -69,13 +69,37 @@ def added_structure_or_class_count(commit: str, paths: tuple[str, ...]) -> int:
     return count
 
 
+def partition_grandfathered_commits(
+    commits: list[str],
+    grandfathered_ancestry: set[str],
+) -> tuple[list[str], list[str]]:
+    grandfathered = [
+        commit for commit in commits if commit in grandfathered_ancestry
+    ]
+    enforced = [
+        commit for commit in commits if commit not in grandfathered_ancestry
+    ]
+    return enforced, grandfathered
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base", required=True)
     parser.add_argument("--head", required=True)
+    parser.add_argument(
+        "--grandfather-commit",
+        action="append",
+        default=[],
+        help="skip one exact, explicitly audited historical commit",
+    )
     args = parser.parse_args()
 
     commits = git("rev-list", "--reverse", f"{args.base}..{args.head}").splitlines()
+    commits, grandfathered = partition_grandfathered_commits(
+        commits,
+        set(args.grandfather_commit),
+    )
+
     errors: list[str] = []
     for commit in commits:
         if is_merge_commit(commit):
@@ -99,6 +123,13 @@ def main() -> int:
     if errors:
         print("\n".join(errors))
         return 1
+    if grandfathered:
+        print(
+            "Commit scope: grandfathered "
+            f"{len(grandfathered)} explicitly audited historical commit(s); "
+            "checked "
+            f"{len(commits)} later commit(s)."
+        )
     return 0
 
 
