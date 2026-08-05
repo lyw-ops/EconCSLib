@@ -4,6 +4,8 @@ This note is the common vocabulary for claims made by EFG relations,
 realizations, serializers, and compilers. Lean declarations remain
 authoritative. A cell marked “premise” means the property is not part of the
 relation itself: a transfer theorem must receive an explicit certificate.
+The canonical pre-stability import for the formal relation-strength vocabulary
+is `EconCSLib.GameTheory.ExtensiveGame.Interface.Preservation`.
 
 ## Strength vocabulary
 
@@ -70,7 +72,7 @@ transforms whose codomain is the existing terminal-history subtype.
 | `ObservedGame.PayoffCompatibleIso` | underlying strict payoff-free iso | inherited | inherited | separate | no law field | adds only the terminal-payoff commuting square | inherited only from the structural iso | inherited | inherited | inherited |
 | `ControlledObservedGame.InformationRefinement` | shared strict controlled dynamics | exact concrete actions | directional fine-to-coarse information map | separate | requires a concrete strategy/law lifting theorem | not included | source pure strategies lift; reverse coverage is extra | not automatic | external | premise |
 | `BoundedHistoryLawFamily` | dependent histories are rooted/reachable by construction | not certified against a policy | arbitrary strategy carrier | not certified | raw bounded PMF family only | not included | profile updates are merely inputs | not included | current history is explicit | not certified |
-| `CertifiedBehavioralExecutionLaw` | rooted history support; legality is explicit | exact through `behavioralHistoryLaw` | behavioral profile | specified normalized chance kernel | normalized, terminal-absorbing, and exactly executor-consistent | downstream only through explicit interpretation | behavioral profiles and chance execution are fixed by the equality field | not included | current history is explicit | absorption field; bounded fuel does not assert eventual termination |
+| `CertifiedBehavioralExecutionLaw` | rooted history support; `exists_suffix_of_mem_support` proves every endpoint is the supplied current history plus a legal typed suffix | exact through `behavioralHistoryLaw` | behavioral profile | specified normalized chance kernel | normalized, terminal-absorbing, and exactly executor-consistent | downstream only through explicit interpretation | behavioral profiles and chance execution are fixed by the equality field | not included | current history is explicit and support is an occurrence-sensitive continuation from it | absorption field; bounded fuel does not assert eventual termination |
 | strict `Simulation` / `Bisimulation` | related endpoints per step | related actions/policies | presentation-specific premise | kernel relation required | only when an execution/coupling theorem is supplied | relation-respecting objective premise | deviation completeness is extra | not automatic | external | not automatic |
 | `WeakSimulation` / `WeakBisimulation` | visible histories may skip/stutter | macro action versus micro trace | serialization invariant | kernel coupling | visible trajectory law through the stated projection | projection-respecting objective premise | explicit policy/deviation compilation | explicit theorem only | macro-root map, not strict root identity | requires progress/no-divergence certificate |
 | same-game `CompleteHistoryLawRealization` | same occurrence-sensitive history carrier | semantic, through induced histories | arbitrary playerwise strategy carriers | supplied by the concrete semantics, not tagged in the relation | exact bounded complete-history PMF | downstream only through explicit interpretations | source deviations map via the playerwise map; target coverage and strategy isomorphism are separate | not included | not included | bounded fuel only |
@@ -114,6 +116,9 @@ The matrix rows above are backed by the following Lean owners:
   same/cross-game law realizations and probability couplings, plus compiler
   packages whose constructors prevent a weak serializer from being labelled
   a strict isomorphism.
+- `Interface/Preservation.lean`: the recommended facade for those distinct
+  strengths. `Interface.Relations.Discrete` intentionally does not import the
+  measure-valued preservation module.
 
 ## Compiler coverage ledger
 
