@@ -1,8 +1,8 @@
 # EFG Minimal-Core Freeze Readiness
 
-**Effective date:** 2026-08-05  
+**Effective date:** 2026-08-05
 **Scope:** Canonical/Frontend API growth, candidate carrier data, and the
-literal `Interface.StructuralCore` dependency boundary  
+literal `Interface.StructuralCore` dependency boundary
 **Status:** API growth frozen; minimal-core source compatibility remains
 deferred
 
