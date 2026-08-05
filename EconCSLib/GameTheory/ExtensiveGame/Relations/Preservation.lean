@@ -12,9 +12,10 @@ import EconCSLib.GameTheory.ExtensiveGame.Relations.Discrete.Morphism
 # Formal preservation-certificate vocabulary
 
 This module is the Lean counterpart of `docs/design/efg-preservation-matrix.md`.
-It gives one stable namespace for the relation strengths used by EFG
-compilers and semantic bridges. Most entries are aliases of the authoritative
-relation structures; the aliases do not add stronger preservation claims.
+It gives one canonical pre-stability namespace for the relation strengths
+used by EFG compilers and semantic bridges. Most entries are aliases of the
+authoritative relation structures; the aliases do not add stronger
+preservation claims.
 
 Strict compiler packages carry a payoff-free observed-game isomorphism and an
 external root-correspondence proof. Weak compiler packages instead carry a
