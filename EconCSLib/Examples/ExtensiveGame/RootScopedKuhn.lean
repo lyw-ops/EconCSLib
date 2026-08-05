@@ -127,14 +127,14 @@ def observed : ObservedGame Unit (Bool × Bool) where
   observe_public := fun _ _ => rfl
   InfoState := fun _ => DecisionInfo
   infoObserve := fun _ information => some information
-  infoAt := fun history _ hmover =>
+  infoAt := fun history _ hmover _ =>
     infoAtState history.1 hmover
   infoAt_observe := by
-    intro history i hmover
+    intro history i hmover hnonterminal
     cases i
     exact infoAtState_observe history.1 hmover
   InfoAction := fun _ _ => Bool
-  actionEquiv := fun history _ hmover =>
+  actionEquiv := fun history _ hmover _ =>
     actionEquiv history.1 hmover
 
 private theorem ownDecisionHistory_at_mover
@@ -157,13 +157,10 @@ private theorem ownDecisionHistory_at_mover
       | start =>
           have hpath := ih rfl
           change
-            observed.ownDecisionHistoryPath () path =
+            observed.ownDecisionHistory () ⟨Stage.start, path⟩ =
               [] at hpath
-          change
-            observed.ownDecisionHistoryPath () path ++
-                [⟨DecisionInfo.first, action⟩] =
-              [⟨DecisionInfo.first, action⟩]
-          rw [hpath]
+          rw [observed.ownDecisionHistory_snoc_of_mover
+            () path action rfl, hpath]
           rfl
       | after first =>
           simp [observed, base, stageNext, stageMover] at hmover
@@ -175,7 +172,8 @@ theorem observed_perfectRecall :
     observed.PerfectRecall := by
   intro i
   cases i
-  intro first second hfirst hsecond hsame
+  intro first second hfirst hfirst_nonterminal
+    hsecond hsecond_nonterminal hsame
   change
     observed.ownDecisionHistory () first =
       observed.ownDecisionHistory () second
@@ -339,7 +337,9 @@ private theorem stoppedPayoff_terminalRoot (first second : Bool) :
 private theorem actionLaw_afterRoot
     (behavioral : observed.BehavioralProfile)
     (first : Bool) :
-    (behavioral ()).actionLawAt observed (afterRoot first) rfl =
+    ObservedGame.BehavioralStrategy.actionLawAt
+        observed (behavioral ()) (afterRoot first) rfl
+        (afterRoot_not_terminal first) =
       behavioral () (.second first) := by
   unfold ObservedGame.BehavioralStrategy.actionLawAt
   change
@@ -350,8 +350,10 @@ private theorem actionLaw_afterRoot
 private theorem chanceActionLaw_afterRoot
     (behavioral : observed.BehavioralProfile)
     (first : Bool) :
-    (behavioral ()).actionLawAt
-        chanceGame.observed (afterRoot first) rfl =
+    ObservedGame.BehavioralStrategy.actionLawAt
+        chanceGame.observed (behavioral ())
+        (afterRoot first) rfl
+        (afterRoot_not_terminal first) =
       behavioral () (.second first) :=
   actionLaw_afterRoot behavioral first
 
@@ -424,8 +426,9 @@ private theorem initial_not_terminal :
 
 private theorem actionLaw_initial
     (behavioral : observed.BehavioralProfile) :
-    (behavioral ()).actionLawAt
-        chanceGame.observed initialRoot rfl =
+    ObservedGame.BehavioralStrategy.actionLawAt
+        chanceGame.observed (behavioral ())
+        initialRoot rfl initial_not_terminal =
       behavioral () .first := by
   unfold ObservedGame.BehavioralStrategy.actionLawAt
   change
