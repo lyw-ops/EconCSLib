@@ -267,7 +267,7 @@ noncomputable def presentation :
   realization := realization
   playerInformation := fun _ input => input.2
   player_informationAt := by
-    intro _ _ i _
+    intro _ _ i _ _hnonterminal
     cases i
     rfl
   chanceKernel := fun _ => 0
