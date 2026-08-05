@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
 import EconCSLib.GameTheory.ExtensiveGame.Interface.Compilation.Discrete
+import Mathlib.Probability.ProbabilityMassFunction.Constructions
+import Mathlib.Tactic.NormNum
 
 /-!
 # Stochastic-tree compilation regression
@@ -16,6 +18,45 @@ preservation theorems for `StochasticGameTree`.
 namespace Examples.ExtensiveGame.StochasticTreeCompilation
 
 open StochasticGameTree
+
+/-- The normalized uniform law on the two fair-coin child occurrences. -/
+noncomputable def fairCoinLaw : PMF (Fin 2) :=
+  PMF.ofFintype
+    (fun _ => (2 : ENNReal)⁻¹)
+    (by
+      rw [Fin.sum_univ_two]
+      exact ENNReal.inv_two_add_inv_two)
+
+/-- Each occurrence has probability one half under `fairCoinLaw`. -/
+theorem fairCoinLaw_apply (choice : Fin 2) :
+    (fairCoinLaw choice).toReal = 1 / 2 := by
+  norm_num [fairCoinLaw, PMF.ofFintype_apply]
+
+/-- The real-valued finite weights of `fairCoinLaw` sum to one. -/
+theorem fairCoinLaw_total :
+    ∑ choice : Fin 2, (fairCoinLaw choice).toReal = 1 := by
+  rw [Fin.sum_univ_two]
+  norm_num [fairCoinLaw_apply]
+
+/-- A one-step fair coin game for examples and CI regression checks. -/
+noncomputable def fairCoinGame : StochasticGameTree (Fin 2) :=
+  StochasticGameTree.Chance 1
+    (fun choice =>
+      if choice = 0 then
+        StochasticGameTree.Leaf (fun i => if i = 0 then 1 else 0)
+      else
+        StochasticGameTree.Leaf (fun i => if i = 0 then 0 else 1))
+    fairCoinLaw
+
+/-- At fuel two, the fair-coin regression game gives player zero expected
+payoff one half. -/
+theorem fairCoin_expected_player0 :
+    expectedPayoffAtFuel 2 (headPolicy : Policy (Fin 2))
+      fairCoinGame 0 = 1 / 2 := by
+  simp only [expectedPayoffAtFuel, expectedPayoffWithFuel, fairCoinGame,
+    fairCoinLaw_apply, Nat.reduceAdd]
+  rw [Fin.sum_univ_two]
+  simp
 
 /-- Empty complete history of the fair-coin source tree. -/
 noncomputable def initialHistory :
