@@ -31,8 +31,10 @@ structure DecisionInfoWitness
   history : G.base.History
   /-- The selected player moves at the endpoint. -/
   mover : G.base.mover history.1 = some i
+  /-- The represented decision history is nonterminal. -/
+  nonterminal : ¬ G.base.isTerminal history.1
   /-- The history represents the requested information state. -/
-  infoAt_eq : G.infoAt history i mover = information
+  infoAt_eq : G.infoAt history i mover nonterminal = information
 
 /-- Every declared information state is represented by a player decision. -/
 def AllDecisionInfoRepresented
@@ -141,7 +143,8 @@ theorem nonempty_infoAction
   have haction := hcoherent witness.history i witness.mover
   have habstract :=
     haction.map
-      (G.actionEquiv witness.history i witness.mover).symm
+      (G.actionEquiv witness.history i witness.mover
+        witness.nonterminal).symm
   simpa [witness.infoAt_eq] using habstract
 
 /-- Represented coherent information makes each pure-strategy carrier
