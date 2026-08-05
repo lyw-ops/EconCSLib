@@ -61,11 +61,12 @@ def FutureDecisionKeysAvailable
     (suffix :
       G.base.toArena.History current.1 finish)
     (i : N)
-    (hmover : G.base.mover finish = some i),
+    (hmover : G.base.mover finish = some i)
+    (hnonterminal : ¬ G.base.isTerminal finish),
     (⟨i,
       G.infoAt
         ⟨finish, current.2.append suffix⟩
-        i hmover⟩ : G.DecisionKey) ∈ remaining
+        i hmover hnonterminal⟩ : G.DecisionKey) ∈ remaining
 
 namespace FutureDecisionKeysAvailable
 
@@ -77,7 +78,7 @@ theorem univ [Fintype G.DecisionKey]
     (current :
       G.base.toArena.HistoryFrom G.base.init) :
     G.FutureDecisionKeysAvailable current Finset.univ := by
-  intro finish suffix i hmover
+  intro finish suffix i hmover hnonterminal
   simp
 
 /-- A chance step consumes no strategic query key. -/
@@ -92,12 +93,12 @@ theorem afterChance
       ⟨G.base.next current.1 action,
         current.2.snoc action⟩
       remaining := by
-  intro finish suffix i hmover
+  intro finish suffix i hmover hnonterminal
   let extended :
       G.base.toArena.History current.1 finish :=
     (Arena.History.nil.snoc action).append suffix
   have hmem :=
-    havailable extended i hmover
+    havailable extended i hmover hnonterminal
   simpa [extended, ← Arena.History.append_assoc] using hmem
 
 /-- A player step consumes exactly its current decision key.
@@ -114,14 +115,15 @@ theorem afterPlayer
       G.FutureDecisionKeysAvailable current remaining)
     (i : N)
     (hmover : G.base.mover current.1 = some i)
+    (hnonterminal : ¬ G.base.isTerminal current.1)
     (action : G.base.Action current.1) :
     G.FutureDecisionKeysAvailable
       ⟨G.base.next current.1 action,
         current.2.snoc action⟩
       (remaining.erase
-        (⟨i, G.infoAt current i hmover⟩ :
+        (⟨i, G.infoAt current i hmover hnonterminal⟩ :
           G.DecisionKey)) := by
-  intro finish suffix j hfinish
+  intro finish suffix j hfinish hfinish_nonterminal
   apply Finset.mem_erase.mpr
   constructor
   · intro heq
@@ -132,17 +134,17 @@ theorem afterPlayer
         G.infoAt
             ⟨finish,
               (current.2.snoc action).append suffix⟩
-            i hfinish =
-          G.infoAt current i hmover :=
+            i hfinish hfinish_nonterminal =
+          G.infoAt current i hmover hnonterminal :=
       eq_of_heq (Sigma.mk.inj_iff.mp heq).2
     exact
       (hnoAbsent i current hmover action
-        finish suffix hfinish) hinfo.symm
+        finish suffix hfinish hfinish_nonterminal) hinfo.symm
   · let extended :
         G.base.toArena.History current.1 finish :=
       (Arena.History.nil.snoc action).append suffix
     have hmem :=
-      havailable extended j hfinish
+      havailable extended j hfinish hfinish_nonterminal
     simpa [extended, ← Arena.History.append_assoc] using hmem
 
 /-- The current player key is available by taking the empty
@@ -154,14 +156,15 @@ theorem current
     (havailable :
       G.FutureDecisionKeysAvailable current remaining)
     (i : N)
-    (hmover : G.base.mover current.1 = some i) :
-    (⟨i, G.infoAt current i hmover⟩ :
+    (hmover : G.base.mover current.1 = some i)
+    (hnonterminal : ¬ G.base.isTerminal current.1) :
+    (⟨i, G.infoAt current i hmover hnonterminal⟩ :
       G.DecisionKey) ∈ remaining := by
   simpa using
     havailable
       (Arena.History.nil :
         G.base.toArena.History current.1 current.1)
-      i hmover
+      i hmover hnonterminal
 
 end FutureDecisionKeysAvailable
 
