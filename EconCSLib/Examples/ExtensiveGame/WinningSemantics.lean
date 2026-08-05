@@ -61,11 +61,11 @@ def game : ExtensiveGame.ObservedGame (Fin 2) Unit where
   observe_public := by simp
   InfoState := fun _ => Unit
   infoObserve := fun _ _ => ()
-  infoAt := fun _ _ _ => ()
+  infoAt := fun _ _ _ _ => ()
   infoAt_observe := by simp
   InfoAction := fun _ _ => Bool
   actionEquiv := by
-    intro history i hmover
+    intro history i hmover _hnonterminal
     generalize hstate : history.1 = state at hmover ⊢
     cases state with
     | root =>
@@ -192,6 +192,7 @@ theorem zero_not_pathwise :
   have hone := hcompatible 1 (not_terminal_after false) rfl
   have hzeroState := congrArg Sigma.fst hzero
   have honeState := congrArg Sigma.fst hone
+  simp only [ExtensiveGame.ObservedGame.PureStrategy.actionAt, game] at hzeroState honeState
   change State.after false =
     State.after (strategy ()) at hzeroState
   change State.terminal false true =
