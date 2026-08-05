@@ -188,7 +188,15 @@ theorem map_terminalPayoffFrom
         hterminatesH =
       G.terminalPayoffFrom
         profile hNoChanceG current hterminatesG := by
-  rw [terminalPayoffFrom, terminalPayoffFrom,
+  change
+    H.base.payoff
+        (H.terminalHistoryFrom
+          (r.mapProfile profile) hNoChanceH
+          (r.historyIso.stateEquiv current) hterminatesH).1 =
+      G.base.payoff
+        (G.terminalHistoryFrom
+          profile hNoChanceG current hterminatesG).1
+  rw [
     ← r.map_terminalHistoryFrom
       profile hNoChanceG hNoChanceH current
       hterminatesG hterminatesH]
