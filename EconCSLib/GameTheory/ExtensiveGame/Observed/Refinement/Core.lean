@@ -102,45 +102,62 @@ theorem map_actionAt
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource : G.base.mover history.1 = some i)
+    (hsource_nonterminal : ¬ G.base.isTerminal history.1)
     (htarget :
-      H.base.mover (r.historyIso.stateEquiv history).1 = some i) :
+      H.base.mover (r.historyIso.stateEquiv history).1 = some i)
+    (htarget_nonterminal :
+      ¬ H.base.isTerminal
+        (r.historyIso.stateEquiv history).1) :
     PureProfile.actionAt H
         (r.mapProfile profile)
-        (r.historyIso.stateEquiv history) i htarget =
+        (r.historyIso.stateEquiv history) i htarget
+        htarget_nonterminal =
       r.historyIso.actionEquiv history
-        (PureProfile.actionAt G profile history i hsource) := by
+        (PureProfile.actionAt G profile history i hsource
+          hsource_nonterminal) := by
   unfold PureProfile.actionAt PureStrategy.actionAt
   change
     H.actionEquiv (r.historyIso.stateEquiv history) i htarget
+        htarget_nonterminal
         (r.infoActionEquiv i
-          (H.infoAt (r.historyIso.stateEquiv history) i htarget)
+          (H.infoAt (r.historyIso.stateEquiv history) i htarget
+            htarget_nonterminal)
           (profile i
             (r.forgetInfo i
               (H.infoAt
-                (r.historyIso.stateEquiv history) i htarget)))) =
+                (r.historyIso.stateEquiv history) i htarget
+                htarget_nonterminal)))) =
       r.historyIso.actionEquiv history
-        (G.actionEquiv history i hsource
-          (profile i (G.infoAt history i hsource)))
+        (G.actionEquiv history i hsource hsource_nonterminal
+          (profile i
+            (G.infoAt history i hsource hsource_nonterminal)))
   have hchoice :
       r.infoActionEquiv i
           (H.infoAt
-            (r.historyIso.stateEquiv history) i htarget)
+            (r.historyIso.stateEquiv history) i htarget
+            htarget_nonterminal)
           (profile i
             (r.forgetInfo i
               (H.infoAt
-                (r.historyIso.stateEquiv history) i htarget))) =
-        r.infoActionEquivAt history i hsource htarget
-          (profile i (G.infoAt history i hsource)) := by
+                (r.historyIso.stateEquiv history) i htarget
+                htarget_nonterminal))) =
+        r.infoActionEquivAt history i hsource
+          hsource_nonterminal htarget htarget_nonterminal
+          (profile i
+            (G.infoAt history i hsource hsource_nonterminal)) := by
     rw [infoActionEquivAt_apply]
     congr 1
     exact
       dependent_apply_eq_cast
         (profile i)
-        (r.map_infoAt history i hsource htarget)
+        (r.map_infoAt history i hsource hsource_nonterminal
+          htarget htarget_nonterminal)
   rw [hchoice]
   exact
-    r.map_infoActionEquivAt history i hsource htarget
-      (profile i (G.infoAt history i hsource))
+    r.map_infoActionEquivAt history i hsource hsource_nonterminal
+      htarget htarget_nonterminal
+      (profile i
+        (G.infoAt history i hsource hsource_nonterminal))
 
 /-- The strict history map identifies terminal histories exactly. -/
 theorem isTerminal_iff
@@ -187,7 +204,7 @@ theorem map_toHistoryPolicy
     i hsourceMover]
   exact
     r.map_actionAt profile history i
-      hsourceMover htargetMover
+      hsourceMover hsource htargetMover htarget
 
 /-- The strict history map commutes exactly with bounded continuation
 execution of every lifted no-chance profile. -/
