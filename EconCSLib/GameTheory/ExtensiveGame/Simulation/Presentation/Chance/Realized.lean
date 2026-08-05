@@ -134,14 +134,18 @@ structure AnalyticPresentation
         G.observed.base.mover
             (MeasurableKernelArena.latestEventState
               time events).1 =
-          some i),
+          some i)
+      (hnonterminal :
+        ¬ G.observed.base.isTerminal
+          (MeasurableKernelArena.latestEventState
+            time events).1),
       information.informationAt time events =
         playerInformation time
           ⟨i,
             G.observed.infoAt
               (MeasurableKernelArena.latestEventState
                 time events)
-              i hmover⟩
+              i hmover hnonterminal⟩
 
 namespace AnalyticPresentation
 
@@ -174,18 +178,24 @@ theorem abstractKernel_eq_of_player_infoAt_eq
           (MeasurableKernelArena.latestEventState
             time events₁).1 =
         some i)
+    (hnonterminal₁ :
+      ¬ G.observed.base.isTerminal
+        (MeasurableKernelArena.latestEventState time events₁).1)
     (hmover₂ :
       G.observed.base.mover
           (MeasurableKernelArena.latestEventState
             time events₂).1 =
         some i)
+    (hnonterminal₂ :
+      ¬ G.observed.base.isTerminal
+        (MeasurableKernelArena.latestEventState time events₂).1)
     (hsame :
       G.observed.infoAt
           (MeasurableKernelArena.latestEventState time events₁)
-          i hmover₁ =
+          i hmover₁ hnonterminal₁ =
         G.observed.infoAt
           (MeasurableKernelArena.latestEventState time events₂)
-          i hmover₂) :
+          i hmover₂ hnonterminal₂) :
     (presentation.toPolicy profile).abstractKernel time
         (presentation.information.informationAt time events₁) =
       (presentation.toPolicy profile).abstractKernel time
@@ -193,8 +203,10 @@ theorem abstractKernel_eq_of_player_infoAt_eq
   apply
     (presentation.toPolicy profile).abstractKernel_eq_of_informationAt_eq
   rw [
-    presentation.player_informationAt time events₁ i hmover₁,
-    presentation.player_informationAt time events₂ i hmover₂,
+    presentation.player_informationAt time events₁ i hmover₁
+      hnonterminal₁,
+    presentation.player_informationAt time events₂ i hmover₂
+      hnonterminal₂,
     hsame]
 
 /-- At a player-controlled latest history, the realized presentation's
@@ -219,7 +231,7 @@ theorem compiled_kernel_of_mover
         (AnalyticHistoryArena G).ActionBundle ⊤
         ((profile.actionLawAt G.observed
             (MeasurableKernelArena.latestEventState time events)
-            i hmover).map
+            i hmover hnonterminal).map
           (fun action =>
             (⟨MeasurableKernelArena.latestEventState time events,
               action⟩ :
