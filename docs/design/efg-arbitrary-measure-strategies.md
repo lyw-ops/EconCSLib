@@ -71,4 +71,3 @@ than an axiom.
 The reusable carrier lives in `Observed.MeasureStrategy` and is exported only
 through `Interface.Equilibrium.Analytic`. It is intentionally absent from the
 discrete equilibrium facade and the root aggregate.
-
