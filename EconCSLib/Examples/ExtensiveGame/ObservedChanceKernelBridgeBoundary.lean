@@ -86,7 +86,10 @@ theorem firstDecision_player_branch :
         (by
           change ¬ IsEmpty Unit
           exact fun hterminal => hterminal.false ()) =
-      profile.actionLawAt game.observed firstDecision 0 rfl := by
+      profile.actionLawAt game.observed firstDecision 0 rfl
+        (by
+          change ¬ IsEmpty Unit
+          exact fun hterminal => hterminal.false ()) := by
   exact
     _root_.ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryKernelPolicy_of_mover
       game profile firstDecision
