@@ -16,6 +16,8 @@ negative source-import boundary is enforced by
 
 #check Arena
 #check ControlledGame
+#check ControlledGame.isNonPlayerState
+#check ControlledGame.isChanceState
 #check Arena.History
 #check Arena.CompletePlayFromHistory
 #check ExtensiveGame.ControlledObservedGame
@@ -24,3 +26,21 @@ negative source-import boundary is enforced by
 #check ExtensiveGame.ControlledObservedGame.PureProfile
 #check ExtensiveGame.ControlledObservedGame.relabelPlayers
 #check ExtensiveGame.ControlledObservedGame.relabelPureProfileEquiv
+
+/--
+error: Unknown identifier `ExtensiveGame.ofControlledGame`
+-/
+#guard_msgs in
+#check ExtensiveGame.ofControlledGame
+
+/--
+error: Unknown identifier `ExtensiveGame.IsReachable`
+-/
+#guard_msgs in
+#check ExtensiveGame.IsReachable
+
+/--
+error: Unknown identifier `ExtensiveGame.unfold`
+-/
+#guard_msgs in
+#check ExtensiveGame.unfold
