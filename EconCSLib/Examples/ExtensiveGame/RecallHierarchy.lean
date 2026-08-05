@@ -84,9 +84,9 @@ def game : ObservedGame (Fin 2) Unit where
   observe_public := by simp
   InfoState := fun _ => Unit
   infoObserve := fun _ _ => false
-  infoAt := fun _ _ _ => ()
+  infoAt := fun _ _ _ _ => ()
   infoAt_observe := by
-    intro history i hmover
+    intro history i hmover _hnonterminal
     generalize hstate : history.1 = state at hmover ⊢
     cases state with
     | root =>
@@ -106,7 +106,7 @@ def game : ObservedGame (Fin 2) Unit where
   InfoAction := fun i _ =>
     if i = 0 then Unit else Bool
   actionEquiv := by
-    intro history i hmover
+    intro history i hmover _hnonterminal
     generalize hstate : history.1 = state at hmover ⊢
     cases state with
     | root =>
@@ -136,6 +136,11 @@ def atDecision (bit : Bool) :
     base.toArena.HistoryFrom base.init :=
   ⟨.decision bit, (afterChoice bit).2.snoc ()⟩
 
+/-- Decision histories have a legal unit action and hence are nonterminal. -/
+theorem atDecision_nonterminal (bit : Bool) :
+    ¬ base.isTerminal (atDecision bit).1 :=
+  fun hterminal => hterminal.false ()
+
 @[simp]
 theorem signalHistory_false :
     game.signalHistory 0 (atDecision false) =
@@ -156,7 +161,8 @@ theorem not_hasEventClockSignalPerfectRecall :
   have heq :=
     hrecall
       (atDecision false) (atDecision true)
-      rfl rfl rfl
+      rfl (atDecision_nonterminal false)
+      rfl (atDecision_nonterminal true) rfl
   have hmiddle :=
     congrArg (fun signals => signals[1]?) heq
   change some false = some true at hmiddle
@@ -169,7 +175,7 @@ def classicRecallCertificate :
     game.RecallCertificate where
   remembered := fun _ _ => []
   remembered_infoAt := by
-    intro i history hmover
+    intro i history hmover _hnonterminal
     rcases history with ⟨state, path⟩
     cases path with
     | nil =>
@@ -268,9 +274,9 @@ def publicRecallGame : ControlledObservedGame (Fin 2) where
   InfoState := fun _ => Unit
   infoObserve := fun i _ =>
     if i = 0 then (.decision, false) else (.root, false)
-  infoAt := fun _ _ _ => ()
+  infoAt := fun _ _ _ _ => ()
   infoAt_observe := by
-    intro history i hmover
+    intro history i hmover _hnonterminal
     generalize hstate : history.1 = state at hmover ⊢
     cases state with
     | root =>
@@ -290,7 +296,7 @@ def publicRecallGame : ControlledObservedGame (Fin 2) where
   InfoAction := fun i _ =>
     if i = 0 then Unit else Bool
   actionEquiv := by
-    intro history i hmover
+    intro history i hmover _hnonterminal
     generalize hstate : history.1 = state at hmover ⊢
     cases state with
     | root =>
@@ -366,7 +372,8 @@ theorem publicRecallGame_not_hasEventClockSignalPerfectRecall :
   have heq :=
     hrecall
       (atDecision false) (atDecision true)
-      rfl rfl rfl
+      rfl (atDecision_nonterminal false)
+      rfl (atDecision_nonterminal true) rfl
   have hmiddle :=
     congrArg (fun signals => signals[1]?) heq
   change
@@ -428,7 +435,7 @@ def game : ObservedGame Unit Unit where
   InfoState := fun _ => Stage
   infoObserve := fun _ _ => ()
   infoAt := by
-    intro history _i hmover
+    intro history _i hmover _hnonterminal
     generalize hstate : history.1 = state at hmover
     cases state with
     | root => exact .first
@@ -437,7 +444,7 @@ def game : ObservedGame Unit Unit where
   infoAt_observe := by simp
   InfoAction := fun _ stage => StageAction stage
   actionEquiv := by
-    intro history _i hmover
+    intro history _i hmover _hnonterminal
     generalize hstate : history.1 = state at hmover ⊢
     cases state with
     | root =>
@@ -455,9 +462,16 @@ def atSecond (first : Bool) :
     base.toArena.HistoryFrom base.init :=
   ⟨.second first, initial.2.snoc first⟩
 
+/-- Second-stage decision histories have a legal unit action and hence are
+nonterminal. -/
+theorem atSecond_nonterminal (first : Bool) :
+    ¬ base.isTerminal (atSecond first).1 :=
+  fun hterminal => hterminal.false ()
+
 @[simp]
 theorem infoAt_second (first : Bool) :
-    game.infoAt (atSecond first) () rfl =
+    game.infoAt (atSecond first) () rfl
+        (atSecond_nonterminal first) =
       Stage.second :=
   rfl
 
@@ -490,7 +504,8 @@ theorem not_hasPerfectRecall :
   exact ownDecisionHistory_false_ne_true
     (hrecall
       (atSecond false) (atSecond true)
-      rfl rfl rfl)
+      rfl (atSecond_nonterminal false)
+      rfl (atSecond_nonterminal true) rfl)
 
 /-- The private-signal sequence factors through the remembered decision
 stage, even though the first chosen action does not. -/
@@ -501,7 +516,7 @@ def signalRecallCertificate :
     | .first => [()]
     | .second => [(), ()]
   rememberedSignals_infoAt := by
-    intro i history hmover
+    intro i history hmover _hnonterminal
     rcases i with ⟨⟩
     rcases history with ⟨state, path⟩
     cases path with
@@ -579,14 +594,14 @@ def publicRecallGame : ControlledObservedGame Unit where
     | .first => .first
     | .second => .second
   infoAt := by
-    intro history _i hmover
+    intro history _i hmover _hnonterminal
     generalize hstate : history.1 = state at hmover
     cases state with
     | root => exact .first
     | second first => exact .second
     | terminal first => simp [base] at hmover
   infoAt_observe := by
-    intro history i hmover
+    intro history i hmover _hnonterminal
     generalize hstate : history.1 = state at hmover ⊢
     cases state with
     | root => rfl
@@ -594,7 +609,7 @@ def publicRecallGame : ControlledObservedGame Unit where
     | terminal first => simp [base] at hmover
   InfoAction := fun _ stage => StageAction stage
   actionEquiv := by
-    intro history _i hmover
+    intro history _i hmover _hnonterminal
     generalize hstate : history.1 = state at hmover ⊢
     cases state with
     | root =>
@@ -653,7 +668,8 @@ theorem publicRecallGame_not_hasPerfectRecall :
   have heq :=
     hrecall
       (atSecond false) (atSecond true)
-      rfl rfl rfl
+      rfl (atSecond_nonterminal false)
+      rfl (atSecond_nonterminal true) rfl
   change
     [(⟨Stage.first, false⟩ :
         publicRecallGame.PersonalDecision ())] =
