@@ -9,10 +9,10 @@ payoff-free controlled dynamics and information; `ExtensiveGame` is the
 compatible state-payoff extension. `Observed.WellFormed`, `FiniteUnfolding`,
 `Winning.Basic`, `Winning.Topology`, `Observed.Quasi`, and `Observed.General`
 implement the finite-profile, finite occurrence unfolding, winning,
-quasistrategy, and discrete-general carrier foundations. Finite no-chance
-perfect-information two-player zero-sum determinacy is proved; well-founded
-prefix/Gale--Stewart determinacy and analytic general-strategy theorems remain
-targets. Discrete
+quasistrategy, and discrete-general carrier foundations. Finite and
+structurally well-founded no-chance perfect-information two-player zero-sum
+determinacy are proved; arbitrary infinite Gale--Stewart determinacy and
+analytic general-strategy theorems remain targets. Discrete
 infinite almost-sure winning is implemented separately from pathwise
 robustness and requires a probability-measure certificate. The canonical
 payoff-free complete-information constructor uses decision histories only;
