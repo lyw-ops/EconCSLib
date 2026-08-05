@@ -10,6 +10,11 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.DeferredSampling.Realization
 # EconCSLib.GameTheory.ExtensiveGame.Observed.KuhnConditioning.Realization
 
 Root-scoped law morphisms, deviation coverage, and finite Kuhn transfer.
+
+The mathematical realization target is [Kuhn 1953, §4, Thm. 4] under finite
+perfect recall. This module's exact bounded history/payoff-law equalities and
+Nash-transfer morphisms are the occurrence-sensitive `PMF` implementation of
+that target. They do not assert equality of arbitrary infinite path measures.
 -/
 
 namespace ExtensiveGame.ObservedChanceGame
@@ -182,10 +187,10 @@ theorem behavioralDeviationHistoryLawAlong_eq
                     PMF
                       (G.observed.InfoAction mover
                         (G.observed.infoAt
-                          current mover hmover)) =>
+                          current mover hmover hterminal)) =>
                   abstractLaw.map
                     (G.observed.actionEquiv
-                      current mover hmover))
+                      current mover hmover hterminal))
               by_cases hmoverWho :
                   mover = who
               · subst mover
@@ -193,6 +198,9 @@ theorem behavioralDeviationHistoryLawAlong_eq
                     G.observed.base.mover finish =
                       some who := by
                   simpa [current] using hmover
+                have hnonterminal' :
+                    ¬ G.observed.base.isTerminal finish := by
+                  simpa [current] using hterminal
                 simp only [targetBehavior,
                   realizedBehavior, sourceDeviation,
                   ObservedGame.RecallCertificate.behavioralizeMixedProfileFrom,
@@ -200,16 +208,16 @@ theorem behavioralDeviationHistoryLawAlong_eq
                 change
                   target
                       (G.observed.infoAt
-                        current who hmover) =
+                        current who hmover hterminal) =
                     h.recallCertificate.behavioralizeMixedFrom
                       G.observed root who
                       (h.behavioralToMixedStrategy
                         who target)
                       (G.observed.infoAt
-                        current who hmover)
+                        current who hmover hterminal)
                 exact
                   (h.behavioralize_behavioralToMixed_at_append
-                    G.observed root suffix who hmover'
+                    G.observed root suffix who hmover' hnonterminal'
                     target).symm
               · simp [targetBehavior,
                   realizedBehavior, baseBehavior,
@@ -345,10 +353,10 @@ theorem behavioralTableDeviationHistoryLawAlong_eq
                     PMF
                       (G.observed.InfoAction mover
                         (G.observed.infoAt
-                          current mover hmover)) =>
+                          current mover hmover hterminal)) =>
                   abstractLaw.map
                     (G.observed.actionEquiv
-                      current mover hmover))
+                      current mover hmover hterminal))
               by_cases hmoverWho :
                   mover = who
               · subst mover
@@ -358,6 +366,9 @@ theorem behavioralTableDeviationHistoryLawAlong_eq
                     G.observed.base.mover finish =
                       some mover := by
                   simpa [current] using hmover
+                have hnonterminal' :
+                    ¬ G.observed.base.isTerminal finish := by
+                  simpa [current] using hterminal
                 simp only [sourceDeviation,
                   mappedDeviation, mappedProfile,
                   mixedProfile,
@@ -368,17 +379,18 @@ theorem behavioralTableDeviationHistoryLawAlong_eq
                 change
                   profile mover
                       (G.observed.infoAt
-                        current mover hmover) =
+                        current mover hmover hterminal) =
                     h.recallCertificate.behavioralizeMixedFrom
                       G.observed root mover
                       (h.behavioralToMixedStrategy
                         mover (profile mover))
                       (G.observed.infoAt
-                        current mover hmover)
+                        current mover hmover hterminal)
                 exact
                   (h.behavioralize_behavioralToMixed_at_append
                     G.observed root suffix mover
-                    hmover' (profile mover)).symm
+                    hmover' hnonterminal'
+                    (profile mover)).symm
         rw [hpolicy]
         apply congrArg
           (fun continuation =>
@@ -700,11 +712,37 @@ theorem finiteKuhn_isNash_iff
       (G.behavioralLawGameForm
         current fuel).IsNash
           utility
-          (h.mixedToBehavioralProfileAt
+      (h.mixedToBehavioralProfileAt
             G.observed current profile) := by
   exact
     (G.finiteKuhnMixedBehavioralRealizationAt
       h current fuel).isNash_iff
-        utility profile
+      utility profile
+
+/-- The finite Kuhn package specializes the broader countably-supported,
+bounded-history realization theorem by supplying its recall certificate.
+
+Finite information is not consumed by the law equality itself; it is needed
+later for behavioral-deviation coverage and hence the two-way Nash theorem
+above. -/
+theorem finiteKuhn_boundedHistoryLaw_specialization
+    [Fintype N] [DecidableEq N]
+    [(state : G.observed.base.State) →
+      Decidable
+        (G.observed.base.isTerminal state)]
+    (h : G.observed.FiniteKuhnHypotheses)
+    (profile : G.observed.MixedProfile)
+    (current :
+      G.observed.base.toArena.HistoryFrom
+        G.observed.base.init)
+    (fuel : ℕ) :
+    G.mixedStoppedHistoryLawFrom profile current fuel =
+      G.observed.base.toArena.stochasticHistoryPMFFrom
+        (BehavioralProfile.toHistoryPolicy G
+          (h.recallCertificate.behavioralizeMixedProfileFrom
+            G.observed current profile))
+        current fuel :=
+  G.countablySupportedMixedToBehavioral_boundedHistoryLaw
+    h.recallCertificate profile current fuel
 
 end ExtensiveGame.ObservedChanceGame
