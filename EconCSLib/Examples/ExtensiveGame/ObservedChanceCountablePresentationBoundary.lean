@@ -129,7 +129,9 @@ theorem recurring_player_abstract_law_eq :
         (presentation.information.informationAt 0 secondPrefix) := by
   exact
     presentation.abstractKernel_eq_of_player_infoAt_eq
-      profile 0 firstPrefix secondPrefix 0 rfl rfl
+      profile 0 firstPrefix secondPrefix 0
+      rfl firstPrefix_nonterminal
+      rfl secondPrefix_nonterminal
       infoState_recurs
 
 /-- The automatic presentation compiles exactly to the original concrete
