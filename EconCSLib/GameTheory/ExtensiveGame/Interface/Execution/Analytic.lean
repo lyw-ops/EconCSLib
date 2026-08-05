@@ -26,10 +26,10 @@ import EconCSLib.GameTheory.ExtensiveGame.Simulation.Presentation.Chance.Countab
 /-!
 # Analytic measurable-kernel EFG execution
 
-Stable public import for normalized non-atomic measurable-kernel dynamics,
-terminal-aware execution, finite endpoint and infinite event-time path laws,
-state/history/event/information-dependent action policies, abstract-action
-realization, and observed profile assembly.
+Recommended pre-stability import for normalized non-atomic measurable-kernel
+dynamics, terminal-aware execution, finite endpoint and infinite event-time
+path laws, state/history/event/information-dependent action policies,
+abstract-action realization, and observed profile assembly.
 
 `Controlled.Law.Analytic` packages a measurable-kernel profile assembly into
 the same lawful `ControlledObservedGame.CompletePathLawSemantics` used by the
