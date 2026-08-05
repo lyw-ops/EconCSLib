@@ -113,10 +113,11 @@ def absentMindedGame : ObservedGame (Fin 1) ℤ where
   observe_public := fun _ _ => rfl
   InfoState := fun _ => Unit
   infoObserve := fun _ _ => ()
-  infoAt := fun _ _ _ => ()
-  infoAt_observe := fun _ _ _ => rfl
+  infoAt := fun _ _ _ _ => ()
+  infoAt_observe := fun _ _ _ _ => rfl
   InfoAction := fun _ _ => Unit
-  actionEquiv := fun history i hmover => rungActionEquiv i history.1 hmover
+  actionEquiv := fun history i hmover _ =>
+    rungActionEquiv i history.1 hmover
 
 /-- The complete history ending at player `0`'s first decision (`s0`). -/
 def firstDecision :
@@ -132,9 +133,22 @@ def secondDecision :
     absentMindedGame.base.toArena.HistoryFrom absentMindedGame.base.init :=
   ⟨Rung.s1, (Arena.History.nil).snoc stepAction⟩
 
+/-- The first decision is genuinely nonterminal. -/
+theorem firstDecision_nonterminal :
+    ¬ absentMindedGame.base.isTerminal firstDecision.1 := by
+  simp [absentMindedGame, base, firstDecision,
+    Arena.IsTerminal, rungAction]
+
+/-- The second decision is genuinely nonterminal. -/
+theorem secondDecision_nonterminal :
+    ¬ absentMindedGame.base.isTerminal secondDecision.1 := by
+  simp [absentMindedGame, base, secondDecision,
+    Arena.IsTerminal, rungAction]
+
 /-- The single player-`0` decision key. -/
 def currentKey : absentMindedGame.DecisionKey :=
-  ⟨0, absentMindedGame.infoAt firstDecision 0 rfl⟩
+  ⟨0, absentMindedGame.infoAt firstDecision 0 rfl
+    firstDecision_nonterminal⟩
 
 instance : DecidableEq absentMindedGame.DecisionKey :=
   inferInstanceAs (DecidableEq (Σ _ : Fin 1, Unit))
@@ -149,7 +163,7 @@ generalization that key erasure preserves future availability in every
 observed game. -/
 theorem futureDecisionKeysAvailable_firstDecision :
     absentMindedGame.FutureDecisionKeysAvailable firstDecision {currentKey} := by
-  intro finish suffix i hmover
+  intro finish suffix i hmover hnonterminal
   refine Finset.mem_singleton.mpr ?_
   have hi : i = 0 := Subsingleton.elim i 0
   subst hi
@@ -162,8 +176,10 @@ This recurrence exhibits the failure of the no-absent-mindedness hypothesis
 and prevents treating a decision information state as automatically fresh at
 successive decision points. -/
 theorem infoState_recurs :
-    absentMindedGame.infoAt firstDecision 0 rfl =
-      absentMindedGame.infoAt secondDecision 0 rfl := rfl
+    absentMindedGame.infoAt firstDecision 0 rfl
+        firstDecision_nonterminal =
+      absentMindedGame.infoAt secondDecision 0 rfl
+        secondDecision_nonterminal := rfl
 
 /-- The whole game is a lawful subgame even though its initial information
 state recurs later. The initial-root convention is essential for general
@@ -191,7 +207,9 @@ theorem secondDecision_not_isLawfulSubgameRoot :
   have heq :=
     hlawful.root_information_singleton
       secondDecision_ne_initial
-      0 rfl firstDecision rfl infoState_recurs.symm
+      0 rfl secondDecision_nonterminal
+      firstDecision rfl firstDecision_nonterminal
+      infoState_recurs.symm
   exact secondDecision_ne_initial (by
     simpa [firstDecision, absentMindedGame, base] using heq.symm)
 
@@ -204,7 +222,8 @@ generalization that every observed game satisfies
 theorem not_hasNoAbsentMindedness :
     ¬ absentMindedGame.HasNoAbsentMindedness 0 := by
   intro h
-  exact h firstDecision rfl stepAction Rung.s1 Arena.History.nil rfl rfl
+  exact h firstDecision rfl stepAction Rung.s1 Arena.History.nil
+    rfl secondDecision_nonterminal rfl
 
 /-- Global no-absent-mindedness also fails.
 
@@ -235,6 +254,7 @@ theorem afterPlayerConclusionFails :
         (({currentKey} : Finset absentMindedGame.DecisionKey).erase currentKey) := by
   intro havail
   have hmem := havail Arena.History.nil 0 rfl
+    secondDecision_nonterminal
   rw [Finset.mem_erase] at hmem
   exact hmem.1 rfl
 
