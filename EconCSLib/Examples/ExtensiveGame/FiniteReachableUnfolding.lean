@@ -86,11 +86,11 @@ abbrev oneStepObserved :
   observe_public := by simp
   InfoState := fun _ => Unit
   infoObserve := fun _ _ => ()
-  infoAt := fun _history _player _hmover => ()
+  infoAt := fun _history _player _hmover _hnonterminal => ()
   infoAt_observe := by simp
   InfoAction := fun _ _ => Bool
   actionEquiv := by
-    intro history player hmover
+    intro history player hmover _hnonterminal
     cases player
     have hstate : history.1 = 0 := by
       by_contra hne
@@ -109,18 +109,23 @@ theorem oneStep_allDecisionInfoRepresented :
           Arena.HistoryFrom.nil oneStepArena 0
         mover := by
           rfl
+        nonterminal := by
+          change ¬ IsEmpty Bool
+          exact not_isEmpty_iff.mpr ⟨false⟩
         infoAt_eq := rfl }⟩
 
 theorem oneStep_decisionMoverCoherent :
     oneStepObserved.DecisionMoverCoherent := by
+  change
+    ∀ (history : oneStepArena.HistoryFrom 0) (player : Unit),
+      (if history.1 = 0 then some () else none) = some player →
+        Nonempty (if history.1 = 0 then Bool else Empty)
   intro history player hmover
   cases player
-  have hstate : history.1 = 0 := by
-    by_contra hne
-    simp [oneStepObserved, oneStepBase, oneStepArena, hne]
-      at hmover
-  simpa [oneStepObserved, oneStepBase, oneStepArena, hstate]
-    using (show Nonempty Bool from ⟨false⟩)
+  by_cases hstate : history.1 = 0
+  · simpa [hstate] using
+      (show Nonempty Bool from ⟨false⟩)
+  · simp [hstate] at hmover
 
 theorem oneStep_hasLengthBound :
     oneStepArena.HasLengthBoundFrom (0 : Nat) 1 := by
@@ -139,14 +144,15 @@ def oneStep_finiteEFG :
   lengthBound := 1
   hasLengthBound := oneStep_hasLengthBound
   finiteAction := by
+    change
+      ∀ history : oneStepArena.HistoryFrom 0,
+        Finite
+          (if history.1 = 0 then Bool else Empty)
     intro history
     by_cases hstate : history.1 = 0
-    · simpa [oneStepObserved, oneStepBase,
-        oneStepArena, hstate] using
+    · simpa [hstate] using
           (show Finite Bool from inferInstance)
-    · change Finite
-        (if history.1 = 0 then Bool else Empty)
-      simpa [hstate] using
+    · simpa [hstate] using
         (show Finite Empty from inferInstance)
   finiteInfoState := by
     intro _player
@@ -265,6 +271,9 @@ def oneStep_controlledFinite :
         { history :=
             Arena.HistoryFrom.nil oneStepArena 0
           mover := rfl
+          nonterminal := by
+            change ¬ IsEmpty Bool
+            exact not_isEmpty_iff.mpr ⟨false⟩
           infoAt_eq := rfl }⟩
   decisionMoverCoherent :=
     oneStep_finiteEFG.decisionMoverCoherent
