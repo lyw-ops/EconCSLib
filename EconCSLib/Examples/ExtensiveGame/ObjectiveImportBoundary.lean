@@ -39,6 +39,24 @@ or analytic kernels.
 #check ExtensiveGame.ObservedGame.HasWinningQuasiStrategy
 
 /--
+error: Unknown constant `Arena.PathOutcomeFromHistory.continueAt`
+-/
+#guard_msgs in
+#check Arena.PathOutcomeFromHistory.continueAt
+
+/--
+error: Unknown constant `Arena.WinningConditionFrom.continueAt`
+-/
+#guard_msgs in
+#check Arena.WinningConditionFrom.continueAt
+
+/--
+error: Unknown constant `Arena.WinningConditionFrom.mem_continueAt_iff`
+-/
+#guard_msgs in
+#check Arena.WinningConditionFrom.mem_continueAt_iff
+
+/--
 error: Unknown constant `Arena.pathLaw`
 -/
 #guard_msgs in
