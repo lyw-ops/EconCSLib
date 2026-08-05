@@ -73,7 +73,8 @@ def mapLawfulSubgameRoot
         (e.historyIso.stateEquiv.symm root)) :
     H.IsLawfulSubgameRoot root where
   root_information_singleton := by
-    intro hproper i hmover other hother hinfo
+    intro hproper i hmover hnonterminal other hother
+      hother_nonterminal hinfo
     let f := e.symm
     have hsourceProper :
         f.historyIso.stateEquiv root ≠
@@ -88,29 +89,42 @@ def mapLawfulSubgameRoot
             (f.historyIso.stateEquiv root).1 =
           some i := by
       rw [f.map_mover root, hmover]
+    have hrootNonterminal :
+        ¬ G.base.isTerminal
+          (f.historyIso.stateEquiv root).1 :=
+      (not_congr (f.historyIso.isTerminal_iff root)).mp
+        hnonterminal
     have hotherMover :
         G.base.mover
             (f.historyIso.stateEquiv other).1 =
           some i := by
       rw [f.map_mover other, hother]
+    have hotherNonterminal :
+        ¬ G.base.isTerminal
+          (f.historyIso.stateEquiv other).1 :=
+      (not_congr (f.historyIso.isTerminal_iff other)).mp
+        hother_nonterminal
     have hsourceInfo :
         G.infoAt
             (f.historyIso.stateEquiv root)
-            i hrootMover =
+            i hrootMover hrootNonterminal =
           G.infoAt
             (f.historyIso.stateEquiv other)
-            i hotherMover := by
-      rw [← f.map_infoAt root i hmover hrootMover,
-        ← f.map_infoAt other i hother hotherMover,
+            i hotherMover hotherNonterminal := by
+      rw [← f.map_infoAt root i hmover hnonterminal
+          hrootMover hrootNonterminal,
+        ← f.map_infoAt other i hother hother_nonterminal
+          hotherMover hotherNonterminal,
         hinfo]
     have hsourceEq :=
       hlawful.root_information_singleton
-        hsourceProper i hrootMover
+        hsourceProper i hrootMover hrootNonterminal
         (f.historyIso.stateEquiv other)
-        hotherMover hsourceInfo
+        hotherMover hotherNonterminal hsourceInfo
     exact f.historyIso.stateEquiv.injective hsourceEq
   information_closed := by
-    intro current hcurrent i hmover other hother hinfo
+    intro current hcurrent i hmover hnonterminal other hother
+      hother_nonterminal hinfo
     let f := e.symm
     have hcurrentSource :
         G.IsContinuationOf
@@ -122,27 +136,39 @@ def mapLawfulSubgameRoot
             (f.historyIso.stateEquiv current).1 =
           some i := by
       rw [f.map_mover current, hmover]
+    have hcurrentNonterminal :
+        ¬ G.base.isTerminal
+          (f.historyIso.stateEquiv current).1 :=
+      (not_congr (f.historyIso.isTerminal_iff current)).mp
+        hnonterminal
     have hotherMover :
         G.base.mover
             (f.historyIso.stateEquiv other).1 =
           some i := by
       rw [f.map_mover other, hother]
+    have hotherNonterminal :
+        ¬ G.base.isTerminal
+          (f.historyIso.stateEquiv other).1 :=
+      (not_congr (f.historyIso.isTerminal_iff other)).mp
+        hother_nonterminal
     have hsourceInfo :
         G.infoAt
             (f.historyIso.stateEquiv current)
-            i hcurrentMover =
+            i hcurrentMover hcurrentNonterminal =
           G.infoAt
             (f.historyIso.stateEquiv other)
-            i hotherMover := by
-      rw [← f.map_infoAt current i hmover hcurrentMover,
-        ← f.map_infoAt other i hother hotherMover,
+            i hotherMover hotherNonterminal := by
+      rw [← f.map_infoAt current i hmover hnonterminal
+          hcurrentMover hcurrentNonterminal,
+        ← f.map_infoAt other i hother hother_nonterminal
+          hotherMover hotherNonterminal,
         hinfo]
     have hotherSource :=
       hlawful.information_closed
         (f.historyIso.stateEquiv current)
-        hcurrentSource i hcurrentMover
+        hcurrentSource i hcurrentMover hcurrentNonterminal
         (f.historyIso.stateEquiv other)
-        hotherMover hsourceInfo
+        hotherMover hotherNonterminal hsourceInfo
     exact (f.map_isContinuationOf root other).mpr hotherSource
 
 /-- Transport a payoff-free lawful subgame system through a strict
