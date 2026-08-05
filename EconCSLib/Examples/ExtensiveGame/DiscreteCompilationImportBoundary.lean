@@ -23,6 +23,24 @@ discrete equilibrium without importing measurable-kernel execution.
 #check ExtensiveGame.FOSG.Sequentialization.rootPresentation
 
 /--
+error: Unknown constant `StochasticGameTree.fairCoinGame`
+-/
+#guard_msgs in
+#check StochasticGameTree.fairCoinGame
+
+/--
+error: Unknown identifier `Examples.ImperfectInformation.tiny`
+-/
+#guard_msgs in
+#check Examples.ImperfectInformation.tiny
+
+/--
+error: Unknown constant `FiniteImperfectGame.actionAt_same_info_label`
+-/
+#guard_msgs in
+#check FiniteImperfectGame.actionAt_same_info_label
+
+/--
 error: Unknown constant `Arena.pathLaw`
 -/
 #guard_msgs in
