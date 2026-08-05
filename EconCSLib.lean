@@ -172,12 +172,13 @@ experimental open-problem interfaces remain available as opt-in imports.
 Infinite discrete paths, analytic measurable kernels, relations, equilibrium,
 restart compatibility, FOSG serialization, and reference compilers are
 intentionally opt-in through the tiered `ExtensiveGame.Interface` imports.
-This keeps the root aggregate finite/PMF-focused and avoids freezing
-historical endpoint-policy and analytic implementation surfaces.
+This keeps the root aggregate finite/PMF-focused. These are governed
+pre-stability EFG boundaries, not a current external source-compatibility
+guarantee.
 
 The historical state-indexed `Play`, `BehaviorStrategy`,
 `ImperfectInformation`, and `StochasticGameTree` paths are not part of this
-stable root surface. Their corrected replacements or compatibility imports
+governed root surface. Their corrected replacements or compatibility imports
 remain available explicitly; canonical EFG development should use the tiered
 interfaces. Historical endpoint-policy NE/SPE/strategic-form declarations,
 finite Arena extraction, Zermelo specialization, and infinite discrete path
