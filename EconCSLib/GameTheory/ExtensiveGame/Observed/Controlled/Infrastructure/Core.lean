@@ -57,6 +57,7 @@ def PureProfile.toHistoryPolicy
     (profile (G.playerAt hNoChance history hnonterminal)).actionAt
       G history
       (G.mover_playerAt hNoChance history hnonterminal)
+      hnonterminal
 
 /-- At a player-controlled history, payoff-free profile execution uses that
 player's component strategy. -/
@@ -68,7 +69,7 @@ theorem PureProfile.toHistoryPolicy_of_mover
     (i : N)
     (hmover : G.base.mover history.1 = some i) :
     profile.toHistoryPolicy hNoChance history hnonterminal =
-      (profile i).actionAt G history hmover := by
+      (profile i).actionAt G history hmover hnonterminal := by
   have hplayer :
       G.playerAt hNoChance history hnonterminal = i := by
     apply Option.some.inj
@@ -87,15 +88,15 @@ def IsCompatibleWithPlayerStrategyFrom
     (i : N) (strategy : G.PureStrategy i)
     (play : G.base.CompletePlayFromHistory current) : Prop :=
   ∀ (n : ℕ)
-    (_hnonterminal :
+    (hnonterminal :
       ¬ G.base.isTerminal (play.historyAt n).1)
     (hmover :
       G.base.mover (play.historyAt n).1 = some i),
     play.historyAt (n + 1) =
       ⟨G.base.next (play.historyAt n).1
-          (strategy.actionAt G (play.historyAt n) hmover),
+          (strategy.actionAt G (play.historyAt n) hmover hnonterminal),
         (play.historyAt n).2.snoc
-          (strategy.actionAt G (play.historyAt n) hmover)⟩
+          (strategy.actionAt G (play.historyAt n) hmover hnonterminal)⟩
 
 /-- Root-started local compatibility in a payoff-free observed game. -/
 abbrev IsCompatibleWithPlayerStrategy
@@ -123,13 +124,13 @@ theorem PureProfile.completePlay_isCompatibleWithPlayerStrategy
           ((profile i).actionAt G
             (Arena.stoppedHistory
               (profile.toHistoryPolicy hNoChance) n)
-            hmover),
+            hmover hnonterminal),
         (Arena.stoppedHistory
             (profile.toHistoryPolicy hNoChance) n).2.snoc
           ((profile i).actionAt G
             (Arena.stoppedHistory
               (profile.toHistoryPolicy hNoChance) n)
-            hmover)⟩
+            hmover hnonterminal)⟩
   rw [Arena.stoppedHistory,
     Arena.stoppedHistoryFrom_add
       (profile.toHistoryPolicy hNoChance)
@@ -156,7 +157,7 @@ theorem PureProfile.completePlay_isCompatibleWithPlayerStrategy
             (profile.toHistoryPolicy hNoChance)
             (Arena.HistoryFrom.nil
               G.base.toArena G.base.init) n)
-          hmover :=
+          hmover hnonterminal :=
     profile.toHistoryPolicy_of_mover
       hNoChance _ hnonterminal i hmover
   rw [haction]
