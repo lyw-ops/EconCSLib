@@ -76,14 +76,16 @@ def base : ExtensiveGame Unit Unit where
 def informationAt
     (history : base.toArena.HistoryFrom base.init)
     (i : Unit)
-    (_hmover : base.mover history.1 = some i) :
+    (_hmover : base.mover history.1 = some i)
+    (_hnonterminal : ¬ base.isTerminal history.1) :
     Unit := ()
 
 /-- At the root, abstract real actions are exactly concrete real actions. -/
 def actionEquiv
     (history : base.toArena.HistoryFrom base.init)
     (i : Unit)
-    (hmover : base.mover history.1 = some i) :
+    (hmover : base.mover history.1 = some i)
+    (_hnonterminal : ¬ base.isTerminal history.1) :
     ℝ ≃ base.Action history.1 := by
   cases i
   cases hstate : history.1 with
@@ -107,7 +109,7 @@ def observed : ObservedGame Unit Unit where
   InfoState := fun _ => Unit
   infoObserve := fun _ _ => ()
   infoAt := informationAt
-  infoAt_observe := fun _ _ _ => rfl
+  infoAt_observe := fun _ _ _ _ => rfl
   InfoAction := fun _ _ => ℝ
   actionEquiv := actionEquiv
 
@@ -961,8 +963,11 @@ law is the exposed real-valued profile law. -/
 theorem actionLawAt_root
     (profile : game.observed.BehavioralProfile)
     (hmover :
-      game.observed.base.mover rootHistory.1 = some ()) :
-    profile.actionLawAt game.observed rootHistory () hmover =
+      game.observed.base.mover rootHistory.1 = some ())
+    (hnonterminal :
+      ¬ game.observed.base.isTerminal rootHistory.1) :
+    profile.actionLawAt game.observed rootHistory () hmover
+        hnonterminal =
       profileLaw profile := by
   unfold
     ObservedGame.BehavioralProfile.actionLawAt
@@ -970,10 +975,12 @@ theorem actionLawAt_root
     profileLaw
   change
     (profile () ()).map
-        (game.observed.actionEquiv rootHistory () hmover) =
+        (game.observed.actionEquiv rootHistory () hmover
+          hnonterminal) =
       profile () ()
   have hequiv :
-      game.observed.actionEquiv rootHistory () hmover =
+      game.observed.actionEquiv rootHistory () hmover
+          hnonterminal =
         Equiv.refl ℝ := by
     rfl
   rw [hequiv]
@@ -985,9 +992,12 @@ theorem package_player_action
     (history : History)
     (hmover :
       game.observed.base.mover history.1 = some ())
+    (hnonterminal :
+      ¬ game.observed.base.isTerminal history.1)
     (action : ℝ) :
     (⟨history,
-      game.observed.actionEquiv history () hmover action⟩ :
+      game.observed.actionEquiv history () hmover hnonterminal
+        action⟩ :
       HistoryAction) =
         historyActionDecode action := by
   have hrootEndpoint : history.1 = .root := by
@@ -1009,8 +1019,11 @@ theorem packaged_actionLawAt
     (profile : game.observed.BehavioralProfile)
     (history : History)
     (hmover :
-      game.observed.base.mover history.1 = some ()) :
-    (profile.actionLawAt game.observed history () hmover).map
+      game.observed.base.mover history.1 = some ())
+    (hnonterminal :
+      ¬ game.observed.base.isTerminal history.1) :
+    (profile.actionLawAt game.observed history () hmover
+      hnonterminal).map
         (fun action =>
           (⟨history, action⟩ : HistoryAction)) =
       (profileLaw profile).map historyActionDecode := by
@@ -1021,11 +1034,12 @@ theorem packaged_actionLawAt
   change
     (profileLaw profile).map
         ((fun action => (⟨history, action⟩ : HistoryAction)) ∘
-          game.observed.actionEquiv history () hmover) =
+          game.observed.actionEquiv history () hmover
+            hnonterminal) =
       _
   congr 1
   funext action
-  exact package_player_action history hmover action
+  exact package_player_action history hmover hnonterminal action
 
 /-- Explicit measurable presentation for every behavioral profile. -/
 noncomputable def presentation :
@@ -1036,7 +1050,7 @@ noncomputable def presentation :
   toPolicy := policy
   playerInformation := fun _ _ => false
   player_informationAt := by
-    intro time events i hmover
+    intro time events i hmover _hnonterminal
     cases i
     have hroot :
         (latestEventState time events).1 = .root := by
@@ -1075,6 +1089,7 @@ noncomputable def presentation :
     have hpackaged :=
       packaged_actionLawAt
         profile (latestEventState time events) hmover
+          hnonterminal
     exact
       (bind_realization profile time events hnonterminal).trans
         (congrArg
@@ -1120,7 +1135,7 @@ theorem compiled_player_kernel_exact
         AnalyticArena.ActionBundle historyActionMeasurable
         ((profile.actionLawAt game.observed
             (latestEventState time events)
-            () hmover).map
+            () hmover hnonterminal).map
           (fun action =>
             (⟨latestEventState time events, action⟩ :
               AnalyticArena.ActionBundle))) :=
