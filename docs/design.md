@@ -73,7 +73,7 @@ and all `admit` uses remain forbidden.
 | `Math/` | fixed-point theorems, simplex helpers, reusable discrete probability, linear algebra, linear programming, and minimax |
 | `GameTheory/GameForm.lean`, `GameTheory/GameForm/` | stable aggregate plus representation-neutral deterministic, law-valued, and continuation-family semantics, with composable realization and functional/relational Nash-on-declared-roots transfer morphisms; representation-aware standard SPE remains in the EFG layer |
 | `GameTheory/StrategicGame/` | strategic games, equilibrium, dominance, checkers, mixed strategies, ESS, IESDS, correlated-equilibrium foundations, potential games, and zero-sum games |
-| `GameTheory/ExtensiveGame/` | Arena-based games with payoff-free `ControlledGame`/`ControlledObservedGame`, the state-payoff `ExtensiveGame` extension, external continuation-root presentations, canonical reachability, typed histories, measure-free complete plays, structural termination and finite-EFG certificates, and granular public facades: exact five-module `Interface.StructuralCore`, the broader `Interface.Core` Foundation Facade, `Interface.Objective`, `Interface.Winning`, `Interface.Winning.Stochastic`, measure-free finite/PMF `Interface.Execution.Finite`, measure-valued discrete-path `Interface.Execution.Infinite`, `Interface.Relations.Discrete`, `Interface.Equilibrium.Discrete`, analytic `Interface.Execution.Analytic` and `Interface.Equilibrium.Analytic`, `Interface.Restart`, and `Interface.Compilation.Discrete`. The payoff-free implementation is physically grouped below `Observed.Controlled`: focused `Infrastructure.*` leaves own execution, well-formedness, lawful-subgame, finite, quasistrategy, and recall declarations; `Morphism.{Core,Subgame,Recall}` owns structural transport; `Law.*` owns probability interpretations; and `.Compat` contains only downstream payoff-aware adapters. `Controlled.Infrastructure` and `Controlled.Morphism` are declaration-free canonical facades. Former broad compatibility aggregates were deleted before API stability; clients compose granular facades explicitly. The stack contains history-sensitive terminal/path outcomes, logical winning conditions, prefix topology, raw and certified execution-law layers, determinacy and discrete almost-sure-winning interfaces, quasistrategies, discrete general-strategy carriers, discrete PMF and analytic measurable Markov-kernel execution, strict and coupling-based weak simulations, observed/chance-EFG relations, evaluator-relative continuation semantics plus concrete execution-certified equilibrium layers, FOSG serialization, reference compilers, finite occurrence-sensitive unfolding, finite trees, backward induction, and SPE. The root `EconCSLib.lean` exposes `Interface.Execution.Finite` plus the finite `GameTree`, backward-induction, and exact zero-sum chance-tree tracks; higher objective/winning facade contracts, Historical modules, infinite probability laws, endpoint-policy equilibrium, extraction, Zermelo, analytic execution, restart, and compilation remain explicit opt-ins. |
+| `GameTheory/ExtensiveGame/` | Arena/history-based extensive games, finite tree frontends, observed information, execution, objectives, equilibrium, relations and compilers. Start with the task routes and authority order in `design/efg-document-authority.md`; choose imports through `design/efg-public-api.md`. `Interface.StructuralCore` is the narrow structural facade, `Interface.Core` is the broader Foundation Facade, Canonical/Frontend API growth is frozen, and carrier compatibility remains unfrozen while the documented universe/import regressions stay active. |
 | `GameTheory/CoalitionalGame/` | transferable-utility games, the core, and Shapley-value infrastructure |
 | `SocialChoice/` | social-choice vocabulary, voting theory, and fair division |
 | `MarketDesign/Matching/` | matching markets and Gale-Shapley developments |
@@ -110,10 +110,14 @@ The extensive-form layer uses an arena and state-space model so infinite-state
 and infinite-horizon games remain representable. Separate finite-tree modules
 support backward induction and executable examples.
 The three-record minimal carrier
-`Arena → ControlledGame → ControlledObservedGame` is frozen: new payoff,
-probability, objective, recall, finiteness, root-selection, or solution-concept
-fields require a demonstrated representation failure that cannot be handled
-by an external certificate, adapter, or compiler.
+`Arena → ControlledGame → ControlledObservedGame` is still under review and
+is not compatibility-frozen. Canonical/Frontend API growth is separately
+frozen, so new capabilities remain in the knowledge blueprint or opt-in
+Experimental work unless that policy is explicitly reopened. Changes to
+existing payoff, probability, objective, recall, finiteness, root-selection,
+or solution-concept boundaries still require a demonstrated representation
+failure that cannot be handled by an external certificate, adapter, or
+compiler.
 Bijective player renamings use
 `ControlledObservedGame.relabelPlayers`; this leaves Arena histories
 definitionally unchanged and reindexes dependent strategy profiles without
