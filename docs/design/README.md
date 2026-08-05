@@ -48,7 +48,7 @@ exactly where every constraint enters.
 | Module | Source | Design notes | Status |
 |--------|--------|-------------|--------|
 | Strategic games | `GameTheory/StrategicGame/` | [`strategic_game.md`](strategic_game.md) | Available |
-| Extensive games | `GameTheory/ExtensiveGame/` | [`extensive_game.md`](extensive_game.md), [`efg-general-foundations.md`](efg-general-foundations.md), [`efg-general-foundations-2-strategy.md`](efg-general-foundations-2-strategy.md), [`efg-general-foundations-3-lean-api.md`](efg-general-foundations-3-lean-api.md), [`efg-general-foundations-4-theorem-roadmap.md`](efg-general-foundations-4-theorem-roadmap.md), [`efg-minimal-core-structure-audit.md`](efg-minimal-core-structure-audit.md), [`efg-controlled-api.md`](efg-controlled-api.md), [`efg-preservation-matrix.md`](efg-preservation-matrix.md), [`efg-governance.md`](efg-governance.md), [`efg-module-status.md`](efg-module-status.md), [`efg-public-api.md`](efg-public-api.md), [`efg-import-granularity.md`](efg-import-granularity.md), [`efg-api-migration.md`](efg-api-migration.md), [`efg-representation-compilation.md`](efg-representation-compilation.md), [`observed-game-constructors.md`](observed-game-constructors.md) | Available |
+| Extensive games | `GameTheory/ExtensiveGame/` | [`efg-document-authority.md`](efg-document-authority.md), [`extensive_game.md`](extensive_game.md) | Available |
 | Coalitional games | `GameTheory/CoalitionalGame/` | — | Planned |
 | Social choice (voting, fair division) | `SocialChoice/` | — | Planned |
 | Matching | `MarketDesign/Matching/` | — | Planned |
@@ -59,16 +59,13 @@ exactly where every constraint enters.
 The remaining rows show where additional focused notes can be added as APIs
 stabilize.
 
-For the EFG foundation boundary, start with
-[`efg-minimal-core-structure-audit.md`](efg-minimal-core-structure-audit.md):
-`Interface.StructuralCore` is the exact narrow structural import, while
-`Interface.Core` is the broader stable Foundation Facade. The source-graph
-rules and measured closure counts live in
-[`efg-governance.md`](efg-governance.md).
-The consolidated `Observed/Controlled/` hierarchy and its canonical owners,
-declaration-free facades, and payoff-aware adapters are mapped in
-[`efg-controlled-api.md`](efg-controlled-api.md); flat
-`Observed.ControlledFoo` siblings are forbidden.
+For EFG work, start with the
+[`authority and claim inventory`](efg-document-authority.md). It gives five
+short routes: choosing an import, locating declaration ownership, reviewing
+mathematics and preservation, changing a facade/lifecycle state, and selecting
+an open research task. In particular, `Interface.StructuralCore` is the exact
+narrow structural import, `Interface.Core` is the broader Foundation Facade,
+and their compatibility freeze is currently deferred.
 
 ## What a module note set should contain
 
