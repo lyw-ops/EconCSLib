@@ -43,3 +43,22 @@ disjoint namespaces.
 #check ExtensiveGame.ObservedGame.PayoffCompatibleIso
 #check ExtensiveGame.ObservedGame.pureStrategy_toControlled
 #check ExtensiveGame.ObservedChanceGame.toDiscreteControlledObservedChanceGame
+#check ExtensiveGame.ObservedChanceGame.ofDiscreteControlledObservedChanceGame
+#check
+  ExtensiveGame.ObservedChanceGame.ofDiscreteControlledObservedChanceGame_toControlled
+#check
+  ExtensiveGame.ObservedChanceGame.ofDiscreteControlledObservedChanceGame_toControlled_payoff
+
+namespace ExtensiveGame.ControlledApiImportBoundary
+
+universe uN uU uA uS uO uI uP
+
+/-- The payoff-aware projection preserves independent action and state
+universes: the result uses `uA` for both base and information actions, and
+retains `uS` for the base state. -/
+example {N : Type uN} {U : Type uU}
+    (G : ObservedGame.{uN, uU, uA, uS, uO, uI, uP} N U) :
+    ControlledObservedGame.{uN, uA, uS, uO, uI, uP} N :=
+  G.toControlledObservedGame
+
+end ExtensiveGame.ControlledApiImportBoundary
