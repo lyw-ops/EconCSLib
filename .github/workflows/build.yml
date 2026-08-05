@@ -35,11 +35,25 @@ jobs:
       - name: Build examples
         run: lake build EconCSLib.Examples
 
+      - name: Build every governed EFG module
+        run: python3 scripts/build_efg_modules.py --fresh
+
       - name: Check Lean sources for placeholders
         run: python3 scripts/check_lean_placeholders.py EconCSLib
 
       - name: Check EFG architecture governance
         run: python3 scripts/check_efg_governance.py
+
+      - name: Test EFG governance tooling
+        run: |
+          python3 -m unittest \
+            tests/test_check_efg_api_growth.py \
+            tests/test_check_commit_scope.py \
+            tests/test_check_efg_governance.py \
+            tests/test_report_efg_declaration_usage.py
+
+      - name: Enforce the EFG API-growth freeze
+        run: python3 scripts/check_efg_api_growth.py
 
       - name: Report EFG declaration usage
         run: |
@@ -59,7 +73,13 @@ jobs:
           HEAD_SHA: ${{ github.sha }}
         run: |
           if [ -n "$BASE_SHA" ] && [ "$BASE_SHA" != "0000000000000000000000000000000000000000" ]; then
-            python3 scripts/check_commit_scope.py --base "$BASE_SHA" --head "$HEAD_SHA"
+            python3 scripts/check_commit_scope.py \
+              --base "$BASE_SHA" \
+              --head "$HEAD_SHA" \
+              --grandfather-commit 8f2009531d0e71f3891b732bffdf1731414d2640 \
+              --grandfather-commit ad4ebea4dbb84ef91d9e0fdc4d7356f9e22cd6f8 \
+              --grandfather-commit c42e9b0d7a610c11bd596f71b339b78de6944b74 \
+              --grandfather-commit 69368f1a18534c8abb5f6c20e8154b48af57abe8
           fi
 
       - name: Check diff whitespace
