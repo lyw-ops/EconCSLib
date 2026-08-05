@@ -56,7 +56,9 @@ theorem map_toHistoryPolicy
     (e.historyIso.stateEquiv h) htarget i htargetMover]
   rw [PureProfile.toHistoryPolicy_of_mover
     G profile hNoChanceG h hsource i hsourceMover]
-  exact e.map_actionAt profile h i hsourceMover htargetMover
+  exact
+    e.map_actionAt profile h i hsourceMover hsource
+      htargetMover htarget
 
 /-- Strict history mapping commutes exactly with continuation execution of a
 mapped no-chance pure profile. -/
