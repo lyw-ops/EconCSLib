@@ -3,7 +3,7 @@ Copyright (c) 2026 EconCSLib contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
-import EconCSLib.GameTheory.ExtensiveGame.Execution.StochasticNaturality
+import EconCSLib.GameTheory.ExtensiveGame.Relations.Discrete.StochasticNaturality
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled
 
 /-!
@@ -28,6 +28,70 @@ execution stack.
 namespace ExtensiveGame
 
 universe uN uA uS uO uI uP
+
+namespace ControlledObservedGame
+
+variable {N : Type*} (G : ControlledObservedGame N)
+
+/-! ## Discrete behavioral strategies -/
+
+/-- A countably supported behavioral strategy indexed by payoff-free decision
+information. -/
+abbrev BehavioralStrategy (i : N) :=
+  (information : G.InfoState i) →
+    PMF (G.InfoAction i information)
+
+/-- One payoff-free discrete behavioral strategy per player. -/
+abbrev BehavioralProfile :=
+  (i : N) → G.BehavioralStrategy i
+
+/-- Unilateral update of a payoff-free discrete behavioral profile. -/
+def BehavioralProfile.deviate [DecidableEq N]
+    (profile : G.BehavioralProfile) (who : N)
+    (deviation : G.BehavioralStrategy who) :
+    G.BehavioralProfile :=
+  Function.update profile who deviation
+
+/-- Realize a discrete behavioral strategy as a law on legal actions at one
+represented player decision. -/
+noncomputable def BehavioralStrategy.actionLawAt
+    {i : N} (strategy : G.BehavioralStrategy i)
+    (history : G.base.History)
+    (hmover : G.base.mover history.1 = some i)
+    (hnonterminal : ¬ G.base.isTerminal history.1) :
+    PMF (G.base.Action history.1) :=
+  (strategy
+    (G.infoAt history i hmover hnonterminal)).map
+      (G.actionEquiv history i hmover hnonterminal)
+
+/-- Equal information states force a behavioral profile to choose the same
+dependent abstract action law. -/
+theorem BehavioralProfile.actionLaw_eq_of_infoState_eq
+    (profile : G.BehavioralProfile) (i : N)
+    (first second : G.base.History)
+    (firstMover : G.base.mover first.1 = some i)
+    (firstNonterminal : ¬ G.base.isTerminal first.1)
+    (secondMover : G.base.mover second.1 = some i)
+    (secondNonterminal : ¬ G.base.isTerminal second.1)
+    (hsame :
+      G.infoAt first i firstMover firstNonterminal =
+        G.infoAt second i secondMover secondNonterminal) :
+    (⟨G.infoAt first i firstMover firstNonterminal,
+        profile i
+          (G.infoAt first i firstMover firstNonterminal)⟩ :
+      Σ information : G.InfoState i,
+        PMF (G.InfoAction i information)) =
+      ⟨G.infoAt second i secondMover secondNonterminal,
+        profile i
+          (G.infoAt second i secondMover secondNonterminal)⟩ :=
+  congrArg
+    (fun information : G.InfoState i =>
+      (⟨information, profile i information⟩ :
+        Σ state : G.InfoState i,
+          PMF (G.InfoAction i state)))
+    hsame
+
+end ControlledObservedGame
 
 /-- A payoff-free observed game with discrete, countably supported chance
 kernels. -/
@@ -60,30 +124,31 @@ abbrev withChanceKernel
 
 /-- Behavioral plans indexed only by decision information. -/
 abbrev BehavioralStrategy (i : N) :=
-  (information : G.observed.InfoState i) →
-    PMF (G.observed.InfoAction i information)
+  G.observed.BehavioralStrategy i
 
 /-- One payoff-free behavioral plan per player. -/
 abbrev BehavioralProfile :=
-  (i : N) → G.BehavioralStrategy i
+  G.observed.BehavioralProfile
 
 /-- Unilateral update of a payoff-free behavioral profile. -/
-def BehavioralProfile.deviate [DecidableEq N]
+abbrev BehavioralProfile.deviate [DecidableEq N]
     (profile : G.BehavioralProfile) (who : N)
     (deviation : G.BehavioralStrategy who) :
     G.BehavioralProfile :=
-  Function.update profile who deviation
+  ControlledObservedGame.BehavioralProfile.deviate
+    G.observed profile who deviation
 
 /-- Concrete legal-action law at one represented player decision. -/
-noncomputable def BehavioralStrategy.actionLawAt
+noncomputable abbrev BehavioralStrategy.actionLawAt
     {i : N} (strategy : G.BehavioralStrategy i)
     (history : G.observed.base.History)
     (hmover :
-      G.observed.base.mover history.1 = some i) :
+      G.observed.base.mover history.1 = some i)
+    (hnonterminal :
+      ¬ G.observed.base.isTerminal history.1) :
     PMF (G.observed.base.Action history.1) :=
-  (strategy
-    (G.observed.infoAt history i hmover)).map
-      (G.observed.actionEquiv history i hmover)
+  ControlledObservedGame.BehavioralStrategy.actionLawAt
+    G.observed strategy history hmover hnonterminal
 
 /-- Stochastic history policy induced jointly by strategic and chance laws. -/
 noncomputable def BehavioralProfile.toHistoryPolicy
@@ -93,7 +158,8 @@ noncomputable def BehavioralProfile.toHistoryPolicy
   fun history hnonterminal =>
     match hmover : G.observed.base.mover history.1 with
     | some i =>
-        (profile i).actionLawAt G history hmover
+        DiscreteControlledObservedChanceGame.BehavioralStrategy.actionLawAt
+          G (profile i) history hmover hnonterminal
     | none =>
         G.chanceKernel history ⟨hmover, hnonterminal⟩
 
@@ -107,7 +173,8 @@ theorem BehavioralProfile.toHistoryPolicy_of_mover
     (i : N)
     (hmover : G.observed.base.mover history.1 = some i) :
     profile.toHistoryPolicy G history hnonterminal =
-      (profile i).actionLawAt G history hmover := by
+      DiscreteControlledObservedChanceGame.BehavioralStrategy.actionLawAt
+        G (profile i) history hmover hnonterminal := by
   rw [BehavioralProfile.toHistoryPolicy]
   split
   · rename_i j hj
@@ -320,6 +387,52 @@ structure CertifiedBehavioralExecutionLaw
         G.behavioralHistoryLaw profile current fuel
 
 namespace CertifiedBehavioralExecutionLaw
+
+/-- Every support endpoint is an occurrence-sensitive continuation of the
+supplied current history.
+
+The witness is a legal typed suffix in the underlying Arena, and the equality
+retains the complete action-occurrence history rather than merely relating
+endpoint states. This is derived from `execution_eq`; callers do not need to
+unfold the concrete stochastic executor. -/
+theorem exists_suffix_of_mem_support
+    {G : DiscreteControlledObservedChanceGame N}
+    {terminalDecidable :
+      (state : G.observed.base.State) →
+        Decidable (G.observed.base.isTerminal state)}
+    (S :
+      @CertifiedBehavioralExecutionLaw N G terminalDecidable)
+    (profile : G.BehavioralProfile)
+    (current endpoint : G.observed.base.History)
+    (fuel : ℕ)
+    (hsupport : endpoint ∈ (S.historyLaw profile current fuel).support) :
+    ∃ suffix :
+        G.observed.base.toArena.History current.1 endpoint.1,
+      endpoint.2 = current.2.append suffix := by
+  rw [S.execution_eq profile current fuel] at hsupport
+  exact
+    G.observed.base.toArena.exists_suffix_of_mem_support_stochasticHistoryPMFFrom
+      (profile.toHistoryPolicy G) current endpoint fuel hsupport
+
+/-- A support endpoint from a terminal current history is the current history
+itself. Equivalently, the only continuation suffix is empty; the accompanying
+law-level statement is `terminal_absorbing`, which gives the Dirac law at
+`current`. -/
+theorem eq_current_of_terminal_of_mem_support
+    {G : DiscreteControlledObservedChanceGame N}
+    {terminalDecidable :
+      (state : G.observed.base.State) →
+        Decidable (G.observed.base.isTerminal state)}
+    (S :
+      @CertifiedBehavioralExecutionLaw N G terminalDecidable)
+    (profile : G.BehavioralProfile)
+    (current endpoint : G.observed.base.History)
+    (fuel : ℕ)
+    (hterminal : G.observed.base.isTerminal current.1)
+    (hsupport : endpoint ∈ (S.historyLaw profile current fuel).support) :
+    endpoint = current := by
+  rw [S.terminal_absorbing profile current fuel hterminal] at hsupport
+  exact (PMF.mem_support_pure_iff current endpoint).mp hsupport
 
 /-- Forget execution certificates and retain the raw history-law family. -/
 def toBoundedHistoryLawFamily
