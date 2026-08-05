@@ -374,4 +374,70 @@ theorem KrepsWilsonConsistencyCertificate.belief_converges
 
 end Assessment
 
+/-- A local continuation-value evaluator for a finite behavioral assessment.
+
+The eventual canonical instance should condition expected terminal utility on
+the assessment's occurrence beliefs and then execute continuation behavior.
+Keeping the evaluator explicit prevents this foundation from claiming an
+operational result before that bridge is proved. -/
+structure SequentialDecisionEvaluator where
+  /-- Value to the acting player of selecting one local behavioral law at the
+  given information state under the supplied assessment. -/
+  value :
+    G.Assessment →
+      (i : N) → (information : G.observed.InfoState i) →
+        PMF (G.observed.InfoAction i information) → ℝ
+
+namespace Assessment
+
+variable [Fintype N] [DecidableEq N]
+
+/-- Evaluator-relative sequential rationality: at every information state,
+the assessment's behavioral law weakly dominates every local behavioral
+deviation according to the supplied continuation evaluator. -/
+def IsSequentiallyRationalFor
+    (assessment : G.Assessment)
+    (evaluator : G.SequentialDecisionEvaluator) : Prop :=
+  ∀ (i : N) (information : G.observed.InfoState i)
+    (deviation : PMF (G.observed.InfoAction i information)),
+    evaluator.value assessment i information deviation ≤
+      evaluator.value assessment i information
+        (assessment.behavior i information)
+
+/-- Evaluator-relative finite sequential equilibrium.
+
+This predicate packages the correct consistency architecture with local
+rationality, but remains explicitly evaluator-relative until conditional
+continuation utility is installed. -/
+def IsSequentialEquilibriumFor
+    (assessment : G.Assessment)
+    (h : G.FiniteSequentialHypotheses)
+    (evaluator : G.SequentialDecisionEvaluator) : Prop :=
+  Assessment.IsKrepsWilsonConsistent G h assessment ∧
+    Assessment.IsSequentiallyRationalFor G assessment evaluator
+
+/-- Evaluator-relative sequential equilibrium implies Kreps--Wilson
+consistency. -/
+theorem IsSequentialEquilibriumFor.consistent
+    {assessment : G.Assessment}
+    {h : G.FiniteSequentialHypotheses}
+    {evaluator : G.SequentialDecisionEvaluator}
+    (equilibrium :
+      IsSequentialEquilibriumFor G assessment h evaluator) :
+    Assessment.IsKrepsWilsonConsistent G h assessment :=
+  equilibrium.1
+
+/-- Evaluator-relative sequential equilibrium implies local sequential
+rationality for the supplied evaluator. -/
+theorem IsSequentialEquilibriumFor.sequentiallyRational
+    {assessment : G.Assessment}
+    {h : G.FiniteSequentialHypotheses}
+    {evaluator : G.SequentialDecisionEvaluator}
+    (equilibrium :
+      IsSequentialEquilibriumFor G assessment h evaluator) :
+    Assessment.IsSequentiallyRationalFor G assessment evaluator :=
+  equilibrium.2
+
+end Assessment
+
 end ExtensiveGame.ObservedChanceGame
