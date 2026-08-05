@@ -37,14 +37,6 @@ abbrev DiscreteGeneralStrategy (i : N) :=
 abbrev DiscreteGeneralProfile :=
   (i : N) → G.DiscreteGeneralStrategy i
 
-/-- Compatibility alias for the former overly broad name. -/
-@[deprecated DiscreteGeneralStrategy (since := "2026-07-31")]
-abbrev GeneralStrategy := G.DiscreteGeneralStrategy
-
-/-- Compatibility alias for the former overly broad profile name. -/
-@[deprecated DiscreteGeneralProfile (since := "2026-07-31")]
-abbrev GeneralProfile := G.DiscreteGeneralProfile
-
 /-- Embed one behavioral strategy as a Dirac discrete general strategy. -/
 noncomputable def BehavioralStrategy.toDiscreteGeneral {i : N}
     (strategy : G.BehavioralStrategy i) :
@@ -56,20 +48,25 @@ noncomputable def BehavioralStrategy.toDiscreteGeneral {i : N}
 noncomputable def BehavioralProfile.toDiscreteGeneral
     (profile : G.BehavioralProfile) :
     G.DiscreteGeneralProfile :=
-  fun i => (profile i).toDiscreteGeneral G
+  fun i =>
+    ObservedGame.BehavioralStrategy.toDiscreteGeneral
+      G (profile i)
 
 /-- Embed a pure contingent plan as a Dirac discrete general strategy
 concentrated on its point-mass behavioral strategy. -/
 noncomputable def PureStrategy.toDiscreteGeneral {i : N}
     (strategy : G.PureStrategy i) :
     G.DiscreteGeneralStrategy i :=
-  (strategy.toBehavioral G).toDiscreteGeneral G
+  ObservedGame.BehavioralStrategy.toDiscreteGeneral G
+    (ObservedGame.PureStrategy.toBehavioral G strategy)
 
 /-- Embed a pure profile componentwise as a discrete general profile. -/
 noncomputable def PureProfile.toDiscreteGeneral
     (profile : G.PureProfile) :
     G.DiscreteGeneralProfile :=
-  fun i => (profile i).toDiscreteGeneral G
+  fun i =>
+    ObservedGame.PureStrategy.toDiscreteGeneral
+      G (profile i)
 
 namespace DiscreteGeneralProfile
 
@@ -107,62 +104,5 @@ theorem deviate_of_ne [DecidableEq N]
   simp [deviate, hne]
 
 end DiscreteGeneralProfile
-
-/-! Compatibility names for the pre-qualification API. -/
-
-/-- Compatibility alias for `BehavioralStrategy.toDiscreteGeneral`. -/
-@[deprecated BehavioralStrategy.toDiscreteGeneral (since := "2026-07-31")]
-noncomputable abbrev BehavioralStrategy.toGeneral :=
-  @BehavioralStrategy.toDiscreteGeneral
-
-/-- Compatibility alias for `BehavioralProfile.toDiscreteGeneral`. -/
-@[deprecated BehavioralProfile.toDiscreteGeneral (since := "2026-07-31")]
-noncomputable abbrev BehavioralProfile.toGeneral :=
-  @BehavioralProfile.toDiscreteGeneral
-
-/-- Compatibility alias for `PureStrategy.toDiscreteGeneral`. -/
-@[deprecated PureStrategy.toDiscreteGeneral (since := "2026-07-31")]
-noncomputable abbrev PureStrategy.toGeneral :=
-  @PureStrategy.toDiscreteGeneral
-
-/-- Compatibility alias for `PureProfile.toDiscreteGeneral`. -/
-@[deprecated PureProfile.toDiscreteGeneral (since := "2026-07-31")]
-noncomputable abbrev PureProfile.toGeneral :=
-  @PureProfile.toDiscreteGeneral
-
-namespace GeneralProfile
-
-/-- Compatibility alias for the discrete product law. -/
-@[deprecated DiscreteGeneralProfile.behavioralProfileLaw
-  (since := "2026-07-31")]
-noncomputable abbrev behavioralProfileLaw :=
-  @DiscreteGeneralProfile.behavioralProfileLaw
-
-/-- Compatibility alias for discrete general-profile deviation. -/
-@[deprecated DiscreteGeneralProfile.deviate (since := "2026-07-31")]
-abbrev deviate := @DiscreteGeneralProfile.deviate
-
-/-- Compatibility theorem for deviation at the changed player. -/
-@[deprecated DiscreteGeneralProfile.deviate_same
-  (since := "2026-07-31")]
-theorem deviate_same [DecidableEq N]
-    (profile : G.DiscreteGeneralProfile) (who : N)
-    (deviation : G.DiscreteGeneralStrategy who) :
-    DiscreteGeneralProfile.deviate G profile who deviation who =
-      deviation :=
-  DiscreteGeneralProfile.deviate_same G profile who deviation
-
-/-- Compatibility theorem for deviation at another player. -/
-@[deprecated DiscreteGeneralProfile.deviate_of_ne
-  (since := "2026-07-31")]
-theorem deviate_of_ne [DecidableEq N]
-    (profile : G.DiscreteGeneralProfile) (who other : N)
-    (deviation : G.DiscreteGeneralStrategy who)
-    (hne : other ≠ who) :
-    DiscreteGeneralProfile.deviate G profile who deviation other =
-      profile other :=
-  DiscreteGeneralProfile.deviate_of_ne G profile who other deviation hne
-
-end GeneralProfile
 
 end ExtensiveGame.ObservedGame
