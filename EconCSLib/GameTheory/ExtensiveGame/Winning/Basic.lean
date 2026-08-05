@@ -7,6 +7,7 @@ import EconCSLib.GameTheory.ExtensiveGame.Execution.Objective
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Quasi
 import Mathlib.Data.Fintype.Basic
+import Mathlib.Tactic.FinCases
 
 /-!
 # Winning conditions on complete extensive-game plays
@@ -236,19 +237,6 @@ def rebaseTailAt
 
 @[simp]
 theorem mem_rebaseTailAt_iff
-    (current : A.HistoryFrom start)
-    (W : A.WinningConditionFrom current N)
-    (i : N) (future : A.CompletePlayFrom current.1) :
-    future ∈ rebaseTailAt current W i ↔
-      CompletePlayFromHistory.splice current future ∈ W i :=
-  Iff.rfl
-
-/-- Compatibility alias for the former tail-rebasing name. -/
-@[deprecated rebaseTailAt (since := "2026-07-31")]
-abbrev continueAt := @rebaseTailAt
-
-@[deprecated mem_rebaseTailAt_iff (since := "2026-07-31")]
-theorem mem_continueAt_iff
     (current : A.HistoryFrom start)
     (W : A.WinningConditionFrom current N)
     (i : N) (future : A.CompletePlayFrom current.1) :
