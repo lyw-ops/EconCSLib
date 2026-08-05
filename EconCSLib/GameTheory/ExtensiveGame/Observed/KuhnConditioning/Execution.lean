@@ -35,7 +35,7 @@ theorem pureProfile_toBehavioral_toHistoryPolicy_of_mover
         history hnonterminal =
       PMF.pure
         (profile.actionAt
-          G.observed history i hmover) := by
+          G.observed history i hmover hnonterminal) := by
   rw [BehavioralProfile.toHistoryPolicy_of_mover
     G (profile.toBehavioral G.observed)
     history hnonterminal i hmover]
@@ -217,12 +217,15 @@ theorem posteriorMixedHistoryLawAlong_eq_behavioral
                 G.observed.base.mover finish =
                   some i := by
               simpa [current] using hmover
+            have hnonterminal' :
+                ¬ G.observed.base.isTerminal finish := by
+              simpa [current] using hterminal
             let information :=
               G.observed.infoAt
-                current i hmover
+                current i hmover hterminal
             let abstractToConcrete :=
               G.observed.actionEquiv
-                current i hmover
+                current i hmover hterminal
             let currentPlanLaw :
                 PMF
                   (G.observed.PureStrategy i) :=
@@ -266,7 +269,7 @@ theorem posteriorMixedHistoryLawAlong_eq_behavioral
                       abstractToConcrete =
                   _
               rw [certificate.behavioralizeMixedFrom_at_append
-                G.observed root suffix i hmover'
+                G.observed root suffix i hmover' hnonterminal'
                 (profile i)]
               rfl
             rw [htargetAction, PMF.bind_map]
@@ -331,7 +334,7 @@ theorem posteriorMixedHistoryLawAlong_eq_behavioral
             funext abstractAction
             have hposteriorUpdate :=
               profile.posteriorAfterDecisions_relative_snoc_of_mover
-                G.observed root suffix i hmover'
+                G.observed root suffix i hmover' hnonterminal'
                 abstractAction
             have ihAction :=
               ih
@@ -414,6 +417,37 @@ theorem mixedToBehavioral_stoppedHistoryLawFrom
       at hrealization
   simpa [mixedStoppedHistoryLawFrom]
     using hrealization
+
+/-- Countably supported mixed-to-behavioral realization at every finite
+execution depth, without a finite information-state hypothesis.
+
+This is the implemented beyond-finite Kuhn boundary. The mixed carrier is
+still a `PMF` over complete pure plans, the player type is finite, and the
+conclusion is equality of bounded complete-history laws at one selected root.
+The theorem permits infinitely many information states and arbitrarily long
+plays, but it does not assert equality of an infinite path measure or an
+arbitrary-measure realization. See [Kuhn 1953, §4 and Thm. 4] for the finite
+perfect-recall theorem and `docs/design/efg-infinite-kuhn-boundary.md` for the
+representation boundary. -/
+theorem countablySupportedMixedToBehavioral_boundedHistoryLaw
+    [Fintype N] [DecidableEq N]
+    [(state : G.observed.base.State) →
+      Decidable
+        (G.observed.base.isTerminal state)]
+    (certificate : G.observed.RecallCertificate)
+    (profile : G.observed.MixedProfile)
+    (current :
+      G.observed.base.toArena.HistoryFrom
+        G.observed.base.init)
+    (fuel : ℕ) :
+    G.mixedStoppedHistoryLawFrom profile current fuel =
+      G.observed.base.toArena.stochasticHistoryPMFFrom
+        (BehavioralProfile.toHistoryPolicy G
+          (certificate.behavioralizeMixedProfileFrom
+            G.observed current profile))
+        current fuel :=
+  G.mixedToBehavioral_stoppedHistoryLawFrom
+    certificate profile current fuel
 
 /-- Root-scoped conditional behavioralization preserves the complete bounded
 optional-payoff law of every arbitrary mixed profile. -/
