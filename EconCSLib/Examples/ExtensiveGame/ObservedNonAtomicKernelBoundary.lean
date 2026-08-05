@@ -331,7 +331,7 @@ noncomputable def presentation :
   realization := realization
   playerInformation := fun _time _information => false
   player_informationAt := by
-    intro time events i hmover
+    intro time events i hmover _hnonterminal
     have hroot :
         (latestEventState time events).1 = .root := by
       cases hstate : (latestEventState time events).1 with
@@ -416,11 +416,12 @@ def chanceObserved : ObservedGame Unit Unit where
   observe_public := fun _ _ => rfl
   InfoState := fun _ => Unit
   infoObserve := fun _ _ => ()
-  infoAt := fun _history _i _hmover => ()
-  infoAt_observe := fun _history _i _hmover => rfl
+  infoAt := fun _history _i _hmover _hnonterminal => ()
+  infoAt_observe :=
+    fun _history _i _hmover _hnonterminal => rfl
   InfoAction := fun _ _ => ℝ
   actionEquiv := by
-    intro history i hmover
+    intro history i hmover _hnonterminal
     exact
       (chanceBase_mover_ne_some history i hmover).elim
 
