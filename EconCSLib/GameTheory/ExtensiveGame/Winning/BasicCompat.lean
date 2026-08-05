@@ -27,15 +27,19 @@ def IsCompatibleWithPlayerStrategyFrom
     (play :
       G.base.toArena.CompletePlayFromHistory current) : Prop :=
   ∀ (n : ℕ)
-    (_hnonterminal :
+    (hnonterminal :
       ¬ G.base.isTerminal (play.historyAt n).1)
     (hmover :
       G.base.mover (play.historyAt n).1 = some i),
     play.historyAt (n + 1) =
       ⟨G.base.next (play.historyAt n).1
-          (strategy.actionAt G (play.historyAt n) hmover),
+          (ObservedGame.PureStrategy.actionAt G strategy
+            (play.historyAt n) hmover
+            hnonterminal),
         (play.historyAt n).2.snoc
-          (strategy.actionAt G (play.historyAt n) hmover)⟩
+          (ObservedGame.PureStrategy.actionAt G strategy
+            (play.historyAt n) hmover
+            hnonterminal)⟩
 
 /-- Root-started compatibility with one observed-game pure strategy. -/
 abbrev IsCompatibleWithPlayerStrategy
@@ -60,16 +64,16 @@ theorem PureProfile.completePlay_isCompatibleWithPlayerStrategy
       ⟨G.base.next
           (Arena.stoppedHistory
             (profile.toHistoryPolicy G hNoChance) n).1
-          ((profile i).actionAt G
+          (ObservedGame.PureStrategy.actionAt G (profile i)
             (Arena.stoppedHistory
               (profile.toHistoryPolicy G hNoChance) n)
-            hmover),
+            hmover hnonterminal),
         (Arena.stoppedHistory
             (profile.toHistoryPolicy G hNoChance) n).2.snoc
-          ((profile i).actionAt G
+          (ObservedGame.PureStrategy.actionAt G (profile i)
             (Arena.stoppedHistory
               (profile.toHistoryPolicy G hNoChance) n)
-            hmover)⟩
+            hmover hnonterminal)⟩
   rw [Arena.stoppedHistory,
     Arena.stoppedHistoryFrom_add
       (profile.toHistoryPolicy G hNoChance)
@@ -89,12 +93,12 @@ theorem PureProfile.completePlay_isCompatibleWithPlayerStrategy
             (Arena.HistoryFrom.nil
               G.base.toArena G.base.init) n)
           hnonterminal =
-        (profile i).actionAt G
+        ObservedGame.PureStrategy.actionAt G (profile i)
           (Arena.stoppedHistoryFrom
             (profile.toHistoryPolicy G hNoChance)
             (Arena.HistoryFrom.nil
               G.base.toArena G.base.init) n)
-          hmover :=
+          hmover hnonterminal :=
     profile.toHistoryPolicy_of_mover
       G hNoChance _ hnonterminal i hmover
   rw [haction]
@@ -109,10 +113,6 @@ def HasPathwiseWinningStrategy
   ∀ play : G.base.toArena.CompletePlayFrom G.base.init,
     G.IsCompatibleWithPlayerStrategy i strategy play →
       play ∈ W i
-
-/-- Compatibility alias for the former underspecified name. -/
-@[deprecated HasPathwiseWinningStrategy (since := "2026-07-31")]
-abbrev HasWinningStrategy := @HasPathwiseWinningStrategy
 
 /-- The selected strategy extends to at least one complete pure profile. -/
 def HasPureProfileExtension
