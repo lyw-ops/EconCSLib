@@ -4,21 +4,20 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
 import EconCSLib.GameTheory.ExtensiveGame.Basic
+import EconCSLib.GameTheory.ExtensiveGame.Structural.Reachability
 
 /-!
 # EconCSLib.GameTheory.ExtensiveGame.Execution.Reachability
 
-Reachability for the Arena extensive-game model.
+Payoff-aware reachability compatibility for the Arena extensive-game model.
 
-This module contains the representation-neutral path relation and the
-initial-state specialization used by execution infrastructure. Historical
-subgame and re-rooting constructions import this module, but canonical
-execution modules need not import those historical APIs.
+The representation-neutral `Arena.Reachable` relation and the payoff-free
+`ControlledGame.IsReachable` specialization live in
+`Structural.Reachability`. This module adds only the historical
+`ExtensiveGame.IsReachable` projection.
 
 ## Main definitions
 
-* `ExtensiveGame.Arena.Reachable` — finite transition reachability between
-  Arena states.
 * `ExtensiveGame.IsReachable` — reachability from an extensive game's initial
   state.
 -/
@@ -27,35 +26,13 @@ namespace ExtensiveGame
 
 variable {N : Type*} {U : Type*}
 
-/-- A state `t` is reachable from `s` if there is a path of transitions from
-`s` to `t`. -/
-inductive Arena.Reachable (A : Arena) : A.State → A.State → Prop where
-  | refl (s : A.State) : Arena.Reachable A s s
-  | step {s t : A.State} (a : A.Action s)
-      (h : Arena.Reachable A (A.next s a) t) :
-      Arena.Reachable A s t
-
-/-- Reachable is transitive. -/
-theorem Arena.Reachable.trans {A : Arena} {s t u : A.State}
-    (h1 : Arena.Reachable A s t) (h2 : Arena.Reachable A t u) :
-    Arena.Reachable A s u := by
-  induction h1 with
-  | refl => exact h2
-  | step a _ ih => exact Arena.Reachable.step a (ih h2)
-
-/-- One step extends reachability. -/
-theorem Arena.Reachable.step' {A : Arena} {s t : A.State}
-    (h : Arena.Reachable A s t) (a : A.Action t) :
-    Arena.Reachable A s (A.next t a) :=
-  h.trans (Arena.Reachable.step a (Arena.Reachable.refl _))
-
 /-- A state is reachable in the game if it is reachable from `init`. -/
 def IsReachable (G : ExtensiveGame N U) (s : G.State) : Prop :=
-  Arena.Reachable G.toArena G.init s
+  G.toControlledGame.IsReachable s
 
 /-- The initial state is always reachable. -/
 theorem isReachable_init (G : ExtensiveGame N U) : G.IsReachable G.init :=
-  Arena.Reachable.refl _
+  ControlledGame.isReachable_init G.toControlledGame
 
 /-- If `s` is reachable and we take action `a`, then `next s a` is reachable. -/
 theorem IsReachable.next {G : ExtensiveGame N U} {s : G.State}
