@@ -12,11 +12,11 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.WellFormed
 These examples show why full decision-information representation is a real
 finite-profile hypothesis rather than decorative metadata.
 
-Both presentations use the same one-state terminal base game. The first
-declares a ghost Boolean information carrier and fails
-`AllDecisionInfoRepresented`. The second uses an empty decision-information
-carrier, satisfies the structural finite-EFG certificate, and consequently
-has an inhabited total pure-profile type.
+The presentations use one-state terminal base games. A ghost Boolean
+information carrier fails `AllDecisionInfoRepresented`; an empty carrier
+satisfies the structural finite-EFG certificate. A separate regression shows
+that an irrelevant terminal player label fails mover normalization but still
+creates no strategy coordinate.
 -/
 
 namespace FiniteEFGWellFormedness
@@ -80,18 +80,17 @@ theorem playerLabeledCanonicalTerminalGame_not_decisionMoverCoherent :
   rcases hnonempty with ⟨action⟩
   exact action.elim
 
-/-- Without mover coherence, even the decision-history presentation honestly
-exposes the ill-formed terminal decision and its pure-profile type is empty.
--/
-theorem playerLabeledCanonicalTerminalGame_pureProfile_empty :
-    IsEmpty playerLabeledCanonicalTerminalGame.PureProfile := by
-  constructor
-  intro profile
-  have action :=
-    profile ()
-      (⟨Arena.HistoryFrom.nil terminalArena (), rfl⟩ :
-        playerLabeledCanonicalTerminalGame.InfoState ())
-  exact action.elim
+/-- Terminal mover labels do not create decision histories. Mover coherence is
+still a useful normalization certificate, but no longer a precondition for
+the complete-information strategy carrier to be inhabited. -/
+theorem playerLabeledCanonicalTerminalGame_pureProfile_nonempty :
+    Nonempty playerLabeledCanonicalTerminalGame.PureProfile := by
+  refine ⟨fun _player information => ?_⟩
+  exact
+    (information.property.2
+      (by
+        change IsEmpty Empty
+        infer_instance)).elim
 
 /-- A presentation with decision-information values that are never realized.
 -/
@@ -105,10 +104,10 @@ def ghostGame : ExtensiveGame.ObservedGame Unit Unit where
   observe_public := by simp
   InfoState := fun _ => Bool
   infoObserve := fun _ _ => ()
-  infoAt := fun _ _ _ => false
+  infoAt := fun _ _ _ _ => false
   infoAt_observe := by simp
   InfoAction := fun _ _ => Empty
-  actionEquiv := fun _ _ _ => Equiv.refl Empty
+  actionEquiv := fun _ _ _ _ => Equiv.refl Empty
 
 /-- Ghost decision information is rejected even though the compact base game
 is finite and terminal. -/
@@ -131,13 +130,13 @@ def cleanGame : ExtensiveGame.ObservedGame Unit Unit where
   observe_public := by simp
   InfoState := fun _ => Empty
   infoObserve := fun _ information => information.elim
-  infoAt := fun _ _ hmover => by
+  infoAt := fun _ _ hmover _hnonterminal => by
     simp [terminalBase] at hmover
   infoAt_observe := by
-    intro _ _ hmover
+    intro _ _ hmover _hnonterminal
     simp [terminalBase] at hmover
   InfoAction := fun _ information => information.elim
-  actionEquiv := fun _ _ hmover => by
+  actionEquiv := fun _ _ hmover _hnonterminal => by
     simp [terminalBase] at hmover
 
 theorem cleanGame_allDecisionInfoRepresented :
