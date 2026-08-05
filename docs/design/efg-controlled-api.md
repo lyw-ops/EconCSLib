@@ -28,7 +28,8 @@ Observed/
     ├── Morphism/
     │   ├── Core.lean
     │   ├── Subgame.lean
-    │   └── Recall.lean
+    │   ├── Recall.lean
+    │   └── Objective.lean
     ├── Law.lean
     ├── Law/
     │   ├── Discrete.lean
@@ -67,7 +68,7 @@ change those mathematical namespaces.
 | Need | Import |
 |---|---|
 | Base payoff-free observation/information record | `Observed.Controlled` |
-| Evaluator-relative continuation equilibrium | `Observed.Controlled.Semantics` |
+| Pure terminal/path-objective continuation and evaluator-relative semantics | `Observed.Controlled.Semantics` |
 | Finite discrete chance/history laws | `Observed.Controlled.Law.Discrete` |
 | Representation-independent complete-path laws | `Observed.Controlled.Law` |
 | Discrete complete-path realization | `Observed.Controlled.Law.DiscretePath` |
@@ -78,8 +79,19 @@ change those mathematical namespaces.
 | Broad payoff-free morphism transport | `Observed.Controlled.Morphism` |
 | Payoff-aware bridge only | `Observed.Controlled.Compat.<adapter>` |
 
+`Controlled.Morphism.Objective` is the operational boundary for strict
+terminal-objective preservation. It requires an explicit
+`TerminalObjectiveCompatible` commuting square; a structural isomorphism does
+not automatically preserve a caller-supplied history objective.
+
 ## Semantic contract boundaries
 
+- `ControlledObservedGame.infoAt`, `infoAt_observe`, and `actionEquiv` are
+  defined only at a nonterminal history whose mover is the named player.
+  Consequently a terminal endpoint carrying an unnormalized `some i` label
+  never creates a decision-information value or pure-strategy coordinate.
+  `DecisionMoverCoherent` remains the optional stronger certificate for
+  presentations that normalize reachable terminal mover labels to `none`.
 - `ControlledGame.NoChance` quantifies over the whole ambient state carrier.
   `ControlledGame.NoChanceOnHistories` quantifies only over legal complete
   histories from `init`, and is the certificate used by canonical pure
@@ -89,13 +101,17 @@ change those mathematical namespaces.
   information and mover coherence.
   `ReachablePureStrategyModelCertificate` adds reachable no-chance. Neither
   bundle contains finiteness, payoff, probability, recall, or termination.
-- `ContinuationSemantics` alone is an arbitrary evaluator. Its generic
-  solution concept is named evaluator-relative. There is intentionally no
-  generic standard-SPE name until concrete execution layers expose a common
-  canonical root-local strategy, deviation, and complete-path interface.
+- `terminalObjectiveContinuationGameForm` and
+  `pathObjectiveContinuationGameForm` execute the canonical full pure
+  strategy space and therefore support operationally named Nash/SPE
+  predicates. `ContinuationSemantics` alone remains an arbitrary evaluator;
+  its generic solution concepts stay explicitly evaluator-relative.
 - `BoundedHistoryLawFamily` is raw per-profile PMF data.
   `CertifiedBehavioralExecutionLaw` adds normalization, reachable legality,
   terminal absorption, and equality with the concrete behavioral executor.
+  Its derived `exists_suffix_of_mem_support` theorem proves every support
+  endpoint is the supplied current history followed by a legal typed suffix;
+  this is stronger and more reusable than root reachability alone.
 - `CompletePathLawSemantics` is a family of lawful per-root path marginals. It
   does not by itself construct one common causal process; restart,
   conditioning, and execution coherence require separate certificates.
@@ -105,15 +121,42 @@ change those mathematical namespaces.
   event. The always-emitting builder recovers the event-clock trace; no
   equivalence with arbitrary silent-event builders is claimed.
 
-Application code should normally import a stable `Interface.*` facade rather
-than an implementation module above.
+Application code should normally import a canonical pre-stability
+`Interface.*` facade rather than an implementation module above. These
+facades are governed recommendations, not current external
+source-compatibility guarantees.
+
+## Payoff-aware convergence audit
+
+The post-freeze ownership audit classifies the remaining parallel-looking
+surface as follows:
+
+| Surface | Classification | Authoritative owner |
+|---|---|---|
+| observation, public observation, decision information, and information actions | necessary state-payoff carrier projection | `ControlledObservedGame`; `ObservedGame.toControlledObservedGame` forgets only payoff |
+| pure strategy and pure profile carriers | definitional payoff-aware spelling | `ControlledObservedGame.PureStrategy` / `PureProfile` |
+| decision-information witness | definitional payoff-aware spelling | `ControlledObservedGame.DecisionInfoWitness` |
+| represented-information and mover-coherence predicates | definitional payoff-aware spelling | `ControlledObservedGame.AllDecisionInfoRepresented` / `DecisionMoverCoherent` |
+| finite-EFG certificate | definitional payoff-aware spelling | `ControlledObservedGame.FiniteEFGHypotheses` |
+| discrete behavioral strategy/profile carriers | definitional payoff-aware spelling | `ControlledObservedGame.BehavioralStrategy` / `BehavioralProfile` in `Controlled.Law.Discrete` |
+| no-chance pure history execution | canonical semantics plus payoff-aware continuation wrapper | controlled infrastructure owns the history policy; `ObservedGame` adds stopped payoff interpretation |
+| discrete chance kernel | necessary probability adapter | `DiscreteControlledObservedChanceGame`; payoff attachment/forgetting has two round trips |
+| terminal state payoff and payoff-compatible morphism square | genuinely payoff-aware semantics | `ObservedGame` and `ObservedGame.PayoffCompatibleIso` |
+
+`ObservedGame` remains a necessary downstream carrier because an endpoint
+state payoff is real additional data. It is not a second owner of pure,
+behavioral, represented-information, or finite certificates. The
+`ofControlledObservedGame`/`toControlledObservedGame` and
+`ofDiscreteControlledObservedChanceGame`/
+`toDiscreteControlledObservedChanceGame` round trips make the additive data
+boundary explicit.
 
 ## Enforced hierarchy invariants
 
 `scripts/check_efg_governance.py` verifies all of the following:
 
 1. the complete `Observed.Controlled` hierarchy is exactly the registered
-   carrier, five semantic owners, nine responsibility owners, two aggregate
+   carrier, five semantic owners, ten responsibility owners, two aggregate
    facades, and three payoff-aware adapters;
 2. a new flat sibling such as `Observed.ControlledFoo` is rejected;
 3. every module role has the matching lifecycle status;
@@ -132,5 +175,5 @@ docstring identifying the canonical aggregate role; unregistered import-only,
 zero-byte, and comment/namespace-only Lean files are rejected.
 
 No compatibility stub is kept at a former flat path. Any future module-path
-compatibility policy must be introduced deliberately after a stable public API
-is declared.
+compatibility policy must be introduced deliberately if a stable public EFG
+API is declared in the future.
