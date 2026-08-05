@@ -58,6 +58,20 @@ def base : ControlledGame (Fin 2) where
     | .hidden _ => some 1
     | .terminal _ _ => none
 
+/-- At each decision state, the abstract Boolean action is the concrete
+Boolean action. -/
+def baseActionEquiv (state : State) (i : Fin 2)
+    (hmover : base.mover state = some i)
+    (_hnonterminal : ¬ base.isTerminal state) :
+    Bool ≃ base.Action state := by
+  cases state with
+  | root =>
+      exact Equiv.refl Bool
+  | hidden bit =>
+      exact Equiv.refl Bool
+  | terminal bit guess =>
+      simp [base] at hmover
+
 /-- Both players receive only a trivial signal and have one decision
 information state. In particular player `1` cannot observe the hidden bit. -/
 def game : ControlledObservedGame (Fin 2) where
@@ -70,19 +84,11 @@ def game : ControlledObservedGame (Fin 2) where
   observe_public := by simp
   InfoState := fun _ => Unit
   infoObserve := fun _ _ => ()
-  infoAt := fun _ _ _ => ()
+  infoAt := fun _ _ _ _ => ()
   infoAt_observe := by simp
   InfoAction := fun _ _ => Bool
-  actionEquiv := by
-    intro history i hmover
-    generalize hstate : history.1 = state at hmover ⊢
-    cases state with
-    | root =>
-        exact Equiv.refl Bool
-    | hidden bit =>
-        exact Equiv.refl Bool
-    | terminal bit guess =>
-        simp [base] at hmover
+  actionEquiv := fun history i hmover hnonterminal =>
+    baseActionEquiv history.1 i hmover hnonterminal
 
 /-- The initial empty history. -/
 def initial : arena.HistoryFrom .root :=
@@ -192,7 +198,10 @@ theorem play_compatible_zero
   intro n hnonterminal hmover
   cases n with
   | zero =>
-      rfl
+      simp [ControlledObservedGame.PureStrategy.actionAt, game, initial,
+        afterHidden, base, arena, next, baseActionEquiv,
+        Arena.HistoryFrom.nil]
+      constructor <;> rfl
   | succ n =>
       cases n with
       | zero =>
@@ -223,7 +232,10 @@ theorem play_compatible_one
   | succ n =>
       cases n with
       | zero =>
-          rfl
+          simp [ControlledObservedGame.PureStrategy.actionAt, game, initial,
+            afterHidden, afterGuess, base, arena, next, baseActionEquiv,
+            Arena.HistoryFrom.nil]
+          constructor <;> rfl
       | succ n =>
           change
             (none : Option (Fin 2)) = some 1
