@@ -65,7 +65,8 @@ theorem map_behavioralHistoryPolicy
         htarget i htargetMover]
       exact
         r.observedRefinement.map_behavioralActionLaw
-          profile history i hmover htargetMover
+          profile history i hmover hsource
+          htargetMover htarget
   | none =>
       have hsourceChance :
           G.observed.base.isChanceState history.1 :=
