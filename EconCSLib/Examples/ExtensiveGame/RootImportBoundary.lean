@@ -6,17 +6,31 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import EconCSLib
 
 /-!
-# Stable root-import boundary
+# Root-aggregate import boundary
 
-The stable root aggregate intentionally exposes finite/PMF execution,
+The governed project root aggregate intentionally exposes finite/PMF execution,
 `GameTree` syntax, and backward-induction values, but not infinite path laws,
 historical endpoint-policy equilibrium, extraction, reference compilers, or
 the analytic measurable-kernel stack. These negative compilation guards
-prevent convenience imports from silently widening the stable surface.
+prevent convenience imports from silently widening the root surface. This
+regression does not promise external source compatibility for the
+pre-stability EFG paths it reaches.
 -/
 
 #check Arena.stochasticHistoryPMFFrom
 #check GameTree.value
+
+/--
+error: Unknown identifier `Examples.HistoryDiamond.arena`
+-/
+#guard_msgs in
+#check Examples.HistoryDiamond.arena
+
+/--
+error: Unknown identifier `Examples.TerminalStoppedExecution.arena`
+-/
+#guard_msgs in
+#check Examples.TerminalStoppedExecution.arena
 
 /--
 error: Unknown constant `Arena.pathLaw`
