@@ -3,7 +3,7 @@ Copyright (c) 2026 EconCSLib contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
-import EconCSLib.GameTheory.ExtensiveGame.Execution.DependentFiber
+import EconCSLib.Math.DependentFiber
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Game
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism.Core
 
@@ -102,29 +102,43 @@ structure InformationRefinement
   map_infoAt :
     ∀ (history : G.base.toArena.HistoryFrom G.base.init) (i : N)
       (hsource : G.base.mover history.1 = some i)
+      (hsource_nonterminal : ¬ G.base.isTerminal history.1)
       (htarget :
-        H.base.mover (historyIso.stateEquiv history).1 = some i),
-      G.infoAt history i hsource =
+        H.base.mover (historyIso.stateEquiv history).1 = some i)
+      (htarget_nonterminal :
+        ¬ H.base.isTerminal (historyIso.stateEquiv history).1),
+      G.infoAt history i hsource hsource_nonterminal =
         forgetInfo i
-          (H.infoAt (historyIso.stateEquiv history) i htarget)
+          (H.infoAt (historyIso.stateEquiv history) i htarget
+            htarget_nonterminal)
   /-- Lifting and realizing every coarse abstract action agrees with the
   strict map of the concrete source action. -/
   map_infoActionAt :
     ∀ (history : G.base.toArena.HistoryFrom G.base.init) (i : N)
       (hsource : G.base.mover history.1 = some i)
+      (hsource_nonterminal : ¬ G.base.isTerminal history.1)
       (htarget :
         H.base.mover (historyIso.stateEquiv history).1 = some i)
-      (action : G.InfoAction i (G.infoAt history i hsource)),
+      (htarget_nonterminal :
+        ¬ H.base.isTerminal (historyIso.stateEquiv history).1)
+      (action :
+        G.InfoAction i
+          (G.infoAt history i hsource hsource_nonterminal)),
       H.actionEquiv (historyIso.stateEquiv history) i htarget
+          htarget_nonterminal
           (infoActionEquiv i
             (H.infoAt
-              (historyIso.stateEquiv history) i htarget)
+              (historyIso.stateEquiv history) i htarget
+              htarget_nonterminal)
             (cast
               (congrArg (G.InfoAction i)
-                (map_infoAt history i hsource htarget))
+                (map_infoAt history i hsource
+                  hsource_nonterminal htarget
+                  htarget_nonterminal))
               action)) =
         historyIso.actionEquiv history
-          (G.actionEquiv history i hsource action)
+          (G.actionEquiv history i hsource
+            hsource_nonterminal action)
 namespace InformationRefinement
 
 variable {G H : ObservedGame N U}
@@ -205,22 +219,29 @@ def infoActionEquivAt
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource : G.base.mover history.1 = some i)
+    (hsource_nonterminal : ¬ G.base.isTerminal history.1)
     (htarget :
       H.base.mover
           (r.historyIso.stateEquiv history).1 =
-        some i) :
-    G.InfoAction i (G.infoAt history i hsource) ≃
+        some i)
+    (htarget_nonterminal :
+      ¬ H.base.isTerminal
+        (r.historyIso.stateEquiv history).1) :
+    G.InfoAction i
+        (G.infoAt history i hsource hsource_nonterminal) ≃
       H.InfoAction i
         (H.infoAt
           (r.historyIso.stateEquiv history)
-          i htarget) :=
+          i htarget htarget_nonterminal) :=
   Equiv.fiberEquivOverAt
     (r.forgetInfo i)
     (r.infoActionEquiv i)
-    (G.infoAt history i hsource)
+    (G.infoAt history i hsource hsource_nonterminal)
     (H.infoAt
-      (r.historyIso.stateEquiv history) i htarget)
-    (r.map_infoAt history i hsource htarget)
+      (r.historyIso.stateEquiv history) i htarget
+      htarget_nonterminal)
+    (r.map_infoAt history i hsource hsource_nonterminal
+      htarget htarget_nonterminal)
 
 @[simp]
 theorem infoActionEquivAt_apply
@@ -228,18 +249,27 @@ theorem infoActionEquivAt_apply
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource : G.base.mover history.1 = some i)
+    (hsource_nonterminal : ¬ G.base.isTerminal history.1)
     (htarget :
       H.base.mover
           (r.historyIso.stateEquiv history).1 =
         some i)
-    (action : G.InfoAction i (G.infoAt history i hsource)) :
-    r.infoActionEquivAt history i hsource htarget action =
+    (htarget_nonterminal :
+      ¬ H.base.isTerminal
+        (r.historyIso.stateEquiv history).1)
+    (action :
+      G.InfoAction i
+        (G.infoAt history i hsource hsource_nonterminal)) :
+    r.infoActionEquivAt history i hsource hsource_nonterminal
+        htarget htarget_nonterminal action =
       r.infoActionEquiv i
         (H.infoAt
-          (r.historyIso.stateEquiv history) i htarget)
+          (r.historyIso.stateEquiv history) i htarget
+          htarget_nonterminal)
         (cast
           (congrArg (G.InfoAction i)
-            (r.map_infoAt history i hsource htarget))
+            (r.map_infoAt history i hsource hsource_nonterminal
+              htarget htarget_nonterminal))
           action) :=
   rfl
 
@@ -250,16 +280,25 @@ theorem map_infoActionEquivAt
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource : G.base.mover history.1 = some i)
+    (hsource_nonterminal : ¬ G.base.isTerminal history.1)
     (htarget :
       H.base.mover
           (r.historyIso.stateEquiv history).1 =
         some i)
-    (action : G.InfoAction i (G.infoAt history i hsource)) :
+    (htarget_nonterminal :
+      ¬ H.base.isTerminal
+        (r.historyIso.stateEquiv history).1)
+    (action :
+      G.InfoAction i
+        (G.infoAt history i hsource hsource_nonterminal)) :
     H.actionEquiv (r.historyIso.stateEquiv history) i htarget
-        (r.infoActionEquivAt history i hsource htarget action) =
+        htarget_nonterminal
+        (r.infoActionEquivAt history i hsource hsource_nonterminal
+          htarget htarget_nonterminal action) =
       r.historyIso.actionEquiv history
-        (G.actionEquiv history i hsource action) :=
-  r.map_infoActionAt history i hsource htarget action
+        (G.actionEquiv history i hsource hsource_nonterminal action) :=
+  r.map_infoActionAt history i hsource hsource_nonterminal
+    htarget htarget_nonterminal action
 
 /-- Identity information refinement. -/
 def refl (G : ObservedGame N U) :
@@ -290,10 +329,12 @@ def refl (G : ObservedGame N U) :
     rfl
   infoActionEquiv := fun _ _ => Equiv.refl _
   map_infoAt := by
-    intro history i hsource htarget
+    intro history i hsource hsource_nonterminal
+      htarget htarget_nonterminal
     congr
   map_infoActionAt := by
-    intro history i hsource htarget action
+    intro history i hsource hsource_nonterminal
+      htarget htarget_nonterminal action
     rfl
 
 /-- Identity refinements leave local information actions unchanged. -/
@@ -302,9 +343,14 @@ theorem refl_infoActionEquivAt
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource htarget : G.base.mover history.1 = some i)
-    (action : G.InfoAction i (G.infoAt history i hsource)) :
+    (hsource_nonterminal htarget_nonterminal :
+      ¬ G.base.isTerminal history.1)
+    (action :
+      G.InfoAction i
+        (G.infoAt history i hsource hsource_nonterminal)) :
     (refl G).infoActionEquivAt
-        history i hsource htarget action =
+        history i hsource hsource_nonterminal
+        htarget htarget_nonterminal action =
       action := by
   rfl
 
@@ -316,27 +362,37 @@ def transInfoAt {K : ObservedGame N U}
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource : G.base.mover history.1 = some i)
+    (hsource_nonterminal : ¬ G.base.isTerminal history.1)
     (hmiddle :
       H.base.mover
           (r.historyIso.stateEquiv history).1 =
         some i)
+    (hmiddle_nonterminal :
+      ¬ H.base.isTerminal
+        (r.historyIso.stateEquiv history).1)
     (htarget :
       K.base.mover
           (s.historyIso.stateEquiv
             (r.historyIso.stateEquiv history)).1 =
-        some i) :
-    G.infoAt history i hsource =
+        some i)
+    (htarget_nonterminal :
+      ¬ K.base.isTerminal
+        (s.historyIso.stateEquiv
+          (r.historyIso.stateEquiv history)).1) :
+    G.infoAt history i hsource hsource_nonterminal =
       r.forgetInfo i
         (s.forgetInfo i
           (K.infoAt
             (s.historyIso.stateEquiv
               (r.historyIso.stateEquiv history))
-            i htarget)) :=
-  (r.map_infoAt history i hsource hmiddle).trans
+            i htarget htarget_nonterminal)) :=
+  (r.map_infoAt history i hsource hsource_nonterminal
+    hmiddle hmiddle_nonterminal).trans
     (congrArg (r.forgetInfo i)
       (s.map_infoAt
         (r.historyIso.stateEquiv history)
-        i hmiddle htarget))
+        i hmiddle hmiddle_nonterminal htarget
+        htarget_nonterminal))
 
 /-- Compose information refinements.
 
@@ -436,40 +492,55 @@ def trans {K : ObservedGame N U}
       (s.forgetInfo i information)).trans
         (s.infoActionEquiv i information)
   map_infoAt := by
-    intro history i hsource htarget
+    intro history i hsource hsource_nonterminal
+      htarget htarget_nonterminal
     let hmiddle :
         H.base.mover
             (r.historyIso.stateEquiv history).1 =
           some i := by
       rw [r.map_mover history]
       exact hsource
+    let hmiddle_nonterminal :
+        ¬ H.base.isTerminal
+          (r.historyIso.stateEquiv history).1 :=
+      (not_congr (r.historyIso.isTerminal_iff history)).mp
+        hsource_nonterminal
     exact
       r.transInfoAt s history i
-        hsource hmiddle htarget
+        hsource hsource_nonterminal
+        hmiddle hmiddle_nonterminal
+        htarget htarget_nonterminal
   map_infoActionAt := by
-    intro history i hsource htarget action
+    intro history i hsource hsource_nonterminal
+      htarget htarget_nonterminal action
     let middleHistory :=
       r.historyIso.stateEquiv history
     let hmiddle :
         H.base.mover middleHistory.1 = some i := by
       rw [r.map_mover history]
       exact hsource
+    let hmiddle_nonterminal :
+        ¬ H.base.isTerminal middleHistory.1 :=
+      (not_congr (r.historyIso.isTerminal_iff history)).mp
+        hsource_nonterminal
     let sourceInformation :=
-      G.infoAt history i hsource
+      G.infoAt history i hsource hsource_nonterminal
     let middleInformation :=
-      H.infoAt middleHistory i hmiddle
+      H.infoAt middleHistory i hmiddle hmiddle_nonterminal
     let targetInformation :=
       K.infoAt
         (s.historyIso.stateEquiv middleHistory)
-        i htarget
+        i htarget htarget_nonterminal
     have hFirst :
-        sourceInformation =
+      sourceInformation =
           r.forgetInfo i middleInformation :=
-      r.map_infoAt history i hsource hmiddle
+      r.map_infoAt history i hsource hsource_nonterminal
+        hmiddle hmiddle_nonterminal
     have hSecond :
-        middleInformation =
+      middleInformation =
           s.forgetInfo i targetInformation :=
-      s.map_infoAt middleHistory i hmiddle htarget
+      s.map_infoAt middleHistory i hmiddle hmiddle_nonterminal
+        htarget htarget_nonterminal
     let middleAction :=
       r.infoActionEquiv i middleInformation
         (cast
@@ -487,7 +558,9 @@ def trans {K : ObservedGame N U}
               (cast
                 (congrArg (G.InfoAction i)
                   (r.transInfoAt s history i
-                    hsource hmiddle htarget))
+                    hsource hsource_nonterminal
+                    hmiddle hmiddle_nonterminal
+                    htarget htarget_nonterminal))
                 action)) =
           targetAction := by
       exact
@@ -505,40 +578,44 @@ def trans {K : ObservedGame N U}
     change
       K.actionEquiv
           (s.historyIso.stateEquiv middleHistory)
-          i htarget
+          i htarget htarget_nonterminal
           (s.infoActionEquiv i targetInformation
             (r.infoActionEquiv i
               (s.forgetInfo i targetInformation)
               (cast
                 (congrArg (G.InfoAction i)
                   (r.transInfoAt s history i
-                    hsource hmiddle htarget))
+                    hsource hsource_nonterminal
+                    hmiddle hmiddle_nonterminal
+                    htarget htarget_nonterminal))
                 action))) =
         s.historyIso.actionEquiv middleHistory
           (r.historyIso.actionEquiv history
             (G.actionEquiv
-              history i hsource action))
+              history i hsource hsource_nonterminal action))
     rw [hcast]
     calc
       K.actionEquiv
           (s.historyIso.stateEquiv middleHistory)
-          i htarget targetAction =
+          i htarget htarget_nonterminal targetAction =
         s.historyIso.actionEquiv middleHistory
           (H.actionEquiv middleHistory i hmiddle
-            middleAction) := by
+            hmiddle_nonterminal middleAction) := by
               exact
                 s.map_infoActionAt middleHistory i
-                  hmiddle htarget middleAction
+                  hmiddle hmiddle_nonterminal
+                  htarget htarget_nonterminal middleAction
       _ = s.historyIso.actionEquiv middleHistory
           (r.historyIso.actionEquiv history
             (G.actionEquiv
-              history i hsource action)) := by
+              history i hsource hsource_nonterminal action)) := by
               exact
                 congrArg
                   (s.historyIso.actionEquiv
                     middleHistory)
                   (r.map_infoActionAt
-                    history i hsource hmiddle action)
+                    history i hsource hsource_nonterminal
+                    hmiddle hmiddle_nonterminal action)
 
 /-- The cast-stable refinement action equivalence is functorial under
 composition. -/
@@ -548,40 +625,56 @@ theorem trans_infoActionEquivAt {K : ObservedGame N U}
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource : G.base.mover history.1 = some i)
+    (hsource_nonterminal : ¬ G.base.isTerminal history.1)
     (hmiddle :
       H.base.mover
           (r.historyIso.stateEquiv history).1 =
         some i)
+    (hmiddle_nonterminal :
+      ¬ H.base.isTerminal
+        (r.historyIso.stateEquiv history).1)
     (htarget :
       K.base.mover
           (s.historyIso.stateEquiv
             (r.historyIso.stateEquiv history)).1 =
         some i)
-    (action : G.InfoAction i (G.infoAt history i hsource)) :
+    (htarget_nonterminal :
+      ¬ K.base.isTerminal
+        (s.historyIso.stateEquiv
+          (r.historyIso.stateEquiv history)).1)
+    (action :
+      G.InfoAction i
+        (G.infoAt history i hsource hsource_nonterminal)) :
     (r.trans s).infoActionEquivAt
-        history i hsource htarget action =
+        history i hsource hsource_nonterminal
+        htarget htarget_nonterminal action =
       s.infoActionEquivAt
         (r.historyIso.stateEquiv history)
-        i hmiddle htarget
+        i hmiddle hmiddle_nonterminal
+        htarget htarget_nonterminal
         (r.infoActionEquivAt
-          history i hsource hmiddle action) := by
+          history i hsource hsource_nonterminal
+          hmiddle hmiddle_nonterminal action) := by
   simpa [infoActionEquivAt, trans, transInfoAt] using
     Equiv.fiberEquivOverAt_trans_apply
       (r.forgetInfo i)
       (s.forgetInfo i)
       (r.infoActionEquiv i)
       (s.infoActionEquiv i)
-      (G.infoAt history i hsource)
+      (G.infoAt history i hsource hsource_nonterminal)
       (H.infoAt
-        (r.historyIso.stateEquiv history) i hmiddle)
+        (r.historyIso.stateEquiv history) i hmiddle
+        hmiddle_nonterminal)
       (K.infoAt
         (s.historyIso.stateEquiv
           (r.historyIso.stateEquiv history))
-        i htarget)
-      (r.map_infoAt history i hsource hmiddle)
+        i htarget htarget_nonterminal)
+      (r.map_infoAt history i hsource hsource_nonterminal
+        hmiddle hmiddle_nonterminal)
       (s.map_infoAt
         (r.historyIso.stateEquiv history)
-        i hmiddle htarget)
+        i hmiddle hmiddle_nonterminal
+        htarget htarget_nonterminal)
       action
 
 /-- Identity is a left unit for information-refinement composition. -/
