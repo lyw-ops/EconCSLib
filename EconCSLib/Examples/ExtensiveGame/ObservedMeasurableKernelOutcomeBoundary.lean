@@ -83,11 +83,11 @@ def observed : ObservedGame Unit ℝ where
   observe_public := fun _ _ => rfl
   InfoState := fun _ => Unit
   infoObserve := fun _ _ => ()
-  infoAt := fun _ _ _ => ()
-  infoAt_observe := fun _ _ _ => rfl
+  infoAt := fun _ _ _ _ => ()
+  infoAt_observe := fun _ _ _ _ => rfl
   InfoAction := fun _ _ => Bool
   actionEquiv := by
-    intro history i hmover
+    intro history i hmover _hnonterminal
     cases i
     cases hstate : history.1 with
     | root =>
@@ -195,7 +195,7 @@ noncomputable def presentation :
   realization := realization
   playerInformation := fun _ _ => rootHistory
   player_informationAt := by
-    intro time events i hmover
+    intro time events i hmover _hnonterminal
     cases i
     change latestEventState time events = rootHistory
     apply eq_rootHistory_of_endpoint_root
