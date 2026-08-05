@@ -452,13 +452,13 @@ def observedChanceGameCore
       InfoState := D.InfoState
       infoObserve := fun i information =>
         some (D.infoObserve i information)
-      infoAt := fun history i hmover =>
+      infoAt := fun history i hmover _hnonterminal =>
         infoAt G D history.1 i hmover
       infoAt_observe := by
-        intro history i hmover
+        intro history i hmover _hnonterminal
         exact infoAt_observe G D history.1 i hmover
       InfoAction := D.InfoAction
-      actionEquiv := fun history i hmover =>
+      actionEquiv := fun history i hmover _hnonterminal =>
         infoActionEquiv G D history.1 i hmover }
   chanceKernel := chanceKernel G rootPayoff
 
