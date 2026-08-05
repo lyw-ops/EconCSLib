@@ -65,8 +65,9 @@ explicitly quotient/restrict strategies to represented information.
 | Quasi | a nonempty set of actions at each information state | nondeterministic permission, not probability |
 
 The canonical discrete names are `DiscreteGeneralStrategy` and
-`DiscreteGeneralProfile`; the shorter former names remain deprecated
-compatibility aliases. New analytic variants live in the analytic layer and
+`DiscreteGeneralProfile`; the shorter former names were removed during
+pre-stability rather than retained as compatibility aliases. New analytic
+variants live in the analytic layer and
 require explicit measurable structures. Do not claim that `PMF` represents
 every mixed or general strategy on an infinite or continuous strategy space.
 
