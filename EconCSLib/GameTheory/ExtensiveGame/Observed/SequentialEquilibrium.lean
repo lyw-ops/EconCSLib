@@ -288,4 +288,90 @@ theorem bayesBelief_tsum
 
 end FiniteSequentialHypotheses
 
+namespace Assessment
+
+variable [Fintype N] [DecidableEq N]
+
+/-- Kreps--Wilson consistency witnessed by one common sequence of completely
+mixed behavioral profiles.
+
+The positivity field is explicit because full support of player behavior does
+not turn a zero-probability chance branch into a positive-probability branch.
+All convergence is pointwise convergence in Mathlib's topology on
+`ℝ≥0∞`. -/
+structure KrepsWilsonConsistencyCertificate
+    (h : G.FiniteSequentialHypotheses)
+    (assessment : G.Assessment) where
+  /-- Common perturbation sequence. -/
+  tremble : ℕ → G.observed.BehavioralProfile
+  /-- Every perturbation puts positive mass on every player action. -/
+  completelyMixed :
+    ∀ n, BehavioralProfile.IsCompletelyMixed G (tremble n)
+  /-- Every information set has a Bayes denominator along the perturbation
+  sequence. -/
+  positiveReach :
+    ∀ (n : ℕ) (i : N)
+      (information : G.observed.InfoState i),
+      FiniteSequentialHypotheses.HasPositiveInformationReach
+        G h (tremble n) i information
+  /-- Perturbed behavior converges pointwise to limiting behavior. -/
+  behaviorTendsTo :
+    BehavioralProfile.TendsTo G tremble assessment.behavior
+  /-- Bayes beliefs induced by the perturbations converge pointwise to the
+  limiting belief system. -/
+  beliefsTendTo :
+    ∀ (i : N) (information : G.observed.InfoState i)
+      (occurrence :
+        G.observed.DecisionInfoWitness i information),
+      Tendsto
+        (fun n =>
+          FiniteSequentialHypotheses.bayesBelief G h
+            (tremble n) i information
+            (positiveReach n i information)
+            occurrence)
+        atTop
+        (𝓝 (assessment.beliefs i information occurrence))
+
+/-- Propositional consistency of an assessment: a common completely mixed
+perturbation certificate exists. -/
+def IsKrepsWilsonConsistent
+    (h : G.FiniteSequentialHypotheses)
+    (assessment : G.Assessment) : Prop :=
+  Nonempty (KrepsWilsonConsistencyCertificate G h assessment)
+
+/-- A consistent assessment exposes the pointwise convergence of its
+completely mixed behavioral perturbations. -/
+theorem KrepsWilsonConsistencyCertificate.behavior_converges
+    {h : G.FiniteSequentialHypotheses}
+    {assessment : G.Assessment}
+    (consistent :
+      Assessment.KrepsWilsonConsistencyCertificate
+        G h assessment) :
+    BehavioralProfile.TendsTo
+      G consistent.tremble assessment.behavior :=
+  consistent.behaviorTendsTo
+
+/-- A consistent assessment exposes pointwise convergence of every induced
+Bayes belief. -/
+theorem KrepsWilsonConsistencyCertificate.belief_converges
+    {h : G.FiniteSequentialHypotheses}
+    {assessment : G.Assessment}
+    (consistent :
+      Assessment.KrepsWilsonConsistencyCertificate
+        G h assessment)
+    (i : N) (information : G.observed.InfoState i)
+    (occurrence :
+      G.observed.DecisionInfoWitness i information) :
+    Tendsto
+      (fun n =>
+        FiniteSequentialHypotheses.bayesBelief G h
+          (consistent.tremble n) i information
+          (consistent.positiveReach n i information)
+          occurrence)
+      atTop
+      (𝓝 (assessment.beliefs i information occurrence)) :=
+  consistent.beliefsTendTo i information occurrence
+
+end Assessment
+
 end ExtensiveGame.ObservedChanceGame
