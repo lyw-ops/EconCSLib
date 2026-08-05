@@ -197,7 +197,7 @@ theorem toHistoryKernelPolicy_of_mover
     (i : N)
     (hmover : G.observed.base.mover history.1 = some i) :
     toHistoryKernelPolicy G profile history hnonterminal =
-      profile.actionLawAt G.observed history i hmover := by
+      profile.actionLawAt G.observed history i hmover hnonterminal := by
   exact toHistoryPolicy_of_mover
     G profile history hnonterminal i hmover
 
@@ -229,7 +229,8 @@ theorem historyKernelArena_stepLaw_of_mover
       G.observed.base.init).stepLaw
         (toHistoryKernelPolicy G profile)
         history hnonterminal =
-      (profile.actionLawAt G.observed history i hmover).map
+      (profile.actionLawAt G.observed history i hmover
+        hnonterminal).map
         (fun action =>
           ⟨G.observed.base.next history.1 action,
             history.2.snoc action⟩) := by
@@ -302,7 +303,8 @@ theorem toMeasurable_stepKernel_apply_of_mover
         history =
       @PMF.toMeasure
         (G.observed.base.toArena.HistoryFrom G.observed.base.init) ⊤
-        ((profile.actionLawAt G.observed history i hmover).map
+        ((profile.actionLawAt G.observed history i hmover
+          hnonterminal).map
           (fun action =>
             ⟨G.observed.base.next history.1 action,
               history.2.snoc action⟩)) := by
