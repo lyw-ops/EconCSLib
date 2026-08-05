@@ -3,7 +3,7 @@
 
 This is intentionally a source-graph check rather than a Lean parser. It
 guards the documented module register, explicit import-only facade lifecycle,
-stable facade closures, root aggregate boundary, and dependency direction.
+governed facade closures, root aggregate boundary, and dependency direction.
 Lean elaboration and placeholder checks remain separate CI steps.
 """
 
@@ -11,9 +11,11 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass
+import hashlib
 from pathlib import Path
 import re
 import sys
+from urllib.parse import unquote
 
 
 IMPORT_RE = re.compile(
@@ -23,6 +25,15 @@ ANY_IMPORT_RE = re.compile(
     r"^import\s+([A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)\s*$", re.MULTILINE
 )
 MODULE_ROW_RE = re.compile(r"^\| `(EconCSLib\.[^`]+)` \|", re.MULTILINE)
+STATUS_SUMMARY_ROW_RE = re.compile(
+    r"^\| (Canonical|Frontend|Historical|Compatibility|Experimental|Internal) "
+    r"\| (\d+) \|$",
+    re.MULTILINE,
+)
+MARKDOWN_LINK_RE = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
+FULL_MODULE_REFERENCE_RE = re.compile(
+    r"`(EconCSLib(?:\.[A-Za-z0-9_]+)+)`"
+)
 DECLARATION_RE = re.compile(
     r"^(?:private\s+|protected\s+|noncomputable\s+|unsafe\s+)*"
     r"(?:abbrev|axiom|class|def|example|inductive|instance|lemma|opaque|"
@@ -57,6 +68,7 @@ CANONICAL_IMPORT_ONLY_MODULES = {
     f"{EFG_PREFIX}Interface.Execution.Infinite",
     f"{EFG_PREFIX}Interface.Execution.Analytic",
     f"{EFG_PREFIX}Interface.Relations.Discrete",
+    f"{EFG_PREFIX}Interface.Preservation",
     f"{EFG_PREFIX}Interface.Equilibrium.Discrete",
     f"{EFG_PREFIX}Interface.Equilibrium.Analytic",
     f"{EFG_PREFIX}Interface.Restart",
@@ -83,6 +95,7 @@ REMOVED_MODULE_PATHS = {
     f"{EFG_PREFIX}Observed.BehaviorRefinement",
     f"{EFG_PREFIX}Observed.DeferredSampling",
     f"{EFG_PREFIX}Observed.KuhnConditioning",
+    f"{EFG_PREFIX}Observed.PathLawEquivalence",
     f"{EFG_PREFIX}Interface.Execution.Discrete",
     f"{EFG_PREFIX}Interface.Relations",
     f"{EFG_PREFIX}Interface.Equilibrium",
@@ -94,33 +107,52 @@ REMOVED_MODULE_PATHS = {
     f"{EFG_PREFIX}Probability.DeferredSampling",
     f"{EFG_PREFIX}Probability.FiniteProductCoupling",
     "EconCSLib.GameTheory.GameForm.Continuation",
+    f"{EFG_PREFIX}Execution.DependentFiber",
+    f"{EFG_PREFIX}Execution.StochasticNaturality",
 }
 
 EXPECTED_CLOSURES = {
-    "EconCSLib": (36, 163),
+    "EconCSLib": (38, 166),
     f"{EFG_PREFIX}Interface.StructuralCore": (5, 5),
-    f"{EFG_PREFIX}Interface.Core": (14, 14),
-    f"{EFG_PREFIX}Interface.Objective": (31, 36),
-    f"{EFG_PREFIX}Interface.Winning": (34, 39),
-    f"{EFG_PREFIX}Interface.Winning.Stochastic": (49, 56),
-    f"{EFG_PREFIX}Interface.Execution.Finite": (32, 39),
-    f"{EFG_PREFIX}Interface.Execution.Infinite": (37, 44),
-    f"{EFG_PREFIX}Interface.Execution.Analytic": (57, 65),
-    f"{EFG_PREFIX}Interface.Relations.Discrete": (38, 45),
-    f"{EFG_PREFIX}Interface.Equilibrium.Discrete": (65, 81),
-    f"{EFG_PREFIX}Interface.Equilibrium.Analytic": (95, 112),
-    f"{EFG_PREFIX}Interface.Restart": (103, 120),
-    f"{EFG_PREFIX}Interface.Compilation.Discrete": (86, 104),
+    f"{EFG_PREFIX}Interface.Core": (17, 17),
+    f"{EFG_PREFIX}Interface.Objective": (33, 39),
+    f"{EFG_PREFIX}Interface.Winning": (36, 42),
+    f"{EFG_PREFIX}Interface.Winning.Stochastic": (51, 59),
+    f"{EFG_PREFIX}Interface.Execution.Finite": (34, 42),
+    f"{EFG_PREFIX}Interface.Execution.Infinite": (39, 47),
+    f"{EFG_PREFIX}Interface.Execution.Analytic": (59, 68),
+    f"{EFG_PREFIX}Interface.Relations.Discrete": (40, 48),
+    f"{EFG_PREFIX}Interface.Preservation": (23, 29),
+    f"{EFG_PREFIX}Interface.Equilibrium.Discrete": (68, 85),
+    f"{EFG_PREFIX}Interface.Equilibrium.Analytic": (99, 117),
+    f"{EFG_PREFIX}Interface.Restart": (107, 125),
+    f"{EFG_PREFIX}Interface.Compilation.Discrete": (89, 108),
+}
+
+GOVERNANCE_CLOSURE_LABELS = {
+    entry: entry.removeprefix(EFG_PREFIX)
+    for entry in EXPECTED_CLOSURES
 }
 
 STRUCTURAL_CORE = f"{EFG_PREFIX}Interface.StructuralCore"
 EXPECTED_STRUCTURAL_CORE_EFG_CLOSURE = {
-    f"{EFG_PREFIX}Basic",
-    f"{EFG_PREFIX}Execution.Reachability",
-    f"{EFG_PREFIX}Execution.History",
+    f"{EFG_PREFIX}Structural.Basic",
+    f"{EFG_PREFIX}Structural.Reachability",
+    f"{EFG_PREFIX}Structural.History",
     f"{EFG_PREFIX}Execution.CompletePlay",
     f"{EFG_PREFIX}Observed.Controlled",
 }
+
+# No minimal carrier currently carries a source-level compatibility freeze.
+# Keep the generic fingerprint machinery below so a later, explicit freeze
+# decision can add reviewed contracts without redesigning the checker.
+FROZEN_MINIMAL_CORE_STRUCTURES = {}
+
+CONTROLLED_OBSERVED_MODULE = f"{EFG_PREFIX}Observed.Controlled"
+CONTROLLED_OBSERVED_START = (
+    r"^structure ControlledObservedGame \(N : Type uN\) where\s*$"
+)
+CONTROLLED_OBSERVED_END = r"^namespace ControlledObservedGame\s*$"
 
 CONTROLLED_INFRASTRUCTURE_RECALL = (
     f"{EFG_PREFIX}Observed.Controlled.Infrastructure.Recall"
@@ -131,40 +163,43 @@ CONTROLLED_INFRASTRUCTURE_WELL_FORMED = (
 CONTROLLED_MORPHISM_CORE = f"{EFG_PREFIX}Observed.Controlled.Morphism.Core"
 CONTROLLED_MORPHISM_SUBGAME = f"{EFG_PREFIX}Observed.Controlled.Morphism.Subgame"
 CONTROLLED_MORPHISM_RECALL = f"{EFG_PREFIX}Observed.Controlled.Morphism.Recall"
+CONTROLLED_MORPHISM_OBJECTIVE = (
+    f"{EFG_PREFIX}Observed.Controlled.Morphism.Objective"
+)
 
 EXPECTED_EXACT_EFG_CLOSURES = {
     CONTROLLED_INFRASTRUCTURE_RECALL: {
-        f"{EFG_PREFIX}Basic",
-        f"{EFG_PREFIX}Execution.Reachability",
-        f"{EFG_PREFIX}Execution.History",
+        f"{EFG_PREFIX}Structural.Basic",
+        f"{EFG_PREFIX}Structural.Reachability",
+        f"{EFG_PREFIX}Structural.History",
         f"{EFG_PREFIX}Execution.CompletePlay",
         f"{EFG_PREFIX}Observed.Controlled",
         CONTROLLED_INFRASTRUCTURE_WELL_FORMED,
     },
     CONTROLLED_INFRASTRUCTURE_WELL_FORMED: {
-        f"{EFG_PREFIX}Basic",
-        f"{EFG_PREFIX}Execution.Reachability",
-        f"{EFG_PREFIX}Execution.History",
+        f"{EFG_PREFIX}Structural.Basic",
+        f"{EFG_PREFIX}Structural.Reachability",
+        f"{EFG_PREFIX}Structural.History",
         f"{EFG_PREFIX}Execution.CompletePlay",
         f"{EFG_PREFIX}Observed.Controlled",
     },
     CONTROLLED_MORPHISM_CORE: {
         f"{EFG_PREFIX}Basic",
-        f"{EFG_PREFIX}Execution.Reachability",
-        f"{EFG_PREFIX}Execution.History",
+        f"{EFG_PREFIX}Structural.Basic",
+        f"{EFG_PREFIX}Structural.Reachability",
+        f"{EFG_PREFIX}Structural.History",
         f"{EFG_PREFIX}Execution.CompletePlay",
         f"{EFG_PREFIX}Execution.StoppedExecution",
-        f"{EFG_PREFIX}Execution.DependentFiber",
         f"{EFG_PREFIX}Relations.Discrete.Morphism",
         f"{EFG_PREFIX}Observed.Controlled",
     },
     CONTROLLED_MORPHISM_SUBGAME: {
         f"{EFG_PREFIX}Basic",
-        f"{EFG_PREFIX}Execution.Reachability",
-        f"{EFG_PREFIX}Execution.History",
+        f"{EFG_PREFIX}Structural.Basic",
+        f"{EFG_PREFIX}Structural.Reachability",
+        f"{EFG_PREFIX}Structural.History",
         f"{EFG_PREFIX}Execution.CompletePlay",
         f"{EFG_PREFIX}Execution.StoppedExecution",
-        f"{EFG_PREFIX}Execution.DependentFiber",
         f"{EFG_PREFIX}Relations.Discrete.Morphism",
         f"{EFG_PREFIX}Observed.Controlled",
         f"{EFG_PREFIX}Observed.Controlled.Infrastructure.Subgame",
@@ -172,11 +207,11 @@ EXPECTED_EXACT_EFG_CLOSURES = {
     },
     CONTROLLED_MORPHISM_RECALL: {
         f"{EFG_PREFIX}Basic",
-        f"{EFG_PREFIX}Execution.Reachability",
-        f"{EFG_PREFIX}Execution.History",
+        f"{EFG_PREFIX}Structural.Basic",
+        f"{EFG_PREFIX}Structural.Reachability",
+        f"{EFG_PREFIX}Structural.History",
         f"{EFG_PREFIX}Execution.CompletePlay",
         f"{EFG_PREFIX}Execution.StoppedExecution",
-        f"{EFG_PREFIX}Execution.DependentFiber",
         f"{EFG_PREFIX}Relations.Discrete.Morphism",
         f"{EFG_PREFIX}Observed.Controlled",
         CONTROLLED_INFRASTRUCTURE_WELL_FORMED,
@@ -199,6 +234,7 @@ EXPECTED_CONTROLLED_AGGREGATE_IMPORTS = {
         CONTROLLED_MORPHISM_CORE,
         CONTROLLED_MORPHISM_SUBGAME,
         CONTROLLED_MORPHISM_RECALL,
+        CONTROLLED_MORPHISM_OBJECTIVE,
     },
 }
 
@@ -228,6 +264,8 @@ CONTROLLED_MODULE_ROLES = {
     f"{EFG_PREFIX}Observed.Controlled.Morphism.Subgame":
         "canonical-responsibility-owner",
     f"{EFG_PREFIX}Observed.Controlled.Morphism.Recall":
+        "canonical-responsibility-owner",
+    CONTROLLED_MORPHISM_OBJECTIVE:
         "canonical-responsibility-owner",
     f"{EFG_PREFIX}Observed.Controlled.Compat.DiscreteLaw":
         "payoff-aware-adapter",
@@ -391,13 +429,17 @@ HISTORICAL_IMPORT_ALLOWLIST = {
 
 FORBIDDEN_DIRECT_IMPORTS = {
     (
-        f"{EFG_PREFIX}Execution.History",
+        f"{EFG_PREFIX}Structural.History",
         f"{EFG_PREFIX}Subgame",
     ): "canonical history infrastructure must depend only on reachability",
     (
         f"{EFG_PREFIX}StochasticGameTree",
         f"{EFG_PREFIX}GameTreeSPE",
     ): "stochastic tree syntax needs only the structural GameTree module",
+    (
+        "EconCSLib.Math.DependentFiber",
+        f"{EFG_PREFIX}Relations.Discrete.Morphism",
+    ): "game-independent dependent-fiber calculus cannot import EFG relations",
 }
 
 # These modules form the payoff-free dependency spine.  Their complete local
@@ -405,8 +447,7 @@ FORBIDDEN_DIRECT_IMPORTS = {
 # compatibility adapters, equilibrium/simulation implementations, or the
 # payoff-aware winning layer.
 PAYOFF_FREE_CORE_BOUNDARIES = {
-    f"{EFG_PREFIX}Execution.DependentFiber",
-    f"{EFG_PREFIX}Execution.StochasticNaturality",
+    f"{EFG_PREFIX}Relations.Discrete.StochasticNaturality",
     f"{EFG_PREFIX}Observed.Controlled",
     f"{EFG_PREFIX}Observed.Controlled.Infrastructure",
     f"{EFG_PREFIX}Observed.Controlled.Infrastructure.Core",
@@ -419,6 +460,7 @@ PAYOFF_FREE_CORE_BOUNDARIES = {
     CONTROLLED_MORPHISM_CORE,
     CONTROLLED_MORPHISM_SUBGAME,
     CONTROLLED_MORPHISM_RECALL,
+    CONTROLLED_MORPHISM_OBJECTIVE,
     f"{EFG_PREFIX}Observed.Controlled.Semantics",
     f"{EFG_PREFIX}Observed.Controlled.Law.Discrete",
     f"{EFG_PREFIX}Observed.Controlled.Law",
@@ -463,6 +505,21 @@ MAXIMUM_PATH_LAW_FORBIDDEN_NAMES = {
 FORBIDDEN_LEGACY_ROOT_NAMES = {
     "IsDesignatedContinuationRoot",
     "legacyContinuationRootPresentation",
+}
+
+EMBEDDED_EXAMPLE_NAMESPACE_RE = re.compile(
+    r"^namespace\s+Examples(?:\.|\s|$)",
+    re.MULTILINE,
+)
+
+MOVED_EXAMPLE_DECLARATIONS = {
+    f"{EFG_PREFIX}StochasticGameTree": {
+        "fairCoinLaw",
+        "fairCoinLaw_apply",
+        "fairCoinLaw_total",
+        "fairCoinGame",
+        "fairCoin_expected_player0",
+    },
 }
 
 
@@ -632,6 +689,73 @@ def strip_lean_comments_and_strings(text: str) -> str:
     return "".join(output)
 
 
+def frozen_structure_digest(
+    source: str, start_pattern: str, end_pattern: str
+) -> str | None:
+    """Hash one normalized top-level structure declaration.
+
+    The end anchor is the namespace that immediately follows the declaration
+    in its owner module. Returning `None` makes missing, renamed, duplicated,
+    or relocated declarations an explicit governance failure.
+    """
+
+    stripped = strip_lean_comments_and_strings(source)
+    start_matches = list(re.finditer(start_pattern, stripped, re.MULTILINE))
+    if len(start_matches) != 1:
+        return None
+    start = start_matches[0]
+    end_matches = list(
+        re.finditer(end_pattern, stripped[start.end():], re.MULTILINE)
+    )
+    if not end_matches:
+        return None
+    declaration = stripped[
+        start.start():start.end() + end_matches[0].start()
+    ]
+    normalized = " ".join(declaration.split())
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def controlled_observed_universe_mapping_is_valid(source: str) -> bool:
+    """Check the action/state universe mapping without freezing the record.
+
+    `ControlledGame` exposes universes in player/action/state order.  The
+    information-action family must therefore share `uA` with the base action
+    fiber, while the base state remains independently universe-polymorphic in
+    `uS`.
+    """
+
+    stripped = strip_lean_comments_and_strings(source)
+    starts = list(
+        re.finditer(CONTROLLED_OBSERVED_START, stripped, re.MULTILINE)
+    )
+    if len(starts) != 1:
+        return False
+    start = starts[0]
+    ends = list(
+        re.finditer(
+            CONTROLLED_OBSERVED_END,
+            stripped[start.end():],
+            re.MULTILINE,
+        )
+    )
+    if not ends:
+        return False
+    declaration = stripped[
+        start.start():start.end() + ends[0].start()
+    ]
+    base_mapping = re.findall(
+        r"\bbase\s*:\s*ControlledGame\.\{\s*uN\s*,\s*uA\s*,\s*uS\s*\}\s*N\b",
+        declaration,
+    )
+    info_action_mapping = re.findall(
+        r"\bInfoAction\s*:\s*"
+        r"\(i\s*:\s*N\)\s*→\s*InfoState\s+i\s*→\s*Type\s+uA\b",
+        declaration,
+    )
+    return len(base_mapping) == 1 and len(info_action_mapping) == 1
+
+
 def local_import_graph(root: Path) -> tuple[dict[str, set[str]], list[str]]:
     graph: dict[str, set[str]] = {}
     errors: list[str] = []
@@ -714,10 +838,52 @@ def compatibility_import_allowed(importer: str, rows: dict[str, StatusRow]) -> b
     )
 
 
+def efg_documentation_paths(root: Path) -> list[Path]:
+    """Return the documentation set governed by the EFG authority inventory."""
+
+    design = root / "docs/design"
+    paths = [
+        root / "docs/design.md",
+        design / "README.md",
+        design / "extensive_game.md",
+    ]
+    paths.extend(design.glob("efg-*.md"))
+    paths.extend((design / "efg-prompts").glob("*.md"))
+    return sorted({path for path in paths if path.is_file()})
+
+
+def documentation_link_errors(paths: list[Path]) -> list[str]:
+    """Check repository-local Markdown link targets in the governed docs."""
+
+    errors: list[str] = []
+    for path in paths:
+        source = path.read_text(encoding="utf-8")
+        for raw_target in MARKDOWN_LINK_RE.findall(source):
+            target = raw_target.strip()
+            if target.startswith("<") and target.endswith(">"):
+                target = target[1:-1]
+            if (
+                not target
+                or target.startswith("#")
+                or re.match(r"^[A-Za-z][A-Za-z0-9+.-]*:", target)
+            ):
+                continue
+            target = unquote(target.split("#", 1)[0].split("?", 1)[0])
+            resolved = (
+                Path(target)
+                if Path(target).is_absolute()
+                else path.parent / target
+            )
+            if not resolved.exists():
+                errors.append(f"{path}: unresolved local Markdown link {raw_target}")
+    return errors
+
+
 def run(root: Path) -> list[str]:
     errors: list[str] = []
     status_path = root / "docs/design/efg-module-status.md"
-    migration_path = root / "docs/design/efg-api-migration.md"
+    governance_path = root / "docs/design/efg-governance.md"
+    governance_source = governance_path.read_text(encoding="utf-8")
     rows, row_errors = read_status_rows(status_path)
     errors.extend(row_errors)
 
@@ -728,11 +894,108 @@ def run(root: Path) -> list[str]:
     for module in sorted(registered - scoped):
         errors.append(f"{status_path}: row has no in-scope source module: {module}")
 
+    status_source = status_path.read_text(encoding="utf-8")
+    actual_status_counts = {
+        status: sum(row.status == status for row in rows.values())
+        for status in {
+            "Canonical",
+            "Frontend",
+            "Historical",
+            "Compatibility",
+            "Experimental",
+            "Internal",
+        }
+    }
+    documented_status_counts = {
+        status: int(count)
+        for status, count in STATUS_SUMMARY_ROW_RE.findall(status_source)
+    }
+    if documented_status_counts != actual_status_counts:
+        errors.append(
+            f"{status_path}: lifecycle summary differs from module rows; "
+            f"documented={documented_status_counts}, "
+            f"actual={actual_status_counts}"
+        )
+    if f"contains {len(rows)} modules" not in status_source:
+        errors.append(
+            f"{status_path}: census prose must contain the checked total "
+            f"`contains {len(rows)} modules`"
+        )
+    if f"| **Total** | **{len(rows)}** |" not in status_source:
+        errors.append(
+            f"{status_path}: lifecycle summary must contain checked total "
+            f"{len(rows)}"
+        )
+
     graph, graph_errors = local_import_graph(root)
     errors.extend(graph_errors)
+    documentation_paths = efg_documentation_paths(root)
+    errors.extend(documentation_link_errors(documentation_paths))
+    for path in documentation_paths:
+        source = path.read_text(encoding="utf-8")
+        for referenced in FULL_MODULE_REFERENCE_RE.findall(source):
+            normalized = (
+                referenced.removesuffix(".lean")
+                if referenced.endswith(".lean")
+                else referenced
+            )
+            if (
+                normalized not in graph
+                and not any(
+                    module.startswith(f"{normalized}.") for module in graph
+                )
+            ):
+                errors.append(
+                    f"{path}: recorded full module name does not resolve: "
+                    f"{referenced}"
+                )
     cycle = import_cycle(graph, scoped)
     if cycle is not None:
         errors.append("local import graph contains a cycle: " + " -> ".join(cycle))
+
+    for name, contract in FROZEN_MINIMAL_CORE_STRUCTURES.items():
+        module, start_pattern, end_pattern, expected_digest = contract
+        path = module_path(module, root)
+        if not path.is_file():
+            errors.append(
+                f"{path}: frozen minimal-core owner for {name} is missing"
+            )
+            continue
+        actual_digest = frozen_structure_digest(
+            path.read_text(encoding="utf-8"),
+            start_pattern,
+            end_pattern,
+        )
+        if actual_digest is None:
+            errors.append(
+                f"{path}: frozen minimal-core structure {name} is missing, "
+                "duplicated, renamed, or moved from its governed declaration "
+                "boundary"
+            )
+        elif actual_digest != expected_digest:
+            errors.append(
+                f"{path}: frozen minimal-core structure {name} changed "
+                f"(expected {expected_digest}, found {actual_digest}); "
+                "represent new semantics with an external certificate, "
+                "adapter, relation, or compiler, or explicitly revise the "
+                "freeze contract in architectural review"
+            )
+
+    controlled_observed_path = module_path(
+        CONTROLLED_OBSERVED_MODULE, root
+    )
+    if (
+        not controlled_observed_path.is_file()
+        or not controlled_observed_universe_mapping_is_valid(
+            controlled_observed_path.read_text(encoding="utf-8")
+        )
+    ):
+        errors.append(
+            f"{controlled_observed_path}: ControlledObservedGame must map "
+            "ControlledGame universes as player/action/state "
+            "`.{uN, uA, uS}` and keep `InfoAction` in `Type uA`; this "
+            "narrow regression guard does not freeze the carrier"
+        )
 
     lifecycle = lean_lifecycle(root)
     for module in sorted(lifecycle.zero_byte):
@@ -820,6 +1083,19 @@ def run(root: Path) -> list[str]:
                 f"{imported} ({reason})"
             )
 
+    execution_prefix = f"{EFG_PREFIX}Execution."
+    relations_prefix = f"{EFG_PREFIX}Relations."
+    for importer, imports in graph.items():
+        if not importer.startswith(execution_prefix):
+            continue
+        for imported in sorted(imports):
+            if imported.startswith(relations_prefix):
+                errors.append(
+                    f"{module_path(importer, root)}: neutral execution module "
+                    f"must not import relation owner {imported}; place "
+                    "naturality/preservation theorems on the relation side"
+                )
+
     for entry in sorted(PAYOFF_FREE_CORE_BOUNDARIES):
         if entry not in graph:
             errors.append(f"missing payoff-free boundary module: {entry}")
@@ -857,11 +1133,23 @@ def run(root: Path) -> list[str]:
         stripped = strip_lean_comments_and_strings(
             path.read_text(encoding="utf-8")
         )
+        if EMBEDDED_EXAMPLE_NAMESPACE_RE.search(stripped):
+            errors.append(
+                f"{path}: reusable library modules must not declare under "
+                "the Examples namespace; move the regression to "
+                "EconCSLib/Examples"
+            )
         for name in sorted(FORBIDDEN_LEGACY_ROOT_NAMES):
             if re.search(rf"\b{re.escape(name)}\b", stripped):
                 errors.append(
                     f"{path}: forbidden legacy continuation-root API {name}; "
                     "pass RootPresentation or a lawful subgame system explicitly"
+                )
+        for name in sorted(MOVED_EXAMPLE_DECLARATIONS.get(module, set())):
+            if re.search(rf"\b{re.escape(name)}\b", stripped):
+                errors.append(
+                    f"{path}: example-only declaration {name} must remain "
+                    "under EconCSLib/Examples"
                 )
 
     compatibility = {
@@ -911,6 +1199,13 @@ def run(root: Path) -> list[str]:
             errors.append(
                 f"{module_path(entry, root)}: closure is {actual[0]} EFG / "
                 f"{actual[1]} local; expected {expected[0]} / {expected[1]}"
+            )
+        label = GOVERNANCE_CLOSURE_LABELS[entry]
+        documented_row = f"| `{label}` | {expected[0]} / {expected[1]} |"
+        if documented_row not in governance_source:
+            errors.append(
+                f"{governance_path}: missing exact governed closure row "
+                f"{documented_row}"
             )
 
     for entry, expected in EXPECTED_EXACT_EFG_CLOSURES.items():
@@ -1154,15 +1449,14 @@ def run(root: Path) -> list[str]:
         if new not in graph:
             errors.append(f"moved internal module is missing: {new}")
 
-    migration = migration_path.read_text(encoding="utf-8")
     for module in sorted(scoped):
         source = module_path(module, root).read_text(encoding="utf-8")
         for name in DEPRECATED_RE.findall(source):
-            if name not in migration:
-                errors.append(
-                    f"{module_path(module, root)}: deprecated declaration "
-                    f"{name} is absent from {migration_path}"
-                )
+            errors.append(
+                f"{module_path(module, root)}: deprecated EFG declaration "
+                f"{name} is forbidden during pre-stability; hard-migrate "
+                "zero-consumer aliases or revise the stability policy"
+            )
 
     simulation_count = sum(
         module.startswith(f"{EFG_PREFIX}Simulation.") for module in scoped
@@ -1228,7 +1522,9 @@ def main() -> int:
         f"{controlled_role_counts['canonical-responsibility-owner']} "
         "responsibility owners/"
         f"{controlled_role_counts['aggregate-facade']} facades/"
-        f"{controlled_role_counts['payoff-aware-adapter']} adapters."
+        f"{controlled_role_counts['payoff-aware-adapter']} adapters, "
+        "minimal-core compatibility freeze deferred, "
+        "1 carrier-universe regression guard."
     )
     lifecycle = lean_lifecycle(root)
     canonical_import_only = (
