@@ -1,7 +1,9 @@
 # Extensive Games — Architecture and Public API
 
-This note is the entry point for EconCSLib's extensive-game architecture. The
-library deliberately supports two interoperating representations:
+This note is the architecture overview for EconCSLib's extensive games. For a
+task-specific reading route and the authority order, start with
+[`efg-document-authority.md`](efg-document-authority.md). The library
+deliberately supports two interoperating representations:
 
 - finite inductive `GameTree`s for structural recursion, backward induction,
   global structural endpoint-policy optimality, and Zermelo determinacy;
@@ -96,9 +98,16 @@ Math/Probability/PMF.lean
        ConditionalProduct,DeferredSampling}.lean
 
 GameTheory/ExtensiveGame/
-  Basic → Strategy → Play → Subgame
+  Structural/{Basic,Reachability,History}
                       ↓
-  Execution/{History,StoppedExecution,StochasticExecution}
+  Execution/CompletePlay
+                      ↓
+  Observed/Controlled
+                      ↓
+  Basic + Execution/{Reachability,History}
+    (payoff-aware compatibility adapters)
+                      ↓
+  Execution/{StoppedExecution,StochasticExecution}
                       ↓
   Simulation/{Morphism,KernelArena,MeasurableKernelArena,
               Simulation.Kernel.Execution,Simulation.Kernel.Endpoint,
@@ -122,8 +131,11 @@ GameTheory/ExtensiveGame/
                        FiniteImperfectObserved}
 ```
 
+[`Interface/StructuralCore.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Interface/StructuralCore.lean)
+is the exact payoff-free five-module base. The broader
 [`Interface/Core.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Interface/Core.lean)
-is the common base. The shallow dependency-ordered ladder is
+adds foundation certificates and bounded execution. The shallow
+dependency-ordered ladder is
 [`Execution/Finite.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Interface/Execution/Finite.lean)
 →
 [`Relations/Discrete.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Interface/Relations/Discrete.lean)
@@ -131,7 +143,8 @@ is the common base. The shallow dependency-ordered ladder is
 [`Equilibrium/Discrete.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Interface/Equilibrium/Discrete.lean).
 [`Execution/Infinite.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Interface/Execution/Infinite.lean)
 adds the intrinsically measure-valued infinite discrete path semantics.
-Analytic execution extends that stable infinite-discrete facade, and
+Analytic execution extends that canonical pre-stability infinite-discrete
+facade, and
 [`Equilibrium/Analytic.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Interface/Equilibrium/Analytic.lean)
 reuses both discrete equilibrium and analytic execution.
 [`Restart.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Interface/Restart.lean)
@@ -142,6 +155,11 @@ and combine branches explicitly when needed; the former broad aggregate files
 have no redirect stubs.
 [`GameForm.lean`](../../EconCSLib/GameTheory/GameForm.lean) aggregates the
 representation-neutral semantic layer.
+
+At the structural boundary, `ControlledGame.isNonPlayerState` is the
+canonical predicate for a nonterminal state with `mover = none`.
+`ControlledGame.isChanceState` remains a compatibility name, but it supplies
+no probability law; stochastic layers add that law separately.
 
 ## 3. Finite `GameTree` track
 
@@ -553,8 +571,8 @@ clock-sensitive nonnatural one.
 
 ### Restart-compatibility API navigation
 
-The stable facade is `Interface.Restart`; its implementation is ordered by
-the actual proof dependency:
+The recommended pre-stability facade is `Interface.Restart`; its
+implementation is ordered by the actual proof dependency:
 
 ```text
 Core → Trajectory → Certificates → Observed → Assembly → Equilibrium
@@ -631,7 +649,7 @@ equilibrium, and Nash transfer on caller-declared finite-macro-horizon continuat
 
 ## 7. Verification and remaining boundary
 
-Stable Lean modules contain no ordinary `sorry` or `admit`. Changes to this
+Lean source modules contain no ordinary `sorry` or `admit`. Changes to this
 stack should run:
 
 ```bash
