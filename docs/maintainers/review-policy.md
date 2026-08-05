@@ -15,6 +15,21 @@ The CI check enforces the one-file and one-new-structure/class rules. Code revie
 checks the semantic same-module rule, because it requires understanding Lean
 types and the intended mathematical API.
 
+### Historical exceptions
+
+The branch history contains four immutable commits that predate enforcement
+or establish the imported EFG review baseline:
+
+- `8f2009531d0e71f3891b732bffdf1731414d2640`
+- `ad4ebea4dbb84ef91d9e0fdc4d7356f9e22cd6f8`
+- `c42e9b0d7a610c11bd596f71b339b78de6944b74`
+- `69368f1a18534c8abb5f6c20e8154b48af57abe8`
+
+CI passes these exact SHAs through repeated `--grandfather-commit` arguments.
+The exception is equality-based, not an ancestry cutoff: no descendant, new
+merge, or later multi-file commit is exempt. Adding another exception is a
+review-policy change and requires a written repository-history reason.
+
 ## Naming
 
 All Lean declarations must follow the
