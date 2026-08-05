@@ -19,14 +19,22 @@ determinacy would blur the standard two-player logical-game meaning.
 
 `FiniteTwoPlayerHypotheses` records the structural assumptions for finite
 backward determinacy without baking them into `ObservedGame` or
-`WinningCondition`. The theorem below constructs an information-consistent
-strategy; it does not replace observed strategies by history-indexed policies.
+`WinningCondition`. `WellFoundedTwoPlayerHypotheses` isolates the weaker
+assumptions actually consumed by the recursive proof. The theorem constructs
+an information-consistent strategy; it does not replace observed strategies
+by history-indexed policies.
 
 The payoff-free carrier owns the logical predicates. This module proves both
 the exclusivity boundary (two robust winners cannot coexist) and genuine
-finite perfect-information determinacy by well-founded backward recursion.
-Well-founded prefix and topological determinacy remain separate theorem
-tracks; existence is never inferred from totality alone.
+finite and well-founded perfect-information determinacy by well-founded
+backward recursion. The finite result is a specialization. Open/closed
+Gale--Stewart and Borel determinacy remain separate theorem tracks; existence
+is never inferred from totality alone.
+
+The finite precedent is [Zermelo 1913]; [Gale--Stewart 1953] marks the
+distinct infinite-game source boundary. The implemented well-founded theorem
+uses `WellFounded.fix`, excluded middle, and classical choice, but no
+descriptive-set theory or external determinacy axiom.
 -/
 
 namespace ExtensiveGame.ControlledObservedGame
@@ -89,6 +97,51 @@ structure FiniteTwoPlayerHypotheses
   perfectInformation : G.PerfectInformation
   /-- Exactly one player wins each complete play. -/
   zeroSum : W.IsTwoPlayerZeroSum
+
+/-! ### Well-founded perfect-information backward induction -/
+
+/-- Minimal structural package consumed by well-founded backward induction.
+
+Unlike `FiniteTwoPlayerHypotheses`, this package does not require a uniform
+history-length bound or finite action/information carriers. The two
+availability fields are needed because an information-indexed pure strategy
+is a total dependent function, including at coordinates not visited by the
+winning play. -/
+structure WellFoundedTwoPlayerHypotheses
+    (G : ControlledObservedGame (Fin 2))
+    (W : G.base.WinningCondition) : Type _ where
+  /-- The legal complete-history child relation is well founded. -/
+  wellFounded :
+    G.base.toArena.IsWellFoundedFrom G.base.init
+  /-- Every nonterminal history is player controlled. -/
+  noChance : G.base.NoChanceOnHistories
+  /-- Decision information determines the complete history. -/
+  perfectInformation : G.PerfectInformation
+  /-- Exactly one player wins each complete play. -/
+  zeroSum : W.IsTwoPlayerZeroSum
+  /-- Every declared decision information state has a concrete occurrence.
+  -/
+  allDecisionInfoRepresented :
+    G.AllDecisionInfoRepresented
+  /-- Player-labelled histories expose at least one legal action. -/
+  decisionMoverCoherent :
+    G.DecisionMoverCoherent
+
+/-- A finite perfect-information package specializes to the strictly weaker
+well-founded backward-induction package. -/
+def FiniteTwoPlayerHypotheses.toWellFounded
+    {G : ControlledObservedGame (Fin 2)}
+    {W : G.base.WinningCondition}
+    (h : G.FiniteTwoPlayerHypotheses W) :
+    G.WellFoundedTwoPlayerHypotheses W where
+  wellFounded := h.finiteEFG.isWellFoundedFrom
+  noChance := h.noChance
+  perfectInformation := h.perfectInformation
+  zeroSum := h.zeroSum
+  allDecisionInfoRepresented :=
+    h.finiteEFG.allDecisionInfoRepresented
+  decisionMoverCoherent :=
+    h.finiteEFG.decisionMoverCoherent
 
 /-! ### Finite perfect-information backward induction -/
 
@@ -157,7 +210,7 @@ is read from the arbitrary path objective on the canonical terminal replay.
 noncomputable def backwardWinner
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
-    (h : G.FiniteTwoPlayerHypotheses W) :
+    (h : G.WellFoundedTwoPlayerHypotheses W) :
     G.base.History → Fin 2 :=
   by
     classical
@@ -165,7 +218,7 @@ noncomputable def backwardWinner
       @WellFounded.fix G.base.History (fun _ => Fin 2)
         (G.base.toArena.IsChildFrom
           (start := G.base.init))
-        h.finiteEFG.isWellFoundedFrom.wellFounded_isChildFrom
+        h.wellFounded.wellFounded_isChildFrom
         (fun history recurse =>
           if hterminal : G.base.isTerminal history.1 then
             terminalWinner h.zeroSum history hterminal
@@ -187,7 +240,7 @@ noncomputable def backwardWinner
 theorem backwardWinner_eq
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
-    (h : G.FiniteTwoPlayerHypotheses W)
+    (h : G.WellFoundedTwoPlayerHypotheses W)
     (history : G.base.History) :
     backwardWinner h history =
       (by
@@ -216,7 +269,7 @@ winner of the canonical terminal replay. -/
 theorem backwardWinner_eq_of_terminal
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
-    (h : G.FiniteTwoPlayerHypotheses W)
+    (h : G.WellFoundedTwoPlayerHypotheses W)
     (history : G.base.History)
     (hterminal : G.base.isTerminal history.1) :
     backwardWinner h history =
@@ -230,7 +283,7 @@ the same backward winner at the child. -/
 theorem exists_action_backwardWinner_eq
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
-    (h : G.FiniteTwoPlayerHypotheses W)
+    (h : G.WellFoundedTwoPlayerHypotheses W)
     (history : G.base.History)
     (hmover :
       G.base.mover history.1 =
@@ -245,7 +298,7 @@ theorem exists_action_backwardWinner_eq
       ¬ G.base.isTerminal history.1 := by
     intro hterminal
     rcases
-        h.finiteEFG.decisionMoverCoherent history
+        h.decisionMoverCoherent history
           (backwardWinner h history) hmover with
       ⟨action⟩
     exact hterminal.false action
@@ -279,7 +332,7 @@ legal action keeps the same backward winner. -/
 theorem backwardWinner_child_eq_of_ne
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
-    (h : G.FiniteTwoPlayerHypotheses W)
+    (h : G.WellFoundedTwoPlayerHypotheses W)
     (history : G.base.History)
     (i : Fin 2)
     (hmover : G.base.mover history.1 = some i)
@@ -329,7 +382,7 @@ theorem backwardWinner_child_eq_of_ne
 noncomputable def backwardAction
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
-    (h : G.FiniteTwoPlayerHypotheses W)
+    (h : G.WellFoundedTwoPlayerHypotheses W)
     (history : G.base.History)
     (hmover :
       G.base.mover history.1 =
@@ -342,7 +395,7 @@ noncomputable def backwardAction
 theorem backwardWinner_backwardAction
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
-    (h : G.FiniteTwoPlayerHypotheses W)
+    (h : G.WellFoundedTwoPlayerHypotheses W)
     (history : G.base.History)
     (hmover :
       G.base.mover history.1 =
@@ -364,16 +417,19 @@ theorem actionEquiv_transport_symm_heq
     {i : Fin 2}
     (first second : G.base.History)
     (hfirst : G.base.mover first.1 = some i)
+    (hfirst_nonterminal : ¬ G.base.isTerminal first.1)
     (hsecond : G.base.mover second.1 = some i)
+    (hsecond_nonterminal : ¬ G.base.isTerminal second.1)
     (hhistory : first = second)
     (hinfo :
-      G.infoAt second i hsecond =
-        G.infoAt first i hfirst)
+      G.infoAt second i hsecond hsecond_nonterminal =
+        G.infoAt first i hfirst hfirst_nonterminal)
     (action : G.base.Action second.1) :
     HEq
-      (G.actionEquiv first i hfirst
+      (G.actionEquiv first i hfirst hfirst_nonterminal
         (hinfo ▸
-          (G.actionEquiv second i hsecond).symm action))
+          (G.actionEquiv second i hsecond
+            hsecond_nonterminal).symm action))
       action := by
   subst second
   simp
@@ -403,11 +459,11 @@ state. -/
 noncomputable def backwardRepresentative
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
-    (h : G.FiniteTwoPlayerHypotheses W)
+    (h : G.WellFoundedTwoPlayerHypotheses W)
     (i : Fin 2) (information : G.InfoState i) :
     G.DecisionInfoWitness i information :=
   Classical.choice
-    (h.finiteEFG.allDecisionInfoRepresented i information)
+    (h.allDecisionInfoRepresented i information)
 
 /-- The information-consistent pure strategy extracted by backward induction.
 
@@ -418,7 +474,7 @@ that the root winner is preserved holds. -/
 noncomputable def backwardStrategy
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
-    (h : G.FiniteTwoPlayerHypotheses W) :
+    (h : G.WellFoundedTwoPlayerHypotheses W) :
     G.PureStrategy
       (backwardWinner h
         (Arena.HistoryFrom.nil
@@ -438,7 +494,7 @@ noncomputable def backwardStrategy
       exact
         witness.infoAt_eq ▸
           (G.actionEquiv witness.history rootWinner
-              witness.mover).symm
+              witness.mover witness.nonterminal).symm
             (backwardAction h witness.history
               (witness.mover.trans
                 (congrArg some hinvariant.symm)))
@@ -446,8 +502,8 @@ noncomputable def backwardStrategy
       exact
         Classical.choice
           (AllDecisionInfoRepresented.nonempty_infoAction
-            h.finiteEFG.allDecisionInfoRepresented
-            h.finiteEFG.decisionMoverCoherent
+            h.allDecisionInfoRepresented
+            h.decisionMoverCoherent
             rootWinner information)
 
 /-- Along the root winner's extracted strategy, a decision by that player
@@ -457,7 +513,7 @@ history. -/
 theorem backwardWinner_child_of_backwardStrategy
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
-    (h : G.FiniteTwoPlayerHypotheses W)
+    (h : G.WellFoundedTwoPlayerHypotheses W)
     (history : G.base.History)
     (hmover :
       G.base.mover history.1 =
@@ -465,6 +521,7 @@ theorem backwardWinner_child_of_backwardStrategy
           (backwardWinner h
             (Arena.HistoryFrom.nil
               G.base.toArena G.base.init)))
+    (hnonterminal : ¬ G.base.isTerminal history.1)
     (hinvariant :
       backwardWinner h history =
         backwardWinner h
@@ -473,10 +530,10 @@ theorem backwardWinner_child_of_backwardStrategy
     backwardWinner h
         ⟨G.base.next history.1
             ((backwardStrategy h).actionAt
-              G history hmover),
+              G history hmover hnonterminal),
           history.2.snoc
             ((backwardStrategy h).actionAt
-              G history hmover)⟩ =
+              G history hmover hnonterminal)⟩ =
       backwardWinner h
         (Arena.HistoryFrom.nil
           G.base.toArena G.base.init) := by
@@ -486,12 +543,13 @@ theorem backwardWinner_child_of_backwardStrategy
       (Arena.HistoryFrom.nil
         G.base.toArena G.base.init)
   let information :=
-    G.infoAt history rootWinner hmover
+    G.infoAt history rootWinner hmover hnonterminal
   let witness :=
     backwardRepresentative h rootWinner information
   have hhistory : history = witness.history := by
     apply h.perfectInformation rootWinner
-      history witness.history hmover witness.mover
+      history witness.history hmover hnonterminal
+      witness.mover witness.nonterminal
     exact witness.infoAt_eq.symm
   have hwitness :
       backwardWinner h witness.history = rootWinner := by
@@ -506,41 +564,43 @@ theorem backwardWinner_child_of_backwardStrategy
       backwardStrategy h information =
         (witness.infoAt_eq ▸
           (G.actionEquiv witness.history rootWinner
-              witness.mover).symm
+              witness.mover witness.nonterminal).symm
             (backwardAction h witness.history
               (witness.mover.trans
                 (congrArg some hwitness.symm)))) := by
     simp [backwardStrategy, rootWinner, information,
       witness, hwitness]
   have hinfo :
-      G.infoAt witness.history rootWinner witness.mover =
-        G.infoAt history rootWinner hmover := by
+      G.infoAt witness.history rootWinner witness.mover
+          witness.nonterminal =
+        G.infoAt history rootWinner hmover hnonterminal := by
     simpa [information] using witness.infoAt_eq
   have haction :
       HEq
         ((backwardStrategy h).actionAt
-          G history hmover)
+          G history hmover hnonterminal)
         (backwardAction h witness.history
           witnessWinnerMover) := by
     change
       HEq
-        (G.actionEquiv history rootWinner hmover
+        (G.actionEquiv history rootWinner hmover hnonterminal
           (backwardStrategy h information))
         (backwardAction h witness.history
           witnessWinnerMover)
     rw [hstrategyInformation]
     exact actionEquiv_transport_symm_heq
-      history witness.history hmover witness.mover
+      history witness.history hmover hnonterminal
+        witness.mover witness.nonterminal
         hhistory hinfo
         (backwardAction h witness.history
           witnessWinnerMover)
   have hchild :
       (⟨G.base.next history.1
             ((backwardStrategy h).actionAt
-              G history hmover),
+              G history hmover hnonterminal),
           history.2.snoc
             ((backwardStrategy h).actionAt
-              G history hmover)⟩ :
+              G history hmover hnonterminal)⟩ :
           G.base.History) =
         ⟨G.base.next witness.history.1
             (backwardAction h witness.history
@@ -551,7 +611,7 @@ theorem backwardWinner_child_of_backwardStrategy
     childHistory_eq_of_heq
       history witness.history hhistory
       ((backwardStrategy h).actionAt
-        G history hmover)
+        G history hmover hnonterminal)
       (backwardAction h witness.history
         witnessWinnerMover)
       haction
@@ -566,7 +626,7 @@ winner's backward-winning region at every coordinate. -/
 theorem backwardWinner_historyAt_eq_root
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
-    (h : G.FiniteTwoPlayerHypotheses W)
+    (h : G.WellFoundedTwoPlayerHypotheses W)
     (play : G.base.CompletePlay)
     (hcompatible :
       G.IsCompatibleWithPlayerStrategy
@@ -601,7 +661,7 @@ theorem backwardWinner_historyAt_eq_root
           rw [hcompatible n hterminal hmover]
           exact
             backwardWinner_child_of_backwardStrategy
-              h (play.historyAt n) hmover ih
+              h (play.historyAt n) hmover hterminal ih
         · have hne :
               i ≠ backwardWinner h (play.historyAt n) := by
             intro heq
@@ -621,18 +681,15 @@ root history. -/
 theorem backwardStrategy_hasPathwiseWinningStrategy
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
-    (h : G.FiniteTwoPlayerHypotheses W) :
+    (h : G.WellFoundedTwoPlayerHypotheses W) :
     G.HasPathwiseWinningStrategy W
       (backwardWinner h
         (Arena.HistoryFrom.nil
           G.base.toArena G.base.init))
       (backwardStrategy h) := by
   intro play hcompatible
-  let bound := h.finiteEFG.lengthBound
-  have hterminal :
-      G.base.isTerminal (play.historyAt bound).1 :=
-    Arena.HasLengthBoundAt.terminal_historyAt
-      h.finiteEFG.hasLengthBound play
+  rcases h.wellFounded.eventuallyTerminates play with
+    ⟨bound, hterminal⟩
   have hinvariant :
       backwardWinner h (play.historyAt bound) =
         backwardWinner h
@@ -661,17 +718,18 @@ theorem backwardStrategy_hasPathwiseWinningStrategy
   rw [hreplay, hterminalWinner] at hwins
   exact hwins
 
-/-- Finite, no-chance, perfect-information, two-player zero-sum observed games
-are determined by a pure information-consistent strategy.
+/-- Well-founded, no-chance, perfect-information, two-player zero-sum observed
+games with total pure-strategy coordinates are determined by a pure
+information-consistent strategy.
 
 The result returns an explicit winning-strategy witness in `Prop`, but the
 backward winner and action selections used here are `noncomputable` and rely
 on classical choice. It is therefore a classical existence theorem, not an
 executable strategy-extraction result. -/
-theorem FiniteTwoPlayerHypotheses.isTwoPlayerDetermined
+theorem WellFoundedTwoPlayerHypotheses.isTwoPlayerDetermined
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
-    (h : G.FiniteTwoPlayerHypotheses W) :
+    (h : G.WellFoundedTwoPlayerHypotheses W) :
     G.IsTwoPlayerDetermined W := by
   let rootWinner :=
     backwardWinner h
@@ -692,6 +750,15 @@ theorem FiniteTwoPlayerHypotheses.isTwoPlayerDetermined
       Fin.eq_one_of_ne_zero rootWinner hzero
     exact Or.inr (hone ▸ hpackage)
 
+/-- The established finite determinacy theorem is a specialization of
+well-founded backward determinacy. -/
+theorem FiniteTwoPlayerHypotheses.isTwoPlayerDetermined
+    {G : ControlledObservedGame (Fin 2)}
+    {W : G.base.WinningCondition}
+    (h : G.FiniteTwoPlayerHypotheses W) :
+    G.IsTwoPlayerDetermined W :=
+  h.toWellFounded.isTwoPlayerDetermined
+
 /-- Structural assumptions for well-founded prefix determinacy on the
 payoff-free carrier. -/
 structure WellFoundedPrefixHypotheses
@@ -706,9 +773,47 @@ structure WellFoundedPrefixHypotheses
   perfectInformation : G.PerfectInformation
   /-- Exactly one player wins each complete play. -/
   zeroSum : W.IsTwoPlayerZeroSum
+  /-- Every declared decision information state has a concrete occurrence.
+  -/
+  allDecisionInfoRepresented :
+    G.AllDecisionInfoRepresented
+  /-- Player-labelled histories expose at least one legal action. -/
+  decisionMoverCoherent :
+    G.DecisionMoverCoherent
   /-- Every play reaches a persistent finite decision prefix. -/
   prefixDecision :
     Arena.WinningConditionFrom.PrefixDecision W
+
+/-- Forget the prefix certificate and retain the hypotheses used by
+well-founded backward induction. -/
+def WellFoundedPrefixHypotheses.toWellFounded
+    {G : ControlledObservedGame (Fin 2)}
+    {W : G.base.WinningCondition}
+    (h : G.WellFoundedPrefixHypotheses W) :
+    G.WellFoundedTwoPlayerHypotheses W where
+  wellFounded := h.wellFounded
+  noChance := h.noChance
+  perfectInformation := h.perfectInformation
+  zeroSum := h.zeroSum
+  allDecisionInfoRepresented :=
+    h.allDecisionInfoRepresented
+  decisionMoverCoherent :=
+    h.decisionMoverCoherent
+
+/-- Well-founded prefix games satisfying the explicit no-chance,
+perfect-information, zero-sum, and strategy-availability hypotheses are
+determined.
+
+The prefix-decision certificate is retained because it exposes the objective
+as a clopen/prefix-decidable game for later topological comparison. The
+backward proof uses the stronger structural fact that well-foundedness forces
+every complete play to terminate. -/
+theorem WellFoundedPrefixHypotheses.isTwoPlayerDetermined
+    {G : ControlledObservedGame (Fin 2)}
+    {W : G.base.WinningCondition}
+    (h : G.WellFoundedPrefixHypotheses W) :
+    G.IsTwoPlayerDetermined W :=
+  h.toWellFounded.isTwoPlayerDetermined
 
 /-- In a payoff-free no-chance game with exclusive objectives, the two
 players cannot both have robust pathwise winning strategies. -/
