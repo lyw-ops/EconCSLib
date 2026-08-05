@@ -4,13 +4,25 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
 import EconCSLib.GameTheory.GameForm.IndexedContinuation
+import EconCSLib.GameTheory.ExtensiveGame.Execution.Objective
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Core
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Subgame
 
 /-!
-# Payoff-free observed continuation semantics
+# Payoff-free observed continuation and objective semantics
 
-Adapter from a `ControlledObservedGame` to an arbitrary indexed continuation
-evaluator.
+Operational pure continuation semantics for history-sensitive terminal and
+complete-path objectives, plus an adapter from a `ControlledObservedGame` to
+an arbitrary indexed continuation evaluator.
+
+The operational layer executes the canonical full pure-profile strategy
+space. Terminal objectives require explicit reachable no-chance and
+profile-by-profile termination evidence. Path objectives use the canonical
+terminal-absorbing complete play and reattach the accumulated absolute prefix,
+so an objective can distinguish histories that merge at the same endpoint.
+The resulting Nash-on-presentation, lawful-system SPE, and complete standard
+SPE predicates are concrete EFG semantics rather than arbitrary
+evaluator-relative notions.
 
 A client supplies strategy spaces, a horizon/index type, an outcome type, and
 an evaluator on complete-history roots. The game supplies only payoff-free
@@ -21,8 +33,8 @@ explicit and orthogonal.
 The generic equilibrium predicates in this module are explicitly
 **evaluator-relative**: an arbitrary evaluator does not by itself define the
 standard execution semantics of an EFG. Operational standard-SPE definitions
-belong to concrete pure, behavioral, or path-law execution layers until those
-layers expose a common canonical root-local strategy and execution interface.
+in this module are limited to the concrete pure execution layer; the arbitrary
+evaluator API retains its explicitly relative names.
 
 The generic transfer theorem remains an abstract game-form result. It assumes
 complete lawful source and target systems, exact continuation outcome
@@ -36,6 +48,519 @@ namespace ExtensiveGame.ControlledObservedGame
 universe uN uStrategy uHorizon uOutcome uV
 
 variable {N : Type uN}
+
+/-! ## Operational pure objective semantics -/
+
+variable {G : ControlledObservedGame N}
+
+/-- A pure profile eventually reaches a terminal history from one accumulated
+absolute history. -/
+def PureTerminatesFrom
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (profile : G.PureProfile)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (current : G.base.History) : Prop :=
+  ∃ fuel : ℕ,
+    G.base.isTerminal
+      (G.base.toArena.stoppedHistoryFrom
+        (profile.toHistoryPolicy hNoChance) current fuel).1
+
+/-- Every pure profile terminates from one accumulated absolute history. -/
+def PureTerminatingAt
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (hNoChance : G.base.NoChanceOnHistories)
+    (current : G.base.History) : Prop :=
+  ∀ profile : G.PureProfile,
+    G.PureTerminatesFrom profile hNoChance current
+
+/-- Every pure profile terminates at each root selected by an explicit
+continuation presentation. -/
+def PureTerminatingOnRoots
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (hNoChance : G.base.NoChanceOnHistories)
+    (roots : G.ContinuationRootPresentation) : Prop :=
+  ∀ current : G.base.History,
+    roots.IsRoot current →
+      G.PureTerminatingAt hNoChance current
+
+/-- Every pure profile terminates at each root of one explicit lawful subgame
+system. -/
+def PureTerminatingOn
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (hNoChance : G.base.NoChanceOnHistories)
+    (system : G.SubgameSystem) : Prop :=
+  ∀ current : G.base.History,
+    system.IsRoot current →
+      G.PureTerminatingAt hNoChance current
+
+/-- Presentation-wide termination restricts to a separately proved visible
+lawful subgame system. -/
+theorem PureTerminatingOnRoots.onSubgameSystem
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (hNoChance : G.base.NoChanceOnHistories)
+    (roots : G.ContinuationRootPresentation)
+    (hterminates : G.PureTerminatingOnRoots hNoChance roots)
+    (system : G.SubgameSystem)
+    (hvisible : system.IsVisibleIn roots) :
+    G.PureTerminatingOn hNoChance system :=
+  fun current hroot =>
+    hterminates current (hvisible current hroot)
+
+/-- Choose a fuel at which one terminating pure continuation has stopped. -/
+noncomputable def terminalFuel
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (profile : G.PureProfile)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (current : G.base.History)
+    (hterminates : G.PureTerminatesFrom profile hNoChance current) : ℕ :=
+  hterminates.choose
+
+/-- The chosen terminal fuel reaches a terminal endpoint. -/
+theorem terminalFuel_spec
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (profile : G.PureProfile)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (current : G.base.History)
+    (hterminates : G.PureTerminatesFrom profile hNoChance current) :
+    G.base.isTerminal
+      (G.base.toArena.stoppedHistoryFrom
+        (profile.toHistoryPolicy hNoChance) current
+        (G.terminalFuel profile hNoChance current hterminates)).1 :=
+  hterminates.choose_spec
+
+/-- The absolute terminal history selected by a pure-termination witness. -/
+noncomputable def terminalHistoryFrom
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (profile : G.PureProfile)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (current : G.base.History)
+    (hterminates : G.PureTerminatesFrom profile hNoChance current) :
+    G.base.History :=
+  G.base.toArena.stoppedHistoryFrom
+    (profile.toHistoryPolicy hNoChance) current
+    (G.terminalFuel profile hNoChance current hterminates)
+
+/-- The selected eventual history is terminal. -/
+theorem terminalHistoryFrom_terminal
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (profile : G.PureProfile)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (current : G.base.History)
+    (hterminates : G.PureTerminatesFrom profile hNoChance current) :
+    G.base.isTerminal
+      (G.terminalHistoryFrom
+        profile hNoChance current hterminates).1 :=
+  G.terminalFuel_spec profile hNoChance current hterminates
+
+/-- Any fuel that has already terminated yields the selected terminal
+history. -/
+theorem terminalHistoryFrom_eq_of_terminal
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (profile : G.PureProfile)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (current : G.base.History)
+    (hterminates : G.PureTerminatesFrom profile hNoChance current)
+    (fuel : ℕ)
+    (hterminal :
+      G.base.isTerminal
+        (G.base.toArena.stoppedHistoryFrom
+          (profile.toHistoryPolicy hNoChance) current fuel).1) :
+    G.terminalHistoryFrom profile hNoChance current hterminates =
+      G.base.toArena.stoppedHistoryFrom
+        (profile.toHistoryPolicy hNoChance) current fuel := by
+  exact
+    Arena.stoppedHistoryFrom_eq_of_terminal
+      (profile.toHistoryPolicy hNoChance) current
+      (G.terminalFuel profile hNoChance current hterminates) fuel
+      (G.terminalHistoryFrom_terminal
+        profile hNoChance current hterminates)
+      hterminal
+
+/-- Evaluate a history-sensitive terminal objective on the absolute terminal
+history selected by pure execution. -/
+noncomputable def terminalOutcomeFrom
+    {Outcome : Type uOutcome}
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (objective :
+      G.base.toArena.TerminalOutcome G.base.init Outcome)
+    (profile : G.PureProfile)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (current : G.base.History)
+    (hterminates : G.PureTerminatesFrom profile hNoChance current) :
+    Outcome :=
+  objective
+    ⟨G.terminalHistoryFrom profile hNoChance current hterminates,
+      G.terminalHistoryFrom_terminal
+        profile hNoChance current hterminates⟩
+
+/-- The root play obtained by executing from `current` and reattaching the
+complete accumulated prefix.
+
+The reattachment is essential for path objectives: evaluating only a
+re-rooted suffix would forget earlier occurrences and the absolute clock. -/
+def pureContinuationPlay
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (profile : G.PureProfile)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (current : G.base.History) :
+    G.base.toArena.CompletePlayFrom G.base.init :=
+  Arena.CompletePlayFromHistory.reattachTail
+    ⟨current,
+      (profile.toHistoryPolicy hNoChance).completePlayFrom current⟩
+
+/-- Evaluate a root-relative path objective after an accumulated history
+without losing the prefix. -/
+def pathOutcomeFrom
+    {Outcome : Type uOutcome}
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (objective :
+      G.base.toArena.PathOutcome G.base.init Outcome)
+    (profile : G.PureProfile)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (current : G.base.History) :
+    Outcome :=
+  objective (G.pureContinuationPlay profile hNoChance current)
+
+/-- Total continuation game form for a history-sensitive terminal objective.
+
+The full pure strategy spaces are reused, so deviations are the canonical
+complete pure-strategy deviations. Totality comes only from the supplied
+profile-by-profile termination proof. -/
+noncomputable def terminalObjectiveContinuationGameForm
+    {Outcome : Type uOutcome}
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (objective :
+      G.base.toArena.TerminalOutcome G.base.init Outcome)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (current : G.base.History)
+    (hterminates : G.PureTerminatingAt hNoChance current) :
+    GameForm N where
+  Strategy := G.PureStrategy
+  Outcome := Outcome
+  outcome profile :=
+    G.terminalOutcomeFrom objective profile hNoChance current
+      (hterminates profile)
+
+/-- Continuation game form for a root-relative complete-path objective.
+
+No termination hypothesis is needed because a `PathOutcome` is defined on
+both eventually terminal and genuinely infinite complete plays. -/
+def pathObjectiveContinuationGameForm
+    {Outcome : Type uOutcome}
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (objective :
+      G.base.toArena.PathOutcome G.base.init Outcome)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (current : G.base.History) :
+    GameForm N where
+  Strategy := G.PureStrategy
+  Outcome := Outcome
+  outcome profile :=
+    G.pathOutcomeFrom objective profile hNoChance current
+
+/-- Pure Nash equilibrium at every presentation-designated root under a
+history-sensitive terminal objective. This is not, by itself, SPE. -/
+noncomputable def IsPureTerminalNashOnRoots
+    {Outcome : Type uOutcome} {V : Type uV}
+    [DecidableEq N] [Preorder V]
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (objective :
+      G.base.toArena.TerminalOutcome G.base.init Outcome)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (roots : G.ContinuationRootPresentation)
+    (hterminates : G.PureTerminatingOnRoots hNoChance roots)
+    (utility : Outcome → N → V)
+    (profile : G.PureProfile) : Prop :=
+  ∀ current : G.base.History,
+    ∀ hroot : roots.IsRoot current,
+      (G.terminalObjectiveContinuationGameForm objective hNoChance current
+        (hterminates current hroot)).IsNash utility profile
+
+/-- Pure subgame perfection on one explicit lawful subgame system under a
+history-sensitive terminal objective. -/
+noncomputable def IsPureTerminalSubgamePerfectOn
+    {Outcome : Type uOutcome} {V : Type uV}
+    [DecidableEq N] [Preorder V]
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (objective :
+      G.base.toArena.TerminalOutcome G.base.init Outcome)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (system : G.SubgameSystem)
+    (hterminates : G.PureTerminatingOn hNoChance system)
+    (utility : Outcome → N → V)
+    (profile : G.PureProfile) : Prop :=
+  ∀ current : G.base.History,
+    ∀ hroot : system.IsRoot current,
+      (G.terminalObjectiveContinuationGameForm objective hNoChance current
+        (hterminates current hroot)).IsNash utility profile
+
+/-- Standard pure SPE for a history-sensitive terminal objective. The
+complete system tests every structurally lawful subgame root. -/
+noncomputable def IsPureTerminalStandardSubgamePerfect
+    {Outcome : Type uOutcome} {V : Type uV}
+    [DecidableEq N] [Preorder V]
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (objective :
+      G.base.toArena.TerminalOutcome G.base.init Outcome)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (system : G.CompleteSubgameSystem)
+    (hterminates :
+      G.PureTerminatingOn hNoChance system.toSubgameSystem)
+    (utility : Outcome → N → V)
+    (profile : G.PureProfile) : Prop :=
+  G.IsPureTerminalSubgamePerfectOn objective hNoChance
+    system.toSubgameSystem hterminates utility profile
+
+/-- Terminal-objective SPE on a lawful system is Nash at the initial root. -/
+theorem IsPureTerminalSubgamePerfectOn.isNashAtInit
+    {Outcome : Type uOutcome} {V : Type uV}
+    [DecidableEq N] [Preorder V]
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (objective :
+      G.base.toArena.TerminalOutcome G.base.init Outcome)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (system : G.SubgameSystem)
+    (hterminates : G.PureTerminatingOn hNoChance system)
+    (utility : Outcome → N → V)
+    (profile : G.PureProfile)
+    (hspe :
+      G.IsPureTerminalSubgamePerfectOn objective hNoChance
+        system hterminates utility profile) :
+    (G.terminalObjectiveContinuationGameForm objective hNoChance
+      (Arena.HistoryFrom.nil G.base.toArena G.base.init)
+      (hterminates
+        (Arena.HistoryFrom.nil G.base.toArena G.base.init)
+        system.init_isRoot)).IsNash utility profile :=
+  hspe
+    (Arena.HistoryFrom.nil G.base.toArena G.base.init)
+    system.init_isRoot
+
+/-- Terminal-objective SPE gives Nash at every selected lawful-system root. -/
+theorem IsPureTerminalSubgamePerfectOn.toNashOnSystemRoots
+    {Outcome : Type uOutcome} {V : Type uV}
+    [DecidableEq N] [Preorder V]
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (objective :
+      G.base.toArena.TerminalOutcome G.base.init Outcome)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (system : G.SubgameSystem)
+    (hterminates : G.PureTerminatingOn hNoChance system)
+    (utility : Outcome → N → V)
+    (profile : G.PureProfile)
+    (hspe :
+      G.IsPureTerminalSubgamePerfectOn objective hNoChance
+        system hterminates utility profile) :
+    ∀ current, ∀ hroot : system.IsRoot current,
+      (G.terminalObjectiveContinuationGameForm objective hNoChance current
+        (hterminates current hroot)).IsNash utility profile :=
+  hspe
+
+/-- Complete terminal-objective standard SPE is SPE on its underlying lawful
+system. -/
+theorem IsPureTerminalStandardSubgamePerfect.toSubgamePerfectOn
+    {Outcome : Type uOutcome} {V : Type uV}
+    [DecidableEq N] [Preorder V]
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (objective :
+      G.base.toArena.TerminalOutcome G.base.init Outcome)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (system : G.CompleteSubgameSystem)
+    (hterminates :
+      G.PureTerminatingOn hNoChance system.toSubgameSystem)
+    (utility : Outcome → N → V)
+    (profile : G.PureProfile)
+    (hspe :
+      G.IsPureTerminalStandardSubgamePerfect objective hNoChance
+        system hterminates utility profile) :
+    G.IsPureTerminalSubgamePerfectOn objective hNoChance
+      system.toSubgameSystem hterminates utility profile :=
+  hspe
+
+/-- Complete terminal-objective standard SPE is Nash at the initial root. -/
+theorem IsPureTerminalStandardSubgamePerfect.isNashAtInit
+    {Outcome : Type uOutcome} {V : Type uV}
+    [DecidableEq N] [Preorder V]
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (objective :
+      G.base.toArena.TerminalOutcome G.base.init Outcome)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (system : G.CompleteSubgameSystem)
+    (hterminates :
+      G.PureTerminatingOn hNoChance system.toSubgameSystem)
+    (utility : Outcome → N → V)
+    (profile : G.PureProfile)
+    (hspe :
+      G.IsPureTerminalStandardSubgamePerfect objective hNoChance
+        system hterminates utility profile) :
+    (G.terminalObjectiveContinuationGameForm objective hNoChance
+      (Arena.HistoryFrom.nil G.base.toArena G.base.init)
+      (hterminates
+        (Arena.HistoryFrom.nil G.base.toArena G.base.init)
+        system.toSubgameSystem.init_isRoot)).IsNash utility profile :=
+  IsPureTerminalSubgamePerfectOn.isNashAtInit G objective hNoChance
+    system.toSubgameSystem hterminates utility profile hspe
+
+/-- Complete terminal-objective standard SPE is Nash at every structurally
+lawful root. -/
+theorem IsPureTerminalStandardSubgamePerfect.toNashOnLawfulRoots
+    {Outcome : Type uOutcome} {V : Type uV}
+    [DecidableEq N] [Preorder V]
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (objective :
+      G.base.toArena.TerminalOutcome G.base.init Outcome)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (system : G.CompleteSubgameSystem)
+    (hterminates :
+      G.PureTerminatingOn hNoChance system.toSubgameSystem)
+    (utility : Outcome → N → V)
+    (profile : G.PureProfile)
+    (hspe :
+      G.IsPureTerminalStandardSubgamePerfect objective hNoChance
+        system hterminates utility profile) :
+    ∀ current, ∀ hlawful : G.IsLawfulSubgameRoot current,
+      (G.terminalObjectiveContinuationGameForm objective hNoChance current
+        (hterminates current
+          (system.complete current hlawful))).IsNash utility profile := by
+  intro current hlawful
+  exact hspe current (system.complete current hlawful)
+
+/-- Pure Nash equilibrium at every presentation-designated root for a
+complete-path objective. -/
+def IsPurePathNashOnRoots
+    {Outcome : Type uOutcome} {V : Type uV}
+    [DecidableEq N] [Preorder V]
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (objective :
+      G.base.toArena.PathOutcome G.base.init Outcome)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (roots : G.ContinuationRootPresentation)
+    (utility : Outcome → N → V)
+    (profile : G.PureProfile) : Prop :=
+  ∀ current : G.base.History,
+    roots.IsRoot current →
+      (G.pathObjectiveContinuationGameForm
+        objective hNoChance current).IsNash utility profile
+
+/-- Pure subgame perfection on an explicit lawful system for a complete-path
+objective. -/
+def IsPurePathSubgamePerfectOn
+    {Outcome : Type uOutcome} {V : Type uV}
+    [DecidableEq N] [Preorder V]
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (objective :
+      G.base.toArena.PathOutcome G.base.init Outcome)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (system : G.SubgameSystem)
+    (utility : Outcome → N → V)
+    (profile : G.PureProfile) : Prop :=
+  ∀ current : G.base.History,
+    system.IsRoot current →
+      (G.pathObjectiveContinuationGameForm
+        objective hNoChance current).IsNash utility profile
+
+/-- Standard pure SPE on every lawful root for a complete-path objective. -/
+def IsPurePathStandardSubgamePerfect
+    {Outcome : Type uOutcome} {V : Type uV}
+    [DecidableEq N] [Preorder V]
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (objective :
+      G.base.toArena.PathOutcome G.base.init Outcome)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (system : G.CompleteSubgameSystem)
+    (utility : Outcome → N → V)
+    (profile : G.PureProfile) : Prop :=
+  G.IsPurePathSubgamePerfectOn objective hNoChance
+    system.toSubgameSystem utility profile
+
+/-- Complete path-objective standard SPE is SPE on its underlying lawful
+system. -/
+theorem IsPurePathStandardSubgamePerfect.toSubgamePerfectOn
+    {Outcome : Type uOutcome} {V : Type uV}
+    [DecidableEq N] [Preorder V]
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (objective :
+      G.base.toArena.PathOutcome G.base.init Outcome)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (system : G.CompleteSubgameSystem)
+    (utility : Outcome → N → V)
+    (profile : G.PureProfile)
+    (hspe :
+      G.IsPurePathStandardSubgamePerfect objective hNoChance
+        system utility profile) :
+    G.IsPurePathSubgamePerfectOn objective hNoChance
+      system.toSubgameSystem utility profile :=
+  hspe
+
+/-- Complete path-objective standard SPE is Nash at the initial root. -/
+theorem IsPurePathStandardSubgamePerfect.isNashAtInit
+    {Outcome : Type uOutcome} {V : Type uV}
+    [DecidableEq N] [Preorder V]
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (objective :
+      G.base.toArena.PathOutcome G.base.init Outcome)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (system : G.CompleteSubgameSystem)
+    (utility : Outcome → N → V)
+    (profile : G.PureProfile)
+    (hspe :
+      G.IsPurePathStandardSubgamePerfect objective hNoChance
+        system utility profile) :
+    (G.pathObjectiveContinuationGameForm objective hNoChance
+      (Arena.HistoryFrom.nil G.base.toArena G.base.init)).IsNash
+        utility profile :=
+  hspe
+    (Arena.HistoryFrom.nil G.base.toArena G.base.init)
+    system.toSubgameSystem.init_isRoot
+
+/-- Complete path-objective standard SPE is Nash at every structurally lawful
+root. -/
+theorem IsPurePathStandardSubgamePerfect.toNashOnLawfulRoots
+    {Outcome : Type uOutcome} {V : Type uV}
+    [DecidableEq N] [Preorder V]
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (objective :
+      G.base.toArena.PathOutcome G.base.init Outcome)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (system : G.CompleteSubgameSystem)
+    (utility : Outcome → N → V)
+    (profile : G.PureProfile)
+    (hspe :
+      G.IsPurePathStandardSubgamePerfect objective hNoChance
+        system utility profile) :
+    ∀ current, G.IsLawfulSubgameRoot current →
+      (G.pathObjectiveContinuationGameForm objective hNoChance current).IsNash
+        utility profile := by
+  intro current hlawful
+  exact hspe current (system.complete current hlawful)
 
 /-- An arbitrary indexed continuation evaluator attached to a payoff-free
 controlled observed EFG. -/
