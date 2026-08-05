@@ -169,7 +169,7 @@ certificate and then call `compiler.toObservedChanceGame`.
 
 ## 6. Boundaries Lean imports cannot enforce
 
-Lean imports can enforce that the stable root does not expose these reference
+Lean imports can enforce that the governed root does not expose these reference
 compilers and that `Interface.Compilation.Discrete` does not pull in the
 analytic kernel stack. They cannot enforce semantic authoring rules such as:
 
