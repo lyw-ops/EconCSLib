@@ -382,9 +382,11 @@ def informationAt
     (h : G.FiniteEFGHypotheses)
     (state : h.toFiniteHistoryGame.State) (i : N)
     (hmover :
-      h.toFiniteHistoryGame.mover state = some i) :
+      h.toFiniteHistoryGame.mover state = some i)
+    (hnonterminal :
+      ¬ h.toFiniteHistoryGame.isTerminal state) :
     G.InfoState i :=
-  G.infoAt (h.originalHistory state) i hmover
+  G.infoAt (h.originalHistory state) i hmover hnonterminal
 
 /-- The pulled-back private observation has exactly the original public
 component. -/
@@ -415,15 +417,16 @@ noncomputable def toFiniteObservedGame
     G.observe_public i (h.originalHistory history.1)
   InfoState := G.InfoState
   infoObserve := G.infoObserve
-  infoAt := fun history i hmover =>
+  infoAt := fun history i hmover hnonterminal =>
     G.infoAt (h.originalHistory history.1) i hmover
-  infoAt_observe := fun history i hmover =>
+      hnonterminal
+  infoAt_observe := fun history i hmover hnonterminal =>
     G.infoAt_observe
-      (h.originalHistory history.1) i hmover
+      (h.originalHistory history.1) i hmover hnonterminal
   InfoAction := G.InfoAction
-  actionEquiv := fun history i hmover =>
+  actionEquiv := fun history i hmover hnonterminal =>
     G.actionEquiv
-      (h.originalHistory history.1) i hmover
+      (h.originalHistory history.1) i hmover hnonterminal
 
 /-- Pure contingent plans are definitionally unchanged by finite occurrence
 unfolding because information-state and abstract-action families are reused
@@ -527,7 +530,7 @@ variable {N : Type uN}
 structural finite-EFG certificate. -/
 noncomputable def toFiniteHistoryGame
     (h : G.FiniteEFGHypotheses) :
-    ControlledGame.{uN, uS, max uA uS} N :=
+    ControlledGame.{uN, uA, max uA uS} N :=
   ControlledGame.ofArena
     (G.base.toArena.boundedUnfolding
       G.base.init h.lengthBound h.hasLengthBound)
@@ -582,7 +585,7 @@ history. -/
 noncomputable def toFiniteObservedGame
     (h : G.FiniteEFGHypotheses) :
     ControlledObservedGame.{
-      uN, max uA uS, uS, uO, uI, uP} N where
+      uN, uA, max uA uS, uO, uI, uP} N where
   base := h.toFiniteHistoryGame
   Observation := G.Observation
   PublicObservation := G.PublicObservation
@@ -595,30 +598,16 @@ noncomputable def toFiniteObservedGame
     G.observe_public i (h.originalHistory history.1)
   InfoState := G.InfoState
   infoObserve := G.infoObserve
-  infoAt := fun history i hmover =>
+  infoAt := fun history i hmover hnonterminal =>
     G.infoAt (h.originalHistory history.1) i hmover
-  infoAt_observe := fun history i hmover =>
+      hnonterminal
+  infoAt_observe := fun history i hmover hnonterminal =>
     G.infoAt_observe
-      (h.originalHistory history.1) i hmover
-  InfoAction := fun i information =>
-    ULift (G.InfoAction i information)
-  actionEquiv := fun history i hmover =>
-    { toFun := fun action =>
-        G.actionEquiv
-          (h.originalHistory history.1) i hmover
-          action.down
-      invFun := fun action =>
-        ULift.up
-          ((G.actionEquiv
-            (h.originalHistory history.1) i hmover).symm
-              action)
-      left_inv := by
-        intro action
-        cases action
-        simp
-      right_inv := by
-        intro action
-        simp }
+      (h.originalHistory history.1) i hmover hnonterminal
+  InfoAction := G.InfoAction
+  actionEquiv := fun history i hmover hnonterminal =>
+    G.actionEquiv
+      (h.originalHistory history.1) i hmover hnonterminal
 
 /-- The bounded state representing one original complete history. -/
 def boundedState
@@ -809,12 +798,14 @@ def toOriginalIso
   map_infoObserve := by
     intro i information
     rfl
-  infoActionEquiv := fun _i _information => Equiv.ulift
+  infoActionEquiv := fun _i _information => Equiv.refl _
   map_infoAt := by
-    intro history i hsource htarget
+    intro history i hsource hsource_nonterminal
+      htarget htarget_nonterminal
     rfl
   map_infoActionAt := by
-    intro history i hsource htarget action
+    intro history i hsource hsource_nonterminal
+      htarget htarget_nonterminal action
     rfl
 
 /-- Classic perfect recall is preserved and reflected by finite occurrence
@@ -881,19 +872,8 @@ payoff-free finite occurrence unfolding. -/
 def pureStrategyEquiv
     (h : G.FiniteEFGHypotheses) (i : N) :
     h.toFiniteObservedGame.PureStrategy i ≃
-      G.PureStrategy i where
-  toFun := fun strategy information =>
-    (strategy information).down
-  invFun := fun strategy information =>
-    ULift.up (strategy information)
-  left_inv := by
-    intro strategy
-    funext information
-    apply ULift.ext
-    rfl
-  right_inv := by
-    intro strategy
-    rfl
+      G.PureStrategy i :=
+  Equiv.refl _
 
 /-- Project a complete play of the bounded unfolding to the corresponding
 occurrence-sensitive complete play of the original arena. -/
@@ -1149,12 +1129,7 @@ noncomputable def behavioralStrategyEquiv
     (h.toFiniteObservedChanceGame chanceKernel).BehavioralStrategy i ≃
       (DiscreteControlledObservedChanceGame.withChanceKernel
         G chanceKernel).BehavioralStrategy i :=
-  Equiv.piCongrRight fun information =>
-    pmfEquiv
-      { toFun := ULift.down
-        invFun := ULift.up
-        left_inv := fun action => by cases action; rfl
-        right_inv := fun _action => rfl }
+  Equiv.refl _
 
 /-- Map a finite-unfolding behavioral profile back to the original
 payoff-free discrete chance presentation. -/
@@ -1246,24 +1221,27 @@ theorem mapBehavioralHistoryPolicy
       have hmoverProof : htargetMover = hmover :=
         Subsingleton.elim _ _
       cases hmoverProof
+      have hnonterminalProof : htarget = hsource :=
+        Subsingleton.elim _ _
+      cases hnonterminalProof
       unfold
         DiscreteControlledObservedChanceGame.BehavioralStrategy.actionLawAt
       change
         ((profile i
             (G.infoAt
-              (h.originalHistory history.1) i hmover)).map
-          (fun action =>
-            G.actionEquiv
-              (h.originalHistory history.1)
-              i hmover action.down)).map id =
-          ((profile i
-              (G.infoAt
-                (h.originalHistory history.1) i hmover)).map
-            ULift.down).map
-              (G.actionEquiv
-                (h.originalHistory history.1) i hmover)
-      rw [PMF.map_id, PMF.map_comp]
-      rfl
+              (h.originalHistory history.1) i hmover
+              hsource)).map
+          (G.actionEquiv
+            (h.originalHistory history.1)
+            i hmover hsource)).map id =
+          (profile i
+            (G.infoAt
+              (h.originalHistory history.1) i hmover
+              hsource)).map
+            (G.actionEquiv
+              (h.originalHistory history.1) i hmover
+              hsource)
+      exact PMF.map_id _
   | none =>
       have htargetMover :
           G.base.mover
