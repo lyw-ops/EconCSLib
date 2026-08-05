@@ -239,7 +239,7 @@ noncomputable def presentation :
                 ⟨PEmpty.elim⟩)).elim
   playerInformation := fun _time _playerInformation => false
   player_informationAt := by
-    intro time events i hmover
+    intro time events i hmover hnonterminal
     change
       terminalTag
           (MeasurableKernelArena.latestEventState time events).1 =
@@ -269,7 +269,9 @@ theorem recurring_player_abstract_law_eq :
         (presentation.information.informationAt 0 secondPrefix) := by
   exact
     presentation.abstractKernel_eq_of_player_infoAt_eq
-      profile 0 firstPrefix secondPrefix 0 rfl rfl
+      profile 0 firstPrefix secondPrefix 0
+      rfl firstPrefix_nonterminal
+      rfl secondPrefix_nonterminal
       infoState_recurs
 
 /-- The realized presentation recovers the exact old two-step stopped-history
