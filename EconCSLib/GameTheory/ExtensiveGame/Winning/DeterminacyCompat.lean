@@ -28,9 +28,6 @@ abbrev PathwiseWinningStrategies
   {strategy : G.PureStrategy i //
     G.HasPathwiseWinningStrategy W i strategy}
 
-@[deprecated PathwiseWinningStrategies (since := "2026-07-31")]
-abbrev WinningStrategies := @PathwiseWinningStrategies
-
 /-- Some player has a pathwise robust pure winning strategy. -/
 def HasSomePathwiseWinningStrategy
     (G : ObservedGame N U)
@@ -38,20 +35,8 @@ def HasSomePathwiseWinningStrategy
   ∃ (i : N) (strategy : G.PureStrategy i),
     G.HasPathwiseWinningStrategy W i strategy
 
-@[deprecated HasSomePathwiseWinningStrategy (since := "2026-07-31")]
-abbrev IsDetermined := @HasSomePathwiseWinningStrategy
-
 /-- Package one explicit pathwise winning strategy. -/
 theorem hasSomePathwiseWinningStrategy_of_hasPathwiseWinningStrategy
-    {W : G.base.toArena.WinningCondition G.base.init N}
-    {i : N} {strategy : G.PureStrategy i}
-    (hwinning : G.HasPathwiseWinningStrategy W i strategy) :
-    G.HasSomePathwiseWinningStrategy W :=
-  ⟨i, strategy, hwinning⟩
-
-@[deprecated hasSomePathwiseWinningStrategy_of_hasPathwiseWinningStrategy
-  (since := "2026-07-31")]
-theorem isDetermined_of_hasWinningStrategy
     {W : G.base.toArena.WinningCondition G.base.init N}
     {i : N} {strategy : G.PureStrategy i}
     (hwinning : G.HasPathwiseWinningStrategy W i strategy) :
@@ -84,15 +69,6 @@ theorem hasSomePathwiseWinningStrategy_iff_isTwoPlayerDetermined
     · rcases hone with ⟨strategy, hwinning⟩
       exact ⟨1, strategy, hwinning⟩
 
-@[deprecated hasSomePathwiseWinningStrategy_iff_isTwoPlayerDetermined
-  (since := "2026-07-31")]
-theorem isDetermined_iff_isTwoPlayerDetermined
-    {G : ObservedGame (Fin 2) U}
-    {W : G.base.toArena.WinningCondition G.base.init (Fin 2)} :
-    G.HasSomePathwiseWinningStrategy W ↔
-      G.IsTwoPlayerDetermined W :=
-  G.hasSomePathwiseWinningStrategy_iff_isTwoPlayerDetermined
-
 /-- Legacy payoff-aware finite determinacy hypothesis package. -/
 structure FiniteTwoPlayerHypotheses
     (G : ObservedGame (Fin 2) U)
@@ -110,7 +86,54 @@ structure WellFoundedPrefixHypotheses
   noChance : G.base.NoChanceOnHistories
   perfectInformation : G.PerfectInformation
   zeroSum : W.IsTwoPlayerZeroSum
+  allDecisionInfoRepresented : G.AllDecisionInfoRepresented
+  decisionMoverCoherent : G.DecisionMoverCoherent
   prefixDecision : Arena.WinningConditionFrom.PrefixDecision W
+
+/-- Forget state payoffs from the legacy finite determinacy package. -/
+def FiniteTwoPlayerHypotheses.toControlled
+    {G : ObservedGame (Fin 2) U}
+    {W : G.base.toArena.WinningCondition G.base.init (Fin 2)}
+    (h : G.FiniteTwoPlayerHypotheses W) :
+    G.toControlledObservedGame.FiniteTwoPlayerHypotheses W where
+  finiteEFG := h.finiteEFG
+  noChance := h.noChance
+  perfectInformation := h.perfectInformation
+  zeroSum := h.zeroSum
+
+/-- Forget state payoffs from the legacy well-founded-prefix package. -/
+def WellFoundedPrefixHypotheses.toControlled
+    {G : ObservedGame (Fin 2) U}
+    {W : G.base.toArena.WinningCondition G.base.init (Fin 2)}
+    (h : G.WellFoundedPrefixHypotheses W) :
+    G.toControlledObservedGame.WellFoundedPrefixHypotheses W where
+  wellFounded := h.wellFounded
+  noChance := h.noChance
+  perfectInformation := h.perfectInformation
+  zeroSum := h.zeroSum
+  allDecisionInfoRepresented :=
+    h.allDecisionInfoRepresented
+  decisionMoverCoherent :=
+    h.decisionMoverCoherent
+  prefixDecision := h.prefixDecision
+
+/-- Legacy payoff-aware finite determinacy is the canonical payoff-free
+theorem under definitional payoff erasure. -/
+theorem FiniteTwoPlayerHypotheses.isTwoPlayerDetermined
+    {G : ObservedGame (Fin 2) U}
+    {W : G.base.toArena.WinningCondition G.base.init (Fin 2)}
+    (h : G.FiniteTwoPlayerHypotheses W) :
+    G.IsTwoPlayerDetermined W :=
+  h.toControlled.isTwoPlayerDetermined
+
+/-- Legacy payoff-aware well-founded-prefix determinacy is the canonical
+payoff-free theorem under definitional payoff erasure. -/
+theorem WellFoundedPrefixHypotheses.isTwoPlayerDetermined
+    {G : ObservedGame (Fin 2) U}
+    {W : G.base.toArena.WinningCondition G.base.init (Fin 2)}
+    (h : G.WellFoundedPrefixHypotheses W) :
+    G.IsTwoPlayerDetermined W :=
+  h.toControlled.isTwoPlayerDetermined
 
 /-- Exclusive no-chance two-player objectives cannot give both players a
 pathwise winning strategy. -/
@@ -151,20 +174,5 @@ theorem not_both_havePathwiseWinningStrategy
   have hwinsOne : play ∈ W 1 :=
     hwinningOne play hcompatibleOne
   exact Fin.zero_ne_one (hexclusive play hwinsZero hwinsOne)
-
-@[deprecated not_both_havePathwiseWinningStrategy
-  (since := "2026-07-31")]
-theorem not_both_haveWinningStrategy
-    {G : ObservedGame (Fin 2) U}
-    [(state : G.base.State) →
-      Decidable (G.base.isTerminal state)]
-    {W : G.base.toArena.WinningCondition G.base.init (Fin 2)}
-    (hNoChance : G.base.NoChanceOnHistories)
-    (hexclusive : W.IsExclusive) :
-    ¬ ((∃ strategy : G.PureStrategy 0,
-          G.HasPathwiseWinningStrategy W 0 strategy) ∧
-        (∃ strategy : G.PureStrategy 1,
-          G.HasPathwiseWinningStrategy W 1 strategy)) :=
-  G.not_both_havePathwiseWinningStrategy hNoChance hexclusive
 
 end ExtensiveGame.ObservedGame
