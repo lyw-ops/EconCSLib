@@ -1,15 +1,14 @@
 # EFG Architecture Governance
 
-This document is the authoritative lifecycle and placement policy for
-EconCSLib's extensive-form-game implementation.  Mathematical declarations and
-their proofs remain authoritative in Lean; public navigation is defined here,
-in [`efg-public-api.md`](efg-public-api.md), and in the complete module register
-[`efg-module-status.md`](efg-module-status.md).
-
-The initial snapshot was the complete worktree on 2026-07-29 and was updated
-after the root and physical-layout closeout on 2026-07-30. It includes
-staged, unstaged, and untracked EFG work.  The audit did not infer architecture
-from HEAD alone and did not alter the index.
+This document and `scripts/check_efg_governance.py` are the authoritative
+enforceable architecture and placement policy for EconCSLib's extensive-form
+games. Mathematical declarations and proofs remain authoritative in Lean,
+module lifecycle lives in
+[`efg-module-status.md`](efg-module-status.md), public navigation lives in
+[`efg-public-api.md`](efg-public-api.md), and freeze readiness lives in
+[`efg-minimal-core-freeze.md`](efg-minimal-core-freeze.md). The complete
+authority order is
+[`efg-document-authority.md`](efg-document-authority.md).
 
 ## Verdict and canonical semantic line
 
@@ -98,7 +97,7 @@ The source does not perfectly mirror the diagram:
    continuation and a lawful `ObservedGame.SubgameSystem` make strictly
    different claims. The representation-neutral `Arena.Reachable` relation and
    initial-state specialization now live separately in canonical
-   `Execution.Reachability`, so typed histories do not import `Subgame`.
+   `Structural.Reachability`, so typed histories do not import `Subgame`.
 4. The endpoint `GameTree` NE/SPE/strategic-form route remains available by
    explicit import but left the root closure on 2026-07-30; occurrence-sensitive
    observed strategies are canonical for standard EFG SPE.
@@ -114,10 +113,10 @@ The source does not perfectly mirror the diagram:
 7. `Observed.Controlled.Morphism` is likewise a declaration-free canonical
    facade. Structural transport is owned by `Controlled.Morphism.Core`,
    lawful-subgame transport by `.Subgame`, and recall transport by `.Recall`;
-   their exact EFG/local closures are 8 / 8, 10 / 10, and 11 / 11.
+   their exact EFG/local closures are 9 / 9, 11 / 11, and 12 / 12.
 8. The complete `Observed.Controlled` hierarchy has the fixed role taxonomy
    documented in [`efg-controlled-api.md`](efg-controlled-api.md): one carrier,
-   five semantic owners, nine responsibility owners, two declaration-free
+   five semantic owners, ten responsibility owners, two declaration-free
    facades, and three downstream payoff-aware adapters under `.Compat`.
    Canonical modules cannot reach an adapter, and a new flat sibling such as
    `Observed.ControlledFoo` is rejected.
@@ -128,26 +127,39 @@ The source does not perfectly mirror the diagram:
    compatibility wrapper.
 
 These deviations are governed below. The `Observed.Controlled` hierarchy was
-hard-migrated before any stable external EFG API commitment; no forwarding
-stubs remain at its former flat paths. Other established compatibility paths
-retain their documented policies.
+hard-migrated during the current EFG pre-stability phase; no forwarding stubs
+remain at its former flat paths. No EFG facade currently carries an external
+source-compatibility guarantee.
 
 ## Lifecycle classes
 
 ### Canonical
 
-Canonical modules own reusable semantics.  General Nash, SPE, continuation,
+Canonical modules own reusable semantics. General Nash, SPE, continuation,
 and representation-transfer theory should be stated here unless its statement
-genuinely mentions a frontend-specific object.  Canonical declarations may be
-implemented in non-public leaves, but consumers import the granular facade.
+genuinely mentions a frontend-specific object. Canonical declarations may be
+implemented in non-facade leaves, but consumers import the granular facade.
 
-An incompatible canonical change requires:
+Canonical means recommended and machine-governed during pre-stability; it
+does not mean externally source-compatible. An evidence-backed hard migration
+is allowed now and requires, in the same change:
 
-1. a mathematically equivalent or explicitly narrower replacement;
-2. an API migration note;
-3. a positive import regression for the replacement;
+1. a mathematically equivalent, explicitly narrower, or honestly documented
+   non-equivalent replacement when one exists;
+2. migration notes and synchronized internal consumers;
+3. a positive import regression for every promised replacement;
 4. a negative boundary regression when dependency closure changes; and
-5. a major release when source compatibility cannot be preserved.
+5. updated lifecycle, governance, and audit records.
+
+The repository-wide Canonical/Frontend API growth freeze overrides the normal
+pre-stability permission to add endpoints. Existing declarations and paths may
+still be corrected or hard-migrated under the rules above, but the checked
+surface does not grow. New research remains in the knowledge blueprint or an
+opt-in Experimental module and is not promoted while the freeze is active.
+
+No migration window, deprecation interval, or major-release-only removal rule
+is currently promised. Those policies begin only if EFG API stability is
+formally announced later.
 
 ### Frontend
 
@@ -183,15 +195,14 @@ designated continuation is not a complete subgame system.
 
 ### Compatibility
 
-A temporary compatibility module, if introduced after API stability:
+A temporary compatibility module:
 
 - must be explicitly listed in both the module-status register and governance
   temporary registry;
 - contains only imports and a module docstring;
 - names the granular or canonical replacement;
 - must not define new implementation; and
-- is removed after internal users are zero and the migration window is
-  documented.
+- is removed after its real users are zero and the migration is documented.
 
 There are currently zero temporary compatibility modules. The pre-release
 broad Interface, implementation aggregate, former EFG-local probability, and
@@ -200,29 +211,32 @@ migrated. New code imports a granular facade or defining leaf.
 
 ### Internal and experimental
 
-Internal modules implement a stable facade.  Their proof helpers are
-name-resolvable through Lean imports but are not individually frozen.  They
-may be reorganized only when the change measurably lowers dependency or
-navigation cost.  A known downstream path receives a thin wrapper. Direct
-Historical imports require the same exact, reasoned pairwise exception as
-Frontend imports; directory-level and wildcard exceptions are not permitted.
+Internal modules implement a governed facade. Their proof helpers are
+name-resolvable through Lean imports but are not individual pre-stability
+contracts. They may be reorganized only when the change measurably lowers
+dependency or navigation cost. A wrapper is justified only by an identified
+downstream consumer. Direct Historical imports require the same exact,
+reasoned pairwise exception as Frontend imports; directory-level and wildcard
+exceptions are not permitted.
 
 Experimental modules are opt-in and must say what evidence would promote them.
 No in-scope module currently needs the Experimental classification; unfinished
 mathematical targets belong in the knowledge blueprint rather than in
 placeholder Lean declarations.
 
-## Placement rules for new work
+## Placement rules for maintenance and experimental work
 
-Place a new declaration at the lowest layer that can state it honestly:
+When the API growth freeze is explicitly reopened, place a new declaration at
+the lowest layer that can state it honestly:
 
 | Declaration depends on | Home |
 |---|---|
 | players, profiles, order, or probability only | `Foundation/` or `Math/` |
 | strategy/outcome maps without histories | `GameForm/` |
-| raw state-dependent dynamics | `ExtensiveGame/Basic` |
-| finite transition reachability | `Execution/Reachability` |
-| typed action occurrences | `Execution/History` |
+| raw payoff-free state-dependent dynamics | `ExtensiveGame/Structural/Basic` |
+| finite transition reachability | `Structural/Reachability` |
+| typed action occurrences and payoff-free unfolding | `Structural/History` |
+| endpoint-state-payoff compatibility | `ExtensiveGame/Basic` and the matching `Execution` adapter |
 | measure-free complete plays or structural termination | `Execution/CompletePlay` or `Execution/Length` |
 | terminal-history or complete-path objectives | `Execution/Objective`, exposed by `Interface.Objective` |
 | observations, information, chance, or lawful roots | `Observed/`; controlled execution/well-formedness/subgame/finite/quasi/recall infrastructure and structural/subgame/recall morphisms use the matching focused leaf |
@@ -233,11 +247,16 @@ Place a new declaration at the lowest layer that can state it honestly:
 | syntax-specific recursion or exact solver | the frontend |
 | preservation from a frontend | `Compiler/` or that frontend's serializer |
 
-New modules are not added to `EconCSLib.lean` merely because they compile.  A
-root import requires broad stable utility, a bounded dependency closure, an
-explicit lifecycle decision, and root-boundary regression coverage.  Analytic,
+New modules are not added to `EconCSLib.lean` merely because they compile. A
+root import requires broad canonical utility, a bounded dependency closure, an
+explicit lifecycle decision, and root-boundary regression coverage. Analytic,
 restart, compiler, internal, experimental, `Examples`, and `OpenProblem`
 modules are opt-in by default.
+
+While the growth freeze is active, this table remains an ownership map for
+fixes and refactors, not permission to add Canonical/Frontend declarations.
+Usability experiments belong in documentation and `Examples`; reusable
+research prototypes remain Experimental until a later policy decision.
 
 ### When a new representation is allowed
 
@@ -295,17 +314,18 @@ EFG theorem.
 | `BehaviorStrategy` | Deleted after consumer migration; no redirect stub | `ObservedGame.BehavioralStrategy`, normalized chance kernels, and `Finite`/`EqD` |
 | `Play` | Deleted after consumer migration; no redirect stub | terminal-aware `Execution.StoppedExecution` / `Finite` |
 | `ExtensiveGame.Probability.*` | Deleted after consumer migration; no redirect stubs | `Math.Probability.PMF.*` |
-| broad Interface aggregates | Deleted before external API stability | smallest granular facade |
+| broad Interface aggregates | Deleted during pre-stability | smallest granular facade |
 | split implementation aggregates | Deleted after consumers imported defining leaves | corresponding subdirectory leaves; downstream users prefer facades |
 | `Observed.Controlled.Infrastructure` | Canonical declaration-free aggregate facade | defining `Controlled.Infrastructure.*` leaf; winning predicates are in `Winning.Basic` |
 | `Observed.Controlled.Morphism` | Canonical declaration-free aggregate facade | `Controlled.Morphism.Core`, `.Subgame`, or `.Recall` according to the declarations used |
-| former flat `Observed.ControlledFoo` paths | Removed before API stability | corresponding module below `Observed.Controlled`; no forwarding stubs |
+| former flat `Observed.ControlledFoo` paths | Removed during pre-stability | corresponding module below `Observed.Controlled`; no forwarding stubs |
+| `Observed.PathLawEquivalence` | Deleted in the 2026-08-03 pre-stability audit after a zero-consumer check | use the authoritative payoff-free `ControlledObservedGame.CompletePathLawSemantics` and its nested equivalence/realization declarations |
 | endpoint `GameTree` NE/SPE/strategic form | Historical, retained, stopped from general expansion | occurrence compiler for canonical standard SPE; no false deprecation |
 | `GameTree.toObservedGame` | Historical endpoint compiler, retained for old policy semantics | occurrence compiler when paths must be distinguished |
 | state-based `Strategy` | Historical but semantically valid | observed pure strategy is information-indexed and not definitionally equivalent |
 | `Subgame.subgameAt` / `reachableSubgameAt` | Historical state re-root/restriction tools | not synonymous with designated roots or lawful/complete subgame systems |
 | `FiniteImperfectGame` | Supported frontend, not a theorem layer | compile via `ObservedCompiler` or `ObservedChanceCompiler` |
-| `actionAt_same_info_label` | Exact deprecated alias may remain | `actionAt_same_info` since 2026-07-29 |
+| exact deprecated declaration aliases | Hard-deleted after the 2026-08-03 zero-source-consumer audit | replacements remain recorded in `efg-api-migration.md`; new EFG deprecations require a future external-stability policy |
 | `ZeroSumChance.GameTree` | Supported specialized frontend | exact rational algorithm has no equivalent replacement |
 | `GameForm.LimitSPE` | Historical path with a correct, explicit convergence theorem | indexed continuation Nash on declared roots; it does not certify standard SPE |
 
@@ -324,12 +344,15 @@ bridge and the endpoint-policy results used by `FiniteArenaExtraction` and
 ## Semantic contract rules
 
 - The minimal carrier line
-  `Arena -> ControlledGame -> ControlledObservedGame` is frozen. New payoff,
-  probability, objective, recall, finiteness, root-selection, termination, or
-  solution-concept fields are rejected unless a concrete representation
-  failure is demonstrated and cannot be expressed by an external certificate,
-  adapter, relation, or compiler. The freeze governs carrier data, not the
-  addition of honest downstream theorems.
+  `Arena -> ControlledGame -> ControlledObservedGame` is governed by
+  [`efg-minimal-core-freeze.md`](efg-minimal-core-freeze.md). Its compatibility
+  freeze is deferred while the current API/generality review continues. A
+  narrow guard keeps `InfoAction` aligned with the base action universe rather
+  than the state universe. New payoff, probability, objective, recall,
+  finiteness, root-selection, termination, or solution-concept data should
+  still normally belong in an external certificate, adapter, relation,
+  execution layer, or compiler. The exact five-module StructuralCore closure
+  is a current import-boundary regression, not a compatibility freeze.
 - Ambient `ControlledGame.NoChance` and reachable
   `NoChanceOnHistories` are distinct. Pure execution, total pure
   continuation/SPE, winning, and determinacy use the reachable certificate;
@@ -362,8 +385,8 @@ bridge and the endpoint-policy results used by `FiniteArenaExtraction` and
 
 ## Root aggregate lifecycle
 
-The root was narrowed on 2026-07-30 and re-audited on 2026-08-03. Its current
-closure is 36 EFG modules and 163 local `EconCSLib` modules. It exposes
+The checker recomputes the root closure from the current source graph. It
+currently contains 38 EFG modules and 166 local `EconCSLib` modules. It exposes
 measure-free complete plays, structural termination, reusable finite-EFG
 certificates, finite/PMF execution, finite `GameTree` syntax and
 backward-induction values, but no infinite path law,
@@ -372,38 +395,40 @@ analytic execution, Restart, FOSG, compiler, or Historical
 module.
 
 The governed direct-import closure budgets are recalculated from the current
-source graph:
+source graph. As in `efg-public-api.md` and the governance checker, the entry
+module itself is excluded:
 
 | Entry | EFG modules / all local modules |
 |---|---:|
-| `EconCSLib` | 36 / 163 |
+| `EconCSLib` | 38 / 166 |
 | `Interface.StructuralCore` | 5 / 5 |
-| `Interface.Core` | 14 / 14 |
-| `Interface.Objective` | 32 / 37 |
-| `Interface.Winning` | 35 / 40 |
-| `Interface.Winning.Stochastic` | 50 / 57 |
-| `Interface.Execution.Finite` | 33 / 40 |
-| `Interface.Execution.Infinite` | 38 / 45 |
-| `Interface.Execution.Analytic` | 58 / 66 |
-| `Interface.Relations.Discrete` | 39 / 46 |
-| `Interface.Equilibrium.Discrete` | 66 / 82 |
-| `Interface.Equilibrium.Analytic` | 95 / 112 |
-| `Interface.Restart` | 103 / 120 |
-| `Interface.Compilation.Discrete` | 86 / 104 |
+| `Interface.Core` | 17 / 17 |
+| `Interface.Objective` | 33 / 39 |
+| `Interface.Winning` | 36 / 42 |
+| `Interface.Winning.Stochastic` | 51 / 59 |
+| `Interface.Execution.Finite` | 34 / 42 |
+| `Interface.Execution.Infinite` | 39 / 47 |
+| `Interface.Execution.Analytic` | 59 / 68 |
+| `Interface.Relations.Discrete` | 40 / 48 |
+| `Interface.Preservation` | 23 / 29 |
+| `Interface.Equilibrium.Discrete` | 68 / 85 |
+| `Interface.Equilibrium.Analytic` | 99 / 117 |
+| `Interface.Restart` | 107 / 125 |
+| `Interface.Compilation.Discrete` | 89 / 108 |
 
 | Path | Class | Root decision | Explicit import for opt-in use |
 |---|---|---|---|
-| `Interface.Execution.Finite` | stable finite/PMF execution | retained as the root EFG facade | same path |
-| `Interface.Objective` | stable measure-free objective semantics | opt-in; terminal/path objectives are not required by every root client | same path |
-| `GameTree` | stable specialized frontend | retained | same path |
-| `BackwardInduction` | stable specialized frontend algorithm | retained | same path |
-| `ZeroSumGameTreeWithChance` | stable specialized exact solver | retained | same path |
+| `Interface.Execution.Finite` | canonical pre-stability finite/PMF execution | retained as the root EFG facade | same path |
+| `Interface.Objective` | canonical pre-stability measure-free objective semantics | opt-in; terminal/path objectives are not required by every root client | same path |
+| `GameTree` | canonical specialized frontend | retained | same path |
+| `BackwardInduction` | canonical specialized frontend algorithm | retained | same path |
+| `ZeroSumGameTreeWithChance` | canonical specialized exact solver | retained | same path |
 | `Interface.Execution.Discrete` | deleted pre-release aggregate | removed from source | `Interface.Execution.Finite` or `Interface.Execution.Infinite` according to need |
 | `GameTreeSPE` | historical endpoint semantics | removed from root | `EconCSLib.GameTheory.ExtensiveGame.GameTreeSPE` |
 | `GameTreeNE` | historical endpoint semantics | removed from root | `EconCSLib.GameTheory.ExtensiveGame.GameTreeNE` |
 | `GameTreeStrategicForm` | historical endpoint semantics | removed from root | explicit module import |
-| `FiniteArenaExtraction` | stable but niche frontend bridge | removed from root | explicit module import |
-| `Zermelo` | stable specialized theorem over historical endpoint policies | removed from root | explicit module import |
+| `FiniteArenaExtraction` | canonical but niche frontend bridge | removed from root | explicit module import |
+| `Zermelo` | canonical specialized theorem over historical endpoint policies | removed from root | explicit module import |
 
 The migration includes explicit internal imports for existing examples and
 positive/negative `RootImportBoundary` regressions. Historical declarations
@@ -483,7 +508,7 @@ maintenance triage, not API cardinalities.
 | `Observed.Continuation` | 1001 / 36 | pure and behavioral continuation adapters | pure + behavioral equilibrium adapters | Medium-high; two parallel halves | Moderate casts | continuation morphism/simulation/iso bundles | pure / behavioral leaves plus aggregate | Medium; useful only if clients need one half independently | Queue on measured import demand |
 | `Observed.Kuhn` | 866 / 41 | finite hypotheses, behavioral-to-mixed, realization | finite probability → strategy → equilibrium | High proof progression | Moderate table/index transport | hypothesis structures and realization records | hypotheses / plan sampling / realization | Medium-high; wrappers share theorem names | Keep |
 | `Observed.PerfectRecall` | 934 / 33 | personal-decision recall and iso transfer | information structure → relation transfer | High | High dependent-list transport | `RecallCertificate` | structure / iso transfer | Medium-high; certificate equivalence links halves | Keep |
-| `Observed.Controlled.Morphism` (former monolith) | 1883 / layered declaration families | payoff-free structural, lawful-subgame, and recall transport | controlled structure → subgames/recall | Three separable layers | High dependent casts in the structural base | `Hom`, `InformationRefinement`, and `Iso` | `Core` / `Subgame` / `Recall` leaves plus facade | Low after preserving declaration names | **Split and hierarchy migration implemented**; exact closures 8 / 8, 10 / 10, and 11 / 11 |
+| `Observed.Controlled.Morphism` (former monolith) | 1883 / layered declaration families | payoff-free structural, lawful-subgame, and recall transport | controlled structure → subgames/recall | Three separable layers | High dependent casts in the structural base | `Hom`, `InformationRefinement`, and `Iso` | `Core` / `Subgame` / `Recall` leaves plus facade | Low after preserving declaration names | **Split and hierarchy migration implemented**; exact closures 9 / 9, 11 / 11, and 12 / 12 |
 | `Observed.SPE` | 923 / 34 | total pure semantics and lawful/complete SPE | termination → root systems → equilibrium transfer | High | High history/root transport | terminating-on and complete-system packages | termination / equilibrium / iso transfer | High; cyclic import risk with morphism/refinement | Keep |
 | `Kernel.EventPath` | 1119 / 60 | event paths, policies, state projection | analytic execution + projection bridge | High | High coordinate/index arithmetic | `EventHistoryActionPolicy` and path measures | event core / policy path / projections | High; Ionescu–Tulcea proof chain | Keep |
 | `Presentation.Chance.Countable` | 1347 / 59 | reachable countability and automatic analytic presentation | types/instances → realization → profile compiler | High | High dependent tags and casts | `presentation`, `measurablePresentation`, kernel adapter | carriers / realization / profile adapters | High; scoped instances cross every section | Keep |
@@ -501,6 +526,12 @@ three independently useful dependency closures, not line count alone. No
 additional low-risk/high-benefit split was identified; the remaining
 mechanical line-count splits would either cut a single induction/transport
 chain or add wrappers without reducing facade closure.
+
+The 2026-08-03 distribution pass moved reusable-module regression data to four
+opt-in example modules and removed zero-consumer exact declaration aliases.
+Neither change justifies splitting a cohesive implementation module: example
+ownership and API compatibility are enforced independently by source scans
+and negative facade regressions.
 
 ## Maintenance queue and stop conditions
 
@@ -534,19 +565,26 @@ python3 scripts/report_efg_declaration_usage.py \
 ```
 
 The report is not a dead-code oracle. It classifies zero-source-indegree
-declarations into documented/example/test-backed endpoints, unexplained
-Canonical/Frontend endpoints, Internal/private review, and lifecycle-specific
-review. A declaration is removed or privatized only after manual confirmation
-that it has no mathematical endpoint role, downstream compatibility role,
-documentation role, example/test role, or external consumer.
+declarations into source-documented or repository-backed endpoints,
+unclassified Canonical/Frontend endpoints, Internal/private helpers, and
+lifecycle-specific review. A declaration is removed or privatized only after
+manual confirmation that it has no mathematical endpoint role, downstream
+compatibility role, documentation role, example/test role, or external
+consumer.
 
-The current unexplained public-endpoint triage ceiling is **263**. This number
-is a no-growth baseline, not evidence that those declarations have already
-been mathematically reviewed and not a target for bulk deletion. A new
-Canonical or Frontend endpoint must add endpoint evidence, gain a source
-consumer, or be accompanied by an explicit reduction elsewhere so that the
-queue does not grow. Changes that reduce the queue are reviewed normally; the
-ceiling is lowered only after the reduction is intentional and stable.
+The generated zero-source-indegree queue is split deterministically into:
+repository-backed public endpoints, source-doc endpoints,
+`[simp]`/normalization API, positive facade-contract declarations,
+compiler-preservation endpoints, proof helpers, historical-only declarations,
+and a residual unclassified-public review bucket. Negative `#guard_msgs`
+checks are excluded from positive facade evidence. The last label still
+requires mathematical and downstream review; it is not a dead-code verdict.
+
+The current residual ceiling is **0**, recorded in the report script. It is
+not a claim that all zero-indegree endpoints should be deleted. Before the API
+growth freeze, endpoint evidence could justify a new Canonical/Frontend
+endpoint; during the freeze, the separate surface baseline rejects the
+addition even when it is documented.
 
 ## Enforceable invariants
 
@@ -556,6 +594,12 @@ The source-graph portion of this policy is checked in CI with:
 python3 scripts/check_efg_governance.py
 ```
 
+The Canonical/Frontend API-growth decision is checked independently with:
+
+```bash
+python3 scripts/check_efg_api_growth.py
+```
+
 The check makes closure changes deliberate: a facade or root dependency change
 must update its boundary regression and the audited count in this policy,
 rather than remaining an invisible transitive import. Review and CI maintain:
@@ -563,17 +607,23 @@ rather than remaining an invisible transitive import. Review and CI maintain:
 - zero-byte and comment/namespace-only Lean files are rejected;
 - every import-only Lean module is explicitly registered as a canonical
   facade/aggregate or temporary compatibility path;
-- the current inventory is 20 canonical import-only modules and zero
+- the current inventory is 21 canonical import-only modules and zero
   temporary compatibility modules;
 - deleted module paths cannot be recreated or imported;
+- no minimal carrier declaration is currently fingerprint-frozen;
+- the registered Canonical/Frontend module inventory and its 1,711 explicit
+  public source declarations do not grow beyond the reviewed baseline;
+- a focused source check requires `ControlledObservedGame.base :
+  ControlledGame.{uN, uA, uS} N` and `InfoAction ... : Type uA`, preventing
+  the base action/state universe swap from recurring;
 - `Interface.StructuralCore` has exactly the five structural EFG dependencies
   and `Interface.Core` cannot regain Objective/Winning;
 - every payoff-free `Controlled.Infrastructure.*` leaf obeys the existing
   reverse-dependency prohibition;
 - `Controlled.Infrastructure.Recall` has its exact six-module closure and
   cannot regain `Finite` or `Execution.Length`;
-- `Controlled.Morphism.{Core,Subgame,Recall}` retain their exact 8 / 8,
-  10 / 10, and 11 / 11 closures without cross-layer leakage;
+- `Controlled.Morphism.{Core,Subgame,Recall}` retain their exact 9 / 9,
+  11 / 11, and 12 / 12 closures without cross-layer leakage;
 - `Observed.Controlled.Infrastructure` and `Observed.Controlled.Morphism`
   remain declaration-free canonical facades with exact direct leaf imports,
   while internal consumers import defining leaves;
@@ -584,7 +634,7 @@ rather than remaining an invisible transitive import. Review and CI maintain:
 - the governed EFG/GameForm/PMF source graph is acyclic;
 - Canonical, Frontend, and Internal modules do not directly import Historical
   modules except for exact, reasoned importer/imported allowlist pairs;
-- `Execution.History` cannot import `Subgame`, and `StochasticGameTree` cannot
+- `Structural.History` cannot import `Subgame`, and `StochasticGameTree` cannot
   import `GameTreeSPE`;
 - `Core`, `Finite`, `Infinite`, `Analytic`, relations, equilibrium, Restart,
   and Compilation keep their documented negative sentinels;
@@ -592,16 +642,34 @@ rather than remaining an invisible transitive import. Review and CI maintain:
   analytic, restart, FOSG, or compiler modules transitively;
 - Restart and Compilation remain sibling branches;
 - `Math/Probability/PMF` imports no game theory;
-- `Examples` and `OpenProblem` do not enter stable aggregates;
+- `Examples` and `OpenProblem` do not enter governed library aggregates;
+- reusable EFG/GameForm/PMF modules do not declare under `namespace Examples`,
+  and example-only fair-coin data does not return to `StochasticGameTree`;
 - any future temporary compatibility module must appear in both explicit
   registries and name a replacement;
-- every `@[deprecated]` EFG declaration appears in
+- no `@[deprecated]` EFG declaration is retained during pre-stability;
+  completed replacement maps live in
   [`efg-api-migration.md`](efg-api-migration.md);
 - the unexplained zero-source-indegree Canonical/Frontend endpoint queue does
   not grow beyond its recorded baseline;
 - no ordinary `sorry` or `admit` appears below `EconCSLib/`; and
 - no compatibility, historical, or internal status is inferred solely from a
   filename: the source responsibility is checked.
+
+CI separately runs:
+
+```bash
+python3 scripts/build_efg_modules.py --fresh
+```
+
+The lifecycle register is the script's only build-module list. The script
+rejects register/source drift, removes only registered artifacts plus the
+governance checker's exact removed-path artifacts in fresh mode, asks Lake to
+build every registered EFG, GameForm, and direct PMF support module in one
+invocation, and verifies one nonempty `.olean` per registered source. This
+covers canonical, frontend, historical, and internal modules without
+importing them into `EconCSLib.lean`, while preventing removed paths from
+surviving through stale project artifacts.
 
 These checks provide machine-checked evidence for source elaboration, the
 axiom surface, placeholder policy, module boundaries, and the listed formal
