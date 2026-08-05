@@ -12,8 +12,8 @@ import EconCSLib.GameTheory.ExtensiveGame.Execution.Discrete.KernelArena
 /-!
 # Finite-horizon discrete EFG execution
 
-Stable public import for deterministic and PMF-valued execution with finite
-fuel.
+Recommended pre-stability import for deterministic and PMF-valued execution
+with finite fuel.
 
 This tier adds observed behavioral/chance execution and the discrete
 `KernelArena` without importing infinite path measures, Mathlib Markov
@@ -31,5 +31,5 @@ facade.
 
 Measure-valued infinite discrete paths are available from
 `Interface.Execution.Infinite`; the former combined
-`Interface.Execution.Discrete` path was deleted before API stability.
+`Interface.Execution.Discrete` path was deleted during pre-stability.
 -/
