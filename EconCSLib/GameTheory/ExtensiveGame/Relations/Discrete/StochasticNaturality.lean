@@ -9,9 +9,9 @@ import EconCSLib.GameTheory.ExtensiveGame.Relations.Discrete.Morphism
 /-!
 # Naturality of bounded stochastic history execution
 
-This neutral execution module proves exact PMF naturality under a strict
-isomorphism of complete-history unfoldings.  The theorem mentions neither
-payoffs nor observed-game presentations.
+This relation-side module proves exact PMF naturality under a strict
+isomorphism of complete-history unfoldings. The execution implementation
+therefore remains independent of the higher Arena relation hierarchy.
 -/
 
 namespace ExtensiveGame.Arena.Iso
