@@ -190,25 +190,29 @@ def toInformationRefinement
   infoActionEquiv :=
     e.infoActionEquivOverTarget
   map_infoAt := by
-    intro history i hsource htarget
+    intro history i hsource hsource_nonterminal
+      htarget htarget_nonterminal
     apply (e.infoStateEquiv i).injective
     rw [(e.infoStateEquiv i).apply_symm_apply]
     exact
       e.map_infoAt
-        history i hsource htarget
+        history i hsource hsource_nonterminal
+        htarget htarget_nonterminal
   map_infoActionAt := by
-    intro history i hsource htarget action
+    intro history i hsource hsource_nonterminal
+      htarget htarget_nonterminal action
     let sourceInformation :=
-      G.infoAt history i hsource
+      G.infoAt history i hsource hsource_nonterminal
     let targetInformation :=
       H.infoAt
         (e.historyIso.stateEquiv history)
-        i htarget
+        i htarget htarget_nonterminal
     have hinfo :
         e.infoStateEquiv i sourceInformation =
           targetInformation :=
       e.map_infoAt
-        history i hsource htarget
+        history i hsource hsource_nonterminal
+        htarget htarget_nonterminal
     have hforget :
         sourceInformation =
           (e.infoStateEquiv i).symm
@@ -234,7 +238,8 @@ def toInformationRefinement
     rw [haction]
     exact
       e.map_infoActionAt
-        history i hsource htarget action
+        history i hsource hsource_nonterminal
+        htarget htarget_nonterminal action
 
 /-- The refinement action lift induced by a strict isomorphism is exactly the
 strict dependent action equivalence, evaluated through its inverse information
@@ -329,7 +334,7 @@ theorem toInformationRefinement_mapBehavioralStrategy
       strategy sourceInformation information
       hinformation
   unfold behavioralStrategyEquiv
-  rw [hpi]
+  refine hpi.trans ?_
   change
     cast
         (congrArg
