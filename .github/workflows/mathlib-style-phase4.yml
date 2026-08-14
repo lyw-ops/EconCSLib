@@ -28,11 +28,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Build pinned Lean environment and run leanchecker
+      - name: Build pinned Lean environment
         uses: leanprover/lean-action@v1
         with:
           build: true
-          leanchecker: true
+          leanchecker: false
 
       - name: Install the frozen JSON Schema runtime
         run: python3 -m pip install --requirement benchmarks/mathlib-style/requirements-phase4.txt
@@ -55,6 +55,10 @@ jobs:
           name: mathlib-style-linux-environment-evidence
           path: /tmp/mathlib-style-phase4-environments/linux-ubuntu/
           if-no-files-found: error
+
+      - name: Run scoped kernel replay
+        timeout-minutes: 10
+        run: lake env leanchecker EconCSLib
 
       - name: Re-run frozen distillation and fixture regressions
         run: python3 benchmarks/mathlib-style/scripts/check_benchmark.py
