@@ -516,11 +516,6 @@ def compile_cases(
     )
     require(lint_build.returncode == 0,
             f"could not build pinned lint-style executable: {lint_build.stderr.strip()}")
-    lint_executable = (
-        REPO_ROOT / ".lake" / "packages" / "mathlib" / ".lake" / "build" / "bin" /
-        "lint-style"
-    )
-    require(lint_executable.is_file(), "pinned lint-style executable is missing")
     environment_result = subprocess.run(
         ["lake", "env", "env"], cwd=REPO_ROOT, text=True,
         capture_output=True, check=False, timeout=timeout,
@@ -530,6 +525,12 @@ def compile_cases(
     lake_environment.update(
         line.split("=", 1) for line in environment_result.stdout.splitlines() if "=" in line
     )
+    lint_executable_raw = shutil.which(
+        "lint-style", path=lake_environment.get("PATH", "")
+    )
+    require(lint_executable_raw is not None,
+            "pinned lint-style executable is missing from the Lake environment")
+    lint_executable = Path(lint_executable_raw)
     cases = sorted(public_case_paths())
     compiled = 0
     with tempfile.TemporaryDirectory(prefix=".mathlib-style-phase4-", dir=REPO_ROOT) as raw_temp, \
