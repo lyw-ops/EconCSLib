@@ -299,7 +299,6 @@ def run_text_linter(
     lint_root: Path,
     timeout: int,
     lake_environment: dict[str, str],
-    lint_executable: Path,
 ) -> CompileResult:
     """Run Mathlib's pinned text-based linter suite on one isolated source copy."""
     lint_source = lint_root / "EconCSLib" / f"{source.parent.parent.name}.lean"
@@ -316,7 +315,7 @@ def run_text_linter(
         lint_scripts / "nolints-style.txt",
     )
     module_name = f"EconCSLib.{lint_source.stem}"
-    command = [str(lint_executable), module_name]
+    command = ["lake", "exe", "lint-style", module_name]
     run_environment = dict(lake_environment)
     run_environment["PWD"] = str(lint_root)
     run_environment["LEAN_SRC_PATH"] = os.pathsep.join(
@@ -525,12 +524,6 @@ def compile_cases(
     lake_environment.update(
         line.split("=", 1) for line in environment_result.stdout.splitlines() if "=" in line
     )
-    lint_executable_raw = shutil.which(
-        "lint-style", path=lake_environment.get("PATH", "")
-    )
-    require(lint_executable_raw is not None,
-            "pinned lint-style executable is missing from the Lake environment")
-    lint_executable = Path(lint_executable_raw)
     cases = sorted(public_case_paths())
     compiled = 0
     with tempfile.TemporaryDirectory(prefix=".mathlib-style-phase4-", dir=REPO_ROOT) as raw_temp, \
@@ -572,7 +565,7 @@ def compile_cases(
                     f"standard linter elaboration failed for {case_id}:\n"
                     f"{linter_result.stdout}{linter_result.stderr}")
             text_linter_result = run_text_linter(
-                source, case_lint_root, timeout, lake_environment, lint_executable
+                source, case_lint_root, timeout, lake_environment
             )
             require(text_linter_result.exit_code == 0,
                     f"text/Unicode linter failed for {case_id}:\n"
@@ -644,7 +637,7 @@ def compile_cases(
                 require(linter_result.exit_code == 0,
                         f"reference repair standard linter failed for {case_id}")
                 text_linter_result = run_text_linter(
-                    after, case_lint_root, timeout, lake_environment, lint_executable
+                    after, case_lint_root, timeout, lake_environment
                 )
                 require(text_linter_result.exit_code == 0,
                         f"reference repair text/Unicode linter failed for {case_id}:\n"
