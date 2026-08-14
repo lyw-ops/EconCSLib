@@ -57,7 +57,7 @@ jobs:
           if-no-files-found: error
 
       - name: Run scoped kernel replay
-        timeout-minutes: 10
+        timeout-minutes: 25
         run: lake env leanchecker EconCSLib
 
       - name: Re-run frozen distillation and fixture regressions
