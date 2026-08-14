@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://econcs.example/mathlib-style/annotation.schema.json",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "case_id",
+    "annotator_id",
+    "task",
+    "submitted_at",
+    "confidence",
+    "annotation_payload",
+    "saw_other_annotation"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.3.0"
+    },
+    "case_id": {
+      "$ref": "common.schema.json#/$defs/caseId"
+    },
+    "annotator_id": {
+      "type": "string"
+    },
+    "task": {
+      "$ref": "common.schema.json#/$defs/task"
+    },
+    "submitted_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "confidence": {
+      "$ref": "common.schema.json#/$defs/confidence"
+    },
+    "annotation_payload": {
+      "type": "object"
+    },
+    "saw_other_annotation": {
+      "const": false
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

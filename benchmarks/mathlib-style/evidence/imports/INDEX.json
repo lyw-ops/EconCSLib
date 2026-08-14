@@ -1,0 +1,24 @@
+{
+  "schema_version": "0.1.0",
+  "category": "imports",
+  "source": "../../manifests/RULES.json",
+  "rule_families": [
+    "FIL-*",
+    "LOC-*"
+  ],
+  "rule_count": 12,
+  "rule_ids": [
+    "FIL-001",
+    "FIL-002A",
+    "FIL-002B",
+    "FIL-003",
+    "FIL-005",
+    "FIL-006",
+    "FIL-007",
+    "FIL-008",
+    "LOC-001",
+    "LOC-002A",
+    "LOC-002B",
+    "LOC-003"
+  ]
+}

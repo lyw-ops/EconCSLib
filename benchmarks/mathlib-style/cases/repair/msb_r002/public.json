@@ -1,0 +1,49 @@
+{
+  "schema_version": "0.3.0",
+  "id": "msb_r002",
+  "task": "REPAIR",
+  "stratum": "documentation",
+  "evaluation_mode": "CLOSED_CONTEXT",
+  "evaluation_environment_ref": "MATHLIB-4.30.0",
+  "requested_output": [
+    "repaired_code",
+    "findings",
+    "rationale",
+    "confidence"
+  ],
+  "prompt": {
+    "context": "Replace the rendered placeholder with accurate module documentation. The theorem statement and proof are frozen.",
+    "code": "/-!\n# A small order lemma\n\nTHE ABOVE DOCS MUST BE UPDATED!\n-/\n\ntheorem le_refl_pilot (n : ℕ) : n ≤ n := le_rfl",
+    "edit_contract": {
+      "editable_regions": [
+        {
+          "start": {
+            "line": 1,
+            "column": 1
+          },
+          "end": {
+            "line": 5,
+            "column": 3
+          }
+        }
+      ],
+      "frozen_declarations": [
+        "le_refl_pilot"
+      ],
+      "allow_new_imports": false,
+      "allow_new_declarations": false,
+      "allow_renaming": false,
+      "max_changed_lines": 4,
+      "interface_contract": "SAME_STATEMENT",
+      "acceptance": {
+        "must_compile": true,
+        "must_resolve_rule_ids": [
+          "DOC-001B",
+          "DOC-003"
+        ],
+        "must_not_introduce_new_findings": true,
+        "edit_cost_metric": "changed_lines_then_tokens"
+      }
+    }
+  }
+}

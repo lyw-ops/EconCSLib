@@ -1,0 +1,19 @@
+{
+  "schema_version": "0.3.0",
+  "id": "msb_d004",
+  "task": "DETECT",
+  "stratum": "api",
+  "evaluation_mode": "REPOSITORY_AGENT",
+  "evaluation_environment_ref": "MATHLIB-4.30.0",
+  "requested_output": [
+    "findings",
+    "rationale",
+    "confidence",
+    "missing_context"
+  ],
+  "prompt": {
+    "context": "Review the signature of this public definition against the repository's morphism hierarchy and downstream API expectations.",
+    "code": "def ValueGroup₀.mk {F : Type*} [FunLike F R Γ₀]\n    [MonoidWithZeroHomClass F R Γ₀] (f : F) (r s : R) : ValueGroup₀ f :=\n  ⟨f r / f s, by aesop⟩",
+    "target_scope": "api_slice"
+  }
+}

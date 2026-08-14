@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://econcs.example/mathlib-style/validation-record.schema.json",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "case_id",
+    "artifact_id",
+    "compile",
+    "placeholder_guards",
+    "axioms",
+    "warnings",
+    "linters",
+    "hashes",
+    "tool_versions"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.3.0"
+    },
+    "case_id": {
+      "$ref": "common.schema.json#/$defs/caseId"
+    },
+    "artifact_id": {
+      "type": "string"
+    },
+    "compile": {
+      "type": "object",
+      "required": [
+        "command",
+        "exit_code",
+        "duration_ms",
+        "stdout_path",
+        "stderr_path"
+      ],
+      "properties": {
+        "command": {
+          "type": "string"
+        },
+        "exit_code": {
+          "const": 0
+        },
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "stdout_path": {
+          "type": "string"
+        },
+        "stderr_path": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "placeholder_guards": {
+      "type": "object",
+      "required": [
+        "contains_sorry",
+        "contains_admit",
+        "introduced_forbidden_declarations"
+      ],
+      "properties": {
+        "contains_sorry": {
+          "const": false
+        },
+        "contains_admit": {
+          "const": false
+        },
+        "introduced_forbidden_declarations": {
+          "type": "array",
+          "maxItems": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "axioms": {
+      "type": "object",
+      "required": [
+        "baseline",
+        "observed",
+        "delta"
+      ],
+      "properties": {
+        "baseline": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "observed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "delta": {
+          "type": "array",
+          "maxItems": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "warnings": {
+      "type": "object",
+      "required": [
+        "observed",
+        "whitelist",
+        "unexpected"
+      ],
+      "properties": {
+        "observed": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "whitelist": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "unexpected": {
+          "type": "array",
+          "maxItems": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "linters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "validator_id",
+          "findings"
+        ],
+        "properties": {
+          "validator_id": {
+            "type": "string"
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "statement_preserved": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "hashes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^sha256:[0-9a-f]{64}$"
+      }
+    },
+    "tool_versions": {
+      "type": "object",
+      "required": [
+        "harness",
+        "mathlib_release",
+        "mathlib_commit",
+        "lean_toolchain"
+      ],
+      "properties": {
+        "harness": {
+          "const": "0.3.0"
+        },
+        "mathlib_release": {
+          "const": "v4.30.0"
+        },
+        "mathlib_commit": {
+          "const": "c5ea00351c28e24afc9f0f84379aa41082b1188f"
+        },
+        "lean_toolchain": {
+          "const": "leanprover/lean4:v4.30.0"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

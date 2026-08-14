@@ -1,0 +1,21 @@
+{
+  "schema_version": "0.3.0",
+  "id": "msb_p004",
+  "task": "PAIR",
+  "stratum": "statement",
+  "evaluation_mode": "CLOSED_CONTEXT",
+  "evaluation_environment_ref": "MATHLIB-4.30.0",
+  "requested_output": [
+    "verdict",
+    "findings",
+    "rationale",
+    "confidence"
+  ],
+  "prompt": {
+    "context": "Compare the two proofs of the same public theorem. The displayed goal is already definitionally reflexive.",
+    "candidate_a": "theorem castSelfA (n : ℕ) : (n : ℤ) = n := by\n  change Int.ofNat n = Int.ofNat n\n  rfl",
+    "candidate_b": "theorem castSelfB (n : ℕ) : (n : ℤ) = n := by\n  rfl",
+    "comparison_contract": "SAME_STATEMENT",
+    "presentation_seed": 104
+  }
+}

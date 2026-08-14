@@ -1,0 +1,4858 @@
+{
+  "name": "Mathlib Style and Review Distillation",
+  "schema_version": "0.3.0",
+  "version": "0.3.1",
+  "checked_date": "2026-08-13",
+  "status": "phase3-normative-revision-complete",
+  "evaluation_environment_ref": "MATHLIB-4.30.0",
+  "policy_snapshot_ref": "MATHLIB-POLICY-2026-08-13",
+  "rule_count": 75,
+  "leaf_rule_ids_frozen_for_pilot": true,
+  "legacy_aliases": {
+    "FIL-002": [
+      "FIL-002A",
+      "FIL-002B"
+    ],
+    "FIL-004": [
+      "DOC-001A"
+    ],
+    "DOC-001": [
+      "DOC-001A",
+      "DOC-001B",
+      "DOC-001C"
+    ],
+    "DOC-002": [
+      "DOC-002A",
+      "DOC-002B",
+      "DOC-002C",
+      "DOC-002D"
+    ],
+    "NAM-010": [
+      "NAM-010A",
+      "NAM-010B",
+      "NAM-010C"
+    ],
+    "LOC-002": [
+      "LOC-002A",
+      "LOC-002B"
+    ]
+  },
+  "rule_strength_levels": {
+    "MUST": {
+      "en": "Explicitly disallowed/required or reliably enforced within the stated scope."
+    },
+    "SHOULD": {
+      "en": "Default expectation; deviations require a concrete reason."
+    },
+    "PREFER": {
+      "en": "Community preference with multiple acceptable alternatives."
+    },
+    "CONTEXT": {
+      "en": "Requires mathematical, architectural, or downstream-use context."
+    }
+  },
+  "evidence_classes": {
+    "DIRECT_MANUAL": {
+      "en": "Directly stated in official contributor or generated documentation."
+    },
+    "REVIEW_HEURISTIC": {
+      "en": "A question or preference presented in the official PR review guide."
+    },
+    "SYNTHESIZED_GUIDANCE": {
+      "en": "A conservative synthesis of official examples; not itself a universal official rule."
+    },
+    "BENCHMARK_POLICY": {
+      "en": "An operational choice made only for benchmark construction."
+    }
+  },
+  "automation_levels": {
+    "DETERMINISTIC": {
+      "en": "A pinned validator decides the operational condition within its explicitly documented scope."
+    },
+    "ASSISTED": {
+      "en": "Machine evidence is useful but a human judgment is still required."
+    },
+    "HUMAN": {
+      "en": "No reliable automatic decision procedure is claimed."
+    }
+  },
+  "finding_priority_levels": {
+    "BLOCKING": {
+      "en": "Must be resolved before the case can be accepted."
+    },
+    "SUBSTANTIVE": {
+      "en": "Material review issue, normally requiring a change or explicit justification."
+    },
+    "MINOR": {
+      "en": "Localized non-blocking improvement."
+    },
+    "INFORMATIONAL": {
+      "en": "Context or advice, not itself a defect."
+    }
+  },
+  "sources_ref": "SOURCES.json",
+  "validators_ref": "VALIDATORS.json",
+  "rules": [
+    {
+      "id": "FIL-001",
+      "category": {
+        "en": "File structure"
+      },
+      "title": {
+        "en": "File naming"
+      },
+      "rule": {
+        "en": "Lean source files should generally use UpperCamelCase names. Rare lower-case exceptions require prior discussion, and the file name should identify its mathematical topic."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "custom.file_name_upper_camel",
+          "human.file_topic_fit"
+        ],
+        "notes": {
+          "en": "Case can be checked mechanically; semantic fit and rare exceptions require review."
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR",
+        "LOCATE"
+      ],
+      "sources": [
+        "NC"
+      ],
+      "applies_to": [
+        "file",
+        "module"
+      ],
+      "exceptions": [
+        {
+          "en": "Case can be checked mechanically; semantic fit and rare exceptions require review."
+        }
+      ],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "bad_file.lean"
+          },
+          "preferred": {
+            "en": "BadFile.lean"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FIL-001"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FIL-002A",
+      "category": {
+        "en": "File structure"
+      },
+      "title": {
+        "en": "Standard header syntax"
+      },
+      "rule": {
+        "en": "Start a mathlib file with the standard copyright, Apache-2.0 license, and `Authors:` header syntax."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.style.header"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "DOC",
+        "LIN-HEADER"
+      ],
+      "applies_to": [
+        "file"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "code",
+          "bad": {
+            "en": "A malformed or missing copyright/license/Authors block."
+          },
+          "preferred": {
+            "en": "Use the exact standard header syntax accepted by `linter.style.header`."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FIL-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "DOC",
+          "section": null
+        },
+        {
+          "source_id": "LIN-HEADER",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "FIL-002B",
+      "category": {
+        "en": "File structure"
+      },
+      "title": {
+        "en": "Author attribution semantics"
+      },
+      "rule": {
+        "en": "The `Authors:` list should identify substantial design/development contributors whom maintainers would contact about the file; syntax alone does not decide attribution."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.authorship_attribution"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "LOCATE"
+      ],
+      "sources": [
+        "SG"
+      ],
+      "applies_to": [
+        "file",
+        "provenance"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Author attribution semantics”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FIL-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        }
+      ],
+      "rule_strength": "CONTEXT"
+    },
+    {
+      "id": "FIL-003",
+      "category": {
+        "en": "File structure"
+      },
+      "title": {
+        "en": "Module and import order"
+      },
+      "rule": {
+        "en": "Put `module` on its own line after the header. For ordinary `public import` and `import` blocks, keep one import per line, place the public block first, and try to sort within each block; no official total order is asserted for uncommon modifiers such as `public meta import` or `import all`."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "linter.style.header",
+          "custom.module_import_order"
+        ],
+        "notes": {
+          "en": "The custom order check may decide ordinary public/ordinary blocks; uncommon modifiers require review because no official relative order is prescribed."
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR",
+        "LOCATE"
+      ],
+      "sources": [
+        "SG",
+        "DOC",
+        "LIN-HEADER"
+      ],
+      "applies_to": [
+        "file",
+        "module"
+      ],
+      "exceptions": [
+        {
+          "en": "No total order is prescribed between uncommon import forms such as `public meta import` and `import all`."
+        }
+      ],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A benchmark invents one relative order for `public meta import` and `import all` and labels every alternative as wrong."
+          },
+          "preferred": {
+            "en": "Score alphabetical order only inside ordinary `public import` and `import` blocks."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FIL-003"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "DOC",
+          "section": null
+        },
+        {
+          "source_id": "LIN-HEADER",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FIL-005",
+      "category": {
+        "en": "File structure"
+      },
+      "title": {
+        "en": "Import organization"
+      },
+      "rule": {
+        "en": "Keep one import per line, preserve the public/ordinary grouping, prefer alphabetical order within groups, and remove imports shown to be redundant or unnecessary."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "custom.module_import_order",
+          "command.#min_imports_in",
+          "command.#redundant_imports",
+          "human.location_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR",
+        "LOCATE"
+      ],
+      "sources": [
+        "SG",
+        "PR",
+        "MINIMPORTS"
+      ],
+      "applies_to": [
+        "file",
+        "module"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Import organization”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FIL-005"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        },
+        {
+          "source_id": "MINIMPORTS",
+          "section": null
+        }
+      ],
+      "rule_strength": "PREFER"
+    },
+    {
+      "id": "FIL-006",
+      "category": {
+        "en": "File structure"
+      },
+      "title": {
+        "en": "Top-level alignment"
+      },
+      "rule": {
+        "en": "Keep top-level declarations and commands flush-left; do not indent the contents of namespaces or sections."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "linter.style.whitespace"
+        ],
+        "notes": {
+          "en": "The linter checks selected command alignment, not every layout judgment."
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR",
+        "LOCATE"
+      ],
+      "sources": [
+        "SG",
+        "LIN-WS"
+      ],
+      "applies_to": [
+        "file",
+        "module"
+      ],
+      "exceptions": [
+        {
+          "en": "The linter checks selected command alignment, not every layout judgment."
+        }
+      ],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Top-level alignment”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FIL-006"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "LIN-WS",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FIL-007",
+      "category": {
+        "en": "File structure"
+      },
+      "title": {
+        "en": "File cohesion and size"
+      },
+      "rule": {
+        "en": "Split files according to mathematical cohesion and dependency boundaries. Roughly 1000 lines is a reviewer signal to reconsider the split; mathlib’s `longFile` linter warns above 1500 lines, while downstream projects have no long-file limit unless configured."
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "LINTER",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "linter.style.longFile",
+          "human.location_review"
+        ],
+        "notes": {
+          "en": "Line count is automatic; whether a split is mathematically appropriate is contextual."
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR",
+        "LOCATE"
+      ],
+      "sources": [
+        "PR",
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "file",
+        "module"
+      ],
+      "exceptions": [
+        {
+          "en": "Line count is automatic; whether a split is mathematically appropriate is contextual."
+        }
+      ],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “File cohesion and size”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FIL-007"
+      ],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        },
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "CONTEXT"
+    },
+    {
+      "id": "FIL-008",
+      "category": {
+        "en": "File structure"
+      },
+      "title": {
+        "en": "Header-level prohibited imports"
+      },
+      "rule": {
+        "en": "Do not introduce `Mathlib.Tactic` bucket imports or other imports explicitly prohibited by the pinned header linter. `Lake.*` instead triggers a warning and may remain only after necessity review, performance benchmarking, and a justified linter allowance."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "linter.style.header",
+          "human.location_review"
+        ],
+        "notes": {
+          "en": "The linter identifies both classes, but only the explicitly prohibited class is a hard failure; retaining a `Lake.*` warning requires human necessity/performance review."
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR",
+        "LOCATE"
+      ],
+      "sources": [
+        "LIN-HEADER"
+      ],
+      "applies_to": [
+        "file",
+        "imports"
+      ],
+      "exceptions": [
+        {
+          "en": "A `Lake.*` import is not an unconditional hard negative when necessity, benchmarking, and a justified linter allowance are recorded."
+        }
+      ],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case labels every `Lake.*` import as the same hard failure as `Mathlib.Tactic`."
+          },
+          "preferred": {
+            "en": "Keep `Mathlib.Tactic` as a hard negative; treat a justified, benchmarked `Lake.*` import as a warning/review case."
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "LIN-HEADER",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "FMT-001",
+      "category": {
+        "en": "Formatting"
+      },
+      "title": {
+        "en": "Line length"
+      },
+      "rule": {
+        "en": "Keep lines at or below 100 characters; the current linter permits documented exceptions such as lines containing URLs."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.style.longLine"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "file",
+        "declaration",
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "A source line with more than 100 characters without a documented exception."
+          },
+          "preferred": {
+            "en": "Break the expression across lines at a readable syntactic boundary."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FMT-001"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FMT-002",
+      "category": {
+        "en": "Formatting"
+      },
+      "title": {
+        "en": "Spaces around operators"
+      },
+      "rule": {
+        "en": "Use spaces around :, :=, and infix operators; keep an operator at the end of the preceding line when breaking."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "linter.style.whitespace",
+          "human.layout_review"
+        ],
+        "notes": {
+          "en": "The official whitespace linter covers only selected patterns and is not a full formatter."
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "LIN-WS"
+      ],
+      "applies_to": [
+        "file",
+        "declaration",
+        "proof"
+      ],
+      "exceptions": [
+        {
+          "en": "The official whitespace linter covers only selected patterns and is not a full formatter."
+        }
+      ],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "a*b:c"
+          },
+          "preferred": {
+            "en": "a * b : c"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FMT-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "LIN-WS",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FMT-003",
+      "category": {
+        "en": "Formatting"
+      },
+      "title": {
+        "en": "Indentation"
+      },
+      "rule": {
+        "en": "Use two-space continuation indentation in general, four spaces for continued theorem statements, and two spaces for proof bodies."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "human.layout_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "file",
+        "declaration",
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "A continued theorem statement aligned by one or three spaces."
+          },
+          "preferred": {
+            "en": "Use the documented continuation indentation consistently."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FMT-003"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FMT-004",
+      "category": {
+        "en": "Formatting"
+      },
+      "title": {
+        "en": "Placement of by and calc"
+      },
+      "rule": {
+        "en": "Place by and calc on the line immediately preceding the proof or calculation, not on a line by themselves."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "human.layout_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "file",
+        "declaration",
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "theorem t : P :=\nby\n  exact h"
+          },
+          "preferred": {
+            "en": "theorem t : P := by\n  exact h"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FMT-004"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FMT-005",
+      "category": {
+        "en": "Formatting"
+      },
+      "title": {
+        "en": "Explicit declaration types"
+      },
+      "rule": {
+        "en": "In public signatures, give explicit types for parameters and return values when omission would obscure readability or API meaning. Types clear from a typed dependent context—such as inferable index, universe, or similar binders `{n}` and `{m}`—may be omitted."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.statement_review"
+        ],
+        "notes": {
+          "en": "Lean elaboration can reveal an omitted type, but deciding whether the public signature remains clear is human review; mathlib has no complete standard linter for this convention."
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "file",
+        "declaration",
+        "proof"
+      ],
+      "exceptions": [
+        {
+          "en": "Inferable index, universe, and similar binders may omit a type when a typed dependent context makes it unambiguous, for example `{n}` and `{m}`."
+        }
+      ],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "def f x := x"
+          },
+          "preferred": {
+            "en": "Use `def f (x : α) : α := x`; accept `{n}` or `{m}` when its type is clear from a typed dependent context."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FMT-005"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FMT-006",
+      "category": {
+        "en": "Formatting"
+      },
+      "title": {
+        "en": "Binder formatting"
+      },
+      "rule": {
+        "en": "Put a space after binders and normally state binder types explicitly."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "linter.style.whitespace",
+          "human.layout_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "LIN-WS",
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "file",
+        "declaration",
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "(x:α)"
+          },
+          "preferred": {
+            "en": "(x : α)"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FMT-006"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "LIN-WS",
+          "section": null
+        },
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FMT-007",
+      "category": {
+        "en": "Formatting"
+      },
+      "title": {
+        "en": "Anonymous functions"
+      },
+      "rule": {
+        "en": "Use `fun`, not `λ`, for anonymous functions. The `↦` arrow is only a slight source-code preference, not a hard requirement."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.style.lambdaSyntax"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "file",
+        "declaration",
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "λ x => x"
+          },
+          "preferred": {
+            "en": "fun x ↦ x"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FMT-007"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "FMT-008",
+      "category": {
+        "en": "Formatting"
+      },
+      "title": {
+        "en": "Application syntax"
+      },
+      "rule": {
+        "en": "Do not use `$` for function application in mathlib source; use `<|` instead."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.style.dollarSyntax"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "file",
+        "declaration",
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "f $ x"
+          },
+          "preferred": {
+            "en": "f <| x"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FMT-008"
+      ],
+      "source_locators": [
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "FMT-009",
+      "category": {
+        "en": "Formatting"
+      },
+      "title": {
+        "en": "Goal focusing"
+      },
+      "rule": {
+        "en": "Normally focus proof goals explicitly, often with `·`, so a tactic does not unintentionally act on several goals; use documented multi-goal combinators only when intentional."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "linter.style.multiGoal",
+          "human.proof_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "LIN-MULTI"
+      ],
+      "applies_to": [
+        "file",
+        "declaration",
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "A tactic runs while several unrelated goals are active."
+          },
+          "preferred": {
+            "en": "Focus the intended goal with `·`, `focus`, or a documented goal combinator."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FMT-009"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "LIN-MULTI",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FMT-010",
+      "category": {
+        "en": "Formatting"
+      },
+      "title": {
+        "en": "One tactic per line"
+      },
+      "rule": {
+        "en": "Normally place one tactic per line; compress short steps only when this clearly improves readability."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.proof_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "PR"
+      ],
+      "applies_to": [
+        "file",
+        "declaration",
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "A long semicolon-packed tactic line that obscures proof flow."
+          },
+          "preferred": {
+            "en": "Put logically separate tactics on separate lines."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FMT-010"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "PREFER"
+    },
+    {
+      "id": "FMT-011",
+      "category": {
+        "en": "Formatting"
+      },
+      "title": {
+        "en": "No blank lines inside declarations"
+      },
+      "rule": {
+        "en": "Within the pinned `linter.style.emptyLine` scope, do not use blank lines to segment a command; use comments to explain proof structure. Its deterministic scope excludes doc/module docs, mutual commands, string syntax, `where` fields, incomplete commands, and paths containing `Tactic`, `Util`, or `Meta`; outside that scope the same readability question is assisted review."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "linter.style.emptyLine",
+          "human.layout_review"
+        ],
+        "notes": {
+          "en": "Deterministic only for syntax nodes and paths actually covered by the pinned linter; all excluded contexts require human readability review."
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "LIN-EMPTY"
+      ],
+      "applies_to": [
+        "file",
+        "declaration",
+        "proof"
+      ],
+      "exceptions": [
+        {
+          "en": "The linter excludes doc/module docs, mutual commands, string syntax, `where` fields, incomplete commands, and files with `Tactic`, `Util`, or `Meta` path segments."
+        }
+      ],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "A blank line splits one declaration body."
+          },
+          "preferred": {
+            "en": "Use a comment for a mathematical stage, without an empty line inside the declaration."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FMT-011"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "LIN-EMPTY",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FMT-012",
+      "category": {
+        "en": "Formatting"
+      },
+      "title": {
+        "en": "Scoped production options"
+      },
+      "rule": {
+        "en": "Remove development options rooted at `debug`, `pp`, `profiler`, or `trace`. The pinned linter also rejects unscoped options containing `maxHeartbeats` and unscoped `linter.flexible`, deprecates `linter.style.commandStart`, and rejects new `backward.inferInstanceAs.wrap.reuseSubInstances` debt. Other technically necessary production options are not automatic failures, but must be scoped as narrowly as possible and explained when required."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "linter.style.setOption",
+          "human.layout_review"
+        ],
+        "notes": {
+          "en": "The pinned linter deterministically covers the named option families; whether another scoped production option is technically necessary remains human review."
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "file",
+        "command"
+      ],
+      "exceptions": [
+        {
+          "en": "A genuinely necessary production option outside the listed failure classes may remain when narrowly scoped; tests may intentionally use debugging options with an explicit linter allowance."
+        }
+      ],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A benchmark labels every production `set_option` as a failure regardless of option family or scope."
+          },
+          "preferred": {
+            "en": "Fail the listed development/debt or unscoped classes; review other narrowly scoped technical options for necessity."
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "FMT-013",
+      "category": {
+        "en": "Formatting"
+      },
+      "title": {
+        "en": "Closed sections and namespaces"
+      },
+      "rule": {
+        "en": "Close sections and namespaces before end-of-file, except for the documented outermost public/meta/noncomputable section exceptions."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.style.missingEnd"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "file"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Closed sections and namespaces”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "FMT-014",
+      "category": {
+        "en": "Formatting"
+      },
+      "title": {
+        "en": "Focusing-dot syntax"
+      },
+      "rule": {
+        "en": "Use the `·` focusing character rather than a plain dot, and do not isolate the focusing dot on a line by itself."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.style.cdot"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Focusing-dot syntax”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "FMT-015",
+      "category": {
+        "en": "Formatting"
+      },
+      "title": {
+        "en": "Scoped Classical opening"
+      },
+      "rule": {
+        "en": "Do not use file-wide `open Classical`/`open scoped Classical` when a declaration-local scope suffices."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.style.openClassical"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "file",
+        "declaration"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Scoped Classical opening”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FMT-016",
+      "category": {
+        "en": "Formatting"
+      },
+      "title": {
+        "en": "Use change for goal changes"
+      },
+      "rule": {
+        "en": "When a `show` command changes the goal rather than merely presenting it, use `change` as required by the pinned style linter."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.style.show"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Use change for goal changes”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "FMT-017",
+      "category": {
+        "en": "Formatting"
+      },
+      "title": {
+        "en": "Heartbeat changes require scope and explanation"
+      },
+      "rule": {
+        "en": "A `maxHeartbeats`-family option must be scoped to a command and accompanied by a comment explaining why the increase is necessary."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.style.setOption",
+          "linter.style.maxHeartbeats"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "LIN-STYLE",
+        "LIN-DEP"
+      ],
+      "applies_to": [
+        "command"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Heartbeat changes require scope and explanation”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        },
+        {
+          "source_id": "LIN-DEP",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "FMT-018",
+      "category": {
+        "en": "Formatting"
+      },
+      "title": {
+        "en": "Use Type* for arbitrary universes"
+      },
+      "rule": {
+        "en": "Use `Type*` rather than `Type _` when the intention is an arbitrary universe level, unless a concrete metavariable behavior is required and justified."
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.statement_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "binder",
+        "declaration"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Use Type* for arbitrary universes”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FMT-019",
+      "category": {
+        "en": "Formatting"
+      },
+      "title": {
+        "en": "Readable allowed Unicode"
+      },
+      "rule": {
+        "en": "Reject characters and variant-selector uses disallowed by the pinned `linter.unicodeLinter`; its allow-list is snapshot-specific and may change with Mathlib. Separately, whether an allowed Unicode character improves mathematical readability is human review."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL",
+        "LINTER"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "linter.unicodeLinter",
+          "human.layout_review"
+        ],
+        "notes": {
+          "en": "The text linter deterministically checks pinned character/variant legality; it does not decide mathematical readability."
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "LIN-TEXT-BASED",
+        "LIN-UNICODE"
+      ],
+      "applies_to": [
+        "file",
+        "documentation",
+        "notation"
+      ],
+      "exceptions": [
+        {
+          "en": "Allow-list acceptance is not evidence that a character improves readability, and an allow-list result must not be transferred to another Mathlib snapshot without repinning."
+        }
+      ],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case treats an allowed character as automatically readable or uses an allow-list from another Mathlib snapshot."
+          },
+          "preferred": {
+            "en": "Run the pinned text linter for legality, then review mathematical readability separately."
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "LIN-TEXT-BASED",
+          "section": null
+        },
+        {
+          "source_id": "LIN-UNICODE",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "NAM-001",
+      "category": {
+        "en": "Naming"
+      },
+      "title": {
+        "en": "Semantic capitalization"
+      },
+      "rule": {
+        "en": "Use snake_case for propositions and theorems, UpperCamelCase for types in Prop/Type/Sort, and usually lowerCamelCase for other Type-valued terms."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "linter.style.nameCheck",
+          "environment_linter.defsWithUnderscore",
+          "human.naming_review"
+        ],
+        "notes": {
+          "en": "Current linters check only a small subset of naming conventions."
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "NC",
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "declaration",
+        "field",
+        "constructor"
+      ],
+      "exceptions": [
+        {
+          "en": "Current linters check only a small subset of naming conventions."
+        }
+      ],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "theorem SomeTheorem"
+          },
+          "preferred": {
+            "en": "theorem some_theorem"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "NAM-001"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        },
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "NAM-002",
+      "category": {
+        "en": "Naming"
+      },
+      "title": {
+        "en": "Function names follow return type"
+      },
+      "rule": {
+        "en": "Choose a function's capitalization from the semantic category of its return type, not merely from the fact that it is a function."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.naming_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "NC"
+      ],
+      "applies_to": [
+        "declaration",
+        "field",
+        "constructor"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Function names follow return type”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "NAM-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "NAM-003",
+      "category": {
+        "en": "Naming"
+      },
+      "title": {
+        "en": "Fields and constructors"
+      },
+      "rule": {
+        "en": "Apply the same semantic naming rules to structure fields and constructors as to ordinary declarations."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.naming_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "NC"
+      ],
+      "applies_to": [
+        "declaration",
+        "field",
+        "constructor"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Fields and constructors”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "NAM-003"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "NAM-004",
+      "category": {
+        "en": "Naming"
+      },
+      "title": {
+        "en": "American spelling"
+      },
+      "rule": {
+        "en": "Use American English spelling in declaration names; documentation prose may use any common English spelling."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.naming_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "NC",
+        "DOC"
+      ],
+      "applies_to": [
+        "declaration",
+        "field",
+        "constructor"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "factorisation"
+          },
+          "preferred": {
+            "en": "factorization"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "NAM-004"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        },
+        {
+          "source_id": "DOC",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "NAM-005",
+      "category": {
+        "en": "Naming"
+      },
+      "title": {
+        "en": "Conclusion-first theorem names"
+      },
+      "rule": {
+        "en": "Name a theorem primarily after its conclusion rather than its proof method or a full restatement of its hypotheses."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.naming_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "NC",
+        "PR"
+      ],
+      "applies_to": [
+        "declaration",
+        "field",
+        "constructor"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "theorem by_induction_using_auxiliary_fact"
+          },
+          "preferred": {
+            "en": "Name the theorem after its conclusion."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "NAM-005"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "NAM-006",
+      "category": {
+        "en": "Naming"
+      },
+      "title": {
+        "en": "Hypotheses after of"
+      },
+      "rule": {
+        "en": "When hypotheses must appear in a theorem name, place them after _of_ in statement order."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.naming_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "NC"
+      ],
+      "applies_to": [
+        "declaration",
+        "field",
+        "constructor"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "conclusion_hypothesis"
+          },
+          "preferred": {
+            "en": "conclusion_of_hypothesis"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "NAM-006"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        }
+      ],
+      "rule_strength": "PREFER"
+    },
+    {
+      "id": "NAM-007",
+      "category": {
+        "en": "Naming"
+      },
+      "title": {
+        "en": "Standard vocabulary"
+      },
+      "rule": {
+        "en": "Reuse mathlib's standard symbol vocabulary, such as mul, add, one, zero, le, and lt, instead of inventing synonymous abbreviations."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.naming_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "NC",
+        "PR"
+      ],
+      "applies_to": [
+        "declaration",
+        "field",
+        "constructor"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "times"
+          },
+          "preferred": {
+            "en": "mul"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "NAM-007"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "NAM-008",
+      "category": {
+        "en": "Naming"
+      },
+      "title": {
+        "en": "Namespaces and dot notation"
+      },
+      "rule": {
+        "en": "Place declarations in the natural namespace and support useful dot notation when they belong to a type or object; avoid repeating context in long names."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.naming_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "NC",
+        "PR"
+      ],
+      "applies_to": [
+        "declaration",
+        "field",
+        "constructor"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Namespaces and dot notation”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "NAM-008"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "NAM-009",
+      "category": {
+        "en": "Naming"
+      },
+      "title": {
+        "en": "Coercion names"
+      },
+      "rule": {
+        "en": "Name coercion declarations after their underlying function rather than hiding semantics behind a generic coe name."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.naming_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "NC"
+      ],
+      "applies_to": [
+        "declaration",
+        "field",
+        "constructor"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Coercion names”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "NAM-009"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "NAM-010A",
+      "category": {
+        "en": "Naming"
+      },
+      "title": {
+        "en": "Extensionality names"
+      },
+      "rule": {
+        "en": "Use established extensionality names such as `.ext` and `.ext_iff`, together with appropriate attributes when justified."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "human.naming_review",
+          "human.api_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "NC",
+        "PR"
+      ],
+      "applies_to": [
+        "theorem",
+        "attribute"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Extensionality names”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "NAM-010"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "NAM-010B",
+      "category": {
+        "en": "Naming"
+      },
+      "title": {
+        "en": "Injectivity names"
+      },
+      "rule": {
+        "en": "Follow established injectivity naming patterns such as `f_injective` and `f_inj` according to the theorem shape."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.naming_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "NC"
+      ],
+      "applies_to": [
+        "theorem"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Injectivity names”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "NAM-010"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "NAM-010C",
+      "category": {
+        "en": "Naming"
+      },
+      "title": {
+        "en": "Induction and recursor names"
+      },
+      "rule": {
+        "en": "Respect the established distinction and parameter-order conventions for induction principles and recursors."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.naming_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "NC"
+      ],
+      "applies_to": [
+        "theorem",
+        "recursor"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Induction and recursor names”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "NAM-010"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "DOC-001A",
+      "category": {
+        "en": "Documentation"
+      },
+      "title": {
+        "en": "Module docstring presence and position"
+      },
+      "rule": {
+        "en": "Except for the documented import-only and initialization exceptions, the first non-import command must be a module docstring."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.style.header"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "DOC",
+        "LIN-HEADER"
+      ],
+      "applies_to": [
+        "file",
+        "module_docstring"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Module docstring presence and position”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FIL-004",
+        "DOC-001"
+      ],
+      "source_locators": [
+        {
+          "source_id": "DOC",
+          "section": null
+        },
+        {
+          "source_id": "LIN-HEADER",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "DOC-001B",
+      "category": {
+        "en": "Documentation"
+      },
+      "title": {
+        "en": "Module title and summary"
+      },
+      "rule": {
+        "en": "A module docstring must contain a first-level title and a useful summary of the file’s mathematical contents."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.documentation_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "DOC"
+      ],
+      "applies_to": [
+        "module_docstring"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Module title and summary”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "DOC-001"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "DOC",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "DOC-001C",
+      "category": {
+        "en": "Documentation"
+      },
+      "title": {
+        "en": "Relevant module sections"
+      },
+      "rule": {
+        "en": "Use conventional module-docstring sections in their documented order when relevant. `Main definitions` and `Main statements` are optional; `Notation`, `References`, and `Tags` are required only when the file's content makes them relevant."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.documentation_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "DOC"
+      ],
+      "applies_to": [
+        "module_docstring"
+      ],
+      "exceptions": [
+        {
+          "en": "Do not add a named section mechanically when the file has no corresponding content."
+        }
+      ],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case requires every module docstring to contain all named sections."
+          },
+          "preferred": {
+            "en": "Require only relevant conditional sections; treat `Main definitions` and `Main statements` as optional."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "DOC-001"
+      ],
+      "source_locators": [
+        {
+          "source_id": "DOC",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "DOC-002A",
+      "category": {
+        "en": "Documentation"
+      },
+      "title": {
+        "en": "Definition docstrings"
+      },
+      "rule": {
+        "en": "Every public definition requires a docstring that conveys its mathematical meaning."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "human.documentation_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "DOC"
+      ],
+      "applies_to": [
+        "definition"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Definition docstrings”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "DOC-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "DOC",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "DOC-002B",
+      "category": {
+        "en": "Documentation"
+      },
+      "title": {
+        "en": "Major-theorem docstrings"
+      },
+      "rule": {
+        "en": "Every major theorem requires a docstring; deciding whether a theorem is major is contextual."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.documentation_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "DOC",
+        "PR"
+      ],
+      "applies_to": [
+        "theorem"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Major-theorem docstrings”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "DOC-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "DOC",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "DOC-002C",
+      "category": {
+        "en": "Documentation"
+      },
+      "title": {
+        "en": "Structure and class field documentation"
+      },
+      "rule": {
+        "en": "Each newly introduced explicit structure or class field should have a docstring by default. Limited exceptions are generated fields, declarations that only `extends` documented parents without new explicit fields, and genuinely self-evident fields with sufficient context."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.documentation_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "DOC"
+      ],
+      "applies_to": [
+        "structure_field",
+        "class_field"
+      ],
+      "exceptions": [
+        {
+          "en": "Generated fields, `extends`-only declarations with no new explicit fields, and rare genuinely self-evident fields with sufficient context may omit a separate field docstring."
+        }
+      ],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A new explicit law or data field is left undocumented merely because its name seems suggestive."
+          },
+          "preferred": {
+            "en": "Document every new explicit field by default and record any limited exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "DOC-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "DOC",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "DOC-002D",
+      "category": {
+        "en": "Documentation"
+      },
+      "title": {
+        "en": "Useful lemma docstrings"
+      },
+      "rule": {
+        "en": "Add docstrings to ordinary lemmas when they carry mathematical content or are likely to be useful across files."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.documentation_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT"
+      ],
+      "sources": [
+        "DOC"
+      ],
+      "applies_to": [
+        "lemma"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Useful lemma docstrings”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "DOC-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "DOC",
+          "section": null
+        }
+      ],
+      "rule_strength": "PREFER"
+    },
+    {
+      "id": "DOC-003",
+      "category": {
+        "en": "Documentation"
+      },
+      "title": {
+        "en": "Mathematical meaning"
+      },
+      "rule": {
+        "en": "Write documentation in English and state the mathematical meaning accurately; implementation details may be abstracted away but not confused with semantics."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.documentation_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "DOC",
+        "PR"
+      ],
+      "applies_to": [
+        "module_docstring",
+        "declaration_docstring",
+        "proof_comments"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Mathematical meaning”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "DOC-003"
+      ],
+      "source_locators": [
+        {
+          "source_id": "DOC",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "DOC-004",
+      "category": {
+        "en": "Documentation"
+      },
+      "title": {
+        "en": "Sentence and theorem formatting"
+      },
+      "rule": {
+        "en": "If a docstring is a complete sentence, end it with a period, and boldface named mathematical theorems according to the documentation convention. `linter.style.docString` checks only mechanical delimiter, emptiness, leading/trailing whitespace, comma, and trailing newline form; sentence punctuation, theorem-name boldface, and general prose remain human review."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "linter.style.docString",
+          "human.documentation_review"
+        ],
+        "notes": {
+          "en": "Deterministic labels cover only the pinned linter's mechanical syntax checks; prose punctuation and boldface labels are human judgments."
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "DOC",
+        "LIN-DOCSTYLE"
+      ],
+      "applies_to": [
+        "module_docstring",
+        "declaration_docstring",
+        "proof_comments"
+      ],
+      "exceptions": [
+        {
+          "en": "Passing `linter.style.docString` does not establish correct sentence punctuation, named-theorem boldface, or prose quality."
+        }
+      ],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "/-- This theorem proves X -/"
+          },
+          "preferred": {
+            "en": "/-- This theorem proves X. -/"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "DOC-004"
+      ],
+      "source_locators": [
+        {
+          "source_id": "DOC",
+          "section": null
+        },
+        {
+          "source_id": "LIN-DOCSTYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "DOC-005",
+      "category": {
+        "en": "Documentation"
+      },
+      "title": {
+        "en": "Cross-references"
+      },
+      "rule": {
+        "en": "Put current Lean 4 declaration names in backticks, use real fully qualified names such as `Set.mem_iUnion₂` when stable linking matters, and cross-reference related declarations explicitly. Backtick formatting does not prove resolution: the planned `custom.doc_link_check` resolves exact names in the pinned environment, while namespace-relative, protected, alias, ambiguous, and unresolved names require separate handling and human review."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "custom.doc_link_check",
+          "human.documentation_review"
+        ],
+        "notes": {
+          "en": "The custom checker is a planned benchmark-side exact-name resolver, not a Mathlib linter and not part of the current smoke harness; backtick syntax and target resolution are separate labels."
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "DOC",
+        "PR"
+      ],
+      "applies_to": [
+        "module_docstring",
+        "declaration_docstring",
+        "proof_comments"
+      ],
+      "exceptions": [
+        {
+          "en": "Namespace-relative or protected names and aliases may resolve differently from exact fully qualified names; ambiguous or unresolved backticks are not accepted merely because their delimiters are well formed."
+        }
+      ],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A backticked token is treated as a valid link without resolving it in the pinned Lean environment."
+          },
+          "preferred": {
+            "en": "Use a current exact name such as `Set.mem_iUnion₂`; label formatting and successful resolution separately."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "DOC-005"
+      ],
+      "source_locators": [
+        {
+          "source_id": "DOC",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "DOC-006",
+      "category": {
+        "en": "Documentation"
+      },
+      "title": {
+        "en": "Proof sketches and comments"
+      },
+      "rule": {
+        "en": "Provide a proof sketch for complex or non-obvious proofs and mark mathematical stages with comments rather than leaving only a tactic sequence."
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.documentation_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "DOC",
+        "PR",
+        "SG"
+      ],
+      "applies_to": [
+        "module_docstring",
+        "declaration_docstring",
+        "proof_comments"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Proof sketches and comments”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "DOC-006"
+      ],
+      "source_locators": [
+        {
+          "source_id": "DOC",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        },
+        {
+          "source_id": "SG",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "DOC-007",
+      "category": {
+        "en": "Documentation"
+      },
+      "title": {
+        "en": "Warnings and scope"
+      },
+      "rule": {
+        "en": "Mark auxiliary, hazardous, or narrowly applicable declarations clearly in their name or documentation so they are not mistaken for preferred public API."
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.documentation_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "module_docstring",
+        "declaration_docstring",
+        "proof_comments"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Warnings and scope”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "DOC-007"
+      ],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "DOC-008",
+      "category": {
+        "en": "Documentation"
+      },
+      "title": {
+        "en": "Literature references"
+      },
+      "rule": {
+        "en": "Record the source and relevance of literature-backed formalizations, adding new bibliography entries to docs/references.bib."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "custom.bibliography_reference_check",
+          "human.documentation_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "DOC",
+        "PR"
+      ],
+      "applies_to": [
+        "module_docstring",
+        "declaration_docstring",
+        "proof_comments"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Literature references”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "DOC-008"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "DOC",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "STM-001",
+      "category": {
+        "en": "Statement design"
+      },
+      "title": {
+        "en": "Hypotheses left of colon"
+      },
+      "rule": {
+        "en": "When a proof begins by introducing variables and hypotheses, prefer parameters to the left of the colon over outermost ∀ or →."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.statement_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT"
+      ],
+      "sources": [
+        "SG"
+      ],
+      "applies_to": [
+        "public_declaration"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Hypotheses left of colon”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "STM-001"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        }
+      ],
+      "rule_strength": "PREFER"
+    },
+    {
+      "id": "STM-002",
+      "category": {
+        "en": "Statement design"
+      },
+      "title": {
+        "en": "Avoid conjunction hypotheses"
+      },
+      "rule": {
+        "en": "Normally split a P ∧ Q hypothesis into separate hP and hQ arguments to improve lemma usability."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.statement_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT"
+      ],
+      "sources": [
+        "SG"
+      ],
+      "applies_to": [
+        "public_declaration"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "(h : P ∧ Q)"
+          },
+          "preferred": {
+            "en": "(hP : P) (hQ : Q)"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "STM-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "STM-003",
+      "category": {
+        "en": "Statement design"
+      },
+      "title": {
+        "en": "Split conjunction conclusions"
+      },
+      "rule": {
+        "en": "Public lemmas should normally expose Q and R separately rather than return Q ∧ R; a private conjunction lemma may share the proof."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.statement_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT"
+      ],
+      "sources": [
+        "SG",
+        "PR"
+      ],
+      "applies_to": [
+        "public_declaration"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "A public lemma returns `Q ∧ R` although callers usually need one component."
+          },
+          "preferred": {
+            "en": "Expose separate public lemmas for `Q` and `R`, optionally backed by a private conjunction lemma."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "STM-003"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "STM-004",
+      "category": {
+        "en": "Statement design"
+      },
+      "title": {
+        "en": "Avoid disjunction hypotheses"
+      },
+      "rule": {
+        "en": "Usually split an S ∨ T hypothesis into two lemmas, retaining the disjunction only when splitting would create excessive duplication."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.statement_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT"
+      ],
+      "sources": [
+        "SG"
+      ],
+      "applies_to": [
+        "public_declaration"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Avoid disjunction hypotheses”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "STM-004"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        }
+      ],
+      "rule_strength": "PREFER"
+    },
+    {
+      "id": "STM-005",
+      "category": {
+        "en": "Statement design"
+      },
+      "title": {
+        "en": "Canonical normal forms"
+      },
+      "rule": {
+        "en": "State results in the canonical normal form and rewrite orientation used by existing mathlib APIs."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.statement_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT"
+      ],
+      "sources": [
+        "SG",
+        "PR"
+      ],
+      "applies_to": [
+        "public_declaration"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Canonical normal forms”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "STM-005"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "PRF-001",
+      "category": {
+        "en": "Proof design"
+      },
+      "title": {
+        "en": "Reuse existing lemmas"
+      },
+      "rule": {
+        "en": "Search for existing or more general results before proving a new one, and prefer composing public API over reproving a special case."
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.proof_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "A special case is reproved by unfolding internals."
+          },
+          "preferred": {
+            "en": "Apply an existing public, more general theorem."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "PRF-001"
+      ],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "PRF-002",
+      "category": {
+        "en": "Proof design"
+      },
+      "title": {
+        "en": "Decompose long proofs"
+      },
+      "rule": {
+        "en": "Decompose long proofs into named, reusable mathematical lemmas; do not hide structure merely to reduce line count."
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.proof_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "PR",
+        "SG"
+      ],
+      "applies_to": [
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "One monolithic proof hides reusable mathematical steps."
+          },
+          "preferred": {
+            "en": "Extract named supporting lemmas at mathematical boundaries."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "PRF-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        },
+        {
+          "source_id": "SG",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "PRF-003",
+      "category": {
+        "en": "Proof design"
+      },
+      "title": {
+        "en": "Readable tactic choice"
+      },
+      "rule": {
+        "en": "Choose tactics that express mathematical intent and remain robust under refactoring; code golf is an improvement only when readability is preserved."
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.proof_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "A brittle low-level tactic sequence encodes incidental syntax."
+          },
+          "preferred": {
+            "en": "Use a tactic or lemma that states the mathematical intent."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "PRF-003"
+      ],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "PREFER"
+    },
+    {
+      "id": "PRF-004",
+      "category": {
+        "en": "Proof design"
+      },
+      "title": {
+        "en": "Stable proof structure"
+      },
+      "rule": {
+        "en": "Treat fragile unfolding, unusual transparency, repeated `erw`, or unexplained extra `rfl` steps as review signals—not automatic violations—that may indicate a missing API lemma or a noncanonical normal form."
+      },
+      "evidence_class": "SYNTHESIZED_GUIDANCE",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.proof_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "PR"
+      ],
+      "applies_to": [
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Stable proof structure”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "PRF-004"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "CONTEXT"
+    },
+    {
+      "id": "PRF-005",
+      "category": {
+        "en": "Proof design"
+      },
+      "title": {
+        "en": "No unused tactic steps"
+      },
+      "rule": {
+        "en": "Remove tactic calls that do not change the proof state, except for the pinned linter’s documented whitelist and exclusions."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.unusedTactic"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "LIN-UNUSED"
+      ],
+      "applies_to": [
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “No unused tactic steps”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "LIN-UNUSED",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "PRF-006",
+      "category": {
+        "en": "Proof design"
+      },
+      "title": {
+        "en": "Avoid deprecated Lean-3-style tactics"
+      },
+      "rule": {
+        "en": "Avoid `refine'`, `cases'`, and `induction'`; use the corresponding Lean 4 tactics unless a documented incompatibility requires otherwise."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.style.refine",
+          "linter.style.cases",
+          "linter.style.induction"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "LIN-DEP"
+      ],
+      "applies_to": [
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Avoid deprecated Lean-3-style tactics”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "LIN-DEP",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "PRF-007",
+      "category": {
+        "en": "Proof design"
+      },
+      "title": {
+        "en": "No native_decide in mathlib proofs"
+      },
+      "rule": {
+        "en": "Do not use `native_decide` or `decide +native` in mathlib proof code. Hard validation combines `linter.style.nativeDecide`—a first-line syntax check with documented false negatives, including some `decide (config := ...)` forms—with the pinned `lake env leanchecker --fresh Mathlib` kernel/environment gate or an adopted equivalent."
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "CHECKER"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.style.nativeDecide",
+          "checker.leanchecker"
+        ],
+        "notes": {
+          "en": "The syntax linter is informative rather than airtight; acceptance requires both the syntax pass and the independent checker gate."
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "LIN-DEP",
+        "CI-LEANCHECKER"
+      ],
+      "applies_to": [
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A candidate passes only the syntax linter even though a native-decision variant can escape that check."
+          },
+          "preferred": {
+            "en": "Require both the pinned syntax linter and `lake env leanchecker --fresh Mathlib` (or the adopted equivalent)."
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "LIN-DEP",
+          "section": null
+        },
+        {
+          "source_id": "CI-LEANCHECKER",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "API-001",
+      "category": {
+        "en": "API design"
+      },
+      "title": {
+        "en": "Complete usable API"
+      },
+      "rule": {
+        "en": "Provide the constructors, eliminators, extensionality lemmas, simp/rewrite lemmas, and attributes that are actually needed for downstream use, so users need not unfold implementation details."
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.api_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "LOCATE"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "definition",
+        "public_api",
+        "instance"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "Downstream users must unfold a new definition for every basic operation."
+          },
+          "preferred": {
+            "en": "Provide the minimal constructor/eliminator/ext/simp API required by users."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "API-001"
+      ],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "API-002",
+      "category": {
+        "en": "API design"
+      },
+      "title": {
+        "en": "Propositional API over definitional accidents"
+      },
+      "rule": {
+        "en": "Prefer a stable propositional API when downstream users would otherwise have to rely on accidental definitional equality. Repeated `erw` or extra `rfl` steps are evidence to investigate, not a universal failure criterion."
+      },
+      "evidence_class": "SYNTHESIZED_GUIDANCE",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.api_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "LOCATE"
+      ],
+      "sources": [
+        "SG",
+        "PR"
+      ],
+      "applies_to": [
+        "definition",
+        "public_api",
+        "instance"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Propositional API over definitional accidents”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "API-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "CONTEXT"
+    },
+    {
+      "id": "API-003",
+      "category": {
+        "en": "API design"
+      },
+      "title": {
+        "en": "Appropriate generality"
+      },
+      "rule": {
+        "en": "State results at the natural level of generality consistent with the literature and existing abstractions, without sacrificing usability for formal maximality."
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.api_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "LOCATE"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "definition",
+        "public_api",
+        "instance"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Appropriate generality”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "API-003"
+      ],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "CONTEXT"
+    },
+    {
+      "id": "API-004",
+      "category": {
+        "en": "API design"
+      },
+      "title": {
+        "en": "Standard bundling patterns"
+      },
+      "rule": {
+        "en": "Reuse established bundling abstractions—such as bundled morphisms, `FunLike`, or `SetLike`—when they genuinely match the object being modeled. Do not impose these patterns universally, and avoid unnecessary dependent types or typeclass diamonds."
+      },
+      "evidence_class": "SYNTHESIZED_GUIDANCE",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.api_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "LOCATE"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "definition",
+        "public_api",
+        "instance"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Standard bundling patterns”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "API-004"
+      ],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "CONTEXT"
+    },
+    {
+      "id": "API-005",
+      "category": {
+        "en": "API design"
+      },
+      "title": {
+        "en": "Appropriate attributes"
+      },
+      "rule": {
+        "en": "Add or omit attributes such as `@[simp]`, `@[ext]`, and `@[simps]` according to the intended API and canonical forms; attributes are not automatically beneficial."
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.api_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "LOCATE"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "attribute",
+        "public_api"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Appropriate attributes”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "CONTEXT"
+    },
+    {
+      "id": "API-006",
+      "category": {
+        "en": "API design"
+      },
+      "title": {
+        "en": "Instance diamond safety"
+      },
+      "rule": {
+        "en": "Check new instances for non-definitional or non-propositional diamonds and for unintended inference paths."
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.api_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "LOCATE"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "instance",
+        "typeclass_graph"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Instance diamond safety”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "CONTEXT"
+    },
+    {
+      "id": "API-007",
+      "category": {
+        "en": "API design"
+      },
+      "title": {
+        "en": "Transformation parity"
+      },
+      "rule": {
+        "en": "Where applicable, use transformation automation such as `@[to_additive]` or duality generation and preserve generated API and naming parity. Contextual exceptions include `to_additive existing`, an existing companion declaration, unsupported constants, necessary naming overrides, and generation that would create an incorrect or unstable API."
+      },
+      "evidence_class": "SYNTHESIZED_GUIDANCE",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "human.api_review"
+        ],
+        "notes": {
+          "en": "Automation can reveal missing parity, but deciding whether a contextual exception applies remains API review."
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "attribute",
+        "generated_declaration"
+      ],
+      "exceptions": [
+        {
+          "en": "`to_additive existing`, an existing companion, unsupported constants, necessary naming overrides, or harmful/unstable generated API can justify not generating the ordinary companion."
+        }
+      ],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "An ordinary transformable declaration omits its expected companion without a contextual reason."
+          },
+          "preferred": {
+            "en": "Generate and preserve parity by default, or record one of the explicit contextual exceptions."
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "LOC-001",
+      "category": {
+        "en": "Location and integration"
+      },
+      "title": {
+        "en": "Correct home file"
+      },
+      "rule": {
+        "en": "Place a declaration in a mathematically appropriate file as high in the import hierarchy as its dependencies permit. Use `#find_home` as evidence, not as an infallible placement oracle."
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "command.#find_home",
+          "human.location_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "LOCATE"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "file",
+        "module",
+        "import_graph",
+        "repository"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "A foundational declaration is placed in a high-level analysis file."
+          },
+          "preferred": {
+            "en": "Place it in the lowest mathematically appropriate module allowed by its dependencies."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "LOC-001"
+      ],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "LOC-002A",
+      "category": {
+        "en": "Location and integration"
+      },
+      "title": {
+        "en": "Import minimization"
+      },
+      "rule": {
+        "en": "Avoid unnecessary or oversized imports. Use `#min_imports in` for a one-command/term experiment that looks upward for dependencies, noting its attribute/example limits; use incremental `linter.minImports` via `#import_bumps` from the activation point downward to track import growth across later commands. Both are assisted evidence and neither proves global architectural minimality."
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "LINTER",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "command.#min_imports_in",
+          "linter.minImports",
+          "command.#redundant_imports",
+          "human.location_review"
+        ],
+        "notes": {
+          "en": "The tools have different directions and purposes; LOCATE/DETECT labels must separate their output from human dependency-architecture judgment."
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "LOCATE"
+      ],
+      "sources": [
+        "PR",
+        "MINIMPORTS",
+        "LIN-MINIMPORTS"
+      ],
+      "applies_to": [
+        "imports",
+        "file"
+      ],
+      "exceptions": [
+        {
+          "en": "`#min_imports in` may miss dependencies from attributes or `example` proof terms, while `linter.minImports` reports incremental growth rather than a global architectural optimum."
+        }
+      ],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A clean tool output is treated as proof that the file is globally minimal and architecturally well placed."
+          },
+          "preferred": {
+            "en": "Interpret each tool in its documented direction, then review the dependency architecture separately."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "LOC-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        },
+        {
+          "source_id": "MINIMPORTS",
+          "section": null
+        },
+        {
+          "source_id": "LIN-MINIMPORTS",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "LOC-002B",
+      "category": {
+        "en": "Location and integration"
+      },
+      "title": {
+        "en": "Dependency direction"
+      },
+      "rule": {
+        "en": "Preserve the intended dependency direction from foundational modules to higher-level modules; a locally minimal import set is not sufficient if it creates an architectural cycle or inversion."
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.location_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "LOCATE"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "import_graph",
+        "architecture"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Dependency direction”."
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "LOC-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "LOC-003",
+      "category": {
+        "en": "Location and integration"
+      },
+      "title": {
+        "en": "Duplicate and general-result search"
+      },
+      "rule": {
+        "en": "Before adding a declaration, search for identical, equivalent, or more general results using tools such as `exact?`, `apply?`, `#check`, and repository search."
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.location_review"
+        ],
+        "notes": {
+          "en": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "LOCATE"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "file",
+        "module",
+        "import_graph",
+        "repository"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "A new theorem duplicates an existing more general result."
+          },
+          "preferred": {
+            "en": "Reuse or specialize the existing result."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "LOC-003"
+      ],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    }
+  ],
+  "hard_validation_policy": {
+    "forbid_candidate_tokens": [
+      "sorry",
+      "admit"
+    ],
+    "forbid_candidate_declarations": [
+      "axiom",
+      "constant"
+    ],
+    "require_compile_exit_code_zero": true,
+    "require_no_unexpected_warnings": true,
+    "require_axiom_delta_empty_relative_to_case_baseline": true,
+    "require_native_decision_syntax_and_checker_gate": true,
+    "note_en": "Static scans are defense in depth, not a substitute for compilation, warning checks, declaration-axiom comparison, and the pinned leanchecker gate required for native-decision trust enforcement."
+  }
+}

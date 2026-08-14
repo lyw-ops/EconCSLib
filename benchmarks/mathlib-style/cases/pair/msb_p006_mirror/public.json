@@ -1,0 +1,21 @@
+{
+  "schema_version": "0.3.0",
+  "id": "msb_p006_mirror",
+  "task": "PAIR",
+  "stratum": "proof",
+  "evaluation_mode": "REPOSITORY_AGENT",
+  "evaluation_environment_ref": "MATHLIB-4.30.0",
+  "requested_output": [
+    "verdict",
+    "findings",
+    "rationale",
+    "confidence"
+  ],
+  "prompt": {
+    "context": "A matching public order isomorphism already exists in the pinned repository. Compare reimplementing it locally with reusing that API.",
+    "candidate_a": "abbrev localWithZeroUnits : WithZero αˣ ≃o α :=\n  OrderIso.withZeroUnits",
+    "candidate_b": "def localWithZeroUnits : WithZero αˣ ≃o α where\n  __ := WithZero.withZeroUnitsEquiv\n  map_rel_iff' := WithZero.withZeroUnitsEquiv_strictMono.le_iff_le",
+    "comparison_contract": "SAME_SPECIFICATION",
+    "presentation_seed": 206
+  }
+}

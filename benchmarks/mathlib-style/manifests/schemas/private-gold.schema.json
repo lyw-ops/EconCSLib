@@ -1,0 +1,542 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://econcs.example/mathlib-style/private-gold.schema.json",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "case_id",
+        "task",
+        "answerability",
+        "confidence",
+        "findings",
+        "missing_context",
+        "verdict",
+        "accepted_verdicts"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "0.3.0"
+        },
+        "case_id": {
+          "$ref": "common.schema.json#/$defs/caseId"
+        },
+        "task": {
+          "const": "PAIR"
+        },
+        "answerability": {
+          "$ref": "common.schema.json#/$defs/answerability"
+        },
+        "confidence": {
+          "$ref": "common.schema.json#/$defs/confidence"
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/finding"
+          }
+        },
+        "missing_context": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "verdict": {
+          "enum": [
+            "A",
+            "B",
+            "TIE",
+            "INSUFFICIENT_CONTEXT"
+          ]
+        },
+        "accepted_verdicts": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "A",
+              "B",
+              "TIE",
+              "INSUFFICIENT_CONTEXT"
+            ]
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "answerability": {
+                "const": "INSUFFICIENT_CONTEXT"
+              }
+            },
+            "required": [
+              "answerability"
+            ]
+          },
+          "then": {
+            "properties": {
+              "missing_context": {
+                "minItems": 1
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "missing_context": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "answerability": {
+                "const": "ANSWERABLE"
+              }
+            },
+            "required": [
+              "answerability"
+            ]
+          },
+          "then": {
+            "properties": {
+              "verdict": {
+                "enum": [
+                  "A",
+                  "B",
+                  "TIE"
+                ]
+              },
+              "accepted_verdicts": {
+                "minItems": 1,
+                "maxItems": 1,
+                "items": {
+                  "enum": [
+                    "A",
+                    "B",
+                    "TIE"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "answerability": {
+                "const": "MULTIPLE_ACCEPTABLE"
+              }
+            },
+            "required": [
+              "answerability"
+            ]
+          },
+          "then": {
+            "properties": {
+              "verdict": {
+                "enum": [
+                  "A",
+                  "B",
+                  "TIE"
+                ]
+              },
+              "accepted_verdicts": {
+                "minItems": 2,
+                "items": {
+                  "enum": [
+                    "A",
+                    "B",
+                    "TIE"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "answerability": {
+                "const": "INSUFFICIENT_CONTEXT"
+              }
+            },
+            "required": [
+              "answerability"
+            ]
+          },
+          "then": {
+            "properties": {
+              "verdict": {
+                "const": "INSUFFICIENT_CONTEXT"
+              },
+              "accepted_verdicts": {
+                "const": [
+                  "INSUFFICIENT_CONTEXT"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "case_id",
+        "task",
+        "answerability",
+        "confidence",
+        "findings",
+        "missing_context",
+        "allow_no_findings"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "0.3.0"
+        },
+        "case_id": {
+          "$ref": "common.schema.json#/$defs/caseId"
+        },
+        "task": {
+          "const": "DETECT"
+        },
+        "answerability": {
+          "$ref": "common.schema.json#/$defs/answerability"
+        },
+        "confidence": {
+          "$ref": "common.schema.json#/$defs/confidence"
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/finding"
+          }
+        },
+        "missing_context": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "allow_no_findings": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "answerability": {
+                "const": "INSUFFICIENT_CONTEXT"
+              }
+            },
+            "required": [
+              "answerability"
+            ]
+          },
+          "then": {
+            "properties": {
+              "missing_context": {
+                "minItems": 1
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "missing_context": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "case_id",
+        "task",
+        "answerability",
+        "confidence",
+        "findings",
+        "missing_context",
+        "reference_repairs",
+        "must_pass_validator_ids"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "0.3.0"
+        },
+        "case_id": {
+          "$ref": "common.schema.json#/$defs/caseId"
+        },
+        "task": {
+          "const": "REPAIR"
+        },
+        "answerability": {
+          "$ref": "common.schema.json#/$defs/answerability"
+        },
+        "confidence": {
+          "$ref": "common.schema.json#/$defs/confidence"
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/finding"
+          }
+        },
+        "missing_context": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "reference_repairs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "must_pass_validator_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "answerability": {
+                "const": "INSUFFICIENT_CONTEXT"
+              }
+            },
+            "required": [
+              "answerability"
+            ]
+          },
+          "then": {
+            "properties": {
+              "missing_context": {
+                "minItems": 1
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "missing_context": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "answerability": {
+                "const": "INSUFFICIENT_CONTEXT"
+              }
+            },
+            "required": [
+              "answerability"
+            ]
+          },
+          "then": {
+            "properties": {
+              "reference_repairs": {
+                "maxItems": 0
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "reference_repairs": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "case_id",
+        "task",
+        "answerability",
+        "confidence",
+        "findings",
+        "missing_context",
+        "preferred_location_ids",
+        "accepted_location_ids"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "0.3.0"
+        },
+        "case_id": {
+          "$ref": "common.schema.json#/$defs/caseId"
+        },
+        "task": {
+          "const": "LOCATE"
+        },
+        "answerability": {
+          "$ref": "common.schema.json#/$defs/answerability"
+        },
+        "confidence": {
+          "$ref": "common.schema.json#/$defs/confidence"
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/finding"
+          }
+        },
+        "missing_context": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "preferred_location_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "accepted_location_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "answerability": {
+                "const": "INSUFFICIENT_CONTEXT"
+              }
+            },
+            "required": [
+              "answerability"
+            ]
+          },
+          "then": {
+            "properties": {
+              "missing_context": {
+                "minItems": 1
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "missing_context": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "answerability": {
+                "const": "ANSWERABLE"
+              }
+            },
+            "required": [
+              "answerability"
+            ]
+          },
+          "then": {
+            "properties": {
+              "preferred_location_ids": {
+                "minItems": 1,
+                "maxItems": 1
+              },
+              "accepted_location_ids": {
+                "minItems": 1,
+                "maxItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "answerability": {
+                "const": "MULTIPLE_ACCEPTABLE"
+              }
+            },
+            "required": [
+              "answerability"
+            ]
+          },
+          "then": {
+            "properties": {
+              "preferred_location_ids": {
+                "minItems": 1,
+                "maxItems": 1
+              },
+              "accepted_location_ids": {
+                "minItems": 2
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "answerability": {
+                "const": "INSUFFICIENT_CONTEXT"
+              }
+            },
+            "required": [
+              "answerability"
+            ]
+          },
+          "then": {
+            "properties": {
+              "preferred_location_ids": {
+                "maxItems": 0
+              },
+              "accepted_location_ids": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

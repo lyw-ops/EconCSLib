@@ -1,0 +1,36 @@
+{
+  "schema_version": "0.1.0",
+  "category": "statements",
+  "source": "../../manifests/RULES.json",
+  "rule_families": [
+    "FMT-*",
+    "STM-*"
+  ],
+  "rule_count": 24,
+  "rule_ids": [
+    "FMT-001",
+    "FMT-002",
+    "FMT-003",
+    "FMT-004",
+    "FMT-005",
+    "FMT-006",
+    "FMT-007",
+    "FMT-008",
+    "FMT-009",
+    "FMT-010",
+    "FMT-011",
+    "FMT-012",
+    "FMT-013",
+    "FMT-014",
+    "FMT-015",
+    "FMT-016",
+    "FMT-017",
+    "FMT-018",
+    "FMT-019",
+    "STM-001",
+    "STM-002",
+    "STM-003",
+    "STM-004",
+    "STM-005"
+  ]
+}

@@ -1,0 +1,261 @@
+{
+  "inventory_version": "1.0.0",
+  "phase": "MATHLIB-STYLE-PHASE4",
+  "captured_at": "2026-08-13T00:00:00+08:00",
+  "repository_root": ".",
+  "scopes": [
+    "AGENTS.md",
+    "docs/research/mathlib-style/",
+    "benchmarks/mathlib-style/"
+  ],
+  "excludes": [
+    "benchmarks/mathlib-style/reports/phase4/BASELINE_SHA256.json"
+  ],
+  "file_count": 61,
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "dce8c8508914c1825fc9fa0038cbd3707543621379c0632e7437d5f353042d5c"
+    },
+    {
+      "path": "benchmarks/mathlib-style/AGENTS.md",
+      "sha256": "b2bc8c49e67b9a43af22d300bc7770d4b2e6e1c7264ec9774038b832236ec4f7"
+    },
+    {
+      "path": "benchmarks/mathlib-style/README.md",
+      "sha256": "3f87d940ad6db95ebf7e81ef61cd11a062b7d12277733d6795a347ba0dc3b3f7"
+    },
+    {
+      "path": "benchmarks/mathlib-style/cases/detect/README.md",
+      "sha256": "db441fc82a01ff1a3bf24f131524b8bff329867f086ffc9949bf1ed561328970"
+    },
+    {
+      "path": "benchmarks/mathlib-style/cases/locate/README.md",
+      "sha256": "32e2f457d4b117a2ef0372642afa34e13016c255632146eb7dad94aafb31504e"
+    },
+    {
+      "path": "benchmarks/mathlib-style/cases/pair/README.md",
+      "sha256": "bda6b93142b2b29a1a02cb71ffa278975102176351f6d86e3c63d32bb89d9191"
+    },
+    {
+      "path": "benchmarks/mathlib-style/cases/repair/README.md",
+      "sha256": "e638784aae6b743b5d868f9a3623dd5ce63b08814c93d9119f58b72357523d4b"
+    },
+    {
+      "path": "benchmarks/mathlib-style/evidence/README.md",
+      "sha256": "3b70b040f27e5ec60f9bd390d228f58af514a47d7387ce653d85dd7b77344dc7"
+    },
+    {
+      "path": "benchmarks/mathlib-style/evidence/api/EXAMPLES.jsonl",
+      "sha256": "268ed0fc282b1ab9b86b54fd44bac31c0c7b896becbb784ae11ba09afb65c6fe"
+    },
+    {
+      "path": "benchmarks/mathlib-style/evidence/api/INDEX.json",
+      "sha256": "7bdb066241687d8b3a26ab6a18e183bc08eb71d2a6569d7bf4fc33f35bf42a03"
+    },
+    {
+      "path": "benchmarks/mathlib-style/evidence/audits/manual_adversarial_audit.md",
+      "sha256": "6de8679ad90d88a48f6ad792ee1fcd54046c10f647c8d8a813c211db772bf48a"
+    },
+    {
+      "path": "benchmarks/mathlib-style/evidence/counterexamples/README.md",
+      "sha256": "a8e0e3a0e699db3c47008b0de92444b9c280404b6de10ec59fac4a3827d48ba3"
+    },
+    {
+      "path": "benchmarks/mathlib-style/evidence/documentation/EXAMPLES.jsonl",
+      "sha256": "5a7803f53e790a7011a3e8de05ce7d4fd97c8b4ec7399e9f3d43dafb698e7bec"
+    },
+    {
+      "path": "benchmarks/mathlib-style/evidence/documentation/INDEX.json",
+      "sha256": "39da07d7f2cd5332f1c5118b6c743ec0fd4f80aa0573fdbc240b1e2db5ac896e"
+    },
+    {
+      "path": "benchmarks/mathlib-style/evidence/imports/EXAMPLES.jsonl",
+      "sha256": "25917e13e78bc95f98e112c908a79366e64e4e7f4fc09d24d2b1a6d39b52c8db"
+    },
+    {
+      "path": "benchmarks/mathlib-style/evidence/imports/INDEX.json",
+      "sha256": "e7e1757dcce238f10bbb2e8b892c3f870f554092bae68f1a1fdfeb8b0a831b8c"
+    },
+    {
+      "path": "benchmarks/mathlib-style/evidence/naming/EXAMPLES.jsonl",
+      "sha256": "4c48d810dbb2c28cc8c2e2349e0eb509719541ff18b1870af2e6477e080ec2b1"
+    },
+    {
+      "path": "benchmarks/mathlib-style/evidence/naming/INDEX.json",
+      "sha256": "1fa88ae7f3dc4260f6c35c70c6eb917a16c7de949a6a2651652b25d84a769c79"
+    },
+    {
+      "path": "benchmarks/mathlib-style/evidence/proofs/EXAMPLES.jsonl",
+      "sha256": "2fec5ea18266e31ab9c04f4c996d0602f813ab35c48c4b36c1f5602e1ba72c92"
+    },
+    {
+      "path": "benchmarks/mathlib-style/evidence/proofs/INDEX.json",
+      "sha256": "f774f2c6269210b161be353a477c3a6c4d4d50a38512d4b2d32c9f34776f2bb6"
+    },
+    {
+      "path": "benchmarks/mathlib-style/evidence/statements/EXAMPLES.jsonl",
+      "sha256": "3725f676ff78d49198b718625e5a79839ab4bcd2271d8ee7c01c104cc312fa5a"
+    },
+    {
+      "path": "benchmarks/mathlib-style/evidence/statements/INDEX.json",
+      "sha256": "2c398e049fedcd13dfcefbcfd242651c196fcd38f85d56629e80e67d4e575e14"
+    },
+    {
+      "path": "benchmarks/mathlib-style/fixtures/negative/neg_lambda_syntax/Case.lean",
+      "sha256": "e35cd6aa0e9feec35c4c1bf2fb1d757929c7148b417d69bab189eb067e98d7ee"
+    },
+    {
+      "path": "benchmarks/mathlib-style/fixtures/negative/neg_lambda_syntax/case.json",
+      "sha256": "8877c4ca9045fc678791f4af27086403c4837816a2a66f748fe256d548c049bf"
+    },
+    {
+      "path": "benchmarks/mathlib-style/fixtures/positive/pos_image_mono/Case.lean",
+      "sha256": "bc0822d9dc84b97118b9237a1fe68765313530ab1996b2b948fe5bdd9d0bde6c"
+    },
+    {
+      "path": "benchmarks/mathlib-style/fixtures/positive/pos_image_mono/case.json",
+      "sha256": "ba3d144dfaabbe37e06942e3f8c8ac198793d146c2ce9814a7ba676c6e10f4e4"
+    },
+    {
+      "path": "benchmarks/mathlib-style/fixtures/repair/rep_dollar_syntax/After.lean",
+      "sha256": "3d8ad8a4f060de5669547a29ecc1349827ccd9c719ca5a866fee43725e13503b"
+    },
+    {
+      "path": "benchmarks/mathlib-style/fixtures/repair/rep_dollar_syntax/Before.lean",
+      "sha256": "d73eb2e5a5276fa5652eecdaf3340dfca47256e320b9be2defe3d2f03e32337b"
+    },
+    {
+      "path": "benchmarks/mathlib-style/fixtures/repair/rep_dollar_syntax/case.json",
+      "sha256": "796ec7e53fcaf5a205316423375419028bbd189da358ede8a3178bb7d92eb24c"
+    },
+    {
+      "path": "benchmarks/mathlib-style/heldout/.gitignore",
+      "sha256": "aae815b9313ef60fb99d51bec324f3de1cea5256d6bbf58a660578b3e2d5815c"
+    },
+    {
+      "path": "benchmarks/mathlib-style/heldout/README.md",
+      "sha256": "a08ab12a1d2f3cd5c66e794e8bc7993f199976cf8c79a6bd583ebd2c19bde7c0"
+    },
+    {
+      "path": "benchmarks/mathlib-style/manifests/COVERAGE.json",
+      "sha256": "09ee5cec038656e6aa63b641983f8af40ad5c6fb114e01105b780b3943c75780"
+    },
+    {
+      "path": "benchmarks/mathlib-style/manifests/RULES.json",
+      "sha256": "9a18d814770bcd817cdd4c4a0d2ff77b293b66cb0e354a53220c76a55dddbe89"
+    },
+    {
+      "path": "benchmarks/mathlib-style/manifests/SOURCES.json",
+      "sha256": "0b008d8ee92651ddc759d701c5ff4ce9ee81b31c3c3f6b20b6f016d4b12d943a"
+    },
+    {
+      "path": "benchmarks/mathlib-style/manifests/VALIDATORS.json",
+      "sha256": "72e7e09278ba5ea2c80822e2de90fccadcdf53472fe78b374721cc603ceb278d"
+    },
+    {
+      "path": "benchmarks/mathlib-style/manifests/mathlib-4.30.md",
+      "sha256": "6c6842959fd2b4a91637c26bfa5bba83db385cd1604776a97300fa1f740dbe10"
+    },
+    {
+      "path": "benchmarks/mathlib-style/manifests/schemas/MANIFEST.json",
+      "sha256": "fe0e0f8116a58ec920eec9d2af40f4496ebad84780f3d5b3f518d21f00014a29"
+    },
+    {
+      "path": "benchmarks/mathlib-style/manifests/schemas/README.md",
+      "sha256": "232d5c4159126d25d6a5cd7edfc23fd59be17343d70d27d24cbe1a3da7b4f29f"
+    },
+    {
+      "path": "benchmarks/mathlib-style/manifests/schemas/annotation.schema.json",
+      "sha256": "5b7e52c8cfd1e770bbe4002d73371a9bc2c2cf7e63dcf8a3d6a295a09df86124"
+    },
+    {
+      "path": "benchmarks/mathlib-style/manifests/schemas/common.schema.json",
+      "sha256": "08644ff796e578d4c415a633d897cac70a99484b41a16b604fcf024ada6aa76c"
+    },
+    {
+      "path": "benchmarks/mathlib-style/manifests/schemas/detect-case.schema.json",
+      "sha256": "ba846f7a2b23bdea5bb3d5e4038619a3aec01630917c7f2056024c568ddb4e76"
+    },
+    {
+      "path": "benchmarks/mathlib-style/manifests/schemas/locate-case.schema.json",
+      "sha256": "3b6ce236f76795a6e026748963e6128bc39621582aed3d67735b7588669575eb"
+    },
+    {
+      "path": "benchmarks/mathlib-style/manifests/schemas/pair-case.schema.json",
+      "sha256": "659f004756d8761de32a976ac51c983e65403a8acddd99e16f4025b55e33d0f8"
+    },
+    {
+      "path": "benchmarks/mathlib-style/manifests/schemas/prediction.schema.json",
+      "sha256": "f0c27a258e7290f1ff044a1262733ecf7984a3cd91e22911aaadcfeaff60732f"
+    },
+    {
+      "path": "benchmarks/mathlib-style/manifests/schemas/private-gold.schema.json",
+      "sha256": "e10ad5c89100d20e7d9f480fa1e9cea4c828a87d295a7665942aa06f3b436309"
+    },
+    {
+      "path": "benchmarks/mathlib-style/manifests/schemas/private-provenance.schema.json",
+      "sha256": "a8c89ff3ab111cce66720fe2941738bf1a72af1da91b59a38281781f45bb85fc"
+    },
+    {
+      "path": "benchmarks/mathlib-style/manifests/schemas/public-case.schema.json",
+      "sha256": "c0ae3a2d0af10a9f5f18d87088f26ae8395901dd9314a638f182d950fb3f8c80"
+    },
+    {
+      "path": "benchmarks/mathlib-style/manifests/schemas/repair-case.schema.json",
+      "sha256": "e59a2076b29c16437fa5347057b7350561b4dc12b7d7c0e3f83360b74146dfa4"
+    },
+    {
+      "path": "benchmarks/mathlib-style/manifests/schemas/validation-record.schema.json",
+      "sha256": "d6829d27c9789f59d0ab02bf80cbfe955f4cf575e010c1c787ae7194e0f639e3"
+    },
+    {
+      "path": "benchmarks/mathlib-style/scripts/check_benchmark.py",
+      "sha256": "a7066debf7f260961ddc94e47223130714ecab17033db2982f6c362338a0af41"
+    },
+    {
+      "path": "benchmarks/mathlib-style/scripts/check_distillation.py",
+      "sha256": "d1d5d2920e9b73daac3f4e33ce7dad0f76402cf4e371f1624fa853f96dacc833"
+    },
+    {
+      "path": "benchmarks/mathlib-style/scripts/static_lean_guard.py",
+      "sha256": "1852f5b8be3ac49321c4f7cb5e1ea3ee1664b08c65bfe91d7ecc5b4384096fdb"
+    },
+    {
+      "path": "docs/research/mathlib-style/DECISIONS.md",
+      "sha256": "06ef00e6674ead6a9e893a472e1233751d120b49a9701574572f1b38ba7fea62"
+    },
+    {
+      "path": "docs/research/mathlib-style/MANUAL_EN.md",
+      "sha256": "74165cce327b89e7573312ad67734c3da8ac4f4ffd640a9dbfeb2aa911be1c70"
+    },
+    {
+      "path": "docs/research/mathlib-style/MANUAL_ZH.md",
+      "sha256": "eb018fc222ce350d39186e2ddf4af3f78d82c338912cef7d005f630abe5f0a12"
+    },
+    {
+      "path": "docs/research/mathlib-style/PHASE1_COMPLETION_REPORT_ZH.md",
+      "sha256": "087ff74efd65dcbfe63cf673f731ec58dda6089e98b2000fcb888993f1c68c43"
+    },
+    {
+      "path": "docs/research/mathlib-style/PHASE3_COMPLETION_REPORT_ZH.md",
+      "sha256": "4d4b2dd3a33e550fa084789622504ead0a7960e9bf53aad52080a25e28820644"
+    },
+    {
+      "path": "docs/research/mathlib-style/README.md",
+      "sha256": "4a123b539acab869885bab5c4a9cb577404443c921583f63b7e5927c08243b2e"
+    },
+    {
+      "path": "docs/research/mathlib-style/REPOSITORY_INTEGRATION_ZH.md",
+      "sha256": "d29a1113c64f58af24e2bd184910724a85a8983ae49dbdaf2490d4875af52013"
+    },
+    {
+      "path": "docs/research/mathlib-style/TAXONOMY.md",
+      "sha256": "c5d2bbbba923f1560de878c1a9799ab3a7831ba406edd9a9dfa5225a614a25ca"
+    },
+    {
+      "path": "docs/research/mathlib-style/VERSION.md",
+      "sha256": "257f7f7fa871761df514f8c299ac4651dc8da3b65e0e5b1b2cfe542c2b942cce"
+    }
+  ]
+}

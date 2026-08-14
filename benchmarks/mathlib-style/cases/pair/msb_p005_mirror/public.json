@@ -1,0 +1,21 @@
+{
+  "schema_version": "0.3.0",
+  "id": "msb_p005_mirror",
+  "task": "PAIR",
+  "stratum": "proof",
+  "evaluation_mode": "CLOSED_CONTEXT",
+  "evaluation_environment_ref": "MATHLIB-4.30.0",
+  "requested_output": [
+    "verdict",
+    "findings",
+    "rationale",
+    "confidence"
+  ],
+  "prompt": {
+    "context": "Compare the two proofs for readability and direct expression of the constructor step.",
+    "candidate_a": "theorem witnessB {α : Type*} (x : α) : ∃ y, y = x := by\n  refine ⟨x, rfl⟩",
+    "candidate_b": "theorem witnessA {α : Type*} (x : α) : ∃ y, y = x := by\n  apply Exists.intro x\n  rfl",
+    "comparison_contract": "SAME_STATEMENT",
+    "presentation_seed": 205
+  }
+}

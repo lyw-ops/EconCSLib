@@ -1,0 +1,21 @@
+{
+  "schema_version": "0.3.0",
+  "id": "msb_p001",
+  "task": "PAIR",
+  "stratum": "surface",
+  "evaluation_mode": "CLOSED_CONTEXT",
+  "evaluation_environment_ref": "MATHLIB-4.30.0",
+  "requested_output": [
+    "verdict",
+    "findings",
+    "rationale",
+    "confidence"
+  ],
+  "prompt": {
+    "context": "Compare the two alpha-equivalent declarations for Mathlib style. Local binder-letter choice is not a scored convention.",
+    "candidate_a": "def mapSuccA (xs : List ℕ) : List ℕ :=\n  xs.map (fun x ↦ x + 1)",
+    "candidate_b": "def mapSuccB (xs : List ℕ) : List ℕ :=\n  xs.map (fun n ↦ n + 1)",
+    "comparison_contract": "STYLE_ONLY",
+    "presentation_seed": 101
+  }
+}

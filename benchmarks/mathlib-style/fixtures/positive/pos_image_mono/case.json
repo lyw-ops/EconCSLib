@@ -1,0 +1,17 @@
+{
+  "schema_version": "0.1.0",
+  "id": "POS-IMAGE-MONO-001",
+  "kind": "positive",
+  "task": "DETECT",
+  "status": "SYNTHETIC_SMOKE",
+  "source_class": "SYNTHETIC",
+  "evaluation_environment_ref": "MATHLIB-4.30.0",
+  "policy_snapshot_ref": "MATHLIB-POLICY-2026-08-13",
+  "compile_files": ["Case.lean"],
+  "evaluation_scope": "declaration: image_mono_of_subset",
+  "target_rule_ids": [],
+  "expected_validator_ids": [],
+  "warning_policy": "none",
+  "expected_warning_files": [],
+  "purpose": "A compilable positive example that reuses the canonical Set.image_mono API."
+}

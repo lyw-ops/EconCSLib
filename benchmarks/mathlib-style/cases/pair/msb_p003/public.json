@@ -1,0 +1,21 @@
+{
+  "schema_version": "0.3.0",
+  "id": "msb_p003",
+  "task": "PAIR",
+  "stratum": "documentation",
+  "evaluation_mode": "CLOSED_CONTEXT",
+  "evaluation_environment_ref": "MATHLIB-4.30.0",
+  "requested_output": [
+    "verdict",
+    "findings",
+    "rationale",
+    "confidence"
+  ],
+  "prompt": {
+    "context": "Compare the two module-documentation excerpts for a file implementing a norm/valuation correspondence.",
+    "candidate_a": "/-!\n# Normed valued fields\n\nTHE ABOVE DOCS MUST BE UPDATED!\n-/",
+    "candidate_b": "/-!\n# Correspondence between nontrivial nonarchimedean norms and rank one valuations\n\nNontrivial nonarchimedean norms correspond to rank one valuations.\n-/",
+    "comparison_contract": "STYLE_ONLY",
+    "presentation_seed": 103
+  }
+}

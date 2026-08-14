@@ -1,0 +1,19 @@
+{
+  "schema_version": "0.3.0",
+  "id": "msb_d003",
+  "task": "DETECT",
+  "stratum": "proof",
+  "evaluation_mode": "CLOSED_CONTEXT",
+  "evaluation_environment_ref": "MATHLIB-4.30.0",
+  "requested_output": [
+    "findings",
+    "rationale",
+    "confidence",
+    "missing_context"
+  ],
+  "prompt": {
+    "context": "Review the isolated proof. Decide whether the available context is enough to make a style finding rather than merely flag a review signal.",
+    "code": "theorem transport {α : Sort*} {a b c : α} (hab : a = b) (hbc : b = c) : a = c := by\n  erw [hab]\n  exact hbc",
+    "target_scope": "proof"
+  }
+}

@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://econcs.example/mathlib-style/private-provenance.schema.json",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "case_id",
+    "source_class",
+    "source_environment",
+    "source_urls",
+    "snapshot_refs",
+    "transformation",
+    "group_ids"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.3.0"
+    },
+    "case_id": {
+      "$ref": "common.schema.json#/$defs/caseId"
+    },
+    "source_class": {
+      "enum": [
+        "NATURAL_PR",
+        "OFFICIAL_GUIDE_EXAMPLE",
+        "SYNTHETIC"
+      ]
+    },
+    "source_environment": {
+      "type": "object",
+      "required": [
+        "repository",
+        "base_commit",
+        "lean_toolchain"
+      ],
+      "properties": {
+        "repository": {
+          "type": "string"
+        },
+        "base_commit": {
+          "type": "string"
+        },
+        "merged_commit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "lean_toolchain": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "source_urls": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uri"
+      },
+      "minItems": 1
+    },
+    "snapshot_refs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "code_license": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "review_comment_usage": {
+      "enum": [
+        "NONE",
+        "METADATA_ONLY",
+        "METADATA_AND_PARAPHRASE",
+        "SHORT_QUOTE_RECORDED"
+      ]
+    },
+    "review_comment_license_assumed": {
+      "const": false
+    },
+    "transformation": {
+      "enum": [
+        "none",
+        "minimalized",
+        "ported_and_minimalized"
+      ]
+    },
+    "porting_changes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_review_outcome": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "reviewer_preference": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "comment_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "adopted_in_merged_code": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "group_ids": {
+      "type": "object",
+      "required": [
+        "source_pr",
+        "theorem_family",
+        "module_family"
+      ],
+      "properties": {
+        "source_pr": {
+          "type": "string"
+        },
+        "theorem_family": {
+          "type": "string"
+        },
+        "module_family": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

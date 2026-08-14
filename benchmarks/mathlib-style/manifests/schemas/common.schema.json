@@ -1,0 +1,292 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://econcs.example/mathlib-style/common.schema.json",
+  "$defs": {
+    "caseId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{2,127}$"
+    },
+    "task": {
+      "enum": [
+        "PAIR",
+        "DETECT",
+        "REPAIR",
+        "LOCATE"
+      ]
+    },
+    "stratum": {
+      "enum": [
+        "surface",
+        "documentation",
+        "statement",
+        "proof",
+        "api",
+        "integration"
+      ]
+    },
+    "evaluationMode": {
+      "enum": [
+        "CLOSED_CONTEXT",
+        "REPOSITORY_AGENT"
+      ]
+    },
+    "answerability": {
+      "enum": [
+        "ANSWERABLE",
+        "MULTIPLE_ACCEPTABLE",
+        "INSUFFICIENT_CONTEXT"
+      ]
+    },
+    "comparisonContract": {
+      "enum": [
+        "SAME_STATEMENT",
+        "SAME_SPECIFICATION",
+        "STYLE_ONLY",
+        "PLACEMENT_ONLY",
+        "CONTEXTUAL_REVIEW"
+      ]
+    },
+    "confidence": {
+      "enum": [
+        "HIGH",
+        "MEDIUM",
+        "LOW"
+      ]
+    },
+    "reviewPriority": {
+      "enum": [
+        "BLOCKING",
+        "SUBSTANTIVE",
+        "MINOR",
+        "INFORMATIONAL"
+      ]
+    },
+    "ruleStrength": {
+      "enum": [
+        "MUST",
+        "SHOULD",
+        "PREFER",
+        "CONTEXT"
+      ]
+    },
+    "requestedOutputField": {
+      "enum": [
+        "verdict",
+        "answerability",
+        "findings",
+        "rationale",
+        "confidence",
+        "missing_context",
+        "repaired_code",
+        "location_ids"
+      ]
+    },
+    "position": {
+      "type": "object",
+      "required": [
+        "line",
+        "column"
+      ],
+      "properties": {
+        "line": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "span": {
+      "type": "object",
+      "required": [
+        "artifact",
+        "start",
+        "end"
+      ],
+      "properties": {
+        "artifact": {
+          "enum": [
+            "A",
+            "B",
+            "CODE",
+            "DECLARATION",
+            "FILE",
+            "PROMPT"
+          ]
+        },
+        "declaration_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "syntax_kind": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "start": {
+          "$ref": "#/$defs/position"
+        },
+        "end": {
+          "$ref": "#/$defs/position"
+        }
+      },
+      "additionalProperties": false
+    },
+    "finding": {
+      "type": "object",
+      "required": [
+        "finding_id",
+        "rule_id",
+        "role",
+        "rule_strength",
+        "review_priority",
+        "span",
+        "evidence",
+        "rationale"
+      ],
+      "properties": {
+        "finding_id": {
+          "type": "string",
+          "pattern": "^f[0-9]+$"
+        },
+        "rule_id": {
+          "type": "string",
+          "pattern": "^[A-Z]+-[0-9]{3}[A-Z]?$"
+        },
+        "role": {
+          "enum": [
+            "primary",
+            "secondary"
+          ]
+        },
+        "rule_strength": {
+          "$ref": "#/$defs/ruleStrength"
+        },
+        "review_priority": {
+          "$ref": "#/$defs/reviewPriority"
+        },
+        "span": {
+          "$ref": "#/$defs/span"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 10
+        }
+      },
+      "additionalProperties": false
+    },
+    "editRegion": {
+      "type": "object",
+      "required": [
+        "start",
+        "end"
+      ],
+      "properties": {
+        "start": {
+          "$ref": "#/$defs/position"
+        },
+        "end": {
+          "$ref": "#/$defs/position"
+        }
+      },
+      "additionalProperties": false
+    },
+    "editContract": {
+      "type": "object",
+      "required": [
+        "editable_regions",
+        "frozen_declarations",
+        "allow_new_imports",
+        "allow_new_declarations",
+        "allow_renaming",
+        "interface_contract",
+        "acceptance"
+      ],
+      "properties": {
+        "editable_regions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/editRegion"
+          },
+          "minItems": 1
+        },
+        "frozen_declarations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "allow_new_imports": {
+          "type": "boolean"
+        },
+        "allow_new_declarations": {
+          "type": "boolean"
+        },
+        "allow_renaming": {
+          "type": "boolean"
+        },
+        "max_changed_lines": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "interface_contract": {
+          "enum": [
+            "SAME_STATEMENT",
+            "SAME_SPECIFICATION",
+            "STYLE_ONLY"
+          ]
+        },
+        "acceptance": {
+          "type": "object",
+          "required": [
+            "must_compile",
+            "must_resolve_rule_ids",
+            "must_not_introduce_new_findings",
+            "edit_cost_metric"
+          ],
+          "properties": {
+            "must_compile": {
+              "const": true
+            },
+            "must_resolve_rule_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1
+            },
+            "must_not_introduce_new_findings": {
+              "const": true
+            },
+            "edit_cost_metric": {
+              "enum": [
+                "changed_lines_then_tokens",
+                "ast_edit_count"
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

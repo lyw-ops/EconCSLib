@@ -1,0 +1,44 @@
+{
+  "schema_version": "0.3.0",
+  "id": "msb_l001",
+  "task": "LOCATE",
+  "stratum": "integration",
+  "evaluation_mode": "REPOSITORY_AGENT",
+  "evaluation_environment_ref": "MATHLIB-4.30.0",
+  "requested_output": [
+    "location_ids",
+    "rationale",
+    "confidence",
+    "missing_context"
+  ],
+  "prompt": {
+    "context": "Choose the mathematically appropriate home for an order-preserving bundled equivalence between a group-with-zero and the WithZero of its units. More than one location may be defensible if dependency direction remains clean.",
+    "declaration": "def OrderMonoidIso.withZeroUnits : WithZero αˣ ≃*o α := ...",
+    "candidate_locations": [
+      {
+        "location_id": "loc_a",
+        "file_path": "Mathlib/Algebra/Order/GroupWithZero/WithZero.lean",
+        "imports": [
+          "Mathlib.Algebra.Order.Group.Units"
+        ],
+        "dependency_summary": "Foundational constructions for ordered groups with zero and WithZero units."
+      },
+      {
+        "location_id": "loc_b",
+        "file_path": "Mathlib/GroupTheory/ArchimedeanDensely.lean",
+        "imports": [
+          "Mathlib.Algebra.Order.GroupWithZero.WithZero"
+        ],
+        "dependency_summary": "A higher-level consumer concerned with Archimedean and densely ordered groups."
+      },
+      {
+        "location_id": "loc_c",
+        "file_path": "Mathlib/Algebra/Order/GroupWithZero/UnitsEquiv.lean",
+        "imports": [
+          "Mathlib.Algebra.Order.Group.Units"
+        ],
+        "dependency_summary": "A narrowly focused new module that preserves the foundational dependency direction."
+      }
+    ]
+  }
+}

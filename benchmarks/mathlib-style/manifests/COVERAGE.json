@@ -1,0 +1,209 @@
+{
+  "version": "0.3.1",
+  "rows": [
+    {
+      "source_section": "Style guide: variable conventions",
+      "rule_ids": [],
+      "status": "DEFERRED",
+      "note_en": "The pilot does not score local variable letters; retain as reviewer context."
+    },
+    {
+      "source_section": "Style guide: Unicode usage",
+      "rule_ids": [
+        "FMT-019"
+      ],
+      "status": "INCLUDED",
+      "note_en": "Pinned `linter.unicodeLinter` character/variant legality plus separate human readability review; the allow-list is snapshot-specific."
+    },
+    {
+      "source_section": "Style guide: line length",
+      "rule_ids": [
+        "FMT-001"
+      ],
+      "status": "INCLUDED",
+      "note_en": ""
+    },
+    {
+      "source_section": "Style guide: header and imports",
+      "rule_ids": [
+        "FIL-002A",
+        "FIL-002B",
+        "FIL-003",
+        "FIL-005",
+        "FIL-008"
+      ],
+      "status": "INCLUDED",
+      "note_en": "Alphabetical labels apply only inside ordinary `public import` and `import` blocks. `Mathlib.Tactic` remains a hard negative; justified benchmarked `Lake.*` imports are warning/review cases."
+    },
+    {
+      "source_section": "Style guide: module docstrings",
+      "rule_ids": [
+        "DOC-001A",
+        "DOC-001B",
+        "DOC-001C"
+      ],
+      "status": "INCLUDED",
+      "note_en": "`Main definitions`/`Main statements` are optional; `Notation`, `References`, and `Tags` are conditional on file content."
+    },
+    {
+      "source_section": "Style guide: declaration layout",
+      "rule_ids": [
+        "FMT-002",
+        "FMT-003",
+        "FMT-004",
+        "FMT-005",
+        "FMT-006"
+      ],
+      "status": "INCLUDED",
+      "note_en": "Omitted binder types are violations only when they obscure a public signature; inferable dependent indices/universes are accepted exceptions."
+    },
+    {
+      "source_section": "Style guide: proof layout",
+      "rule_ids": [
+        "FMT-009",
+        "FMT-010",
+        "FMT-011",
+        "FMT-014"
+      ],
+      "status": "INCLUDED",
+      "note_en": "Empty-line deterministic labels are restricted to the pinned linter's syntax/path scope; excluded contexts require assisted review."
+    },
+    {
+      "source_section": "Naming guide: capitalization and spelling",
+      "rule_ids": [
+        "NAM-001",
+        "NAM-002",
+        "NAM-003",
+        "NAM-004"
+      ],
+      "status": "INCLUDED",
+      "note_en": ""
+    },
+    {
+      "source_section": "Naming guide: theorem and structural names",
+      "rule_ids": [
+        "NAM-005",
+        "NAM-006",
+        "NAM-007",
+        "NAM-008",
+        "NAM-009",
+        "NAM-010A",
+        "NAM-010B",
+        "NAM-010C"
+      ],
+      "status": "INCLUDED",
+      "note_en": ""
+    },
+    {
+      "source_section": "Documentation guide: declarations and links",
+      "rule_ids": [
+        "DOC-002A",
+        "DOC-002B",
+        "DOC-002C",
+        "DOC-002D",
+        "DOC-003",
+        "DOC-004",
+        "DOC-005"
+      ],
+      "status": "INCLUDED",
+      "note_en": "Field documentation defaults to every new explicit field with limited exceptions. Docstring mechanics, prose style, and exact-name resolution receive separate labels."
+    },
+    {
+      "source_section": "Documentation guide: proof sketches and literature",
+      "rule_ids": [
+        "DOC-006",
+        "DOC-007",
+        "DOC-008"
+      ],
+      "status": "INCLUDED",
+      "note_en": ""
+    },
+    {
+      "source_section": "PR review: location",
+      "rule_ids": [
+        "LOC-001",
+        "LOC-002A",
+        "LOC-002B",
+        "LOC-003"
+      ],
+      "status": "INCLUDED",
+      "note_en": "Tool output from `#min_imports in` and incremental `linter.minImports` is separated from dependency-architecture judgment in LOCATE/DETECT."
+    },
+    {
+      "source_section": "PR review: improvements",
+      "rule_ids": [
+        "PRF-001",
+        "PRF-002",
+        "PRF-003",
+        "PRF-004"
+      ],
+      "status": "INCLUDED",
+      "note_en": ""
+    },
+    {
+      "source_section": "PR review: API and integration",
+      "rule_ids": [
+        "API-001",
+        "API-002",
+        "API-003",
+        "API-004",
+        "API-005",
+        "API-006",
+        "API-007"
+      ],
+      "status": "INCLUDED",
+      "note_en": "Ordinary transformation parity is `SHOULD`; explicit `existing`, existing-companion, unsupported-constant, naming-override, and generated-API-hazard cases are contextual exceptions."
+    },
+    {
+      "source_section": "PR review: Type* and attributes",
+      "rule_ids": [
+        "FMT-018",
+        "API-005"
+      ],
+      "status": "INCLUDED",
+      "note_en": ""
+    },
+    {
+      "source_section": "Pinned syntax linters: options/scopes",
+      "rule_ids": [
+        "FMT-012",
+        "FMT-013",
+        "FMT-015",
+        "FMT-016",
+        "FMT-017"
+      ],
+      "status": "INCLUDED",
+      "note_en": "Only the exact `setOption` option families are deterministic failures; other scoped technical options require necessity review."
+    },
+    {
+      "source_section": "Pinned proof linters",
+      "rule_ids": [
+        "PRF-005",
+        "PRF-006",
+        "PRF-007"
+      ],
+      "status": "INCLUDED",
+      "note_en": "Native-decision trust validation combines syntax-linter coverage with the pinned `leanchecker` gate; syntax-only success is insufficient."
+    },
+    {
+      "source_section": "Profiling and performance benchmarking",
+      "rule_ids": [],
+      "status": "OUT_OF_SCOPE",
+      "note_en": "A separate performance benchmark is required."
+    },
+    {
+      "source_section": "Deprecation/migration campaigns",
+      "rule_ids": [
+        "PRF-006"
+      ],
+      "status": "PARTIAL",
+      "note_en": "Only code-local deprecated tactic syntax is included; repository-wide migrations are out of scope."
+    },
+    {
+      "source_section": "AI contribution policy",
+      "rule_ids": [],
+      "status": "BENCHMARK_POLICY",
+      "note_en": "Recorded as release/use policy, not a code-style label."
+    }
+  ]
+}

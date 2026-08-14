@@ -1,0 +1,21 @@
+{
+  "schema_version": "0.3.0",
+  "id": "msb_p002_mirror",
+  "task": "PAIR",
+  "stratum": "surface",
+  "evaluation_mode": "CLOSED_CONTEXT",
+  "evaluation_environment_ref": "MATHLIB-4.30.0",
+  "requested_output": [
+    "verdict",
+    "findings",
+    "rationale",
+    "confidence"
+  ],
+  "prompt": {
+    "context": "Compare the two declarations under the pinned Mathlib style rules. Both have the same type and behavior.",
+    "candidate_a": "def applyTwiceB {α : Type*} (f : α → α) (x : α) : α :=\n  f <| f x",
+    "candidate_b": "def applyTwiceA {α : Type*} (f : α → α) (x : α) : α :=\n  f $ f x",
+    "comparison_contract": "SAME_STATEMENT",
+    "presentation_seed": 202
+  }
+}

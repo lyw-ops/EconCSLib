@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://econcs.example/mathlib-style/repair-case.schema.json",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "id",
+    "task",
+    "stratum",
+    "evaluation_mode",
+    "evaluation_environment_ref",
+    "requested_output",
+    "prompt"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.3.0"
+    },
+    "id": {
+      "$ref": "common.schema.json#/$defs/caseId"
+    },
+    "stratum": {
+      "$ref": "common.schema.json#/$defs/stratum"
+    },
+    "evaluation_mode": {
+      "$ref": "common.schema.json#/$defs/evaluationMode"
+    },
+    "evaluation_environment_ref": {
+      "const": "MATHLIB-4.30.0"
+    },
+    "requested_output": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/requestedOutputField"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "task": {
+      "const": "REPAIR"
+    },
+    "prompt": {
+      "type": "object",
+      "required": [
+        "context",
+        "code",
+        "edit_contract"
+      ],
+      "properties": {
+        "context": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "edit_contract": {
+          "$ref": "common.schema.json#/$defs/editContract"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

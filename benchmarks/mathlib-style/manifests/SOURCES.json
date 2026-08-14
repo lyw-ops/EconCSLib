@@ -1,0 +1,115 @@
+{
+  "registry_version": "0.3.1",
+  "checked_date": "2026-08-13",
+  "evaluation_environment": {
+    "id": "MATHLIB-4.30.0",
+    "repository": "leanprover-community/mathlib4",
+    "release_tag": "v4.30.0",
+    "commit": "c5ea00351c28e24afc9f0f84379aa41082b1188f",
+    "lean_toolchain": "leanprover/lean4:v4.30.0",
+    "tag_ref_url": "https://api.github.com/repos/leanprover-community/mathlib4/git/ref/tags/v4.30.0",
+    "toolchain_path": "lean-toolchain",
+    "toolchain_content_id": {
+      "algorithm": "git-blob-sha1",
+      "value": "af9e5d339aeb37e4e6ba2603fb873e637678e304"
+    },
+    "note_en": "Compilation and linter behavior are pinned to mathlib v4.30.0."
+  },
+  "policy_snapshot": {
+    "id": "MATHLIB-POLICY-2026-08-13",
+    "repository": "leanprover-community/leanprover-community.github.io",
+    "commit": "7b967eb1aaab674bd6aead708d42c4a83e2aca05",
+    "retrieved_at": "2026-08-13",
+    "note_en": "Contributor guidance is versioned independently from the mathlib code release. This snapshot is the normative prose source for v0.3.1.",
+    "files": {
+      "SG": {
+        "title": "Library Style Guidelines",
+        "path": "templates/contribute/style.md",
+        "git_blob_sha": "4d7dc29a0edb95fd4e4bc40e2907df8670bf5466"
+      },
+      "NC": {
+        "title": "Mathlib naming conventions",
+        "path": "templates/contribute/naming.md",
+        "git_blob_sha": "71b7d85e0bd0c00d7938b7b513fde60dc578a4dc"
+      },
+      "DOC": {
+        "title": "Documentation style",
+        "path": "templates/contribute/doc.md",
+        "git_blob_sha": "b3a3d201601ec80845714de6d48521f7a34387af"
+      },
+      "PR": {
+        "title": "Pull Request Review Guide",
+        "path": "templates/contribute/pr-review.md",
+        "git_blob_sha": "b6b59e101151aeff174f6ce8d335240e52bb0002"
+      },
+      "CONTRIB": {
+        "title": "Contributing to mathlib",
+        "path": "templates/contribute/index.md",
+        "git_blob_sha": "513e08d1957f9b1b98b046fab2052f2c4d6d1261"
+      }
+    }
+  },
+  "machine_source_snapshot": {
+    "repository": "leanprover-community/mathlib4",
+    "ref": "v4.30.0",
+    "commit": "c5ea00351c28e24afc9f0f84379aa41082b1188f",
+    "files": {
+      "LIN-INIT": {
+        "path": "Mathlib/Init.lean",
+        "git_blob_sha": "d0760e71b0bf606cd36d82a2ba155bf84ada6790"
+      },
+      "LIN-STYLE": {
+        "path": "Mathlib/Tactic/Linter/Style.lean",
+        "git_blob_sha": "28e1aeff5fc333e0f94037f93590d62cd34a2a07"
+      },
+      "LIN-HEADER": {
+        "path": "Mathlib/Tactic/Linter/Header.lean",
+        "git_blob_sha": "bb8fff00908e6fe3d08041d7e23cfaf3ee85c64e"
+      },
+      "LIN-WS": {
+        "path": "Mathlib/Tactic/Linter/Whitespace.lean",
+        "git_blob_sha": "054bff27fa7fb13ba2187b6ba8d57eb6a14ed9c8"
+      },
+      "LIN-EMPTY": {
+        "path": "Mathlib/Tactic/Linter/EmptyLine.lean",
+        "git_blob_sha": "f6d1325c74655dffce099628f6e1786a6cc822c4"
+      },
+      "LIN-DOCSTYLE": {
+        "path": "Mathlib/Tactic/Linter/DocString.lean",
+        "git_blob_sha": "8c245f543eba2196ca7b2674d1eaf653c1b22e00"
+      },
+      "LIN-UNUSED": {
+        "path": "Mathlib/Tactic/Linter/UnusedTactic.lean",
+        "git_blob_sha": "2704ae66527eaff1538d1df30e14df1ce8531a47"
+      },
+      "LIN-MULTI": {
+        "path": "Mathlib/Tactic/Linter/Multigoal.lean",
+        "git_blob_sha": "48f8bf73adc9ff0d87e12db3d8eb87562a9e7bab"
+      },
+      "LIN-DEP": {
+        "path": "Mathlib/Tactic/Linter/DeprecatedSyntaxLinter.lean",
+        "git_blob_sha": "aad82013bae39a6b4a1e544c9fe88241c90e31ac"
+      },
+      "LIN-TEXT-BASED": {
+        "path": "Mathlib/Tactic/Linter/TextBased.lean",
+        "git_blob_sha": "1e98722a0e092900ec98816f9c162845406c7518"
+      },
+      "LIN-UNICODE": {
+        "path": "Mathlib/Tactic/Linter/TextBased/UnicodeLinter.lean",
+        "git_blob_sha": "b4b7a8b9e8c9e3d01209117035eaadb318bdc843"
+      },
+      "CI-LEANCHECKER": {
+        "path": ".github/workflows/daily.yml",
+        "git_blob_sha": "0e759fe3ec85ffb70a83d1497037b1cbff4ffdde"
+      },
+      "MINIMPORTS": {
+        "path": "Mathlib/Tactic/MinImports.lean",
+        "git_blob_sha": "96d4e88a0a62a2afceae3a4aaa2d95bb6a95144a"
+      },
+      "LIN-MINIMPORTS": {
+        "path": "Mathlib/Tactic/Linter/MinImports.lean",
+        "git_blob_sha": "ddfbb78c56a2a2f88e3949f011edc5d60a95fc09"
+      }
+    }
+  }
+}
