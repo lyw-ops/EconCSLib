@@ -58,7 +58,7 @@ jobs:
 
       - name: Run scoped kernel replay
         timeout-minutes: 25
-        run: lake env leanchecker EconCSLib
+        run: lake env leanchecker --fresh EconCSLib
 
       - name: Re-run frozen distillation and fixture regressions
         run: python3 benchmarks/mathlib-style/scripts/check_benchmark.py
