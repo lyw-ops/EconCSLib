@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://econcs.example/mathlib-style/locate-case.schema.json",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "id",
+    "task",
+    "stratum",
+    "evaluation_mode",
+    "evaluation_environment_ref",
+    "requested_output",
+    "prompt"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.3.0"
+    },
+    "id": {
+      "$ref": "common.schema.json#/$defs/caseId"
+    },
+    "stratum": {
+      "$ref": "common.schema.json#/$defs/stratum"
+    },
+    "evaluation_mode": {
+      "$ref": "common.schema.json#/$defs/evaluationMode"
+    },
+    "evaluation_environment_ref": {
+      "const": "MATHLIB-4.30.0"
+    },
+    "requested_output": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/requestedOutputField"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "task": {
+      "const": "LOCATE"
+    },
+    "prompt": {
+      "type": "object",
+      "required": [
+        "context",
+        "declaration",
+        "candidate_locations"
+      ],
+      "properties": {
+        "context": {
+          "type": "string"
+        },
+        "declaration": {
+          "type": "string",
+          "minLength": 1
+        },
+        "candidate_locations": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": [
+              "location_id",
+              "file_path",
+              "imports",
+              "dependency_summary"
+            ],
+            "properties": {
+              "location_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "file_path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "imports": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "uniqueItems": true
+              },
+              "dependency_summary": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

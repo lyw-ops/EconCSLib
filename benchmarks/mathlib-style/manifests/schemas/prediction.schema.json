@@ -1,0 +1,418 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://econcs.example/mathlib-style/prediction.schema.json",
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "case_id",
+        "task",
+        "answerability",
+        "confidence",
+        "findings",
+        "missing_context",
+        "rationale",
+        "verdict"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "0.3.0"
+        },
+        "case_id": {
+          "$ref": "common.schema.json#/$defs/caseId"
+        },
+        "task": {
+          "const": "PAIR"
+        },
+        "answerability": {
+          "$ref": "common.schema.json#/$defs/answerability"
+        },
+        "confidence": {
+          "$ref": "common.schema.json#/$defs/confidence"
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/finding"
+          }
+        },
+        "missing_context": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verdict": {
+          "enum": [
+            "A",
+            "B",
+            "TIE",
+            "INSUFFICIENT_CONTEXT"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "answerability": {
+                "const": "INSUFFICIENT_CONTEXT"
+              }
+            },
+            "required": [
+              "answerability"
+            ]
+          },
+          "then": {
+            "properties": {
+              "missing_context": {
+                "minItems": 1
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "missing_context": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "answerability": {
+                "const": "INSUFFICIENT_CONTEXT"
+              }
+            },
+            "required": [
+              "answerability"
+            ]
+          },
+          "then": {
+            "properties": {
+              "verdict": {
+                "const": "INSUFFICIENT_CONTEXT"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "verdict": {
+                "enum": [
+                  "A",
+                  "B",
+                  "TIE"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "case_id",
+        "task",
+        "answerability",
+        "confidence",
+        "findings",
+        "missing_context",
+        "rationale"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "0.3.0"
+        },
+        "case_id": {
+          "$ref": "common.schema.json#/$defs/caseId"
+        },
+        "task": {
+          "const": "DETECT"
+        },
+        "answerability": {
+          "$ref": "common.schema.json#/$defs/answerability"
+        },
+        "confidence": {
+          "$ref": "common.schema.json#/$defs/confidence"
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/finding"
+          }
+        },
+        "missing_context": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "answerability": {
+                "const": "INSUFFICIENT_CONTEXT"
+              }
+            },
+            "required": [
+              "answerability"
+            ]
+          },
+          "then": {
+            "properties": {
+              "missing_context": {
+                "minItems": 1
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "missing_context": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "case_id",
+        "task",
+        "answerability",
+        "confidence",
+        "findings",
+        "missing_context",
+        "rationale",
+        "repaired_code"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "0.3.0"
+        },
+        "case_id": {
+          "$ref": "common.schema.json#/$defs/caseId"
+        },
+        "task": {
+          "const": "REPAIR"
+        },
+        "answerability": {
+          "$ref": "common.schema.json#/$defs/answerability"
+        },
+        "confidence": {
+          "$ref": "common.schema.json#/$defs/confidence"
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/finding"
+          }
+        },
+        "missing_context": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repaired_code": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "answerability": {
+                "const": "INSUFFICIENT_CONTEXT"
+              }
+            },
+            "required": [
+              "answerability"
+            ]
+          },
+          "then": {
+            "properties": {
+              "missing_context": {
+                "minItems": 1
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "missing_context": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "answerability": {
+                "const": "INSUFFICIENT_CONTEXT"
+              }
+            },
+            "required": [
+              "answerability"
+            ]
+          },
+          "then": {
+            "properties": {
+              "repaired_code": {
+                "maxLength": 0
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "repaired_code": {
+                "minLength": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "case_id",
+        "task",
+        "answerability",
+        "confidence",
+        "findings",
+        "missing_context",
+        "rationale",
+        "location_ids"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": "0.3.0"
+        },
+        "case_id": {
+          "$ref": "common.schema.json#/$defs/caseId"
+        },
+        "task": {
+          "const": "LOCATE"
+        },
+        "answerability": {
+          "$ref": "common.schema.json#/$defs/answerability"
+        },
+        "confidence": {
+          "$ref": "common.schema.json#/$defs/confidence"
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/finding"
+          }
+        },
+        "missing_context": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "location_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "answerability": {
+                "const": "INSUFFICIENT_CONTEXT"
+              }
+            },
+            "required": [
+              "answerability"
+            ]
+          },
+          "then": {
+            "properties": {
+              "missing_context": {
+                "minItems": 1
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "missing_context": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "answerability": {
+                "const": "INSUFFICIENT_CONTEXT"
+              }
+            },
+            "required": [
+              "answerability"
+            ]
+          },
+          "then": {
+            "properties": {
+              "location_ids": {
+                "maxItems": 0
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "location_ids": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

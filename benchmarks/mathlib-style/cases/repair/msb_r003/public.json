@@ -1,0 +1,49 @@
+{
+  "schema_version": "0.3.0",
+  "id": "msb_r003",
+  "task": "REPAIR",
+  "stratum": "proof",
+  "evaluation_mode": "REPOSITORY_AGENT",
+  "evaluation_environment_ref": "MATHLIB-4.30.0",
+  "requested_output": [
+    "repaired_code",
+    "findings",
+    "rationale",
+    "confidence"
+  ],
+  "prompt": {
+    "context": "Minimally repair the proof by using the existing value-group API. The theorem statement is frozen and no declarations or imports may be added.",
+    "code": "lemma generator'_zpowers_eq_top : (zpowers (generator' v)) = ⊤ := by\n  rw [← (Subgroup.map_injective (valueGroup v).subtype_injective).eq_iff,\n    MonoidHom.map_zpowers, subtype_apply, ← MonoidHom.range_eq_map,\n    Subgroup.subtype_range]\n  apply generator_zpowers_eq_valueGroup",
+    "edit_contract": {
+      "editable_regions": [
+        {
+          "start": {
+            "line": 1,
+            "column": 64
+          },
+          "end": {
+            "line": 4,
+            "column": 48
+          }
+        }
+      ],
+      "frozen_declarations": [
+        "pilot_generator'_zpowers_eq_top"
+      ],
+      "allow_new_imports": false,
+      "allow_new_declarations": false,
+      "allow_renaming": false,
+      "max_changed_lines": 4,
+      "interface_contract": "SAME_STATEMENT",
+      "acceptance": {
+        "must_compile": true,
+        "must_resolve_rule_ids": [
+          "PRF-001",
+          "PRF-003"
+        ],
+        "must_not_introduce_new_findings": true,
+        "edit_cost_metric": "changed_lines_then_tokens"
+      }
+    }
+  }
+}

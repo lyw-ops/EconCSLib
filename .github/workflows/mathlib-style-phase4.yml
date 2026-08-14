@@ -1,0 +1,68 @@
+name: Mathlib Style Phase 4
+
+on:
+  push:
+    paths:
+      - "benchmarks/mathlib-style/**"
+      - "docs/research/mathlib-style/**"
+      - ".github/workflows/mathlib-style-phase4.yml"
+  pull_request:
+    paths:
+      - "benchmarks/mathlib-style/**"
+      - "docs/research/mathlib-style/**"
+      - ".github/workflows/mathlib-style-phase4.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mathlib-style-phase4-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  public-hard-gates:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build pinned Lean environment and run leanchecker
+        uses: leanprover/lean-action@v1
+        with:
+          build: true
+          leanchecker: true
+
+      - name: Install the frozen JSON Schema runtime
+        run: python3 -m pip install --requirement benchmarks/mathlib-style/requirements-phase4.txt
+
+      - name: Test deterministic scoring boundaries
+        run: python3 -m unittest discover -s benchmarks/mathlib-style/tests -v
+
+      - name: Run public hard gates and record the pinned Linux environment
+        run: >-
+          python3 benchmarks/mathlib-style/scripts/run_phase4_environment.py
+          --label linux-ubuntu
+          --public-only
+          --timeout 180
+          --output-root /tmp/mathlib-style-phase4-environments
+
+      - name: Upload Linux identity, exit code, and log hashes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mathlib-style-linux-environment-evidence
+          path: /tmp/mathlib-style-phase4-environments/linux-ubuntu/
+          if-no-files-found: error
+
+      - name: Re-run frozen distillation and fixture regressions
+        run: python3 benchmarks/mathlib-style/scripts/check_benchmark.py
+
+      - name: Reject generated Lean artifacts and whitespace errors
+        run: |
+          if find benchmarks/mathlib-style -type f \( -name '*.olean' -o -name '*.ilean' \) | grep -q .; then
+            echo "generated Lean artifact found under benchmark tree" >&2
+            exit 1
+          fi
+          git diff --check

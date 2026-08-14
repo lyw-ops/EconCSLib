@@ -1,0 +1,20 @@
+{
+  "schema_version": "0.1.0",
+  "id": "REP-DOLLAR-SYNTAX-001",
+  "kind": "repair",
+  "task": "REPAIR",
+  "status": "SYNTHETIC_SMOKE",
+  "source_class": "SYNTHETIC",
+  "evaluation_environment_ref": "MATHLIB-4.30.0",
+  "policy_snapshot_ref": "MATHLIB-POLICY-2026-08-13",
+  "compile_files": ["Before.lean", "After.lean"],
+  "evaluation_scope": "expression: applyTwice body",
+  "target_rule_ids": ["FMT-008"],
+  "expected_validator_ids": ["linter.style.dollarSyntax"],
+  "warning_policy": "none",
+  "expected_warning_files": [],
+  "editable_files": ["Before.lean"],
+  "reference_repair": "After.lean",
+  "statement_contract": "The type and value of applyTwice must be preserved.",
+  "purpose": "A minimal repair that replaces dollar application with `<|`."
+}

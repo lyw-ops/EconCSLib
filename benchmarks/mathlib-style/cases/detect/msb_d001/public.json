@@ -1,0 +1,19 @@
+{
+  "schema_version": "0.3.0",
+  "id": "msb_d001",
+  "task": "DETECT",
+  "stratum": "surface",
+  "evaluation_mode": "CLOSED_CONTEXT",
+  "evaluation_environment_ref": "MATHLIB-4.30.0",
+  "requested_output": [
+    "findings",
+    "rationale",
+    "confidence",
+    "missing_context"
+  ],
+  "prompt": {
+    "context": "Review this declaration under the pinned Mathlib style rules. Report declaration-aware findings only.",
+    "code": "theorem duplicateEvidence (p : Prop) (hp : p) : p ∧ p := by\n  constructor\n\n  · exact hp\n  · exact hp",
+    "target_scope": "declaration"
+  }
+}

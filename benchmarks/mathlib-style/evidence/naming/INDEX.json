@@ -1,0 +1,23 @@
+{
+  "schema_version": "0.1.0",
+  "category": "naming",
+  "source": "../../manifests/RULES.json",
+  "rule_families": [
+    "NAM-*"
+  ],
+  "rule_count": 12,
+  "rule_ids": [
+    "NAM-001",
+    "NAM-002",
+    "NAM-003",
+    "NAM-004",
+    "NAM-005",
+    "NAM-006",
+    "NAM-007",
+    "NAM-008",
+    "NAM-009",
+    "NAM-010A",
+    "NAM-010B",
+    "NAM-010C"
+  ]
+}

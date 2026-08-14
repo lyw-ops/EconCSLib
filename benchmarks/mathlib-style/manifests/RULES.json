@@ -1,0 +1,5342 @@
+{
+  "name": "Mathlib Style and Review Distillation",
+  "name_zh": "Mathlib 风格与评审蒸馏规则集",
+  "schema_version": "0.3.0",
+  "version": "0.3.1",
+  "checked_date": "2026-08-13",
+  "status": "phase3-normative-revision-complete",
+  "evaluation_environment_ref": "MATHLIB-4.30.0",
+  "policy_snapshot_ref": "MATHLIB-POLICY-2026-08-13",
+  "rule_count": 75,
+  "leaf_rule_ids_frozen_for_pilot": true,
+  "legacy_aliases": {
+    "FIL-002": [
+      "FIL-002A",
+      "FIL-002B"
+    ],
+    "FIL-004": [
+      "DOC-001A"
+    ],
+    "DOC-001": [
+      "DOC-001A",
+      "DOC-001B",
+      "DOC-001C"
+    ],
+    "DOC-002": [
+      "DOC-002A",
+      "DOC-002B",
+      "DOC-002C",
+      "DOC-002D"
+    ],
+    "NAM-010": [
+      "NAM-010A",
+      "NAM-010B",
+      "NAM-010C"
+    ],
+    "LOC-002": [
+      "LOC-002A",
+      "LOC-002B"
+    ]
+  },
+  "rule_strength_levels": {
+    "MUST": {
+      "en": "Explicitly disallowed/required or reliably enforced within the stated scope.",
+      "zh": "在所述范围内明确禁止/要求，或可被可靠执行。"
+    },
+    "SHOULD": {
+      "en": "Default expectation; deviations require a concrete reason.",
+      "zh": "默认应遵守；偏离需要具体理由。"
+    },
+    "PREFER": {
+      "en": "Community preference with multiple acceptable alternatives.",
+      "zh": "社区偏好，通常存在多个可接受写法。"
+    },
+    "CONTEXT": {
+      "en": "Requires mathematical, architectural, or downstream-use context.",
+      "zh": "必须结合数学、架构或下游使用上下文判断。"
+    }
+  },
+  "evidence_classes": {
+    "DIRECT_MANUAL": {
+      "en": "Directly stated in official contributor or generated documentation.",
+      "zh": "官方贡献指南或生成文档中直接陈述。"
+    },
+    "REVIEW_HEURISTIC": {
+      "en": "A question or preference presented in the official PR review guide.",
+      "zh": "官方 PR 评审指南中的问题或偏好。"
+    },
+    "SYNTHESIZED_GUIDANCE": {
+      "en": "A conservative synthesis of official examples; not itself a universal official rule.",
+      "zh": "对官方示例的保守综合；本身不是普遍官方规则。"
+    },
+    "BENCHMARK_POLICY": {
+      "en": "An operational choice made only for benchmark construction.",
+      "zh": "仅为 benchmark 构造而制定的操作规则。"
+    }
+  },
+  "automation_levels": {
+    "DETERMINISTIC": {
+      "en": "A pinned validator decides the operational condition within its explicitly documented scope.",
+      "zh": "固定验证器在明确文档化的适用范围内决定该操作条件。"
+    },
+    "ASSISTED": {
+      "en": "Machine evidence is useful but a human judgment is still required.",
+      "zh": "机器证据有帮助，但仍需要人工判断。"
+    },
+    "HUMAN": {
+      "en": "No reliable automatic decision procedure is claimed.",
+      "zh": "不声称存在可靠自动判定程序。"
+    }
+  },
+  "finding_priority_levels": {
+    "BLOCKING": {
+      "en": "Must be resolved before the case can be accepted.",
+      "zh": "在 case 可接受前必须解决。"
+    },
+    "SUBSTANTIVE": {
+      "en": "Material review issue, normally requiring a change or explicit justification.",
+      "zh": "实质性评审问题，通常需要修改或明确说明。"
+    },
+    "MINOR": {
+      "en": "Localized non-blocking improvement.",
+      "zh": "局部、非阻塞性改进。"
+    },
+    "INFORMATIONAL": {
+      "en": "Context or advice, not itself a defect.",
+      "zh": "上下文或建议，本身不构成缺陷。"
+    }
+  },
+  "sources_ref": "SOURCES.json",
+  "validators_ref": "VALIDATORS.json",
+  "rules": [
+    {
+      "id": "FIL-001",
+      "category": {
+        "en": "File structure",
+        "zh": "文件结构"
+      },
+      "title": {
+        "en": "File naming",
+        "zh": "文件命名"
+      },
+      "rule": {
+        "en": "Lean source files should generally use UpperCamelCase names. Rare lower-case exceptions require prior discussion, and the file name should identify its mathematical topic.",
+        "zh": "Lean 源文件通常使用 UpperCamelCase。极少数小写例外应先讨论；文件名还应反映其数学主题。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "custom.file_name_upper_camel",
+          "human.file_topic_fit"
+        ],
+        "notes": {
+          "en": "Case can be checked mechanically; semantic fit and rare exceptions require review.",
+          "zh": "大小写可机械检查；主题匹配与少数例外需要人工判断。"
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR",
+        "LOCATE"
+      ],
+      "sources": [
+        "NC"
+      ],
+      "applies_to": [
+        "file",
+        "module"
+      ],
+      "exceptions": [
+        {
+          "en": "Case can be checked mechanically; semantic fit and rare exceptions require review.",
+          "zh": "大小写可机械检查；主题匹配与少数例外需要人工判断。"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "bad_file.lean",
+            "zh": "bad_file.lean"
+          },
+          "preferred": {
+            "en": "BadFile.lean",
+            "zh": "BadFile.lean"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FIL-001"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FIL-002A",
+      "category": {
+        "en": "File structure",
+        "zh": "文件结构"
+      },
+      "title": {
+        "en": "Standard header syntax",
+        "zh": "标准文件头格式"
+      },
+      "rule": {
+        "en": "Start a mathlib file with the standard copyright, Apache-2.0 license, and `Authors:` header syntax.",
+        "zh": "mathlib 文件以标准版权、Apache-2.0 许可证与 `Authors:` 文件头格式开始。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.style.header"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "DOC",
+        "LIN-HEADER"
+      ],
+      "applies_to": [
+        "file"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "code",
+          "bad": {
+            "en": "A malformed or missing copyright/license/Authors block.",
+            "zh": "版权、许可证或 Authors 区块缺失或格式错误。"
+          },
+          "preferred": {
+            "en": "Use the exact standard header syntax accepted by `linter.style.header`.",
+            "zh": "采用 `linter.style.header` 接受的标准文件头格式。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FIL-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "DOC",
+          "section": null
+        },
+        {
+          "source_id": "LIN-HEADER",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "FIL-002B",
+      "category": {
+        "en": "File structure",
+        "zh": "文件结构"
+      },
+      "title": {
+        "en": "Author attribution semantics",
+        "zh": "作者归属语义"
+      },
+      "rule": {
+        "en": "The `Authors:` list should identify substantial design/development contributors whom maintainers would contact about the file; syntax alone does not decide attribution.",
+        "zh": "`Authors:` 列表应标出在设计或开发上有实质贡献、维护者会就该文件联系的人；单靠格式检查不能决定作者归属。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.authorship_attribution"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "LOCATE"
+      ],
+      "sources": [
+        "SG"
+      ],
+      "applies_to": [
+        "file",
+        "provenance"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Author attribution semantics”.",
+            "zh": "某个 case 忽略了“作者归属语义”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FIL-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        }
+      ],
+      "rule_strength": "CONTEXT"
+    },
+    {
+      "id": "FIL-003",
+      "category": {
+        "en": "File structure",
+        "zh": "文件结构"
+      },
+      "title": {
+        "en": "Module and import order",
+        "zh": "模块与导入顺序"
+      },
+      "rule": {
+        "en": "Put `module` on its own line after the header. For ordinary `public import` and `import` blocks, keep one import per line, place the public block first, and try to sort within each block; no official total order is asserted for uncommon modifiers such as `public meta import` or `import all`.",
+        "zh": "版权头后单独写 `module`。对于普通 `public import` 与 `import` 区块，每行一个 import、public 区块在前，并尽量在各区块内排序；对 `public meta import`、`import all` 等少见 modifier 不声称存在官方全序。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "linter.style.header",
+          "custom.module_import_order"
+        ],
+        "notes": {
+          "en": "The custom order check may decide ordinary public/ordinary blocks; uncommon modifiers require review because no official relative order is prescribed.",
+          "zh": "custom order check 可判定普通 public/ordinary 区块；少见 modifier 没有官方相对顺序，需人工判断。"
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR",
+        "LOCATE"
+      ],
+      "sources": [
+        "SG",
+        "DOC",
+        "LIN-HEADER"
+      ],
+      "applies_to": [
+        "file",
+        "module"
+      ],
+      "exceptions": [
+        {
+          "en": "No total order is prescribed between uncommon import forms such as `public meta import` and `import all`.",
+          "zh": "`public meta import` 与 `import all` 等少见 import 形式之间没有规定全序。"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A benchmark invents one relative order for `public meta import` and `import all` and labels every alternative as wrong.",
+            "zh": "Benchmark 为 `public meta import` 与 `import all` 臆造唯一相对顺序，并把其他顺序都标为错误。"
+          },
+          "preferred": {
+            "en": "Score alphabetical order only inside ordinary `public import` and `import` blocks.",
+            "zh": "只在普通 `public import` 与 `import` 区块内部评测字母顺序。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FIL-003"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "DOC",
+          "section": null
+        },
+        {
+          "source_id": "LIN-HEADER",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FIL-005",
+      "category": {
+        "en": "File structure",
+        "zh": "文件结构"
+      },
+      "title": {
+        "en": "Import organization",
+        "zh": "导入组织"
+      },
+      "rule": {
+        "en": "Keep one import per line, preserve the public/ordinary grouping, prefer alphabetical order within groups, and remove imports shown to be redundant or unnecessary.",
+        "zh": "每行写一个 import，保持 public/普通导入分组，组内优先按字母排序，并删除已证明冗余或无必要的导入。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "custom.module_import_order",
+          "command.#min_imports_in",
+          "command.#redundant_imports",
+          "human.location_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR",
+        "LOCATE"
+      ],
+      "sources": [
+        "SG",
+        "PR",
+        "MINIMPORTS"
+      ],
+      "applies_to": [
+        "file",
+        "module"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Import organization”.",
+            "zh": "某个 case 忽略了“导入组织”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FIL-005"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        },
+        {
+          "source_id": "MINIMPORTS",
+          "section": null
+        }
+      ],
+      "rule_strength": "PREFER"
+    },
+    {
+      "id": "FIL-006",
+      "category": {
+        "en": "File structure",
+        "zh": "文件结构"
+      },
+      "title": {
+        "en": "Top-level alignment",
+        "zh": "顶层对齐"
+      },
+      "rule": {
+        "en": "Keep top-level declarations and commands flush-left; do not indent the contents of namespaces or sections.",
+        "zh": "def、theorem、namespace、section、open 等顶层命令左对齐；不要因 namespace 或 section 而整体缩进。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "linter.style.whitespace"
+        ],
+        "notes": {
+          "en": "The linter checks selected command alignment, not every layout judgment.",
+          "zh": "linter 只检查部分命令对齐，不覆盖所有布局判断。"
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR",
+        "LOCATE"
+      ],
+      "sources": [
+        "SG",
+        "LIN-WS"
+      ],
+      "applies_to": [
+        "file",
+        "module"
+      ],
+      "exceptions": [
+        {
+          "en": "The linter checks selected command alignment, not every layout judgment.",
+          "zh": "linter 只检查部分命令对齐，不覆盖所有布局判断。"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Top-level alignment”.",
+            "zh": "某个 case 忽略了“顶层对齐”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FIL-006"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "LIN-WS",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FIL-007",
+      "category": {
+        "en": "File structure",
+        "zh": "文件结构"
+      },
+      "title": {
+        "en": "File cohesion and size",
+        "zh": "文件内聚与规模"
+      },
+      "rule": {
+        "en": "Split files according to mathematical cohesion and dependency boundaries. Roughly 1000 lines is a reviewer signal to reconsider the split; mathlib’s `longFile` linter warns above 1500 lines, while downstream projects have no long-file limit unless configured.",
+        "zh": "按数学内聚性与依赖边界拆分文件。约 1000 行只是评审者重新检查拆分的信号；mathlib 的 `longFile` linter 在超过 1500 行时警告，而下游项目若未配置则没有该行数上限。"
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "LINTER",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "linter.style.longFile",
+          "human.location_review"
+        ],
+        "notes": {
+          "en": "Line count is automatic; whether a split is mathematically appropriate is contextual.",
+          "zh": "行数可自动统计；是否应拆分取决于数学与依赖上下文。"
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR",
+        "LOCATE"
+      ],
+      "sources": [
+        "PR",
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "file",
+        "module"
+      ],
+      "exceptions": [
+        {
+          "en": "Line count is automatic; whether a split is mathematically appropriate is contextual.",
+          "zh": "行数可自动统计；是否应拆分取决于数学与依赖上下文。"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “File cohesion and size”.",
+            "zh": "某个 case 忽略了“文件内聚与规模”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FIL-007"
+      ],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        },
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "CONTEXT"
+    },
+    {
+      "id": "FIL-008",
+      "category": {
+        "en": "File structure",
+        "zh": "文件结构"
+      },
+      "title": {
+        "en": "Header-level prohibited imports",
+        "zh": "文件头禁止导入"
+      },
+      "rule": {
+        "en": "Do not introduce `Mathlib.Tactic` bucket imports or other imports explicitly prohibited by the pinned header linter. `Lake.*` instead triggers a warning and may remain only after necessity review, performance benchmarking, and a justified linter allowance.",
+        "zh": "不得引入 `Mathlib.Tactic` 桶式导入或固定 header linter 明确禁止的其他导入。`Lake.*` 只触发警告，且仅可在必要性评审、性能测试和有理由的 linter allowance 后保留。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "linter.style.header",
+          "human.location_review"
+        ],
+        "notes": {
+          "en": "The linter identifies both classes, but only the explicitly prohibited class is a hard failure; retaining a `Lake.*` warning requires human necessity/performance review.",
+          "zh": "linter 会识别两类导入，但只有明确禁止类是 hard failure；保留 `Lake.*` 警告需人工评审必要性和性能。"
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR",
+        "LOCATE"
+      ],
+      "sources": [
+        "LIN-HEADER"
+      ],
+      "applies_to": [
+        "file",
+        "imports"
+      ],
+      "exceptions": [
+        {
+          "en": "A `Lake.*` import is not an unconditional hard negative when necessity, benchmarking, and a justified linter allowance are recorded.",
+          "zh": "若已记录必要性、性能测试与有理由的 linter allowance，`Lake.*` import 不是无条件 hard negative。"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case labels every `Lake.*` import as the same hard failure as `Mathlib.Tactic`.",
+            "zh": "某个 case 把所有 `Lake.*` import 标成与 `Mathlib.Tactic` 相同的 hard failure。"
+          },
+          "preferred": {
+            "en": "Keep `Mathlib.Tactic` as a hard negative; treat a justified, benchmarked `Lake.*` import as a warning/review case.",
+            "zh": "继续把 `Mathlib.Tactic` 作为 hard negative；将有理由且经 benchmark 的 `Lake.*` import 作为警告/评审 case。"
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "LIN-HEADER",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "FMT-001",
+      "category": {
+        "en": "Formatting",
+        "zh": "格式"
+      },
+      "title": {
+        "en": "Line length",
+        "zh": "行宽"
+      },
+      "rule": {
+        "en": "Keep lines at or below 100 characters; the current linter permits documented exceptions such as lines containing URLs.",
+        "zh": "每行不超过 100 个字符；当前 linter 对包含 URL 等文档化情形允许例外。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.style.longLine"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "file",
+        "declaration",
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "A source line with more than 100 characters without a documented exception.",
+            "zh": "A source line with more than 100 characters without a documented exception."
+          },
+          "preferred": {
+            "en": "Break the expression across lines at a readable syntactic boundary.",
+            "zh": "Break the expression across lines at a readable syntactic boundary."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FMT-001"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FMT-002",
+      "category": {
+        "en": "Formatting",
+        "zh": "格式"
+      },
+      "title": {
+        "en": "Spaces around operators",
+        "zh": "运算符空格"
+      },
+      "rule": {
+        "en": "Use spaces around :, :=, and infix operators; keep an operator at the end of the preceding line when breaking.",
+        "zh": "在 :、:= 和中缀运算符两侧留空格；换行时把运算符留在上一行末尾。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "linter.style.whitespace",
+          "human.layout_review"
+        ],
+        "notes": {
+          "en": "The official whitespace linter covers only selected patterns and is not a full formatter.",
+          "zh": "官方 whitespace linter 只覆盖部分模式，并非完整格式化器。"
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "LIN-WS"
+      ],
+      "applies_to": [
+        "file",
+        "declaration",
+        "proof"
+      ],
+      "exceptions": [
+        {
+          "en": "The official whitespace linter covers only selected patterns and is not a full formatter.",
+          "zh": "官方 whitespace linter 只覆盖部分模式，并非完整格式化器。"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "a*b:c",
+            "zh": "a*b:c"
+          },
+          "preferred": {
+            "en": "a * b : c",
+            "zh": "a * b : c"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FMT-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "LIN-WS",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FMT-003",
+      "category": {
+        "en": "Formatting",
+        "zh": "格式"
+      },
+      "title": {
+        "en": "Indentation",
+        "zh": "缩进"
+      },
+      "rule": {
+        "en": "Use two-space continuation indentation in general, four spaces for continued theorem statements, and two spaces for proof bodies.",
+        "zh": "一般续行增加 2 空格；多行定理陈述的续行增加 4 空格；证明体相对声明缩进 2 空格。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "human.layout_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "file",
+        "declaration",
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "A continued theorem statement aligned by one or three spaces.",
+            "zh": "A continued theorem statement aligned by one or three spaces."
+          },
+          "preferred": {
+            "en": "Use the documented continuation indentation consistently.",
+            "zh": "Use the documented continuation indentation consistently."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FMT-003"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FMT-004",
+      "category": {
+        "en": "Formatting",
+        "zh": "格式"
+      },
+      "title": {
+        "en": "Placement of by and calc",
+        "zh": "by 与 calc 的位置"
+      },
+      "rule": {
+        "en": "Place by and calc on the line immediately preceding the proof or calculation, not on a line by themselves.",
+        "zh": "by 与 calc 放在后续证明或计算开始前的同一行，而不是单独占一行。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "human.layout_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "file",
+        "declaration",
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "theorem t : P :=\nby\n  exact h",
+            "zh": "theorem t : P :=\nby\n  exact h"
+          },
+          "preferred": {
+            "en": "theorem t : P := by\n  exact h",
+            "zh": "theorem t : P := by\n  exact h"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FMT-004"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FMT-005",
+      "category": {
+        "en": "Formatting",
+        "zh": "格式"
+      },
+      "title": {
+        "en": "Explicit declaration types",
+        "zh": "显式声明类型"
+      },
+      "rule": {
+        "en": "In public signatures, give explicit types for parameters and return values when omission would obscure readability or API meaning. Types clear from a typed dependent context—such as inferable index, universe, or similar binders `{n}` and `{m}`—may be omitted.",
+        "zh": "公共签名中的参数与返回值若省略类型会妨碍可读性或 API 理解，就应显式写出类型。可从 typed dependent context 清楚推断的 index、universe 或类似 binder（如 `{n}`、`{m}`）可以省略类型。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.statement_review"
+        ],
+        "notes": {
+          "en": "Lean elaboration can reveal an omitted type, but deciding whether the public signature remains clear is human review; mathlib has no complete standard linter for this convention.",
+          "zh": "Lean elaboration 可以揭示省略类型，但公共签名是否仍清晰需要人工评审；mathlib 没有覆盖该约定的完整标准 linter。"
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "file",
+        "declaration",
+        "proof"
+      ],
+      "exceptions": [
+        {
+          "en": "Inferable index, universe, and similar binders may omit a type when a typed dependent context makes it unambiguous, for example `{n}` and `{m}`.",
+          "zh": "当 typed dependent context 已使类型无歧义时，可推断的 index、universe 与类似 binder 可以省略类型，例如 `{n}`、`{m}`。"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "def f x := x",
+            "zh": "def f x := x"
+          },
+          "preferred": {
+            "en": "Use `def f (x : α) : α := x`; accept `{n}` or `{m}` when its type is clear from a typed dependent context.",
+            "zh": "使用 `def f (x : α) : α := x`；当类型可从 typed dependent context 清楚得到时，接受 `{n}` 或 `{m}`。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FMT-005"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FMT-006",
+      "category": {
+        "en": "Formatting",
+        "zh": "格式"
+      },
+      "title": {
+        "en": "Binder formatting",
+        "zh": "绑定子格式"
+      },
+      "rule": {
+        "en": "Put a space after binders and normally state binder types explicitly.",
+        "zh": "绑定子后留空格，并通常显式写出绑定变量的类型。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "linter.style.whitespace",
+          "human.layout_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "LIN-WS",
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "file",
+        "declaration",
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "(x:α)",
+            "zh": "(x:α)"
+          },
+          "preferred": {
+            "en": "(x : α)",
+            "zh": "(x : α)"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FMT-006"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "LIN-WS",
+          "section": null
+        },
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FMT-007",
+      "category": {
+        "en": "Formatting",
+        "zh": "格式"
+      },
+      "title": {
+        "en": "Anonymous functions",
+        "zh": "匿名函数"
+      },
+      "rule": {
+        "en": "Use `fun`, not `λ`, for anonymous functions. The `↦` arrow is only a slight source-code preference, not a hard requirement.",
+        "zh": "匿名函数必须使用 `fun`，而不是 `λ`。箭头 `↦` 只是轻微的源码偏好，不是硬性要求。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.style.lambdaSyntax"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "file",
+        "declaration",
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "λ x => x",
+            "zh": "λ x => x"
+          },
+          "preferred": {
+            "en": "fun x ↦ x",
+            "zh": "fun x ↦ x"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FMT-007"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "FMT-008",
+      "category": {
+        "en": "Formatting",
+        "zh": "格式"
+      },
+      "title": {
+        "en": "Application syntax",
+        "zh": "函数应用语法"
+      },
+      "rule": {
+        "en": "Do not use `$` for function application in mathlib source; use `<|` instead.",
+        "zh": "mathlib 源码中不得使用 `$` 表示函数应用；应改用 `<|`。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.style.dollarSyntax"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "file",
+        "declaration",
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "f $ x",
+            "zh": "f $ x"
+          },
+          "preferred": {
+            "en": "f <| x",
+            "zh": "f <| x"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FMT-008"
+      ],
+      "source_locators": [
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "FMT-009",
+      "category": {
+        "en": "Formatting",
+        "zh": "格式"
+      },
+      "title": {
+        "en": "Goal focusing",
+        "zh": "目标聚焦"
+      },
+      "rule": {
+        "en": "Normally focus proof goals explicitly, often with `·`, so a tactic does not unintentionally act on several goals; use documented multi-goal combinators only when intentional.",
+        "zh": "通常应显式聚焦证明目标（常用 `·`），避免 tactic 无意作用于多个目标；只有在明确需要时才使用文档化的多目标组合子。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "linter.style.multiGoal",
+          "human.proof_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "LIN-MULTI"
+      ],
+      "applies_to": [
+        "file",
+        "declaration",
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "A tactic runs while several unrelated goals are active.",
+            "zh": "A tactic runs while several unrelated goals are active."
+          },
+          "preferred": {
+            "en": "Focus the intended goal with `·`, `focus`, or a documented goal combinator.",
+            "zh": "Focus the intended goal with `·`, `focus`, or a documented goal combinator."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FMT-009"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "LIN-MULTI",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FMT-010",
+      "category": {
+        "en": "Formatting",
+        "zh": "格式"
+      },
+      "title": {
+        "en": "One tactic per line",
+        "zh": "每行一个 tactic"
+      },
+      "rule": {
+        "en": "Normally place one tactic per line; compress short steps only when this clearly improves readability.",
+        "zh": "通常每行只写一个 tactic；只有在确实提高可读性时才压缩短步骤。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.proof_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "PR"
+      ],
+      "applies_to": [
+        "file",
+        "declaration",
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "A long semicolon-packed tactic line that obscures proof flow.",
+            "zh": "A long semicolon-packed tactic line that obscures proof flow."
+          },
+          "preferred": {
+            "en": "Put logically separate tactics on separate lines.",
+            "zh": "Put logically separate tactics on separate lines."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FMT-010"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "PREFER"
+    },
+    {
+      "id": "FMT-011",
+      "category": {
+        "en": "Formatting",
+        "zh": "格式"
+      },
+      "title": {
+        "en": "No blank lines inside declarations",
+        "zh": "声明内部不留空行"
+      },
+      "rule": {
+        "en": "Within the pinned `linter.style.emptyLine` scope, do not use blank lines to segment a command; use comments to explain proof structure. Its deterministic scope excludes doc/module docs, mutual commands, string syntax, `where` fields, incomplete commands, and paths containing `Tactic`, `Util`, or `Meta`; outside that scope the same readability question is assisted review.",
+        "zh": "在固定 `linter.style.emptyLine` 的适用范围内，不要用空白行切分 command，应以注释解释证明结构。其 deterministic 范围排除 doc/module doc、mutual command、string syntax、`where` fields、incomplete commands，以及路径含 `Tactic`、`Util` 或 `Meta` 的文件；范围外的同类可读性问题属于 assisted review。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "linter.style.emptyLine",
+          "human.layout_review"
+        ],
+        "notes": {
+          "en": "Deterministic only for syntax nodes and paths actually covered by the pinned linter; all excluded contexts require human readability review.",
+          "zh": "只有固定 linter 实际覆盖的 syntax node 与路径才是 deterministic；所有排除上下文都需人工可读性评审。"
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "LIN-EMPTY"
+      ],
+      "applies_to": [
+        "file",
+        "declaration",
+        "proof"
+      ],
+      "exceptions": [
+        {
+          "en": "The linter excludes doc/module docs, mutual commands, string syntax, `where` fields, incomplete commands, and files with `Tactic`, `Util`, or `Meta` path segments.",
+          "zh": "linter 排除 doc/module doc、mutual command、string syntax、`where` fields、incomplete commands，以及路径含 `Tactic`、`Util` 或 `Meta` 的文件。"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "A blank line splits one declaration body.",
+            "zh": "A blank line splits one declaration body."
+          },
+          "preferred": {
+            "en": "Use a comment for a mathematical stage, without an empty line inside the declaration.",
+            "zh": "Use a comment for a mathematical stage, without an empty line inside the declaration."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FMT-011"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "LIN-EMPTY",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FMT-012",
+      "category": {
+        "en": "Formatting",
+        "zh": "格式"
+      },
+      "title": {
+        "en": "Scoped production options",
+        "zh": "生产代码中的 option 作用域"
+      },
+      "rule": {
+        "en": "Remove development options rooted at `debug`, `pp`, `profiler`, or `trace`. The pinned linter also rejects unscoped options containing `maxHeartbeats` and unscoped `linter.flexible`, deprecates `linter.style.commandStart`, and rejects new `backward.inferInstanceAs.wrap.reuseSubInstances` debt. Other technically necessary production options are not automatic failures, but must be scoped as narrowly as possible and explained when required.",
+        "zh": "移除以 `debug`、`pp`、`profiler` 或 `trace` 为 root 的开发期 option。固定 linter 还拒绝未局部化的 `maxHeartbeats` 类 option 与 `linter.flexible`，将 `linter.style.commandStart` 标为弃用，并拒绝新增 `backward.inferInstanceAs.wrap.reuseSubInstances` 技术债。其他确有技术必要的 production option 不自动失败，但必须尽量缩小作用域，并在要求时说明理由。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "linter.style.setOption",
+          "human.layout_review"
+        ],
+        "notes": {
+          "en": "The pinned linter deterministically covers the named option families; whether another scoped production option is technically necessary remains human review.",
+          "zh": "固定 linter deterministic 覆盖所列 option 类别；其他局部 production option 是否技术上必要仍需人工评审。"
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "file",
+        "command"
+      ],
+      "exceptions": [
+        {
+          "en": "A genuinely necessary production option outside the listed failure classes may remain when narrowly scoped; tests may intentionally use debugging options with an explicit linter allowance.",
+          "zh": "不属于所列失败类别且确有必要的 production option 可在尽量局部化后保留；测试可在显式 linter allowance 下有意使用 debugging option。"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A benchmark labels every production `set_option` as a failure regardless of option family or scope.",
+            "zh": "Benchmark 不区分 option 类别和作用域，把所有 production `set_option` 都标为失败。"
+          },
+          "preferred": {
+            "en": "Fail the listed development/debt or unscoped classes; review other narrowly scoped technical options for necessity.",
+            "zh": "将所列开发期/技术债或未局部化类别判为失败；其他局部技术 option 按必要性评审。"
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "FMT-013",
+      "category": {
+        "en": "Formatting",
+        "zh": "格式"
+      },
+      "title": {
+        "en": "Closed sections and namespaces",
+        "zh": "闭合 section 与 namespace"
+      },
+      "rule": {
+        "en": "Close sections and namespaces before end-of-file, except for the documented outermost public/meta/noncomputable section exceptions.",
+        "zh": "文件结束前应闭合 section 与 namespace，但文档化的最外层 public/meta/noncomputable section 例外除外。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.style.missingEnd"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "file"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Closed sections and namespaces”.",
+            "zh": "某个 case 忽略了“闭合 section 与 namespace”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "FMT-014",
+      "category": {
+        "en": "Formatting",
+        "zh": "格式"
+      },
+      "title": {
+        "en": "Focusing-dot syntax",
+        "zh": "聚焦点语法"
+      },
+      "rule": {
+        "en": "Use the `·` focusing character rather than a plain dot, and do not isolate the focusing dot on a line by itself.",
+        "zh": "使用 `·` 聚焦字符而不是普通句点，并且不要让聚焦点单独占一行。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.style.cdot"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Focusing-dot syntax”.",
+            "zh": "某个 case 忽略了“聚焦点语法”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "FMT-015",
+      "category": {
+        "en": "Formatting",
+        "zh": "格式"
+      },
+      "title": {
+        "en": "Scoped Classical opening",
+        "zh": "Classical 的局部作用域"
+      },
+      "rule": {
+        "en": "Do not use file-wide `open Classical`/`open scoped Classical` when a declaration-local scope suffices.",
+        "zh": "声明局部作用域足够时，不应在整个文件范围使用 `open Classical` 或 `open scoped Classical`。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.style.openClassical"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "file",
+        "declaration"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Scoped Classical opening”.",
+            "zh": "某个 case 忽略了“Classical 的局部作用域”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FMT-016",
+      "category": {
+        "en": "Formatting",
+        "zh": "格式"
+      },
+      "title": {
+        "en": "Use change for goal changes",
+        "zh": "使用 change 改变目标"
+      },
+      "rule": {
+        "en": "When a `show` command changes the goal rather than merely presenting it, use `change` as required by the pinned style linter.",
+        "zh": "`show` 若实际上改变目标，而不只是展示目标，应按固定版本 style linter 的要求使用 `change`。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.style.show"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Use change for goal changes”.",
+            "zh": "某个 case 忽略了“使用 change 改变目标”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "FMT-017",
+      "category": {
+        "en": "Formatting",
+        "zh": "格式"
+      },
+      "title": {
+        "en": "Heartbeat changes require scope and explanation",
+        "zh": "Heartbeat 修改需局部化并解释"
+      },
+      "rule": {
+        "en": "A `maxHeartbeats`-family option must be scoped to a command and accompanied by a comment explaining why the increase is necessary.",
+        "zh": "`maxHeartbeats` 系列 option 必须局部作用于单个命令，并附注释解释提高限制的必要性。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.style.setOption",
+          "linter.style.maxHeartbeats"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "LIN-STYLE",
+        "LIN-DEP"
+      ],
+      "applies_to": [
+        "command"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Heartbeat changes require scope and explanation”.",
+            "zh": "某个 case 忽略了“Heartbeat 修改需局部化并解释”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        },
+        {
+          "source_id": "LIN-DEP",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "FMT-018",
+      "category": {
+        "en": "Formatting",
+        "zh": "格式"
+      },
+      "title": {
+        "en": "Use Type* for arbitrary universes",
+        "zh": "任意宇宙使用 Type*"
+      },
+      "rule": {
+        "en": "Use `Type*` rather than `Type _` when the intention is an arbitrary universe level, unless a concrete metavariable behavior is required and justified.",
+        "zh": "表示任意宇宙层级时使用 `Type*` 而不是 `Type _`；只有确实需要并能说明元变量行为时才例外。"
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.statement_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "binder",
+        "declaration"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Use Type* for arbitrary universes”.",
+            "zh": "某个 case 忽略了“任意宇宙使用 Type*”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "FMT-019",
+      "category": {
+        "en": "Formatting",
+        "zh": "格式"
+      },
+      "title": {
+        "en": "Readable allowed Unicode",
+        "zh": "可读且允许的 Unicode"
+      },
+      "rule": {
+        "en": "Reject characters and variant-selector uses disallowed by the pinned `linter.unicodeLinter`; its allow-list is snapshot-specific and may change with Mathlib. Separately, whether an allowed Unicode character improves mathematical readability is human review.",
+        "zh": "拒绝固定 `linter.unicodeLinter` 不允许的字符与 variant-selector 用法；其 allow-list 依赖快照，并可能随 Mathlib 版本变化。允许字符是否提升数学可读性则另由人工评审。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL",
+        "LINTER"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "linter.unicodeLinter",
+          "human.layout_review"
+        ],
+        "notes": {
+          "en": "The text linter deterministically checks pinned character/variant legality; it does not decide mathematical readability.",
+          "zh": "text linter deterministic 检查固定快照中的字符/variant 合法性；它不判断数学可读性。"
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "LIN-TEXT-BASED",
+        "LIN-UNICODE"
+      ],
+      "applies_to": [
+        "file",
+        "documentation",
+        "notation"
+      ],
+      "exceptions": [
+        {
+          "en": "Allow-list acceptance is not evidence that a character improves readability, and an allow-list result must not be transferred to another Mathlib snapshot without repinning.",
+          "zh": "进入 allow-list 不代表字符提升可读性；未重新固定快照时，不得把 allow-list 结果迁移到另一 Mathlib 版本。"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case treats an allowed character as automatically readable or uses an allow-list from another Mathlib snapshot.",
+            "zh": "某个 case 把允许字符自动视为可读，或使用另一 Mathlib 快照的 allow-list。"
+          },
+          "preferred": {
+            "en": "Run the pinned text linter for legality, then review mathematical readability separately.",
+            "zh": "先运行固定 text linter 检查合法性，再单独人工评审数学可读性。"
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "LIN-TEXT-BASED",
+          "section": null
+        },
+        {
+          "source_id": "LIN-UNICODE",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "NAM-001",
+      "category": {
+        "en": "Naming",
+        "zh": "命名"
+      },
+      "title": {
+        "en": "Semantic capitalization",
+        "zh": "语义化大小写"
+      },
+      "rule": {
+        "en": "Use snake_case for propositions and theorems, UpperCamelCase for types in Prop/Type/Sort, and usually lowerCamelCase for other Type-valued terms.",
+        "zh": "Prop 项和定理使用 snake_case；Prop、Type、Sort 中的类型使用 UpperCamelCase；其他 Type 值通常使用 lowerCamelCase。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "linter.style.nameCheck",
+          "environment_linter.defsWithUnderscore",
+          "human.naming_review"
+        ],
+        "notes": {
+          "en": "Current linters check only a small subset of naming conventions.",
+          "zh": "当前 linter 只覆盖命名约定的一小部分。"
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "NC",
+        "LIN-STYLE"
+      ],
+      "applies_to": [
+        "declaration",
+        "field",
+        "constructor"
+      ],
+      "exceptions": [
+        {
+          "en": "Current linters check only a small subset of naming conventions.",
+          "zh": "当前 linter 只覆盖命名约定的一小部分。"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "theorem SomeTheorem",
+            "zh": "theorem SomeTheorem"
+          },
+          "preferred": {
+            "en": "theorem some_theorem",
+            "zh": "theorem some_theorem"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "NAM-001"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        },
+        {
+          "source_id": "LIN-STYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "NAM-002",
+      "category": {
+        "en": "Naming",
+        "zh": "命名"
+      },
+      "title": {
+        "en": "Function names follow return type",
+        "zh": "函数名服从返回类型"
+      },
+      "rule": {
+        "en": "Choose a function's capitalization from the semantic category of its return type, not merely from the fact that it is a function.",
+        "zh": "函数名的大小写由其返回类型的语义类别决定，而不是由“它是函数”这一事实决定。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.naming_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "NC"
+      ],
+      "applies_to": [
+        "declaration",
+        "field",
+        "constructor"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Function names follow return type”.",
+            "zh": "某个 case 忽略了“函数名服从返回类型”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "NAM-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "NAM-003",
+      "category": {
+        "en": "Naming",
+        "zh": "命名"
+      },
+      "title": {
+        "en": "Fields and constructors",
+        "zh": "字段与构造子"
+      },
+      "rule": {
+        "en": "Apply the same semantic naming rules to structure fields and constructors as to ordinary declarations.",
+        "zh": "结构字段和构造子遵循与普通声明相同的语义化命名规则。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.naming_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "NC"
+      ],
+      "applies_to": [
+        "declaration",
+        "field",
+        "constructor"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Fields and constructors”.",
+            "zh": "某个 case 忽略了“字段与构造子”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "NAM-003"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "NAM-004",
+      "category": {
+        "en": "Naming",
+        "zh": "命名"
+      },
+      "title": {
+        "en": "American spelling",
+        "zh": "美式拼写"
+      },
+      "rule": {
+        "en": "Use American English spelling in declaration names; documentation prose may use any common English spelling.",
+        "zh": "声明名使用美式英语拼写；文档正文可接受常见英语拼写。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.naming_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "NC",
+        "DOC"
+      ],
+      "applies_to": [
+        "declaration",
+        "field",
+        "constructor"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "factorisation",
+            "zh": "factorisation"
+          },
+          "preferred": {
+            "en": "factorization",
+            "zh": "factorization"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "NAM-004"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        },
+        {
+          "source_id": "DOC",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "NAM-005",
+      "category": {
+        "en": "Naming",
+        "zh": "命名"
+      },
+      "title": {
+        "en": "Conclusion-first theorem names",
+        "zh": "结论优先的定理名"
+      },
+      "rule": {
+        "en": "Name a theorem primarily after its conclusion rather than its proof method or a full restatement of its hypotheses.",
+        "zh": "定理名先描述结论，而不是复述证明方法或所有前提。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.naming_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "NC",
+        "PR"
+      ],
+      "applies_to": [
+        "declaration",
+        "field",
+        "constructor"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "theorem by_induction_using_auxiliary_fact",
+            "zh": "theorem by_induction_using_auxiliary_fact"
+          },
+          "preferred": {
+            "en": "Name the theorem after its conclusion.",
+            "zh": "Name the theorem after its conclusion."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "NAM-005"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "NAM-006",
+      "category": {
+        "en": "Naming",
+        "zh": "命名"
+      },
+      "title": {
+        "en": "Hypotheses after of",
+        "zh": "用 of 表达前提"
+      },
+      "rule": {
+        "en": "When hypotheses must appear in a theorem name, place them after _of_ in statement order.",
+        "zh": "需要在名称中表达前提时，把它们按陈述中的顺序放在 _of_ 之后。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.naming_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "NC"
+      ],
+      "applies_to": [
+        "declaration",
+        "field",
+        "constructor"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "conclusion_hypothesis",
+            "zh": "conclusion_hypothesis"
+          },
+          "preferred": {
+            "en": "conclusion_of_hypothesis",
+            "zh": "conclusion_of_hypothesis"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "NAM-006"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        }
+      ],
+      "rule_strength": "PREFER"
+    },
+    {
+      "id": "NAM-007",
+      "category": {
+        "en": "Naming",
+        "zh": "命名"
+      },
+      "title": {
+        "en": "Standard vocabulary",
+        "zh": "标准词汇"
+      },
+      "rule": {
+        "en": "Reuse mathlib's standard symbol vocabulary, such as mul, add, one, zero, le, and lt, instead of inventing synonymous abbreviations.",
+        "zh": "复用 mathlib 已有的标准符号词汇，例如 mul、add、one、zero、le、lt，而不要创造近义缩写。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.naming_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "NC",
+        "PR"
+      ],
+      "applies_to": [
+        "declaration",
+        "field",
+        "constructor"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "times",
+            "zh": "times"
+          },
+          "preferred": {
+            "en": "mul",
+            "zh": "mul"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "NAM-007"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "NAM-008",
+      "category": {
+        "en": "Naming",
+        "zh": "命名"
+      },
+      "title": {
+        "en": "Namespaces and dot notation",
+        "zh": "命名空间与点记法"
+      },
+      "rule": {
+        "en": "Place declarations in the natural namespace and support useful dot notation when they belong to a type or object; avoid repeating context in long names.",
+        "zh": "当声明自然依附于某类型或对象时，放入相应命名空间并设计可用的点记法；不要把上下文重复编码进长名称。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.naming_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "NC",
+        "PR"
+      ],
+      "applies_to": [
+        "declaration",
+        "field",
+        "constructor"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Namespaces and dot notation”.",
+            "zh": "某个 case 忽略了“命名空间与点记法”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "NAM-008"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "NAM-009",
+      "category": {
+        "en": "Naming",
+        "zh": "命名"
+      },
+      "title": {
+        "en": "Coercion names",
+        "zh": "强制转换命名"
+      },
+      "rule": {
+        "en": "Name coercion declarations after their underlying function rather than hiding semantics behind a generic coe name.",
+        "zh": "强制转换声明按其底层函数命名，不使用泛化的 coe 名称掩盖语义。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.naming_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "NC"
+      ],
+      "applies_to": [
+        "declaration",
+        "field",
+        "constructor"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Coercion names”.",
+            "zh": "某个 case 忽略了“强制转换命名”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "NAM-009"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "NAM-010A",
+      "category": {
+        "en": "Naming",
+        "zh": "命名"
+      },
+      "title": {
+        "en": "Extensionality names",
+        "zh": "外延性定理命名"
+      },
+      "rule": {
+        "en": "Use established extensionality names such as `.ext` and `.ext_iff`, together with appropriate attributes when justified.",
+        "zh": "外延性定理采用 `.ext`、`.ext_iff` 等既有命名，并在有依据时添加适当属性。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "human.naming_review",
+          "human.api_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "NC",
+        "PR"
+      ],
+      "applies_to": [
+        "theorem",
+        "attribute"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Extensionality names”.",
+            "zh": "某个 case 忽略了“外延性定理命名”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "NAM-010"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "NAM-010B",
+      "category": {
+        "en": "Naming",
+        "zh": "命名"
+      },
+      "title": {
+        "en": "Injectivity names",
+        "zh": "单射定理命名"
+      },
+      "rule": {
+        "en": "Follow established injectivity naming patterns such as `f_injective` and `f_inj` according to the theorem shape.",
+        "zh": "根据定理形状采用 `f_injective`、`f_inj` 等既有单射命名模式。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.naming_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "NC"
+      ],
+      "applies_to": [
+        "theorem"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Injectivity names”.",
+            "zh": "某个 case 忽略了“单射定理命名”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "NAM-010"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "NAM-010C",
+      "category": {
+        "en": "Naming",
+        "zh": "命名"
+      },
+      "title": {
+        "en": "Induction and recursor names",
+        "zh": "归纳与递归原理命名"
+      },
+      "rule": {
+        "en": "Respect the established distinction and parameter-order conventions for induction principles and recursors.",
+        "zh": "遵循归纳原理与递归原理的既有区分及参数顺序约定。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.naming_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "NC"
+      ],
+      "applies_to": [
+        "theorem",
+        "recursor"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Induction and recursor names”.",
+            "zh": "某个 case 忽略了“归纳与递归原理命名”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "NAM-010"
+      ],
+      "source_locators": [
+        {
+          "source_id": "NC",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "DOC-001A",
+      "category": {
+        "en": "Documentation",
+        "zh": "文档"
+      },
+      "title": {
+        "en": "Module docstring presence and position",
+        "zh": "模块文档字符串的存在与位置"
+      },
+      "rule": {
+        "en": "Except for the documented import-only and initialization exceptions, the first non-import command must be a module docstring.",
+        "zh": "除文档化的纯导入文件与初始化例外外，第一个非 import 命令必须是模块文档字符串。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.style.header"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "DOC",
+        "LIN-HEADER"
+      ],
+      "applies_to": [
+        "file",
+        "module_docstring"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Module docstring presence and position”.",
+            "zh": "某个 case 忽略了“模块文档字符串的存在与位置”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "FIL-004",
+        "DOC-001"
+      ],
+      "source_locators": [
+        {
+          "source_id": "DOC",
+          "section": null
+        },
+        {
+          "source_id": "LIN-HEADER",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "DOC-001B",
+      "category": {
+        "en": "Documentation",
+        "zh": "文档"
+      },
+      "title": {
+        "en": "Module title and summary",
+        "zh": "模块标题与摘要"
+      },
+      "rule": {
+        "en": "A module docstring must contain a first-level title and a useful summary of the file’s mathematical contents.",
+        "zh": "模块文档字符串必须包含一级标题，并对文件的数学内容给出有用摘要。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.documentation_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "DOC"
+      ],
+      "applies_to": [
+        "module_docstring"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Module title and summary”.",
+            "zh": "某个 case 忽略了“模块标题与摘要”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "DOC-001"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "DOC",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "DOC-001C",
+      "category": {
+        "en": "Documentation",
+        "zh": "文档"
+      },
+      "title": {
+        "en": "Relevant module sections",
+        "zh": "相关模块章节"
+      },
+      "rule": {
+        "en": "Use conventional module-docstring sections in their documented order when relevant. `Main definitions` and `Main statements` are optional; `Notation`, `References`, and `Tags` are required only when the file's content makes them relevant.",
+        "zh": "相关时按文档规定的顺序使用常规模块文档章节。`Main definitions` 与 `Main statements` 是可选 section；`Notation`、`References` 与 `Tags` 仅在文件内容相关时才要求。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.documentation_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "DOC"
+      ],
+      "applies_to": [
+        "module_docstring"
+      ],
+      "exceptions": [
+        {
+          "en": "Do not add a named section mechanically when the file has no corresponding content.",
+          "zh": "文件没有对应内容时，不要机械添加命名 section。"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case requires every module docstring to contain all named sections.",
+            "zh": "某个 case 要求每个 module docstring 都包含所有命名 section。"
+          },
+          "preferred": {
+            "en": "Require only relevant conditional sections; treat `Main definitions` and `Main statements` as optional.",
+            "zh": "只要求相关的条件性 section；把 `Main definitions` 与 `Main statements` 视为可选。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "DOC-001"
+      ],
+      "source_locators": [
+        {
+          "source_id": "DOC",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "DOC-002A",
+      "category": {
+        "en": "Documentation",
+        "zh": "文档"
+      },
+      "title": {
+        "en": "Definition docstrings",
+        "zh": "定义文档字符串"
+      },
+      "rule": {
+        "en": "Every public definition requires a docstring that conveys its mathematical meaning.",
+        "zh": "每个公共定义都需要文档字符串，并说明其数学含义。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "human.documentation_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "DOC"
+      ],
+      "applies_to": [
+        "definition"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Definition docstrings”.",
+            "zh": "某个 case 忽略了“定义文档字符串”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "DOC-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "DOC",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "DOC-002B",
+      "category": {
+        "en": "Documentation",
+        "zh": "文档"
+      },
+      "title": {
+        "en": "Major-theorem docstrings",
+        "zh": "主要定理文档字符串"
+      },
+      "rule": {
+        "en": "Every major theorem requires a docstring; deciding whether a theorem is major is contextual.",
+        "zh": "每个主要定理都需要文档字符串；某个定理是否属于“主要定理”需要结合上下文判断。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.documentation_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "DOC",
+        "PR"
+      ],
+      "applies_to": [
+        "theorem"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Major-theorem docstrings”.",
+            "zh": "某个 case 忽略了“主要定理文档字符串”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "DOC-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "DOC",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "DOC-002C",
+      "category": {
+        "en": "Documentation",
+        "zh": "文档"
+      },
+      "title": {
+        "en": "Structure and class field documentation",
+        "zh": "结构体与类字段文档"
+      },
+      "rule": {
+        "en": "Each newly introduced explicit structure or class field should have a docstring by default. Limited exceptions are generated fields, declarations that only `extends` documented parents without new explicit fields, and genuinely self-evident fields with sufficient context.",
+        "zh": "每个新出现的显式 structure 或 class field 默认都应有 docstring。有限例外包括 generated fields、只通过 `extends` 继承已文档化父项且没有新增显式字段的声明，以及上下文充分且真正自明的字段。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.documentation_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "DOC"
+      ],
+      "applies_to": [
+        "structure_field",
+        "class_field"
+      ],
+      "exceptions": [
+        {
+          "en": "Generated fields, `extends`-only declarations with no new explicit fields, and rare genuinely self-evident fields with sufficient context may omit a separate field docstring.",
+          "zh": "generated fields、没有新增显式字段的 `extends`-only 声明，以及上下文充分且真正自明的极少数字段可以省略单独 field docstring。"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A new explicit law or data field is left undocumented merely because its name seems suggestive.",
+            "zh": "新增显式 law 或 data field 仅因名称看似有提示性就不写文档。"
+          },
+          "preferred": {
+            "en": "Document every new explicit field by default and record any limited exception.",
+            "zh": "默认文档化每个新增显式字段，并记录有限例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "DOC-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "DOC",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "DOC-002D",
+      "category": {
+        "en": "Documentation",
+        "zh": "文档"
+      },
+      "title": {
+        "en": "Useful lemma docstrings",
+        "zh": "有价值的引理文档"
+      },
+      "rule": {
+        "en": "Add docstrings to ordinary lemmas when they carry mathematical content or are likely to be useful across files.",
+        "zh": "普通引理若具有数学内容或可能跨文件复用，应添加文档字符串。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.documentation_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT"
+      ],
+      "sources": [
+        "DOC"
+      ],
+      "applies_to": [
+        "lemma"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Useful lemma docstrings”.",
+            "zh": "某个 case 忽略了“有价值的引理文档”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "DOC-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "DOC",
+          "section": null
+        }
+      ],
+      "rule_strength": "PREFER"
+    },
+    {
+      "id": "DOC-003",
+      "category": {
+        "en": "Documentation",
+        "zh": "文档"
+      },
+      "title": {
+        "en": "Mathematical meaning",
+        "zh": "数学含义"
+      },
+      "rule": {
+        "en": "Write documentation in English and state the mathematical meaning accurately; implementation details may be abstracted away but not confused with semantics.",
+        "zh": "文档使用英语并准确说明数学含义；可以抽象掉实现细节，但不能把实现描述冒充数学语义。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.documentation_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "DOC",
+        "PR"
+      ],
+      "applies_to": [
+        "module_docstring",
+        "declaration_docstring",
+        "proof_comments"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Mathematical meaning”.",
+            "zh": "某个 case 忽略了“数学含义”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "DOC-003"
+      ],
+      "source_locators": [
+        {
+          "source_id": "DOC",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "DOC-004",
+      "category": {
+        "en": "Documentation",
+        "zh": "文档"
+      },
+      "title": {
+        "en": "Sentence and theorem formatting",
+        "zh": "句子与定理格式"
+      },
+      "rule": {
+        "en": "If a docstring is a complete sentence, end it with a period, and boldface named mathematical theorems according to the documentation convention. `linter.style.docString` checks only mechanical delimiter, emptiness, leading/trailing whitespace, comma, and trailing newline form; sentence punctuation, theorem-name boldface, and general prose remain human review.",
+        "zh": "如果 docstring 是完整句子，应以句号结尾；有专名的数学定理按文档约定使用粗体。`linter.style.docString` 只检查 delimiter、空内容、首尾空白、尾随逗号与尾随换行形式等机械格式；句末标点、定理名称 boldface 和一般文风仍由人工评审。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "linter.style.docString",
+          "human.documentation_review"
+        ],
+        "notes": {
+          "en": "Deterministic labels cover only the pinned linter's mechanical syntax checks; prose punctuation and boldface labels are human judgments.",
+          "zh": "deterministic label 只覆盖固定 linter 的机械语法检查；正文标点与 boldface label 属于人工判断。"
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "DOC",
+        "LIN-DOCSTYLE"
+      ],
+      "applies_to": [
+        "module_docstring",
+        "declaration_docstring",
+        "proof_comments"
+      ],
+      "exceptions": [
+        {
+          "en": "Passing `linter.style.docString` does not establish correct sentence punctuation, named-theorem boldface, or prose quality.",
+          "zh": "通过 `linter.style.docString` 不代表句末标点、定理名称 boldface 或文风正确。"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "/-- This theorem proves X -/",
+            "zh": "/-- This theorem proves X -/"
+          },
+          "preferred": {
+            "en": "/-- This theorem proves X. -/",
+            "zh": "/-- This theorem proves X. -/"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "DOC-004"
+      ],
+      "source_locators": [
+        {
+          "source_id": "DOC",
+          "section": null
+        },
+        {
+          "source_id": "LIN-DOCSTYLE",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "DOC-005",
+      "category": {
+        "en": "Documentation",
+        "zh": "文档"
+      },
+      "title": {
+        "en": "Cross-references",
+        "zh": "交叉引用"
+      },
+      "rule": {
+        "en": "Put current Lean 4 declaration names in backticks, use real fully qualified names such as `Set.mem_iUnion₂` when stable linking matters, and cross-reference related declarations explicitly. Backtick formatting does not prove resolution: the planned `custom.doc_link_check` resolves exact names in the pinned environment, while namespace-relative, protected, alias, ambiguous, and unresolved names require separate handling and human review.",
+        "zh": "当前 Lean 4 声明名用反引号标记；需要稳定链接时使用真实 fully-qualified name（如 `Set.mem_iUnion₂`），并显式交叉引用相关声明。普通 backtick 格式不证明名称可解析：计划中的 `custom.doc_link_check` 在固定环境中解析 exact name，而 namespace-relative、protected、alias、ambiguous 与 unresolved name 需分别处理并人工评审。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "custom.doc_link_check",
+          "human.documentation_review"
+        ],
+        "notes": {
+          "en": "The custom checker is a planned benchmark-side exact-name resolver, not a Mathlib linter and not part of the current smoke harness; backtick syntax and target resolution are separate labels.",
+          "zh": "custom checker 是计划中的 benchmark-side exact-name resolver，不是 Mathlib linter，也未进入当前 smoke harness；backtick 语法与目标解析必须分开标注。"
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "DOC",
+        "PR"
+      ],
+      "applies_to": [
+        "module_docstring",
+        "declaration_docstring",
+        "proof_comments"
+      ],
+      "exceptions": [
+        {
+          "en": "Namespace-relative or protected names and aliases may resolve differently from exact fully qualified names; ambiguous or unresolved backticks are not accepted merely because their delimiters are well formed.",
+          "zh": "namespace-relative/protected name 与 alias 的解析可能不同于 exact fully-qualified name；ambiguous 或 unresolved backtick 不会因 delimiter 正确就自动接受。"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A backticked token is treated as a valid link without resolving it in the pinned Lean environment.",
+            "zh": "某个反引号 token 未在固定 Lean 环境中解析就被当作有效链接。"
+          },
+          "preferred": {
+            "en": "Use a current exact name such as `Set.mem_iUnion₂`; label formatting and successful resolution separately.",
+            "zh": "使用 `Set.mem_iUnion₂` 这类当前 exact name；分别标注格式与解析成功。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "DOC-005"
+      ],
+      "source_locators": [
+        {
+          "source_id": "DOC",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "DOC-006",
+      "category": {
+        "en": "Documentation",
+        "zh": "文档"
+      },
+      "title": {
+        "en": "Proof sketches and comments",
+        "zh": "证明草图与注释"
+      },
+      "rule": {
+        "en": "Provide a proof sketch for complex or non-obvious proofs and mark mathematical stages with comments rather than leaving only a tactic sequence.",
+        "zh": "复杂或非显然证明应提供 proof sketch，并在证明中用注释标出数学阶段，而不是只保留 tactic 序列。"
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.documentation_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "DOC",
+        "PR",
+        "SG"
+      ],
+      "applies_to": [
+        "module_docstring",
+        "declaration_docstring",
+        "proof_comments"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Proof sketches and comments”.",
+            "zh": "某个 case 忽略了“证明草图与注释”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "DOC-006"
+      ],
+      "source_locators": [
+        {
+          "source_id": "DOC",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        },
+        {
+          "source_id": "SG",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "DOC-007",
+      "category": {
+        "en": "Documentation",
+        "zh": "文档"
+      },
+      "title": {
+        "en": "Warnings and scope",
+        "zh": "警告与适用范围"
+      },
+      "rule": {
+        "en": "Mark auxiliary, hazardous, or narrowly applicable declarations clearly in their name or documentation so they are not mistaken for preferred public API.",
+        "zh": "辅助性、危险性或适用范围很窄的声明，应在名称或文档中明确警告，避免被误当成公共首选 API。"
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.documentation_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "module_docstring",
+        "declaration_docstring",
+        "proof_comments"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Warnings and scope”.",
+            "zh": "某个 case 忽略了“警告与适用范围”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "DOC-007"
+      ],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "DOC-008",
+      "category": {
+        "en": "Documentation",
+        "zh": "文档"
+      },
+      "title": {
+        "en": "Literature references",
+        "zh": "文献引用"
+      },
+      "rule": {
+        "en": "Record the source and relevance of literature-backed formalizations, adding new bibliography entries to docs/references.bib.",
+        "zh": "形式化源自文献时，记录出处和结果的相关性；新的书目条目加入 docs/references.bib。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "custom.bibliography_reference_check",
+          "human.documentation_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "DOC",
+        "PR"
+      ],
+      "applies_to": [
+        "module_docstring",
+        "declaration_docstring",
+        "proof_comments"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Literature references”.",
+            "zh": "某个 case 忽略了“文献引用”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "DOC-008"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "DOC",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "STM-001",
+      "category": {
+        "en": "Statement design",
+        "zh": "陈述设计"
+      },
+      "title": {
+        "en": "Hypotheses left of colon",
+        "zh": "前提置于冒号左侧"
+      },
+      "rule": {
+        "en": "When a proof begins by introducing variables and hypotheses, prefer parameters to the left of the colon over outermost ∀ or →.",
+        "zh": "若证明一开始只是引入变量和前提，优先把它们写成冒号左侧参数，而不是最外层 ∀ 或 →。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.statement_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT"
+      ],
+      "sources": [
+        "SG"
+      ],
+      "applies_to": [
+        "public_declaration"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Hypotheses left of colon”.",
+            "zh": "某个 case 忽略了“前提置于冒号左侧”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "STM-001"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        }
+      ],
+      "rule_strength": "PREFER"
+    },
+    {
+      "id": "STM-002",
+      "category": {
+        "en": "Statement design",
+        "zh": "陈述设计"
+      },
+      "title": {
+        "en": "Avoid conjunction hypotheses",
+        "zh": "避免合取前提"
+      },
+      "rule": {
+        "en": "Normally split a P ∧ Q hypothesis into separate hP and hQ arguments to improve lemma usability.",
+        "zh": "通常把 P ∧ Q 前提拆成独立的 hP 与 hQ，以提高 lemma 的可应用性。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.statement_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT"
+      ],
+      "sources": [
+        "SG"
+      ],
+      "applies_to": [
+        "public_declaration"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "(h : P ∧ Q)",
+            "zh": "(h : P ∧ Q)"
+          },
+          "preferred": {
+            "en": "(hP : P) (hQ : Q)",
+            "zh": "(hP : P) (hQ : Q)"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "STM-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "STM-003",
+      "category": {
+        "en": "Statement design",
+        "zh": "陈述设计"
+      },
+      "title": {
+        "en": "Split conjunction conclusions",
+        "zh": "拆分合取结论"
+      },
+      "rule": {
+        "en": "Public lemmas should normally expose Q and R separately rather than return Q ∧ R; a private conjunction lemma may share the proof.",
+        "zh": "公共 lemma 通常不要返回 Q ∧ R；分别提供两个结果，必要时由 private 合取 lemma 共享证明。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.statement_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT"
+      ],
+      "sources": [
+        "SG",
+        "PR"
+      ],
+      "applies_to": [
+        "public_declaration"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "A public lemma returns `Q ∧ R` although callers usually need one component.",
+            "zh": "A public lemma returns `Q ∧ R` although callers usually need one component."
+          },
+          "preferred": {
+            "en": "Expose separate public lemmas for `Q` and `R`, optionally backed by a private conjunction lemma.",
+            "zh": "Expose separate public lemmas for `Q` and `R`, optionally backed by a private conjunction lemma."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "STM-003"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "STM-004",
+      "category": {
+        "en": "Statement design",
+        "zh": "陈述设计"
+      },
+      "title": {
+        "en": "Avoid disjunction hypotheses",
+        "zh": "避免析取前提"
+      },
+      "rule": {
+        "en": "Usually split an S ∨ T hypothesis into two lemmas, retaining the disjunction only when splitting would create excessive duplication.",
+        "zh": "大多数情况下把 S ∨ T 前提拆成两个 lemma；只有拆分会造成大量近乎重复声明时才保留析取。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.statement_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT"
+      ],
+      "sources": [
+        "SG"
+      ],
+      "applies_to": [
+        "public_declaration"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Avoid disjunction hypotheses”.",
+            "zh": "某个 case 忽略了“避免析取前提”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "STM-004"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        }
+      ],
+      "rule_strength": "PREFER"
+    },
+    {
+      "id": "STM-005",
+      "category": {
+        "en": "Statement design",
+        "zh": "陈述设计"
+      },
+      "title": {
+        "en": "Canonical normal forms",
+        "zh": "规范正规形"
+      },
+      "rule": {
+        "en": "State results in the canonical normal form and rewrite orientation used by existing mathlib APIs.",
+        "zh": "选择与 mathlib 现有 simp 方向和规范正规形一致的陈述，避免引入等价但不稳定的重写方向。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.statement_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT"
+      ],
+      "sources": [
+        "SG",
+        "PR"
+      ],
+      "applies_to": [
+        "public_declaration"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Canonical normal forms”.",
+            "zh": "某个 case 忽略了“规范正规形”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "STM-005"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "PRF-001",
+      "category": {
+        "en": "Proof design",
+        "zh": "证明设计"
+      },
+      "title": {
+        "en": "Reuse existing lemmas",
+        "zh": "复用已有引理"
+      },
+      "rule": {
+        "en": "Search for existing or more general results before proving a new one, and prefer composing public API over reproving a special case.",
+        "zh": "先搜索已有或更一般的结果，再写新证明；优先组合公共 API，而不是重做特殊情形。"
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.proof_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "A special case is reproved by unfolding internals.",
+            "zh": "A special case is reproved by unfolding internals."
+          },
+          "preferred": {
+            "en": "Apply an existing public, more general theorem.",
+            "zh": "Apply an existing public, more general theorem."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "PRF-001"
+      ],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "PRF-002",
+      "category": {
+        "en": "Proof design",
+        "zh": "证明设计"
+      },
+      "title": {
+        "en": "Decompose long proofs",
+        "zh": "分解长证明"
+      },
+      "rule": {
+        "en": "Decompose long proofs into named, reusable mathematical lemmas; do not hide structure merely to reduce line count.",
+        "zh": "把长证明按数学步骤拆成可命名、可复用的辅助 lemma；不要只为缩短行数而隐藏结构。"
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.proof_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "PR",
+        "SG"
+      ],
+      "applies_to": [
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "One monolithic proof hides reusable mathematical steps.",
+            "zh": "One monolithic proof hides reusable mathematical steps."
+          },
+          "preferred": {
+            "en": "Extract named supporting lemmas at mathematical boundaries.",
+            "zh": "Extract named supporting lemmas at mathematical boundaries."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "PRF-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        },
+        {
+          "source_id": "SG",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "PRF-003",
+      "category": {
+        "en": "Proof design",
+        "zh": "证明设计"
+      },
+      "title": {
+        "en": "Readable tactic choice",
+        "zh": "可读的 tactic 选择"
+      },
+      "rule": {
+        "en": "Choose tactics that express mathematical intent and remain robust under refactoring; code golf is an improvement only when readability is preserved.",
+        "zh": "选择能表达数学意图、对重构较稳健的 tactic；代码高尔夫只有在不牺牲可读性时才是改进。"
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.proof_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "A brittle low-level tactic sequence encodes incidental syntax.",
+            "zh": "A brittle low-level tactic sequence encodes incidental syntax."
+          },
+          "preferred": {
+            "en": "Use a tactic or lemma that states the mathematical intent.",
+            "zh": "Use a tactic or lemma that states the mathematical intent."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "PRF-003"
+      ],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "PREFER"
+    },
+    {
+      "id": "PRF-004",
+      "category": {
+        "en": "Proof design",
+        "zh": "证明设计"
+      },
+      "title": {
+        "en": "Stable proof structure",
+        "zh": "稳定证明结构"
+      },
+      "rule": {
+        "en": "Treat fragile unfolding, unusual transparency, repeated `erw`, or unexplained extra `rfl` steps as review signals—not automatic violations—that may indicate a missing API lemma or a noncanonical normal form.",
+        "zh": "把脆弱展开、非常规透明度、反复使用 `erw` 或无法解释的额外 `rfl` 视为评审信号，而非自动违规；它们可能表明缺少 API lemma 或使用了非规范正规形。"
+      },
+      "evidence_class": "SYNTHESIZED_GUIDANCE",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.proof_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "SG",
+        "PR"
+      ],
+      "applies_to": [
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Stable proof structure”.",
+            "zh": "某个 case 忽略了“稳定证明结构”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "PRF-004"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "CONTEXT"
+    },
+    {
+      "id": "PRF-005",
+      "category": {
+        "en": "Proof design",
+        "zh": "证明设计"
+      },
+      "title": {
+        "en": "No unused tactic steps",
+        "zh": "不保留无效 tactic 步骤"
+      },
+      "rule": {
+        "en": "Remove tactic calls that do not change the proof state, except for the pinned linter’s documented whitelist and exclusions.",
+        "zh": "删除不改变证明状态的 tactic 调用，但固定版本 linter 文档化的白名单与排除项除外。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.unusedTactic"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "LIN-UNUSED"
+      ],
+      "applies_to": [
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “No unused tactic steps”.",
+            "zh": "某个 case 忽略了“不保留无效 tactic 步骤”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "LIN-UNUSED",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "PRF-006",
+      "category": {
+        "en": "Proof design",
+        "zh": "证明设计"
+      },
+      "title": {
+        "en": "Avoid deprecated Lean-3-style tactics",
+        "zh": "避免弃用的 Lean 3 风格 tactic"
+      },
+      "rule": {
+        "en": "Avoid `refine'`, `cases'`, and `induction'`; use the corresponding Lean 4 tactics unless a documented incompatibility requires otherwise.",
+        "zh": "避免 `refine'`、`cases'` 与 `induction'`；除非存在文档化的不兼容性，应使用对应的 Lean 4 tactic。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.style.refine",
+          "linter.style.cases",
+          "linter.style.induction"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "LIN-DEP"
+      ],
+      "applies_to": [
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Avoid deprecated Lean-3-style tactics”.",
+            "zh": "某个 case 忽略了“避免弃用的 Lean 3 风格 tactic”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "LIN-DEP",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "PRF-007",
+      "category": {
+        "en": "Proof design",
+        "zh": "证明设计"
+      },
+      "title": {
+        "en": "No native_decide in mathlib proofs",
+        "zh": "mathlib 证明中禁用 native_decide"
+      },
+      "rule": {
+        "en": "Do not use `native_decide` or `decide +native` in mathlib proof code. Hard validation combines `linter.style.nativeDecide`—a first-line syntax check with documented false negatives, including some `decide (config := ...)` forms—with the pinned `lake env leanchecker --fresh Mathlib` kernel/environment gate or an adopted equivalent.",
+        "zh": "mathlib 证明代码不得使用 `native_decide` 或 `decide +native`。硬验证必须组合 `linter.style.nativeDecide`（第一层语法检查，且对某些 `decide (config := ...)` 形式存在文档化 false negative）与固定的 `lake env leanchecker --fresh Mathlib` kernel/environment gate 或项目采用的等价检查。"
+      },
+      "evidence_class": "DIRECT_MANUAL",
+      "authority": [
+        "LINTER",
+        "CHECKER"
+      ],
+      "automation": {
+        "level": "DETERMINISTIC",
+        "validator_ids": [
+          "linter.style.nativeDecide",
+          "checker.leanchecker"
+        ],
+        "notes": {
+          "en": "The syntax linter is informative rather than airtight; acceptance requires both the syntax pass and the independent checker gate.",
+          "zh": "语法 linter 只提供第一层信息而非严密完备；接受候选必须同时通过语法检查与独立 checker gate。"
+        }
+      },
+      "benchmark_tasks": [
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "LIN-DEP",
+        "CI-LEANCHECKER"
+      ],
+      "applies_to": [
+        "proof"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A candidate passes only the syntax linter even though a native-decision variant can escape that check.",
+            "zh": "候选只通过语法 linter；某个 native-decision 变体仍可能逃过该检查。"
+          },
+          "preferred": {
+            "en": "Require both the pinned syntax linter and `lake env leanchecker --fresh Mathlib` (or the adopted equivalent).",
+            "zh": "同时要求固定语法 linter 与 `lake env leanchecker --fresh Mathlib`（或项目采用的等价检查）。"
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "LIN-DEP",
+          "section": null
+        },
+        {
+          "source_id": "CI-LEANCHECKER",
+          "section": null
+        }
+      ],
+      "rule_strength": "MUST"
+    },
+    {
+      "id": "API-001",
+      "category": {
+        "en": "API design",
+        "zh": "API 设计"
+      },
+      "title": {
+        "en": "Complete usable API",
+        "zh": "完整可用的 API"
+      },
+      "rule": {
+        "en": "Provide the constructors, eliminators, extensionality lemmas, simp/rewrite lemmas, and attributes that are actually needed for downstream use, so users need not unfold implementation details.",
+        "zh": "按下游实际需要提供构造、消去、extensionality、simp/rewrite lemma 与属性，使用户无需展开实现细节。"
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.api_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "LOCATE"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "definition",
+        "public_api",
+        "instance"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "Downstream users must unfold a new definition for every basic operation.",
+            "zh": "Downstream users must unfold a new definition for every basic operation."
+          },
+          "preferred": {
+            "en": "Provide the minimal constructor/eliminator/ext/simp API required by users.",
+            "zh": "Provide the minimal constructor/eliminator/ext/simp API required by users."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "API-001"
+      ],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "API-002",
+      "category": {
+        "en": "API design",
+        "zh": "API 设计"
+      },
+      "title": {
+        "en": "Propositional API over definitional accidents",
+        "zh": "命题式 API 优于定义偶然性"
+      },
+      "rule": {
+        "en": "Prefer a stable propositional API when downstream users would otherwise have to rely on accidental definitional equality. Repeated `erw` or extra `rfl` steps are evidence to investigate, not a universal failure criterion.",
+        "zh": "当下游用户否则必须依赖偶然的定义相等时，优先提供稳定的命题式 API。反复出现 `erw` 或额外 `rfl` 只是需要调查的证据，并非普遍失败标准。"
+      },
+      "evidence_class": "SYNTHESIZED_GUIDANCE",
+      "authority": [
+        "MANUAL",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.api_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "LOCATE"
+      ],
+      "sources": [
+        "SG",
+        "PR"
+      ],
+      "applies_to": [
+        "definition",
+        "public_api",
+        "instance"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Propositional API over definitional accidents”.",
+            "zh": "某个 case 忽略了“命题式 API 优于定义偶然性”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "API-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "SG",
+          "section": null
+        },
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "CONTEXT"
+    },
+    {
+      "id": "API-003",
+      "category": {
+        "en": "API design",
+        "zh": "API 设计"
+      },
+      "title": {
+        "en": "Appropriate generality",
+        "zh": "适当的一般性"
+      },
+      "rule": {
+        "en": "State results at the natural level of generality consistent with the literature and existing abstractions, without sacrificing usability for formal maximality.",
+        "zh": "陈述应覆盖自然的一般情形并与相关文献和现有抽象一致，但不要为了形式上的最大一般性破坏可用性。"
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.api_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "LOCATE"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "definition",
+        "public_api",
+        "instance"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Appropriate generality”.",
+            "zh": "某个 case 忽略了“适当的一般性”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "API-003"
+      ],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "CONTEXT"
+    },
+    {
+      "id": "API-004",
+      "category": {
+        "en": "API design",
+        "zh": "API 设计"
+      },
+      "title": {
+        "en": "Standard bundling patterns",
+        "zh": "标准捆绑模式"
+      },
+      "rule": {
+        "en": "Reuse established bundling abstractions—such as bundled morphisms, `FunLike`, or `SetLike`—when they genuinely match the object being modeled. Do not impose these patterns universally, and avoid unnecessary dependent types or typeclass diamonds.",
+        "zh": "当现有捆绑抽象（如 bundled morphism、`FunLike` 或 `SetLike`）确实符合所建模对象时，应复用它们；不要把这些模式普遍强加于所有设计，并避免不必要的依赖类型或类型类 diamond。"
+      },
+      "evidence_class": "SYNTHESIZED_GUIDANCE",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.api_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "LOCATE"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "definition",
+        "public_api",
+        "instance"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Standard bundling patterns”.",
+            "zh": "某个 case 忽略了“标准捆绑模式”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "API-004"
+      ],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "CONTEXT"
+    },
+    {
+      "id": "API-005",
+      "category": {
+        "en": "API design",
+        "zh": "API 设计"
+      },
+      "title": {
+        "en": "Appropriate attributes",
+        "zh": "适当的属性"
+      },
+      "rule": {
+        "en": "Add or omit attributes such as `@[simp]`, `@[ext]`, and `@[simps]` according to the intended API and canonical forms; attributes are not automatically beneficial.",
+        "zh": "根据预期 API 与规范形决定是否添加 `@[simp]`、`@[ext]`、`@[simps]` 等属性；属性并非自动有益。"
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.api_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "LOCATE"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "attribute",
+        "public_api"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Appropriate attributes”.",
+            "zh": "某个 case 忽略了“适当的属性”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "CONTEXT"
+    },
+    {
+      "id": "API-006",
+      "category": {
+        "en": "API design",
+        "zh": "API 设计"
+      },
+      "title": {
+        "en": "Instance diamond safety",
+        "zh": "实例菱形安全"
+      },
+      "rule": {
+        "en": "Check new instances for non-definitional or non-propositional diamonds and for unintended inference paths.",
+        "zh": "检查新增实例是否产生非定义等价或非命题等价的菱形，以及非预期的推断路径。"
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.api_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "LOCATE"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "instance",
+        "typeclass_graph"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Instance diamond safety”.",
+            "zh": "某个 case 忽略了“实例菱形安全”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "CONTEXT"
+    },
+    {
+      "id": "API-007",
+      "category": {
+        "en": "API design",
+        "zh": "API 设计"
+      },
+      "title": {
+        "en": "Transformation parity",
+        "zh": "变换生成的一致性"
+      },
+      "rule": {
+        "en": "Where applicable, use transformation automation such as `@[to_additive]` or duality generation and preserve generated API and naming parity. Contextual exceptions include `to_additive existing`, an existing companion declaration, unsupported constants, necessary naming overrides, and generation that would create an incorrect or unstable API.",
+        "zh": "普通适用情况下，应使用 `@[to_additive]` 或对偶生成等 transformation automation，并保持生成 API 与命名一致性。上下文例外包括 `to_additive existing`、companion declaration 已存在、unsupported constants、必要 naming override，以及生成结果会产生错误或不稳定 API 的情形。"
+      },
+      "evidence_class": "SYNTHESIZED_GUIDANCE",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "human.api_review"
+        ],
+        "notes": {
+          "en": "Automation can reveal missing parity, but deciding whether a contextual exception applies remains API review.",
+          "zh": "automation 可揭示 parity 缺失，但上下文例外是否适用仍需 API 评审。"
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "REPAIR"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "attribute",
+        "generated_declaration"
+      ],
+      "exceptions": [
+        {
+          "en": "`to_additive existing`, an existing companion, unsupported constants, necessary naming overrides, or harmful/unstable generated API can justify not generating the ordinary companion.",
+          "zh": "`to_additive existing`、已有 companion、unsupported constants、必要 naming override，或有害/不稳定的生成 API，可作为不生成普通 companion 的理由。"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "An ordinary transformable declaration omits its expected companion without a contextual reason.",
+            "zh": "普通可变换声明无上下文理由地缺少预期 companion。"
+          },
+          "preferred": {
+            "en": "Generate and preserve parity by default, or record one of the explicit contextual exceptions.",
+            "zh": "默认生成并保持 parity，或记录一个明确的上下文例外。"
+          }
+        }
+      ],
+      "legacy_ids": [],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "LOC-001",
+      "category": {
+        "en": "Location and integration",
+        "zh": "位置与集成"
+      },
+      "title": {
+        "en": "Correct home file",
+        "zh": "正确归属文件"
+      },
+      "rule": {
+        "en": "Place a declaration in a mathematically appropriate file as high in the import hierarchy as its dependencies permit. Use `#find_home` as evidence, not as an infallible placement oracle.",
+        "zh": "把声明放在数学主题合适且依赖允许的尽可能高层文件中。`#find_home` 只是证据，不是绝对可靠的位置判定器。"
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "command.#find_home",
+          "human.location_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "LOCATE"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "file",
+        "module",
+        "import_graph",
+        "repository"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "A foundational declaration is placed in a high-level analysis file.",
+            "zh": "A foundational declaration is placed in a high-level analysis file."
+          },
+          "preferred": {
+            "en": "Place it in the lowest mathematically appropriate module allowed by its dependencies.",
+            "zh": "Place it in the lowest mathematically appropriate module allowed by its dependencies."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "LOC-001"
+      ],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "LOC-002A",
+      "category": {
+        "en": "Location and integration",
+        "zh": "位置与集成"
+      },
+      "title": {
+        "en": "Import minimization",
+        "zh": "导入最小化"
+      },
+      "rule": {
+        "en": "Avoid unnecessary or oversized imports. Use `#min_imports in` for a one-command/term experiment that looks upward for dependencies, noting its attribute/example limits; use incremental `linter.minImports` via `#import_bumps` from the activation point downward to track import growth across later commands. Both are assisted evidence and neither proves global architectural minimality.",
+        "zh": "避免不必要或过大的导入。使用 `#min_imports in` 对单个 command/term 向上查找依赖，并记录其 attribute/example 限制；使用通过 `#import_bumps` 启动的增量式 `linter.minImports`，从启用点向下跟踪后续 command 的 import 增长。两者都只是 assisted evidence，都不能证明全局架构最小性。"
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "LINTER",
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "ASSISTED",
+        "validator_ids": [
+          "command.#min_imports_in",
+          "linter.minImports",
+          "command.#redundant_imports",
+          "human.location_review"
+        ],
+        "notes": {
+          "en": "The tools have different directions and purposes; LOCATE/DETECT labels must separate their output from human dependency-architecture judgment.",
+          "zh": "两种工具的方向与用途不同；LOCATE/DETECT label 必须把工具输出与人工 dependency architecture 判断分开。"
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "LOCATE"
+      ],
+      "sources": [
+        "PR",
+        "MINIMPORTS",
+        "LIN-MINIMPORTS"
+      ],
+      "applies_to": [
+        "imports",
+        "file"
+      ],
+      "exceptions": [
+        {
+          "en": "`#min_imports in` may miss dependencies from attributes or `example` proof terms, while `linter.minImports` reports incremental growth rather than a global architectural optimum.",
+          "zh": "`#min_imports in` 可能遗漏 attribute 或 `example` proof term 的依赖；`linter.minImports` 报告增量增长，而不是全局架构最优。"
+        }
+      ],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A clean tool output is treated as proof that the file is globally minimal and architecturally well placed.",
+            "zh": "把干净的工具输出当作文件全局最小且架构归属正确的证明。"
+          },
+          "preferred": {
+            "en": "Interpret each tool in its documented direction, then review the dependency architecture separately.",
+            "zh": "按各工具的文档化方向解释输出，再单独评审依赖架构。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "LOC-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        },
+        {
+          "source_id": "MINIMPORTS",
+          "section": null
+        },
+        {
+          "source_id": "LIN-MINIMPORTS",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "LOC-002B",
+      "category": {
+        "en": "Location and integration",
+        "zh": "位置与集成"
+      },
+      "title": {
+        "en": "Dependency direction",
+        "zh": "依赖方向"
+      },
+      "rule": {
+        "en": "Preserve the intended dependency direction from foundational modules to higher-level modules; a locally minimal import set is not sufficient if it creates an architectural cycle or inversion.",
+        "zh": "保持从基础模块指向高层模块的依赖方向；即使局部导入集合最小，只要造成架构循环或依赖倒置，也不合格。"
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.location_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "LOCATE"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "import_graph",
+        "architecture"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "review_scenario",
+          "bad": {
+            "en": "A case ignores the operational requirement “Dependency direction”.",
+            "zh": "某个 case 忽略了“依赖方向”对应的操作要求。"
+          },
+          "preferred": {
+            "en": "Apply the rule only within its stated scope and record any exception.",
+            "zh": "只在声明的适用范围内执行该规则，并记录例外。"
+          }
+        }
+      ],
+      "legacy_ids": [
+        "LOC-002"
+      ],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    },
+    {
+      "id": "LOC-003",
+      "category": {
+        "en": "Location and integration",
+        "zh": "位置与集成"
+      },
+      "title": {
+        "en": "Duplicate and general-result search",
+        "zh": "重复与一般结果搜索"
+      },
+      "rule": {
+        "en": "Before adding a declaration, search for identical, equivalent, or more general results using tools such as `exact?`, `apply?`, `#check`, and repository search.",
+        "zh": "新增声明前，应使用 `exact?`、`apply?`、`#check` 和仓库搜索等工具查找相同、等价或更一般的结果。"
+      },
+      "evidence_class": "REVIEW_HEURISTIC",
+      "authority": [
+        "REVIEW"
+      ],
+      "automation": {
+        "level": "HUMAN",
+        "validator_ids": [
+          "human.location_review"
+        ],
+        "notes": {
+          "en": "",
+          "zh": ""
+        }
+      },
+      "benchmark_tasks": [
+        "PAIR",
+        "DETECT",
+        "LOCATE"
+      ],
+      "sources": [
+        "PR"
+      ],
+      "applies_to": [
+        "file",
+        "module",
+        "import_graph",
+        "repository"
+      ],
+      "exceptions": [],
+      "examples": [
+        {
+          "kind": "representative",
+          "bad": {
+            "en": "A new theorem duplicates an existing more general result.",
+            "zh": "A new theorem duplicates an existing more general result."
+          },
+          "preferred": {
+            "en": "Reuse or specialize the existing result.",
+            "zh": "Reuse or specialize the existing result."
+          }
+        }
+      ],
+      "legacy_ids": [
+        "LOC-003"
+      ],
+      "source_locators": [
+        {
+          "source_id": "PR",
+          "section": null
+        }
+      ],
+      "rule_strength": "SHOULD"
+    }
+  ],
+  "hard_validation_policy": {
+    "forbid_candidate_tokens": [
+      "sorry",
+      "admit"
+    ],
+    "forbid_candidate_declarations": [
+      "axiom",
+      "constant"
+    ],
+    "require_compile_exit_code_zero": true,
+    "require_no_unexpected_warnings": true,
+    "require_axiom_delta_empty_relative_to_case_baseline": true,
+    "require_native_decision_syntax_and_checker_gate": true,
+    "note_en": "Static scans are defense in depth, not a substitute for compilation, warning checks, declaration-axiom comparison, and the pinned leanchecker gate required for native-decision trust enforcement.",
+    "note_zh": "静态扫描只是纵深防御，不能替代编译、警告检查、声明公理差分以及 native-decision 信任检查所需的固定 leanchecker gate。"
+  }
+}

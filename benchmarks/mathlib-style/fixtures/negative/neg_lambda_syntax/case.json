@@ -1,0 +1,17 @@
+{
+  "schema_version": "0.1.0",
+  "id": "NEG-LAMBDA-SYNTAX-001",
+  "kind": "negative",
+  "task": "DETECT",
+  "status": "SYNTHETIC_SMOKE",
+  "source_class": "SYNTHETIC",
+  "evaluation_environment_ref": "MATHLIB-4.30.0",
+  "policy_snapshot_ref": "MATHLIB-POLICY-2026-08-13",
+  "compile_files": ["Case.lean"],
+  "evaluation_scope": "expression: doubleEntries body",
+  "target_rule_ids": ["FMT-007"],
+  "expected_validator_ids": ["linter.style.lambdaSyntax"],
+  "warning_policy": "none",
+  "expected_warning_files": [],
+  "purpose": "A single-target negative example for the forbidden lambda glyph."
+}

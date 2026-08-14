@@ -1,0 +1,19 @@
+{
+  "schema_version": "0.3.0",
+  "id": "msb_d002",
+  "task": "DETECT",
+  "stratum": "statement",
+  "evaluation_mode": "REPOSITORY_AGENT",
+  "evaluation_environment_ref": "MATHLIB-4.30.0",
+  "requested_output": [
+    "findings",
+    "rationale",
+    "confidence",
+    "missing_context"
+  ],
+  "prompt": {
+    "context": "Review the declaration name against the existing valuation vocabulary in the pinned repository.",
+    "code": "class RankLEOne (v : Valuation R Γ₀) where\n  hom' : ValueGroup₀ v →*₀ ℝ≥0\n  strictMono' : StrictMono hom'",
+    "target_scope": "declaration"
+  }
+}

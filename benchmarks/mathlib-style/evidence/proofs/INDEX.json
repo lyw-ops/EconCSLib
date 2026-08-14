@@ -1,0 +1,18 @@
+{
+  "schema_version": "0.1.0",
+  "category": "proofs",
+  "source": "../../manifests/RULES.json",
+  "rule_families": [
+    "PRF-*"
+  ],
+  "rule_count": 7,
+  "rule_ids": [
+    "PRF-001",
+    "PRF-002",
+    "PRF-003",
+    "PRF-004",
+    "PRF-005",
+    "PRF-006",
+    "PRF-007"
+  ]
+}

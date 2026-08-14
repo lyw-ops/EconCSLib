@@ -1,0 +1,44 @@
+{
+  "schema_version": "0.3.0",
+  "id": "msb_l003",
+  "task": "LOCATE",
+  "stratum": "integration",
+  "evaluation_mode": "REPOSITORY_AGENT",
+  "evaluation_environment_ref": "MATHLIB-4.30.0",
+  "requested_output": [
+    "location_ids",
+    "rationale",
+    "confidence",
+    "missing_context"
+  ],
+  "prompt": {
+    "context": "Choose the home for a MessageData expression-iteration wrapper and its ForIn instance while preserving namespace ownership and import direction.",
+    "declaration": "protected structure Lean.MessageData.Exprs where\n  msg : MessageData\n\ninstance : ForIn m MessageData.Exprs (PPContext × Expr) := ...",
+    "candidate_locations": [
+      {
+        "location_id": "loc_a",
+        "file_path": "Mathlib/Lean/MessageData/ForExprs.lean",
+        "imports": [
+          "Lean.Meta.Basic"
+        ],
+        "dependency_summary": "A focused Lean integration module owned by Lean.MessageData."
+      },
+      {
+        "location_id": "loc_b",
+        "file_path": "Mathlib/Tactic/ForExprs.lean",
+        "imports": [
+          "Mathlib.Tactic"
+        ],
+        "dependency_summary": "A tactic-layer module with a substantially larger dependency surface."
+      },
+      {
+        "location_id": "loc_c",
+        "file_path": "Mathlib/Lean/Core.lean",
+        "imports": [
+          "Lean"
+        ],
+        "dependency_summary": "A broad core facade unrelated to the focused traversal API."
+      }
+    ]
+  }
+}

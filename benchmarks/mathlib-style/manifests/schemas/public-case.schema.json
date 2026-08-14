@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://econcs.example/mathlib-style/public-case.schema.json",
+  "oneOf": [
+    {
+      "$ref": "pair-case.schema.json"
+    },
+    {
+      "$ref": "detect-case.schema.json"
+    },
+    {
+      "$ref": "repair-case.schema.json"
+    },
+    {
+      "$ref": "locate-case.schema.json"
+    }
+  ]
+}

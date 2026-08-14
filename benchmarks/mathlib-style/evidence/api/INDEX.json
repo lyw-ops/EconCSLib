@@ -1,0 +1,18 @@
+{
+  "schema_version": "0.1.0",
+  "category": "api",
+  "source": "../../manifests/RULES.json",
+  "rule_families": [
+    "API-*"
+  ],
+  "rule_count": 7,
+  "rule_ids": [
+    "API-001",
+    "API-002",
+    "API-003",
+    "API-004",
+    "API-005",
+    "API-006",
+    "API-007"
+  ]
+}

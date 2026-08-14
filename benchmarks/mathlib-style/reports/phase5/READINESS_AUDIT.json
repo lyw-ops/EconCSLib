@@ -1,0 +1,157 @@
+{
+  "audit_version": "1.0.0",
+  "phase": 5,
+  "release_candidate": "MATHLIB-STYLE-PILOT-0.1.0-RC1",
+  "audited_at": "2026-08-14T04:12:23Z",
+  "status": "blocked-by-phase4-readiness",
+  "gate_passed": false,
+  "phase4_status_observed": [
+    "linux-validation-pending",
+    "human-review-pending"
+  ],
+  "safety_state": {
+    "evaluation_agents_started": false,
+    "primary_predictions_created": false,
+    "private_gold_unsealed": false,
+    "scoring_started": false,
+    "phase5_scoring_protocol_created": false,
+    "phase5_freeze_manifests_created": false,
+    "release_candidate_packaged": false
+  },
+  "public_inventory": {
+    "primary_cases": 16,
+    "task_counts": {
+      "PAIR": 6,
+      "DETECT": 4,
+      "REPAIR": 3,
+      "LOCATE": 3
+    },
+    "stratum_counts": {
+      "surface": 4,
+      "documentation_statement": 4,
+      "proof": 4,
+      "api_integration": 4
+    },
+    "pair_mirrors_excluded_from_primary": 6,
+    "synthetic_primary_cases": 0,
+    "public_manifest_files": 67,
+    "public_manifest_sha256": "bccd572e26baf8ab438d6bde263b03a0e260eda0be4e3347946a60fcbf792b43"
+  },
+  "private_custody_safe_summary": {
+    "schema_valid_documents": 92,
+    "provenance_records": 16,
+    "blind_annotation_records": 32,
+    "adjudication_records": 2,
+    "gold_records": 22,
+    "validation_records": 22,
+    "custody_manifest_files": 482,
+    "git_ignored": true,
+    "private_hashes_disclosed": false
+  },
+  "checks": [
+    {
+      "id": "phase4_completion_report_exists",
+      "result": "PASS",
+      "evidence": "The Phase 4 completion-status report and public pilot report both exist."
+    },
+    {
+      "id": "phase4_status_is_not_partial_pending_or_blocked",
+      "result": "FAIL",
+      "evidence": "Both Phase 4 reports explicitly retain linux-validation-pending and human-review-pending."
+    },
+    {
+      "id": "primary_case_matrix",
+      "result": "PASS",
+      "evidence": "Exactly 16 primary cases: PAIR 6, DETECT 4, REPAIR 3, LOCATE 3."
+    },
+    {
+      "id": "balanced_strata",
+      "result": "PASS",
+      "evidence": "The four declared strata contain four distinct primary cases each and cover the primary set exactly."
+    },
+    {
+      "id": "no_synthetic_primary_case",
+      "result": "PASS",
+      "evidence": "The provenance audit reports 14 NATURAL_PR and 2 OFFICIAL_GUIDE_EXAMPLE primary cases."
+    },
+    {
+      "id": "schema_and_custody_completeness",
+      "result": "PASS",
+      "evidence": "All 92 schema-governed private documents validate; the 482-file private custody manifest verifies without disclosing private hashes."
+    },
+    {
+      "id": "source_provenance",
+      "result": "PASS",
+      "evidence": "The offline Phase 4 provenance audit passes for all 16 primary cases."
+    },
+    {
+      "id": "independent_annotations_and_adjudication",
+      "result": "PASS",
+      "evidence": "Two distinct 76-file snapshots contain 16 outputs each with no cross-annotation visibility; the retained adjudication inventory is complete under the Phase 4 audit."
+    },
+    {
+      "id": "public_private_leakage_and_layout",
+      "result": "PASS",
+      "evidence": "The Phase 4 public harness passes recursive leakage, strict three-file layout, public hash, and mirror checks."
+    },
+    {
+      "id": "local_hard_gates",
+      "result": "PASS",
+      "evidence": "Current Darwin public rerun passes 22 repeated case compilations and 67 public hashes; the retained full-private Darwin record is PASSED and is linked to the same public manifest."
+    },
+    {
+      "id": "linux_hard_gates",
+      "result": "FAIL",
+      "evidence": "No actual Linux environment record or Linux log-hash artifact exists; only one Darwin arm64 environment record is present."
+    },
+    {
+      "id": "independent_human_review",
+      "result": "FAIL",
+      "evidence": "No Phase 4 human-review record exists, and the Phase 4 report explicitly marks human-review-pending."
+    },
+    {
+      "id": "pair_mirrors_excluded_from_primary",
+      "result": "PASS",
+      "evidence": "Six PAIR mirrors are frozen separately and are not members of the 16-case primary denominator."
+    },
+    {
+      "id": "private_custody_is_git_ignored",
+      "result": "PASS",
+      "evidence": "git check-ignore resolves the private custody sentinel to the committed held-out ignore policy."
+    },
+    {
+      "id": "no_generated_lean_artifacts_in_benchmark_tree",
+      "result": "PASS",
+      "evidence": "No .olean or .ilean file is present below the benchmark tree."
+    },
+    {
+      "id": "phase3_fixed_assets_preserved",
+      "result": "PASS",
+      "evidence": "The distillation and Phase 4 preservation checks pass: 75 rule IDs, aliases, 11 frozen schemas, and captured Phase 2/3 assets remain intact."
+    },
+    {
+      "id": "default_python_phase4_runtime",
+      "result": "FAIL",
+      "evidence": "The exact unqualified preflight commands fail because the default Python environment lacks jsonschema; the same commands pass with the retained frozen Phase 4 dependency overlay."
+    }
+  ],
+  "blocking_items": [
+    {
+      "id": "phase4_pending_status",
+      "required_action": "Complete the Phase 4 release gates and update its status only after evidence exists for the unchanged frozen artifacts."
+    },
+    {
+      "id": "linux_reproduction_missing",
+      "required_action": "Run the frozen Phase 4 gates on Linux against the same public manifest and retain OS, architecture, command, exit code, and log hashes."
+    },
+    {
+      "id": "human_review_missing",
+      "required_action": "Obtain the independent qualified human review specified by the Phase 4 runbook and retain its ignored private record."
+    },
+    {
+      "id": "default_python_dependency_missing",
+      "required_action": "Install the frozen Phase 4 requirements for the interpreter used by the prescribed unqualified preflight commands, or standardize the documented dependency overlay."
+    }
+  ],
+  "decision": "Phase 5 blind evaluation must not start. Do not create the scoring protocol or Phase 5 freeze manifests, do not run evaluation agents, and do not unseal or rewrite private gold until a new readiness audit passes."
+}

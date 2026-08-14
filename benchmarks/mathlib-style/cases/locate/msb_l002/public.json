@@ -1,0 +1,44 @@
+{
+  "schema_version": "0.3.0",
+  "id": "msb_l002",
+  "task": "LOCATE",
+  "stratum": "api",
+  "evaluation_mode": "REPOSITORY_AGENT",
+  "evaluation_environment_ref": "MATHLIB-4.30.0",
+  "requested_output": [
+    "location_ids",
+    "rationale",
+    "confidence",
+    "missing_context"
+  ],
+  "prompt": {
+    "context": "A helper only supports implementation of one public tactic module and is not intended as stable API. Choose its declaration scope.",
+    "declaration": "partial def goFmt (ppCtx : PPContext) (infos : PersistentArray FVarIdInfo) ... := ...",
+    "candidate_locations": [
+      {
+        "location_id": "loc_a",
+        "file_path": "public namespace scope in Mathlib/Tactic/DefEqAbuse.lean",
+        "imports": [
+          "Lean.Meta.Tactic"
+        ],
+        "dependency_summary": "Exports the helper as public tactic API."
+      },
+      {
+        "location_id": "loc_b",
+        "file_path": "private implementation scope in Mathlib/Tactic/DefEqAbuse.lean",
+        "imports": [
+          "Lean.Meta.Tactic"
+        ],
+        "dependency_summary": "Keeps the helper local to the public module implementation."
+      },
+      {
+        "location_id": "loc_c",
+        "file_path": "Mathlib/Tactic.lean aggregate",
+        "imports": [
+          "Mathlib.Tactic.DefEqAbuse"
+        ],
+        "dependency_summary": "Places the helper in a high-level import aggregate."
+      }
+    ]
+  }
+}

@@ -64,6 +64,10 @@ Examples and open-problem interfaces must not be imported by `EconCSLib.lean`.
 - `scripts/build_api_docs.py`: local API-documentation wrapper.
 - `docbuild/`: nested Lake project for API-reference generation.
 
+For Mathlib Style Manual, benchmark, evidence, case, or validation-script
+work, first read [`docs/research/mathlib-style/README.md`](docs/research/mathlib-style/README.md)
+and [`benchmarks/mathlib-style/AGENTS.md`](benchmarks/mathlib-style/AGENTS.md).
+
 Do not commit textbook PDFs, scans, OCR-derived content, or generated sites.
 
 ## Lean Architecture

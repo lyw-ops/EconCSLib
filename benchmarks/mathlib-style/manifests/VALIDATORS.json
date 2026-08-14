@@ -1,0 +1,869 @@
+{
+  "registry_version": "0.3.1",
+  "mathlib_environment_ref": "MATHLIB-4.30.0",
+  "standard_set_exact_members": [
+    "linter.flexible",
+    "linter.hashCommand",
+    "linter.oldObtain",
+    "linter.privateModule",
+    "linter.style.cases",
+    "linter.style.induction",
+    "linter.style.refine",
+    "linter.style.cdot",
+    "linter.style.docString",
+    "linter.style.dollarSyntax",
+    "linter.style.emptyLine",
+    "linter.style.header",
+    "linter.style.lambdaSyntax",
+    "linter.style.longLine",
+    "linter.style.longFile",
+    "linter.style.multiGoal",
+    "linter.style.nativeDecide",
+    "linter.style.openClassical",
+    "linter.style.maxHeartbeats",
+    "linter.style.missingEnd",
+    "linter.style.setOption",
+    "linter.style.show",
+    "linter.style.whitespace",
+    "linter.unusedDecidableInType",
+    "linter.unusedFintypeInType"
+  ],
+  "validators": [
+    {
+      "id": "compiler.lean",
+      "kind": "compiler",
+      "canonical_identifier": "lake env lean",
+      "invocation_template": "lake env lean {file}",
+      "source_ids": [
+        "LIN-INIT"
+      ],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": true,
+      "notes": {
+        "en": "Compilation success is necessary but does not rule out placeholders or added axioms.",
+        "zh": "编译成功是必要条件，但不能排除占位证明或新增公理。"
+      }
+    },
+    {
+      "id": "linter.mathlibStandardSet",
+      "kind": "linter_set",
+      "canonical_identifier": "linter.mathlibStandardSet",
+      "invocation_template": "set_option linter.mathlibStandardSet true",
+      "source_ids": [
+        "LIN-INIT"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "Exactly the default mathlib syntax-linter set at v4.30.0.",
+        "zh": "精确对应 v4.30.0 的默认 mathlib 语法 linter 集。"
+      }
+    },
+    {
+      "id": "linter.flexible",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.flexible",
+      "invocation_template": "set_option linter.flexible true",
+      "source_ids": [
+        "LIN-INIT"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "linter.hashCommand",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.hashCommand",
+      "invocation_template": "set_option linter.hashCommand true",
+      "source_ids": [
+        "LIN-INIT"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "linter.oldObtain",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.oldObtain",
+      "invocation_template": "set_option linter.oldObtain true",
+      "source_ids": [
+        "LIN-INIT"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "linter.privateModule",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.privateModule",
+      "invocation_template": "set_option linter.privateModule true",
+      "source_ids": [
+        "LIN-INIT"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "linter.style.cases",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.style.cases",
+      "invocation_template": "set_option linter.style.cases true",
+      "source_ids": [
+        "LIN-DEP"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "linter.style.induction",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.style.induction",
+      "invocation_template": "set_option linter.style.induction true",
+      "source_ids": [
+        "LIN-DEP"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "linter.style.refine",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.style.refine",
+      "invocation_template": "set_option linter.style.refine true",
+      "source_ids": [
+        "LIN-DEP"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "linter.style.cdot",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.style.cdot",
+      "invocation_template": "set_option linter.style.cdot true",
+      "source_ids": [
+        "LIN-STYLE"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "linter.style.docString",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.style.docString",
+      "invocation_template": "set_option linter.style.docString true",
+      "source_ids": [
+        "LIN-DOCSTYLE"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "Checks docstring mechanics only: empty content, opening delimiter whitespace, trailing comma, and closing whitespace/newline form. It does not decide sentence punctuation, boldface theorem names, link resolution, or prose quality.",
+        "zh": "只检查 docstring 机械格式：空内容、起始 delimiter 空白、尾随逗号和结束空白/换行形式；不判断句末标点、定理名称 boldface、链接解析或文风。"
+      }
+    },
+    {
+      "id": "linter.style.dollarSyntax",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.style.dollarSyntax",
+      "invocation_template": "set_option linter.style.dollarSyntax true",
+      "source_ids": [
+        "LIN-STYLE"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "linter.style.emptyLine",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.style.emptyLine",
+      "invocation_template": "set_option linter.style.emptyLine true",
+      "source_ids": [
+        "LIN-EMPTY"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "Deterministic only in its pinned scope. It excludes doc/module docs, mutual commands, string syntax, `where` fields, incomplete commands, and files with `Tactic`, `Util`, or `Meta` path segments.",
+        "zh": "只在固定范围内 deterministic；排除 doc/module doc、mutual command、string syntax、`where` fields、incomplete commands，以及路径含 `Tactic`、`Util` 或 `Meta` 的文件。"
+      }
+    },
+    {
+      "id": "linter.style.header",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.style.header",
+      "invocation_template": "set_option linter.style.header true",
+      "source_ids": [
+        "LIN-HEADER"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "The pinned implementation hard-rejects `Mathlib.Tactic` and selected deprecated tactic imports. A `Lake.*` import emits a necessity/performance warning that may be retained after benchmarking and a justified linter allowance; it is not the same unconditional prohibition.",
+        "zh": "固定实现硬性拒绝 `Mathlib.Tactic` 与指定弃用 tactic import。`Lake.*` 只发出必要性/性能警告，可在 benchmark 和有理由的 linter allowance 后保留；它不是同一种无条件禁止。"
+      }
+    },
+    {
+      "id": "linter.style.lambdaSyntax",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.style.lambdaSyntax",
+      "invocation_template": "set_option linter.style.lambdaSyntax true",
+      "source_ids": [
+        "LIN-STYLE"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "linter.style.longLine",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.style.longLine",
+      "invocation_template": "set_option linter.style.longLine true",
+      "source_ids": [
+        "LIN-STYLE"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "linter.style.longFile",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.style.longFile",
+      "invocation_template": "set_option linter.style.longFile true",
+      "source_ids": [
+        "LIN-STYLE"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "linter.style.multiGoal",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.style.multiGoal",
+      "invocation_template": "set_option linter.style.multiGoal true",
+      "source_ids": [
+        "LIN-MULTI"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "linter.style.nativeDecide",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.style.nativeDecide",
+      "invocation_template": "set_option linter.style.nativeDecide true",
+      "source_ids": [
+        "LIN-DEP"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "First-line syntax check only. The implementation documents false negatives for some `decide (config := {<options>})` forms and explicitly requires an independent checker gate for airtight trust enforcement.",
+        "zh": "只作为第一层语法检查。实现文档明确指出某些 `decide (config := {<options>})` 形式可能 false negative，并要求独立 checker gate 才能严密执行信任边界。"
+      }
+    },
+    {
+      "id": "linter.style.openClassical",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.style.openClassical",
+      "invocation_template": "set_option linter.style.openClassical true",
+      "source_ids": [
+        "LIN-STYLE"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "linter.style.maxHeartbeats",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.style.maxHeartbeats",
+      "invocation_template": "set_option linter.style.maxHeartbeats true",
+      "source_ids": [
+        "LIN-DEP"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "linter.style.missingEnd",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.style.missingEnd",
+      "invocation_template": "set_option linter.style.missingEnd true",
+      "source_ids": [
+        "LIN-STYLE"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "linter.style.setOption",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.style.setOption",
+      "invocation_template": "set_option linter.style.setOption true",
+      "source_ids": [
+        "LIN-STYLE"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "Checks options rooted at `debug`, `pp`, `profiler`, or `trace`; unscoped names containing `maxHeartbeats`; unscoped `linter.flexible`; deprecated `linter.style.commandStart`; and `backward.inferInstanceAs.wrap.reuseSubInstances` technical debt. It does not reject every production `set_option`.",
+        "zh": "检查 root 为 `debug`、`pp`、`profiler`、`trace` 的 option、未局部化且名称含 `maxHeartbeats` 的 option、未局部化 `linter.flexible`、弃用的 `linter.style.commandStart`，以及 `backward.inferInstanceAs.wrap.reuseSubInstances` 技术债；不拒绝所有 production `set_option`。"
+      }
+    },
+    {
+      "id": "linter.style.show",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.style.show",
+      "invocation_template": "set_option linter.style.show true",
+      "source_ids": [
+        "LIN-STYLE"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "linter.style.whitespace",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.style.whitespace",
+      "invocation_template": "set_option linter.style.whitespace true",
+      "source_ids": [
+        "LIN-WS"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "linter.unusedDecidableInType",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.unusedDecidableInType",
+      "invocation_template": "set_option linter.unusedDecidableInType true",
+      "source_ids": [
+        "LIN-INIT"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "linter.unusedFintypeInType",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.unusedFintypeInType",
+      "invocation_template": "set_option linter.unusedFintypeInType true",
+      "source_ids": [
+        "LIN-INIT"
+      ],
+      "in_mathlib_standard_set_v4_30": true,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "linter.style.nameCheck",
+      "kind": "syntax_linter",
+      "canonical_identifier": "linter.style.nameCheck",
+      "invocation_template": "set_option linter.style.nameCheck true",
+      "source_ids": [
+        "LIN-STYLE"
+      ],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": true,
+      "notes": {
+        "en": "Available in v4.30.0 but not part of linter.mathlibStandardSet.",
+        "zh": "v4.30.0 可用，但不属于 linter.mathlibStandardSet。"
+      }
+    },
+    {
+      "id": "environment_linter.defsWithUnderscore",
+      "kind": "environment_linter",
+      "canonical_identifier": "defsWithUnderscore",
+      "invocation_template": "#lint only [defsWithUnderscore]",
+      "source_ids": [
+        "LIN-STYLE"
+      ],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "linter.unusedTactic",
+      "kind": "info_tree_linter",
+      "canonical_identifier": "linter.unusedTactic",
+      "invocation_template": "set_option linter.unusedTactic true",
+      "source_ids": [
+        "LIN-UNUSED"
+      ],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": true,
+      "notes": {
+        "en": "Enabled by default in its implementation; run explicitly in the harness for reproducibility.",
+        "zh": "实现中默认启用；harness 中仍显式设置以保证可复现。"
+      }
+    },
+    {
+      "id": "linter.minImports",
+      "kind": "incremental_import_linter",
+      "canonical_identifier": "linter.minImports",
+      "invocation_template": "#import_bumps",
+      "source_ids": [
+        "LIN-MINIMPORTS"
+      ],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": true,
+      "notes": {
+        "en": "Incremental analysis activated by `#import_bumps`: it counts from the activation point downward and reports later import growth, which is useful for file splitting but does not prove global architectural minimality.",
+        "zh": "由 `#import_bumps` 启动的增量分析：从启用点向下统计后续 import 增长，适合辅助拆分文件，但不能证明全局架构最小性。"
+      }
+    },
+    {
+      "id": "command.#min_imports_in",
+      "kind": "command",
+      "canonical_identifier": "#min_imports in",
+      "invocation_template": "#min_imports in\n{command}",
+      "source_ids": [
+        "MINIMPORTS"
+      ],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": true,
+      "notes": {
+        "en": "One-command/term experiment that looks upward for sufficient imports. It has documented limitations, especially around attributes and `example` proof terms, and does not prove global architectural minimality.",
+        "zh": "对单个 command/term 向上查找充分 import 的实验命令。它对 attribute 与 `example` proof term 等有文档化限制，也不能证明全局架构最小性。"
+      }
+    },
+    {
+      "id": "command.#redundant_imports",
+      "kind": "command",
+      "canonical_identifier": "#redundant_imports",
+      "invocation_template": "#redundant_imports",
+      "source_ids": [
+        "LIN-INIT"
+      ],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "command.#find_home",
+      "kind": "command",
+      "canonical_identifier": "#find_home",
+      "invocation_template": "#find_home {declaration}",
+      "source_ids": [
+        "LIN-INIT"
+      ],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "command.#print_axioms",
+      "kind": "command",
+      "canonical_identifier": "#print axioms",
+      "invocation_template": "#print axioms {declaration}",
+      "source_ids": [
+        "LIN-INIT"
+      ],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "checker.leanchecker",
+      "kind": "checker",
+      "canonical_identifier": "leanchecker",
+      "invocation_template": "lake env leanchecker --fresh Mathlib",
+      "source_ids": [
+        "CI-LEANCHECKER"
+      ],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": true,
+      "notes": {
+        "en": "Actual pinned Mathlib daily-CI command. It independently checks compiled environments; a project may adopt an equivalent module-root gate, but must record the exact command rather than invent a source path for `lean4checker`.",
+        "zh": "固定 Mathlib daily CI 的实际命令，用于独立检查已编译环境。项目可采用等价 module-root gate，但必须记录真实命令，不能为 `lean4checker` 臆造源码路径。"
+      }
+    },
+    {
+      "id": "guard.no_sorry",
+      "kind": "custom_guard",
+      "canonical_identifier": "no_sorry",
+      "invocation_template": "python scripts/static_lean_guard.py --forbid sorry {file}",
+      "source_ids": [],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": true,
+      "notes": {
+        "en": "A source scan is only a first layer; compiler warnings and axiom checks are also required.",
+        "zh": "源码扫描只是第一层；还必须检查编译器警告与公理。"
+      }
+    },
+    {
+      "id": "guard.no_admit",
+      "kind": "custom_guard",
+      "canonical_identifier": "no_admit",
+      "invocation_template": "python scripts/static_lean_guard.py --forbid admit {file}",
+      "source_ids": [],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "guard.no_axiom_declaration",
+      "kind": "custom_guard",
+      "canonical_identifier": "no_axiom_declaration",
+      "invocation_template": "python scripts/static_lean_guard.py --forbid-declarations axiom,constant {file}",
+      "source_ids": [],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": true,
+      "notes": {
+        "en": "Case scaffolding may declare trusted context only in a separate frozen prelude, never in candidate code.",
+        "zh": "可信上下文只能位于单独冻结的 prelude，候选代码不得声明。"
+      }
+    },
+    {
+      "id": "guard.axiom_delta",
+      "kind": "custom_guard",
+      "canonical_identifier": "axiom_delta",
+      "invocation_template": "python scripts/check_axiom_delta.py {case_id}",
+      "source_ids": [],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": true,
+      "notes": {
+        "en": "Compare target declaration axioms with the case baseline/allow-list; do not require an empty axiom set globally.",
+        "zh": "比较目标声明与 case 基线/白名单的公理差异；不要求全局公理集为空。"
+      }
+    },
+    {
+      "id": "guard.unexpected_warnings",
+      "kind": "custom_guard",
+      "canonical_identifier": "unexpected_warnings",
+      "invocation_template": "python scripts/check_warnings.py {log}",
+      "source_ids": [],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "guard.statement_preservation",
+      "kind": "custom_guard",
+      "canonical_identifier": "statement_preservation",
+      "invocation_template": "python scripts/check_statement_preservation.py {case_id}",
+      "source_ids": [],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "guard.source_hash",
+      "kind": "custom_guard",
+      "canonical_identifier": "sha256",
+      "invocation_template": "sha256sum {file}",
+      "source_ids": [],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "human.file_topic_fit",
+      "kind": "human_review",
+      "canonical_identifier": "file_topic_fit",
+      "invocation_template": null,
+      "source_ids": [
+        "PR"
+      ],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": false,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "human.authorship_attribution",
+      "kind": "human_review",
+      "canonical_identifier": "authorship_attribution",
+      "invocation_template": null,
+      "source_ids": [
+        "SG"
+      ],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": false,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "human.layout_review",
+      "kind": "human_review",
+      "canonical_identifier": "layout_review",
+      "invocation_template": null,
+      "source_ids": [
+        "SG"
+      ],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": false,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "human.naming_review",
+      "kind": "human_review",
+      "canonical_identifier": "naming_review",
+      "invocation_template": null,
+      "source_ids": [
+        "NC"
+      ],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": false,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "human.documentation_review",
+      "kind": "human_review",
+      "canonical_identifier": "documentation_review",
+      "invocation_template": null,
+      "source_ids": [
+        "DOC"
+      ],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": false,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "human.statement_review",
+      "kind": "human_review",
+      "canonical_identifier": "statement_review",
+      "invocation_template": null,
+      "source_ids": [
+        "SG",
+        "PR"
+      ],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": false,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "human.proof_review",
+      "kind": "human_review",
+      "canonical_identifier": "proof_review",
+      "invocation_template": null,
+      "source_ids": [
+        "PR"
+      ],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": false,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "human.api_review",
+      "kind": "human_review",
+      "canonical_identifier": "api_review",
+      "invocation_template": null,
+      "source_ids": [
+        "PR"
+      ],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": false,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "human.location_review",
+      "kind": "human_review",
+      "canonical_identifier": "location_review",
+      "invocation_template": null,
+      "source_ids": [
+        "PR"
+      ],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": false,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "custom.file_name_upper_camel",
+      "kind": "static_check",
+      "canonical_identifier": "file_name_upper_camel",
+      "invocation_template": "python scripts/check_file_name.py {file}",
+      "source_ids": [],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "custom.module_import_order",
+      "kind": "static_check",
+      "canonical_identifier": "module_import_order",
+      "invocation_template": "python scripts/check_module_import_order.py {file}",
+      "source_ids": [],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    },
+    {
+      "id": "linter.unicodeLinter",
+      "kind": "text_linter",
+      "canonical_identifier": "linter.unicodeLinter",
+      "invocation_template": "lake exe lint-style {module}",
+      "source_ids": [
+        "LIN-TEXT-BASED",
+        "LIN-UNICODE"
+      ],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": true,
+      "notes": {
+        "en": "The actual pinned text-based Unicode validator. `TextBased.lean` defines `linter.unicodeLinter` and variant checks; `TextBased/UnicodeLinter.lean` defines the snapshot-specific allow-list and replacements. It decides character/variant legality, not mathematical readability.",
+        "zh": "固定版本中真实的 text-based Unicode validator。`TextBased.lean` 定义 `linter.unicodeLinter` 与 variant 检查，`TextBased/UnicodeLinter.lean` 定义依赖快照的 allow-list 与替换；它判定字符/variant 合法性，不判断数学可读性。"
+      }
+    },
+    {
+      "id": "custom.doc_link_check",
+      "kind": "planned_static_check",
+      "canonical_identifier": "doc_link_check",
+      "invocation_template": null,
+      "source_ids": [],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": false,
+      "implemented_in_smoke_harness": false,
+      "notes": {
+        "en": "Planned benchmark-side resolver, not a Mathlib linter. Its initial contract is exact fully qualified Lean 4 names in the pinned environment; namespace-relative names, protected names, aliases, ambiguity, and unresolved backticks must be reported separately. Well-formed backticks do not imply a valid link.",
+        "zh": "计划中的 benchmark-side resolver，不是 Mathlib linter。初始契约只覆盖固定环境中的 exact fully-qualified Lean 4 name；namespace-relative name、protected name、alias、歧义与 unresolved backtick 必须分别报告。backtick 格式正确不代表链接有效。"
+      }
+    },
+    {
+      "id": "custom.bibliography_reference_check",
+      "kind": "static_check",
+      "canonical_identifier": "bibliography_reference_check",
+      "invocation_template": "python scripts/check_bibliography_refs.py {file}",
+      "source_ids": [],
+      "in_mathlib_standard_set_v4_30": false,
+      "deterministic": true,
+      "notes": {
+        "en": "",
+        "zh": ""
+      }
+    }
+  ]
+}

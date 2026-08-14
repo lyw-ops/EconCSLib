@@ -1,0 +1,33 @@
+{
+  "schema_version": "0.3.0",
+  "id": "msb_r001",
+  "task": "REPAIR",
+  "stratum": "surface",
+  "evaluation_mode": "CLOSED_CONTEXT",
+  "evaluation_environment_ref": "MATHLIB-4.30.0",
+  "requested_output": ["repaired_code", "findings", "rationale", "confidence"],
+  "prompt": {
+    "context": "Repair the section commands so the enclosing namespace is closed before end-of-file, without changing the declaration or adding imports. Only the displayed section commands are editable.",
+    "code": "@[expose] public section\n\n@[expose] public section\n\ndef sectionValue : ℕ := 1\n\nend\nend",
+    "edit_contract": {
+      "editable_regions": [
+        {
+          "start": {"line": 1, "column": 1},
+          "end": {"line": 8, "column": 4}
+        }
+      ],
+      "frozen_declarations": ["sectionValue"],
+      "allow_new_imports": false,
+      "allow_new_declarations": false,
+      "allow_renaming": false,
+      "max_changed_lines": 2,
+      "interface_contract": "SAME_STATEMENT",
+      "acceptance": {
+        "must_compile": true,
+        "must_resolve_rule_ids": ["FMT-013"],
+        "must_not_introduce_new_findings": true,
+        "edit_cost_metric": "changed_lines_then_tokens"
+      }
+    }
+  }
+}
