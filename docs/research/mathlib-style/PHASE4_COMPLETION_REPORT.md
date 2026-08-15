@@ -1,11 +1,11 @@
 # Mathlib Style Benchmark Phase 4 Completion-Status Report
 
-**Status: `linux-validation-pending`, `human-review-pending`.**
+**Status: Linux validation passed; `human-review-pending`.**
 
 The local 16-case pilot, isolated custody, two AI-agent blind annotations,
-adjudication, hard-gate harness, and deterministic scoring were implemented and
-passed locally. Phase 4 is not complete under its acceptance rule because no
-actual Linux run record or qualified human review is present.
+adjudication, hard-gate harness, deterministic scoring, and pinned Linux
+validation were implemented and passed. Phase 4 is not complete under its
+acceptance rule because qualified independent human review is not present.
 
 ## 1. Goal and scope
 
@@ -149,9 +149,24 @@ custody was ignored by Git, and no file was staged.
 | Environment | Identity and result |
 |---|---|
 | Local | Darwin 25.6.0 arm64, Lean 4.30.0, pinned Mathlib commit; actual full run exit 0 with command and log hashes in private custody |
-| Linux | Pinned Ubuntu workflow with the same Lean/Mathlib pins; no actual run artifact, exit code, or log hash was available at report time |
+| Linux | Ubuntu 24.04 x86_64, Lean 4.30.0, pinned Mathlib commit; public hard gates exit 0, aggregate kernel replay passed, regression reruns passed, and environment evidence uploaded |
 
-The workflow is a reproducible entry point, not proof of a Linux pass.
+The successful Linux record is
+[GitHub Actions run 31804054807](https://github.com/lyw-ops/EconCSLib/actions/runs/31804054807),
+job `94778564899`, on exact validation commit
+`51e53baa0ed86545f98bf485838be1ddcd28b4a1`. It verified public manifest
+SHA-256
+`bccd572e26baf8ab438d6bde263b03a0e260eda0be4e3347946a60fcbf792b43`
+and uploaded artifact `mathlib-style-linux-environment-evidence` (artifact ID
+`9220614313`). The evidence records Linux
+`6.17.0-1022-azure` x86_64, Python 3.12.3, Lean 4.30.0, Mathlib commit
+`c5ea00351c28e24afc9f0f84379aa41082b1188f`, the exact public hard-gate
+command, exit code 0, duration, and log SHA-256 values.
+
+The run also passed `lake env leanchecker --fresh EconCSLib`, the frozen
+distillation and fixture regression rerun, all 16 deterministic scorer tests,
+and generated Lean artifact and whitespace rejection. This resolves the Linux
+acceptance gate for the recorded commit and frozen public hashes.
 
 ## 10. Public/private custody
 
@@ -164,14 +179,14 @@ after both annotations and adjudication were complete.
 
 ## 11. Remaining acceptance work
 
-1. Run the pinned workflow on a real Linux runner and retain OS/architecture,
-   Lean/Mathlib identity, command, exit code, and log-hash evidence.
-2. Obtain qualified human review of both agent annotations, adjudication,
+1. Obtain qualified human review of both agent annotations, adjudication,
    source interpretation, and gold; retain the private review record described
    by `HUMAN_REVIEW_RUNBOOK.md`.
-3. Reassess release eligibility only after both gates pass against unchanged
-   hashes.
+2. Confirm that the human-review record applies to the same frozen public and
+   private hashes before changing the pilot status.
+3. Make a separate release decision before describing the pilot as
+   public-release eligible.
 
-Until then the correct status remains `linux-validation-pending` and
-`human-review-pending`, not complete or public-release eligible, and the pilot
-must not support model-capability conclusions.
+Until then the correct status remains `human-review-pending`, not complete or
+public-release eligible, and the pilot must not support model-capability
+conclusions.

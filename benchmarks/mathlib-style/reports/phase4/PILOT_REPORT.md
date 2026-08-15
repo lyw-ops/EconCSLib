@@ -4,8 +4,9 @@
 - **Rule/manual:** `v0.3.1`
 - **Data schema:** `v0.3.0`
 - **Evaluation environment:** `MATHLIB-4.30.0`
-- **Status:** `linux-validation-pending`, `human-review-pending`
-- **Date:** 2026-08-13
+- **Status:** Linux validation passed; `human-review-pending`
+- **Report date:** 2026-08-13
+- **Status updated:** 2026-08-15
 
 This public report provides only aggregates that do not reveal individual
 answers. Gold, source locators, canonical A/B mappings, reference repairs,
@@ -148,13 +149,16 @@ All primary scores are computed deterministically without an LLM judge.
 | Environment | Result | Evidence |
 |---|---|---|
 | Darwin 25.6.0 arm64, Lean 4.30.0, pinned Mathlib commit | Passed | Full private run exit 0 in 1,185.966 seconds, identity and log hashes, 22 validation records, 482-asset custody manifest |
-| Pinned Ubuntu GitHub Actions | No actual run at report time | The workflow is configured to upload OS/architecture, identity, command, exit code, and log hashes, but no run artifact was available |
+| Ubuntu 24.04 x86_64, Lean 4.30.0, pinned Mathlib commit | Passed | [Run 31804054807](https://github.com/lyw-ops/EconCSLib/actions/runs/31804054807), job `94778564899`, validation commit `51e53baa0ed86545f98bf485838be1ddcd28b4a1`, public hard gates exit 0, aggregate kernel replay and regression reruns passed, evidence artifact `9220614313` uploaded |
 
-At report time there was no available Linux runner, and the task did not
-authorize the push or pull request needed to trigger GitHub Actions. The
-workflow alone is not Linux-pass evidence. Both annotations were produced by
-AI agents and had not received human review.
+The Linux evidence records kernel `6.17.0-1022-azure`, Python 3.12.3, Lean
+4.30.0, the pinned Mathlib commit, the exact public hard-gate command, exit
+code 0, duration, and log SHA-256 values. It verifies the unchanged public
+manifest SHA-256
+`bccd572e26baf8ab438d6bde263b03a0e260eda0be4e3347946a60fcbf792b43`.
+Both annotations were produced by AI agents and have not received independent
+qualified human review.
 
-Therefore the pilot remains `linux-validation-pending` and
-`human-review-pending`. It must not be marked complete, described as
-public-release eligible, or used for model-capability conclusions.
+Therefore the remaining status is `human-review-pending`. The pilot must not
+be marked complete, described as public-release eligible, or used for
+model-capability conclusions.

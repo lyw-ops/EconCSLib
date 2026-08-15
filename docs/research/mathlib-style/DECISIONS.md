@@ -197,3 +197,29 @@ artifact version `v0.3.1`, schema version `v0.3.0`, and pilot identity.
 **Reason:** This is a presentation and packaging migration, not a normative
 rule revision or schema migration. The structural checker enforces that the
 distributed Mathlib-style text surface contains no CJK Unified Ideographs.
+
+## D015 — Linux validation evidence and remaining review boundary
+
+**Decision:** Accept GitHub Actions run
+[`31804054807`](https://github.com/lyw-ops/EconCSLib/actions/runs/31804054807),
+job `94778564899`, as the pinned Linux validation record for validation commit
+`51e53baa0ed86545f98bf485838be1ddcd28b4a1` and public manifest SHA-256
+`bccd572e26baf8ab438d6bde263b03a0e260eda0be4e3347946a60fcbf792b43`.
+The uploaded `mathlib-style-linux-environment-evidence` artifact records the
+Ubuntu x86_64 environment, Lean and Mathlib identities, exact public hard-gate
+command, exit code 0, duration, and log hashes. The same job also passed the
+aggregate fresh kernel replay, frozen regression reruns, unit tests, and
+generated-artifact and whitespace checks.
+
+The Linux evidence changes the current pilot status from
+`linux-validation-pending`, `human-review-pending` to
+`human-review-pending`. It does not make the pilot
+`internal-pilot-complete` or `public-release-eligible`; those labels still
+require the qualified human-review record and, for public release, a separate
+release decision.
+
+**Reason:** A successful workflow run on the exact frozen validation commit
+supplies the environment and hard-gate evidence that D013 intentionally left
+pending. Keeping the human and release decisions separate prevents CI success
+from being mistaken for validation of agent-produced judgments or a benchmark
+capability claim.

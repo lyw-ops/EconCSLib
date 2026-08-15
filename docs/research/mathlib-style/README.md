@@ -30,8 +30,10 @@ Phase 4 has produced a separate `MATHLIB-STYLE-PILOT-0.1.0` artifact with 16
 real primary cases, 6 PAIR mirrors, isolated private custody, two independent
 AI-agent blind annotations, adjudication, a full local hard-gate harness, and
 deterministic scoring. This does not change the rule/manual or schema versions.
-The benchmark is still not published: actual pinned Linux validation and human
-review remain pending, so no model-capability or public-release claim is made.
+The pinned Linux validation passed on the exact validation commit and frozen
+public manifest. The benchmark is still not published because independent
+qualified human review remains pending, so no model-capability or
+public-release claim is made.
 Schema provenance and exact hashes are recorded in the
 [`schemas` manifest](../../../benchmarks/mathlib-style/manifests/schemas/MANIFEST.json),
 with migration status in [`VERSION.md`](VERSION.md).
@@ -58,8 +60,8 @@ environment validation before formal cases can be accepted.
   finding disposition, version boundary, changed/unchanged paths, validation,
   and Phase 4 handoff.
 - [`PHASE4_COMPLETION_REPORT.md`](PHASE4_COMPLETION_REPORT.md): Phase 4
-  pilot construction, custody, annotation, harness, local validation, and
-  outstanding Linux/human gates.
+  pilot construction, custody, annotation, local and Linux validation, and
+  the outstanding human-review gate.
 
 Run validation from the repository root:
 

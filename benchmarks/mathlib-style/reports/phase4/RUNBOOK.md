@@ -24,9 +24,10 @@ warnings, runs the Mathlib standard and text/Unicode linter suites, and runs a
 declaration-level `#print axioms` probe.
 
 On Linux, `.github/workflows/mathlib-style-phase4.yml` runs the pinned build through
-`leanprover/lean-action@v1`, then invokes the bundled `leanchecker` on the aggregate
-`EconCSLib` module. The checker is deliberately module-scoped: its no-argument mode checks
-every `.olean` on the full dependency search path in parallel and is not the Phase 4 target.
+`leanprover/lean-action@v1`, then invokes
+`lake env leanchecker --fresh EconCSLib`. The checker replays the aggregate module in a fresh
+environment. Prefix or no-argument modes can schedule a much broader dependency set in parallel
+and are not the Phase 4 target.
 The workflow records OS/architecture, Lean and Mathlib identity, the hard-gate command, exit
 code, and log SHA-256 values, then uploads those records as
 `mathlib-style-linux-environment-evidence`. A local Darwin pass is not a substitute for this

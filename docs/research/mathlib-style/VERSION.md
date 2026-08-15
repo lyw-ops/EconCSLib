@@ -1,11 +1,11 @@
 # Mathlib Style Artifact Version
 
-- **Status date:** 2026-08-13
+- **Status date:** 2026-08-15
 - **Rule/manual artifact version:** `v0.3.1`
 - **Benchmark data schema version:** `v0.3.0`
 - **Pilot release identity:** `MATHLIB-STYLE-PILOT-0.1.0`
 - **Asset maturity:** `phase3-normative-revision-complete`
-- **Benchmark maturity:** `linux-validation-pending`; `human-review-pending`;
+- **Benchmark maturity:** Linux validation passed; `human-review-pending`;
   not a completed or published benchmark
 - **Distribution language:** English only
 
@@ -75,8 +75,16 @@ hash, recursive leakage, provenance, annotation-isolation, mirror, executable
 REPAIR, and scoring gates pass in a recorded local environment run; two
 independent AI-agent blind annotations and adjudication are present.
 
-The pilot is not complete under the Phase 4 release rule because an actual
-pinned Linux run has not occurred and the agent annotations have not received
-human review. The precise statuses are `linux-validation-pending` and
-`human-review-pending`. This does not affect completion of the Phase 3
-normative revision.
+The pinned Linux workflow passed on 2026-08-14 UTC against validation commit
+`51e53baa0ed86545f98bf485838be1ddcd28b4a1` and the unchanged public manifest
+SHA-256
+`bccd572e26baf8ab438d6bde263b03a0e260eda0be4e3347946a60fcbf792b43`.
+It recorded Ubuntu x86_64, Lean 4.30.0, the pinned Mathlib commit, public hard
+gates exit 0, aggregate kernel replay, regression reruns, and uploaded
+environment evidence in
+[GitHub Actions run 31804054807](https://github.com/lyw-ops/EconCSLib/actions/runs/31804054807).
+
+The pilot is still not complete under the Phase 4 release rule because the
+agent annotations and adjudication have not received independent qualified
+human review. The remaining status is `human-review-pending`. This does not
+affect completion of the Phase 3 normative revision.

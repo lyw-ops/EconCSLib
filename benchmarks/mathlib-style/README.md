@@ -10,8 +10,10 @@ including all 13 P1/P2 findings from the immutable Phase 2 audit. The Phase 4
 pilot identity is independently versioned as `MATHLIB-STYLE-PILOT-0.1.0`; its
 16 primary cases and 6 PAIR mirrors pass the local hard gates. The complete
 [v0.3.0 JSON Schemas](manifests/schemas/README.md), 75 leaf IDs, legacy aliases,
-task definitions, and original smoke fixtures remain unchanged. This is not a
-published benchmark: actual Linux validation and human review remain pending.
+task definitions, and original smoke fixtures remain unchanged. The pinned
+Linux validation passed on the exact validation commit and frozen public
+manifest. This is not a published benchmark because independent qualified
+human review remains pending.
 
 ## Layout
 
@@ -127,8 +129,8 @@ API/integration strata. Six PAIR mirrors are excluded from the primary count.
 Private custody contains complete provenance, two independent AI-agent blind
 annotations, adjudication, executable repairs, validation records, and gold.
 
-Local validation is complete. Release still requires an actual pinned Linux
-run and human review, so the status is `linux-validation-pending` and
+Local and pinned Linux validation are complete. Release still requires
+independent qualified human review, so the status is
 `human-review-pending`, not complete. See the
 [Phase 4 pilot report](reports/phase4/PILOT_REPORT.md) and the
 [completion-status report](../../docs/research/mathlib-style/PHASE4_COMPLETION_REPORT.md).

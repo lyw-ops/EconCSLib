@@ -9,6 +9,17 @@
 
 ## 1. Conclusion
 
+### Post-audit event
+
+This audit remains an immutable failed readiness snapshot from 2026-08-14; the
+result below is not rewritten. After the audit, pinned Linux validation passed
+on exact validation commit
+`51e53baa0ed86545f98bf485838be1ddcd28b4a1` in
+[GitHub Actions run 31804054807](https://github.com/lyw-ops/EconCSLib/actions/runs/31804054807)
+against the same public manifest hash. This resolves the Linux blocker for a
+future readiness audit, but independent qualified human review remains pending
+and Phase 5 has not started.
+
 Phase 5 could not enter freeze, blind evaluation, scoring, difficulty
 calibration, dynamic red teaming, or RC1 packaging. The blocker was not the
 16-case inventory, schemas, provenance, annotation isolation, or current
