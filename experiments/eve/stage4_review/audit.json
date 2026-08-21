@@ -1,0 +1,354 @@
+{
+  "schema_version": "1.0.0",
+  "status": "COMPLETED_CODEX_AI_REVIEW",
+  "protocol": {
+    "id": "EVE-STAGE4-LUNA-ENTRY-GAME-DEV-002",
+    "sha256": "946c556ee5f2a13eafe57a5a5b7db55c3118febb715eaf34aaddd91caf74c037",
+    "frozen_baseline_commit": "ad8bfa6",
+    "superseded_protocol": "EVE-STAGE4-LUNA-ENTRY-GAME-DEV-001",
+    "superseded_protocol_disposition": "invalidated before any model session; excluded from every DEV-002 result"
+  },
+  "review": {
+    "kind": "codex-ai-review",
+    "independent_human_review": false,
+    "reviewed_unique_passing_sources": 6,
+    "reviewed_passing_candidate_instances": 10,
+    "reviewed_failed_deterministic_reports": 14,
+    "blocking_false_accepts": 0,
+    "accepted_source_matches_public_gold_hash": false
+  },
+  "machine_audit": {
+    "script": "experiments/eve/scripts/audit_stage4.py",
+    "script_sha256": "2a67cdcb1259c23c5964a3d86937d3a803728c4419aa12219b544005b438b3a1",
+    "local_report": "experiments/eve/.runtime/stage4-audit-machine.json",
+    "local_report_sha256": "edc5332e822918bcf2635e01320f150825ad1d4e0c0b82a3acf20bc39b86142c",
+    "status": "passed",
+    "rechecked_all_candidates": true,
+    "candidate_rechecks": 24,
+    "archived_and_rechecked_status_score_failure_codes_gates_and_axioms_match": true
+  },
+  "execution": {
+    "expected_cells": 12,
+    "completed_unique_cells": 12,
+    "duplicate_dev002_cells": 0,
+    "resume_or_import_used": false,
+    "solver_candidate_instances": 24,
+    "agent_turns": 100,
+    "output_tokens": 117770,
+    "solver_wallclock_seconds": 3436.932902,
+    "successful_runs": 6,
+    "failed_runs": 6,
+    "passed_candidate_instances": 10,
+    "failed_candidate_instances": 14,
+    "optimizer_candidates_produced": 0
+  },
+  "grouped_outcomes": [
+    {
+      "task": "entry-game-direct",
+      "condition": "static",
+      "successes": 1,
+      "runs": 2,
+      "descriptive_rate": 0.5
+    },
+    {
+      "task": "entry-game-direct",
+      "condition": "fixed",
+      "successes": 2,
+      "runs": 2,
+      "descriptive_rate": 1.0
+    },
+    {
+      "task": "entry-game-direct",
+      "condition": "evolved",
+      "successes": 2,
+      "runs": 2,
+      "descriptive_rate": 1.0
+    },
+    {
+      "task": "entry-game-transport",
+      "condition": "static",
+      "successes": 1,
+      "runs": 2,
+      "descriptive_rate": 0.5
+    },
+    {
+      "task": "entry-game-transport",
+      "condition": "fixed",
+      "successes": 0,
+      "runs": 2,
+      "descriptive_rate": 0.0
+    },
+    {
+      "task": "entry-game-transport",
+      "condition": "evolved",
+      "successes": 0,
+      "runs": 2,
+      "descriptive_rate": 0.0
+    }
+  ],
+  "failure_code_counts": {
+    "compile-failed": 9,
+    "route-discipline-violation": 3,
+    "target-declaration-missing-or-wrong-type": 2
+  },
+  "cells": [
+    {
+      "ordinal": 1,
+      "task": "entry-game-direct",
+      "condition": "static",
+      "seed": 1729,
+      "run_root": "experiments/eve/.runtime/runs/20260821T044722_971897Z",
+      "launch_sha256": "b1825af8add75acb78443bf8ec269f7d873673b6c380c131625fad8730f7784d",
+      "seed_audit_sha256": "78e7e5640cd2c4fc35cb8f6482fa0a8aadea63af280160b58ee1085965a02ab7",
+      "scores": [1.0, 1.0],
+      "candidate_sha256": [
+        "5edcd38949f3ca63a496bd059072a89149be9fad2559a5c2ce0373416db94494",
+        "5edcd38949f3ca63a496bd059072a89149be9fad2559a5c2ce0373416db94494"
+      ],
+      "primary_success": true,
+      "first_success_iteration": 1
+    },
+    {
+      "ordinal": 2,
+      "task": "entry-game-direct",
+      "condition": "fixed",
+      "seed": 1729,
+      "run_root": "experiments/eve/.runtime/runs/20260821T045053_058997Z",
+      "launch_sha256": "d6c0a5f7f37b8bf429cbcb2fd4749b984bfb377bf1dab58432be50f0d32a6dc7",
+      "seed_audit_sha256": "e7cde8411e139560dc5c8e812607d8dc5ae9de364372b0d19d0db5875cd7cd80",
+      "scores": [0.0, 1.0],
+      "candidate_sha256": [
+        "f533964c2567807f319c7eb078710fcbf1a16ede07396cacd76df6cda710fe98",
+        "8a15ea4321197b7397a46df521a353ef396dd7540d4e3915662504512765970e"
+      ],
+      "primary_success": true,
+      "first_success_iteration": 2
+    },
+    {
+      "ordinal": 3,
+      "task": "entry-game-direct",
+      "condition": "evolved",
+      "seed": 1729,
+      "run_root": "experiments/eve/.runtime/runs/20260821T045749_141507Z",
+      "launch_sha256": "ee15ad66613ffe013eaec1e14380d091097b5871ade668b84e758436280e704c",
+      "seed_audit_sha256": "2d7dccbfd6525db278a3e0d1c2d79156b531c70dc02092ad2e4645aebf65ac6b",
+      "scores": [1.0, 1.0],
+      "candidate_sha256": [
+        "6cac97e390e7bcabd19b8f2651bb12db437c8cc776698b840147b0353e5472d2",
+        "6cac97e390e7bcabd19b8f2651bb12db437c8cc776698b840147b0353e5472d2"
+      ],
+      "primary_success": true,
+      "first_success_iteration": 1
+    },
+    {
+      "ordinal": 4,
+      "task": "entry-game-direct",
+      "condition": "static",
+      "seed": 2718,
+      "run_root": "experiments/eve/.runtime/runs/20260821T050124_455338Z",
+      "launch_sha256": "bea64f804714adddd0352a007e16f7e1530254a45be54e7caa268864d752c317",
+      "seed_audit_sha256": "72621e5e2877bb56e4e57fb379cc1b413f341ac08b6af9d112f200b4826f9481",
+      "scores": [0.0, 0.0],
+      "candidate_sha256": [
+        "abc2ccf8d1b5fda35d788384c7ac33ae0e4a49b0e832785c915fc382431ef8a6",
+        "3b8e4ba4afe884c2ea5d7825e602f5b5ed9320e2ca77f7854bb1a52ea5a4ef58"
+      ],
+      "primary_success": false,
+      "first_success_iteration": null
+    },
+    {
+      "ordinal": 5,
+      "task": "entry-game-direct",
+      "condition": "fixed",
+      "seed": 2718,
+      "run_root": "experiments/eve/.runtime/runs/20260821T050908_191330Z",
+      "launch_sha256": "fac912e35c08fba0b349e70e5d3fea6abafcdd318588d04d6d6c319cdb5cb511",
+      "seed_audit_sha256": "a8304b83d6e91d4215d5de1f3231048e1fc325e83553834bf6299fd16d167847",
+      "scores": [1.0, 1.0],
+      "candidate_sha256": [
+        "5fbe4fb0c3fc6ad05c8d0e7b4ad8fcbc081c64fcdeb9bed24f5132bc8d5a2f1d",
+        "5fbe4fb0c3fc6ad05c8d0e7b4ad8fcbc081c64fcdeb9bed24f5132bc8d5a2f1d"
+      ],
+      "primary_success": true,
+      "first_success_iteration": 1
+    },
+    {
+      "ordinal": 6,
+      "task": "entry-game-direct",
+      "condition": "evolved",
+      "seed": 2718,
+      "run_root": "experiments/eve/.runtime/runs/20260821T051212_727816Z",
+      "launch_sha256": "27341e31a3313d38981ae64cdc0cb50e74a1a8cdaf6ba1cff2d431b0dec1e5a6",
+      "seed_audit_sha256": "5d876621a1499fafad7dcd8fc929196eac95a05cfd6e733d321dc70b535031a2",
+      "scores": [1.0, 1.0],
+      "candidate_sha256": [
+        "5f7dbbbb427b8d2d4fae7c844f7f70e7c691358b920829c411d21d668b946a62",
+        "5f7dbbbb427b8d2d4fae7c844f7f70e7c691358b920829c411d21d668b946a62"
+      ],
+      "primary_success": true,
+      "first_success_iteration": 1
+    },
+    {
+      "ordinal": 7,
+      "task": "entry-game-transport",
+      "condition": "static",
+      "seed": 1729,
+      "run_root": "experiments/eve/.runtime/runs/20260821T051558_144658Z",
+      "launch_sha256": "825cc433a29d19cf2dc3aaaff8fcfffc9c5285f903b270c3b71b8a41b737882d",
+      "seed_audit_sha256": "78e7e5640cd2c4fc35cb8f6482fa0a8aadea63af280160b58ee1085965a02ab7",
+      "scores": [0.0, 1.0],
+      "candidate_sha256": [
+        "b76b0cecff7a9bab062945aa7751874b4036cbd41b5823343e1f0ce31abf6ba8",
+        "e29a80addc02a6030aa28282769ecff0efcff6a700e5f4cbc4fae87ed91475dd"
+      ],
+      "primary_success": true,
+      "first_success_iteration": 2
+    },
+    {
+      "ordinal": 8,
+      "task": "entry-game-transport",
+      "condition": "fixed",
+      "seed": 1729,
+      "run_root": "experiments/eve/.runtime/runs/20260821T052058_660932Z",
+      "launch_sha256": "4efe00c9768665b926ea820546b7d39e4ea6596223869558dd9429296d240b92",
+      "seed_audit_sha256": "e7cde8411e139560dc5c8e812607d8dc5ae9de364372b0d19d0db5875cd7cd80",
+      "scores": [0.0, 0.0],
+      "candidate_sha256": [
+        "2d65ba66a15e17083fc9f8767592af9955b3e123dda9d3e21eee738ba7e3d3ab",
+        "ad9ae4a05d0f907b543a33999034551b89d9c645bdf857eaed61bb1a13ec5837"
+      ],
+      "primary_success": false,
+      "first_success_iteration": null
+    },
+    {
+      "ordinal": 9,
+      "task": "entry-game-transport",
+      "condition": "evolved",
+      "seed": 1729,
+      "run_root": "experiments/eve/.runtime/runs/20260821T052545_469510Z",
+      "launch_sha256": "d90257ff7589b2f1e2d06c9d18d5a3cb2a95e9804e0e06e2a8ccb51f017702c6",
+      "seed_audit_sha256": "2d7dccbfd6525db278a3e0d1c2d79156b531c70dc02092ad2e4645aebf65ac6b",
+      "scores": [0.0, 0.0],
+      "candidate_sha256": [
+        "5d8881e1a4be4f54242964b727b2c627358896acbed9c46be6930457e6821d05",
+        "f829692278b286b0bf6698bff9319ce1a5e8213942f2b6f609b0d7a76ad16d43"
+      ],
+      "primary_success": false,
+      "first_success_iteration": null
+    },
+    {
+      "ordinal": 10,
+      "task": "entry-game-transport",
+      "condition": "static",
+      "seed": 2718,
+      "run_root": "experiments/eve/.runtime/runs/20260821T053338_448014Z",
+      "launch_sha256": "42915d59be6354f86162637468dfb9c0c2cde3b0ee62b3b2bcba6f9cede7682e",
+      "seed_audit_sha256": "72621e5e2877bb56e4e57fb379cc1b413f341ac08b6af9d112f200b4826f9481",
+      "scores": [0.0, 0.0],
+      "candidate_sha256": [
+        "da818d2b9fc0f662f9c82b07d32d28531af734d81117061cf12a8b6a56c1f40b",
+        "e78cfe207e2cdba67bbbd651e8c1633e06a96b51ce30203df91336d4e612998f"
+      ],
+      "primary_success": false,
+      "first_success_iteration": null
+    },
+    {
+      "ordinal": 11,
+      "task": "entry-game-transport",
+      "condition": "fixed",
+      "seed": 2718,
+      "run_root": "experiments/eve/.runtime/runs/20260821T053749_338037Z",
+      "launch_sha256": "72bf5062195a67f3a71ce857c9979d96e9e0cb6ee5188cb34859927d0d060f74",
+      "seed_audit_sha256": "a8304b83d6e91d4215d5de1f3231048e1fc325e83553834bf6299fd16d167847",
+      "scores": [0.0, 0.0],
+      "candidate_sha256": [
+        "b8a8133874e64214830ee0a5e2a8f6a070a33f8b58c94236b480dddf3bdfaed0",
+        "59480552e5f5d5c2164809f7ad7ee225521d9eb718cf485a414424c21c593ade"
+      ],
+      "primary_success": false,
+      "first_success_iteration": null
+    },
+    {
+      "ordinal": 12,
+      "task": "entry-game-transport",
+      "condition": "evolved",
+      "seed": 2718,
+      "run_root": "experiments/eve/.runtime/runs/20260821T054410_302547Z",
+      "launch_sha256": "54d20ada187584f5b692c4d8902fc0b04e660d9860d4eccc6833ffe9036606d2",
+      "seed_audit_sha256": "5d876621a1499fafad7dcd8fc929196eac95a05cfd6e733d321dc70b535031a2",
+      "scores": [0.0, 0.0],
+      "candidate_sha256": [
+        "d7ad45903c7c921a632ba182dd1865ad4da7f127948a925340aeda9ea52f489c",
+        "d7ad45903c7c921a632ba182dd1865ad4da7f127948a925340aeda9ea52f489c"
+      ],
+      "primary_success": false,
+      "first_success_iteration": null
+    }
+  ],
+  "source_review_findings": [
+    {
+      "id": "S4-R1",
+      "severity": "none",
+      "scope": "passing direct-route candidates",
+      "finding": "Five unique passing sources use concrete finite case analysis over the four pure profiles and preserve the direct-route boundary. No accepted source uses the abstract certificate route."
+    },
+    {
+      "id": "S4-R2",
+      "severity": "none",
+      "scope": "passing transport-route candidate",
+      "finding": "The unique passing source constructs every RefinementCertificate field, invokes the two fixed AbstractTwoStage theorems, uses the certificate Nash/SPE preservation projections, transports encoded equalities back to concrete profiles by cases, and proves the requested off-path separation."
+    },
+    {
+      "id": "S4-R3",
+      "severity": "P2-research-design",
+      "scope": "transport route",
+      "finding": "Three candidates were rejected by a lexical route-discipline gate because they did not explicitly consume entryCertificate.nash_preserved and entryCertificate.subgamePerfect_preserved, even though they defined the certificate and used nearby preservation lemmas. This is an intentional strict-route false-negative risk, not a false accept."
+    },
+    {
+      "id": "S4-R4",
+      "severity": "P1-next-protocol",
+      "scope": "evolved condition",
+      "finding": "All four evolved cells and eight evolved rollouts left guidance unchanged, so zero optimizer candidates were produced and no evolved guidance could be selected later. The batch does not measure guidance evolution."
+    },
+    {
+      "id": "S4-R5",
+      "severity": "P1-claim-boundary",
+      "scope": "public development experiment",
+      "finding": "The task, accepted fixtures, evaluator, and run artifacts are answer-visible within the local repository and physical private-evaluator isolation is absent. The results are implementation and prompt-development evidence only."
+    }
+  ],
+  "diagnostic_review": {
+    "direct_compile_failures": 3,
+    "transport_compile_failures": 6,
+    "transport_route_discipline_failures": 3,
+    "transport_target_contract_failures": 2,
+    "target_contract_pattern": "The candidate stopped at equality of encoded profiles and/or gave the separation theorem the wrong function type instead of transporting equality and returning the exact concrete conclusion.",
+    "recommended_transport_template": [
+      "freeze exact target declaration signatures",
+      "define action/profile encoders and utilities",
+      "prove payoff and strict-hypothesis bridges",
+      "prove Nash and SPE preservation",
+      "construct RefinementCertificate",
+      "invoke the fixed general theorems through certificate projections",
+      "prove encoded-profile equality reflection or split concrete actions by cases",
+      "transport both final conclusions to the exact concrete theorem types"
+    ]
+  },
+  "guidance_evolution": {
+    "evolved_cells": 4,
+    "evolved_rollouts": 8,
+    "guidance_tree_changes": 0,
+    "optimizer_candidates_produced": 0,
+    "evolved_guidance_selected_later": 0,
+    "interpretation": "Evolved was enabled but inactive. Its outcome must not be treated as an EvE-improvement or guidance-evolution result."
+  },
+  "next_protocol_requirements": [
+    "Create a new protocol id; never rewrite DEV-002 outcomes.",
+    "Use one common prompt across all conditions that requires a concise reusable guidance update after a failed local Lean check; static/fixed may discard it while evolved may retain it.",
+    "Freeze a transport proof template with explicit equality-reflection and exact final-signature checkpoints.",
+    "Predeclare a minimum number of later selection opportunities and report produced-versus-selected guidance separately.",
+    "Retain n-by-task raw outcomes; do not claim a condition effect while provider sampling remains unseeded.",
+    "Do not begin Sol replication until Luna demonstrates at least one auditable produced-and-later-selected guidance candidate under the revised public protocol."
+  ],
+  "claim_boundary": "Public, answer-visible development data with Codex AI review. It validates the launcher, deterministic filters, the two proof-route encodings, and failure taxonomy. It does not establish hidden-test generalization, independent review, a causal condition effect, EvE improvement, or general Luna capability."
+}

@@ -6,6 +6,7 @@ import importlib.util
 import io
 import json
 import os
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -387,6 +388,20 @@ class ScaffoldTests(unittest.TestCase):
         )
         self.assertFalse(protocol["pairing"]["provider_model_seed_controlled"])
         self.assertEqual(protocol["shared_compute"]["attempts_per_matrix_cell"], 1)
+
+    def test_stage4_review_record_verifies_without_runtime_dependency(self) -> None:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                str(SIDECAR_ROOT / "scripts" / "verify_stage4_review.py"),
+            ],
+            cwd=RUNNER.REPO_ROOT,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stdout)
 
     def test_stage4_guidance_tree_hashes_are_frozen(self) -> None:
         with tempfile.TemporaryDirectory(prefix="eve-empty-") as raw_empty:

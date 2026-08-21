@@ -1,14 +1,17 @@
 # EvE sidecar for EconCSLib
 
-> **Status: `stage3-complete-stage4-luna-protocol-frozen`. Stage 1 smoke 002 is
+> **Status: `stage4-luna-dev-complete-codex-reviewed`. Stage 1 smoke 002 is
 > closed at score `1.0`; the public Entry Game direct/transport pair and its 12
 > mutations pass Stage 2; the Stage 3 Codex review record verifies at `1.0`.
-> Stage 4 has source-verified static/fixed/evolved semantics, two paired EvE
-> sampler seeds, and a frozen 12-cell Luna development protocol. Codex review
-> is AI review, not independent human review, and none of this is a hidden
-> benchmark, formal EvE-effect result, or general model-capability claim.**
+> Stage 4 completed and re-audited all 12 Luna development cells: direct-route
+> run success is static `1/2`, fixed `2/2`, evolved `2/2`; transport-route run
+> success is static `1/2`, fixed `0/2`, evolved `0/2`. No rollout changed
+> guidance, so this is an implementation/prompt baseline rather than an EvE
+> evolution result. Codex review is AI review, not independent human review,
+> and none of this is a hidden benchmark, causal condition result, formal
+> EvE-effect result, or general model-capability claim.**
 
-## 总体技术路线（v3.0，权威入口）
+## 总体技术路线（v3.1，权威入口）
 
 本节是 EconCSLib EVE 研究计划的**唯一技术路线入口**。后续关于研究目标、
 证明路线、实验设计、模型顺序、阶段门槛和任务扩展的决定，都应更新在本节，
@@ -403,12 +406,12 @@ Codex 已按冻结 rubric 审查两个 accepted candidate 与 12 个 mutation：
 `0`。一致性 verifier 得分 `1.0`。该记录明确标为 `codex-ai-review`，不是独立人工
 review，也不替代 deterministic evaluator 的数学接受权。
 
-#### Stage 4：Luna 三条件实验（协议已冻结，待执行）
+#### Stage 4：Luna 三条件公开开发实验（已执行并由 Codex 审查）
 
 - 已从固定 upstream 源码与真实 Hydra loader 建立 static、fixed、evolved 语义；
 - 已预声明两个独立 EvE sampler seed：`1729`、`2718`；
-- fresh run roots 完整执行 static、fixed、evolved；
-- 冻结并保留命令、退出码、日志哈希、模型/CLI/环境身份。
+- 12 个 fresh run roots 已完整执行 static、fixed、evolved；
+- 命令、退出码、seed audit、候选/日志哈希、模型/CLI/环境身份均已保留。
 
 冻结协议为 `stage4_protocol.json`：两条证明路线 × 三个条件 × 两个 seed，共
 12 个 fresh cells；每个 cell 两次迭代、单 worker、最多 6 turns/rollout、禁止
@@ -417,11 +420,27 @@ solver population、optimizer population 和 worker-selection RNG，不修改 pi
 upstream。Codex/provider adapter 不暴露模型 seed，因此模型采样仍不可控；这一限制
 记录在每次 seed audit 中，绝不把 paired EvE seed 描述为端到端确定性。
 
-#### Stage 5：冻结协议与 Sol 复制
+`stage4_review/audit.json` 是本批的收口记录。机器审计重新执行了全部 24 个候选的
+确定性 evaluator，并逐项比对 status、score、failure codes、gates 和 axioms；结果
+完全一致。Codex 又审阅了代表 10 个通过实例的 6 份唯一源码：五份 direct 源码均
+使用具体四 profile 穷举；唯一通过的 transport 源码完整构造 certificate、调用两
+个一般定理，并把 encoded equality 运输回具体 profile。没有 blocking false accept。
 
-- 根据 Luna 开发阶段形成 protocol v1；
-- 在冻结 protocol 下重新跑 Luna 正式实验；
-- Sol 使用同一 protocol 完整复制；
+本批只能作为实施性基线：四个 evolved cell 的八个 rollout 全部未修改 guidance，
+`optimizer_candidates_produced = 0`，因此不存在“新 guidance 在后续迭代被选中”的
+观测。fixed/evolved 与 static 的差异也不能作因果解释，因为 provider model RNG
+不可控且每组仅 `n=2`。
+
+#### Stage 5：先修订 Luna 公开协议，再做 Sol 复制
+
+- 保留 DEV-002 不变，另建新协议，不回写本批结果；
+- 所有条件使用同一提示：本地 Lean 检查失败后必须沉淀一条简短、可复用 guidance，
+  static/fixed 丢弃变化，evolved 才允许保留；
+- transport 模版固定 encoded-equality reflection、certificate projection 消费和最终
+  具体声明签名三个检查点；
+- 增加足够的后续选择机会，分开统计 guidance produced 与 selected；
+- 先用 Luna 验证至少一条 guidance 确实产生并在后续迭代被选中，再冻结协议；
+- Sol 使用该修订后的同一协议完整复制；
 - 只在模型内部比较 EvE 效果，跨模型比较作为第二层分析。
 
 #### Stage 6：七题 EFG 任务扩展
@@ -524,11 +543,16 @@ upstream。Codex/provider adapter 不暴露模型 seed，因此模型采样仍�
 - static/fixed/evolved 语义已由固定 EvE v0.2.0 源码哈希和真实 loader 验证；
   sidecar 为 upstream 原本无配置入口的三个 EvE `random.Random` 流增加了运行前
   domain-separated 播种。模型 RNG 仍不可配置；
-- `EVE-STAGE4-LUNA-ENTRY-GAME-DEV-002` 已冻结 12-cell、24-session 上限和零 retry
-  协议；在协议执行前，所有 cell 仍为 not-run；
+- `EVE-STAGE4-LUNA-ENTRY-GAME-DEV-002` 的 12-cell、24-session 上限和零 retry
+  协议已完整执行；12 个唯一 cell、24 个候选、100 agent turns、零 resume/import
+  经机器审计一致，原 DEV-001 的一次 Hydra 启动失败发生在模型调用前并已整版排除；
+- Stage 4 run-level 结果为 direct `static 1/2, fixed 2/2, evolved 2/2`，transport
+  `static 1/2, fixed 0/2, evolved 0/2`；失败候选为 compile `9`、route discipline
+  `3`、target contract `2`。所有 evolved rollout 均未更新 guidance，optimizer
+  candidate 总数为 `0`；
 - 当前 EFG driver/manifest 已记录显式 `gpt-5.6-luna`、low effort 和
   Codex-default/unpinned verbosity；清单保留 001 score-zero、002 score-one 和
-  comparative conditions 的 not-run 事实。两次都没有 guidance 更新。冻结 case
+  comparative conditions 的历史 not-run 事实。两次都没有 guidance 更新。冻结 case
   protection 与完整测试均已通过。Stage 0 legacy driver 仍保持 `gpt-5.4-mini`；
 - `EFG_Formalization_Exercises.lean` 包含七题工作稿，但在当前 API 上不能通过
   Lean，已观察到 `IsDecision`、`RepresentedInfo`、finite hypothesis fields 和
@@ -551,6 +575,14 @@ upstream。Codex/provider adapter 不暴露模型 seed，因此模型采样仍�
 
 #### 变更记录
 
+- **2026-08-21 · v3.1**：完整执行并收口 `DEV-002` Stage 4 Luna 公开开发矩阵。
+  第一次 `DEV-001` 启动在任何模型 session 前暴露 Hydra primary-config 解析缺陷，
+  已记录、整版作废并修复为显式 absolute-config CLI；真实 CLI 零模型预检和 53 项
+  回归通过后，以新协议一次性执行 12 个 cell。机器审计重新评测全部 24 个候选，
+  无重复、resume/import、结果漂移或 false accept。Codex AI 源码审查确认两条路线
+  的通过候选满足各自证明原则。四个 evolved cell 没有产生 guidance/optimizer，
+  所以本批仅关闭实施性 Stage 4，不形成 EvE-evolution 或因果效果结论；下一阶段先
+  以新协议激活并观测 guidance produced/selected，再复制到 Sol。
 - **2026-08-20 · v2.3**：收口 fresh manual smoke 002。唯一一次 post-repair
   execution 以 one Luna session、5/10 turns、零 resume/retry 完成，candidate
   score `1.0` 且 15/15 deterministic gates 通过；旧 001 运行树保持不变，elan
@@ -925,7 +957,7 @@ Manual-smoke-001 completed with score zero; its audited isolated-toolchain
 feedback issue was repaired. Manual-smoke-002 then completed with score one and
 closed the Stage 1 engineering gate. Both runs left guidance unchanged.
 
-## Stage 4 three-condition protocol (frozen, not yet executed)
+## Stage 4 three-condition protocol (executed and Codex-reviewed)
 
 `stage4_protocol.json` freezes these conditions for both Entry Game routes:
 
@@ -951,6 +983,14 @@ Entry Game run roots；12 个 cell 各只有一次 attempt，失败也作为结�
 私有 Phase 4/5 material 继续 hard-disabled 并物理断开，本公开开发矩阵不解除其
 Linux、独立人工 review、private isolation 或 split blocker。
 
+All 12 DEV-002 cells completed. The independently repeated deterministic audit
+matched every archived candidate status, score, failure code, gate, and axiom
+record. Run-level outcomes are direct `1/2, 2/2, 2/2` and transport
+`1/2, 0/2, 0/2` for static, fixed, and evolved respectively. These are raw
+development outcomes at `n=2`, not significance or causal claims. All eight
+evolved rollouts left guidance unchanged and produced zero optimizer
+candidates; evolved was enabled but inactive.
+
 Any proposed `Arena`, controlled-carrier, StructuralCore-closure, or
 Canonical/Frontend API change discovered later must return to the documented
 EFG freeze/governance human decision process. A micro-pilot score never
@@ -967,16 +1007,20 @@ tree. The external upstream checkout separately contains its ignored,
 `uv`-managed `.venv` and the upstream-generated Codex hook file after the
 documented manual hook command.
 
-Before cleanup, verify the target exactly:
+The Stage 4 run roots and full machine-audit report are local evidence for
+`stage4_review/audit.json`. Do not clean them until they have been archived to
+an approved evidence store; the tracked hashes prove identity but cannot
+reconstruct deleted transcripts or candidates. Before any later cleanup,
+verify the target exactly:
 
 ```bash
 find experiments/eve/.runtime -maxdepth 2 -print
 ```
 
-Only after confirming it contains tool-generated data, remove that exact
-directory with `rm -rf -- experiments/eve/.runtime`. It is reproducible and
-not versioned. Do not broaden the target or substitute a home, repository, or
-workspace root.
+Only after confirming it contains tool-generated data and the Stage 4 evidence
+has been archived, remove that exact directory with `rm -rf --
+experiments/eve/.runtime`. It is not versioned. Do not broaden the target or
+substitute a home, repository, or workspace root.
 
 ## Tests
 
@@ -984,6 +1028,8 @@ From the EconCSLib repository root:
 
 ```bash
 python3 -m unittest discover -s experiments/eve/tests -v
+python3 experiments/eve/scripts/audit_stage4.py --no-recheck
+python3 experiments/eve/scripts/verify_stage4_review.py --require-local-evidence
 python3 -m json.tool experiments/eve/UPSTREAM.lock.json >/dev/null
 python3 -m json.tool experiments/eve/smoke/case.json >/dev/null
 python3 -m json.tool experiments/eve/efg_reachability_micro/case.json >/dev/null
@@ -995,8 +1041,9 @@ the task's validation record.
 
 ## Known limitations
 
-- Exactly two bounded evolved-labelled EFG engineering smokes have run; the
-  frozen Stage 4 paired development matrix is separate and not yet executed.
+- Exactly two bounded evolved-labelled Stage 1 engineering smokes and 12
+  Stage 4 public development cells have run. Stage 4 produced no optimizer
+  candidate, so guidance-evolution effectiveness remains untested.
 - Neither public synthetic/local task can support a benchmark,
   model-capability, EvE-improvement, or minimal-core optimization conclusion.
 - EvE has no native dry-run at the pin; the sidecar prevents invocation.

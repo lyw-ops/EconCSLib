@@ -1,18 +1,18 @@
 # EvE experiment readiness
 
-- **Current status:** `PUBLIC_STAGE3_COMPLETE_STAGE4_LUNA_PROTOCOL_FROZEN`;
+- **Current status:** `PUBLIC_STAGE4_LUNA_DEV_COMPLETE_CODEX_REVIEWED`;
   Stage 1 smoke 002 is closed at score one, Stage 2 direct/transport/pair and
   12 mutations are closed, Stage 3 Codex review verifies at score one, and
-  the 12-cell Stage 4 Luna development protocol is source/loader ready
+  all 12 Stage 4 Luna development cells completed and passed machine re-audit
 - **Not valid statuses:** `benchmark-ready`, `evaluation-complete`,
   `internal-pilot-complete`, or any model-capability conclusion
 - **Formal pilot default:** disabled and not configured
-- **Paid/long EvE execution:** no paired Stage 4, benchmark, or formal run yet;
-  exactly two bounded evolved-labelled Stage 1 engineering smokes completed
-- **EvE runner / `--execute`:** exactly two EFG executions, consumed by
-  manual-smoke-001 and manual-smoke-002; Stage 0 has not run
-- **Model access calls:** one read-only Luna access smoke plus two five-turn
-  Luna solver sessions, one in each bounded EFG execution
+- **Paid/long EvE execution:** the 12-cell public Stage 4 development matrix is
+  complete; no benchmark, private evaluation, or formal run has occurred
+- **EvE runner / `--execute`:** 14 executions: two Stage 1 smokes plus 12 fresh
+  Stage 4 cells; Stage 0 has not run
+- **Luna sessions:** one read-only access smoke, two Stage 1 solver sessions,
+  and 24 Stage 4 solver sessions
 
 ## What is ready
 
@@ -132,8 +132,9 @@ instances actually consumed by EvE sampling before the loop; upstream remains
 unchanged. Codex/provider model sampling has no exposed seed, so only EvE
 sampling is paired and end-to-end determinism is not claimed.
 
-This is sufficient for Stage 0--3 public development exit gates and Stage 4
-protocol readiness.
+This is sufficient for Stage 0--4 public implementation and prompt-development
+gates. It does not close the EvE guidance-evolution effect gate: all eight
+evolved rollouts left guidance unchanged and produced zero optimizer candidates.
 It does not establish that an agent can repair Mathlib or EFG code reliably,
 that EvE improves an agent, that a model has a capability, that the minimal
 core should change, or that the formal pilot is ready to evaluate.
@@ -174,9 +175,19 @@ evolved starts from that same guidance with production enabled only for an
 actually changed tree. Both Stage 4 task preflights report checkout identity,
 locked environment, isolated Lean, authentication, and hook trust available.
 
-The protocol is frozen but the 12 cells are not yet executed. Every cell must
-use a fresh run root and may not resume, import, retry, or share caches,
-populations, logs, or evolved guidance. Any resulting
+All 12 protocol cells completed once in the frozen order with fresh run roots,
+no resume/import/retry, and 24 solver sessions. `audit_stage4.py` independently
+re-evaluated all 24 candidates and matched every archived status, score,
+failure code, gate, and axiom record. Run-level outcomes are:
+
+| Route | static | fixed | evolved |
+|---|---:|---:|---:|
+| direct | 1/2 | 2/2 | 2/2 |
+| transport | 1/2 | 0/2 | 0/2 |
+
+These are descriptive public-development outcomes at `n=2`; provider sampling
+is unseeded. All evolved cells produced zero optimizer candidates, so no later
+selection of evolved guidance occurred. Any resulting
 carrier, StructuralCore, or public-API proposal must go through the EFG
 freeze/governance human decision process; the micro-pilot cannot authorize it.
 
