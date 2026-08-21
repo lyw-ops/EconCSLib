@@ -1,0 +1,295 @@
+{
+  "schema_version": "1.0.0",
+  "status": "EXECUTED_PROTOCOL_DEFECT_DETECTED",
+  "protocol": {
+    "id": "EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-002",
+    "version": "2.0.0",
+    "sha256": "6dafcb0d2476cd2f21df0c976f4f380488f1dcec067d7a0e7ba0802631045a05",
+    "frozen_status_at_launch": "FROZEN_NOT_YET_EXECUTED",
+    "pre_execution_review": "experiments/eve/stage5a_review/dev002-audit.json",
+    "pre_execution_review_sha256": "ce308878d2b8398a140e6c24cd51cf5b841835980505e5dc4166a847ee28cd40"
+  },
+  "authorization": {
+    "authorized_by_user": true,
+    "authorized_on": "2026-08-21",
+    "scope": "Execute the frozen DEV-002 Stage 5A Luna matrix with the required model-quota acknowledgement.",
+    "sol_replication_authorized": false
+  },
+  "execution": {
+    "expected_cells": 12,
+    "completed_unique_cells": 12,
+    "completed_exit_zero_cells": 12,
+    "duplicate_cells": 0,
+    "solver_iterations_per_cell": 3,
+    "luna_sessions": 36,
+    "retry_used": false,
+    "resume_used": false,
+    "import_used": false,
+    "attempt_ledger": "experiments/eve/.runtime/stage5a-dev002-attempt-ledger.sqlite3",
+    "attempt_ledger_sha256": "e593bf5726b20aa20f1cbb15882b7c2e9e169080233f346d67b48d6543a37922",
+    "first_reservation_utc": "2026-08-21T09:16:17.116123+00:00",
+    "last_reservation_utc": "2026-08-21T10:56:06.556434+00:00",
+    "run_root_parent": "experiments/eve/.runtime/stage5a-dev002-runs",
+    "fresh_run_roots": 12,
+    "stage4_run_roots_reused": false,
+    "provider_model_seed_controlled": false
+  },
+  "deterministic_reaudit": {
+    "script": "experiments/eve/scripts/audit_stage5a.py",
+    "script_sha256": "43d6da96e72fabf8613719902987517ffed42afe60ad8f1746d3ad5a34b5e17f",
+    "run_roots_reaudited": 12,
+    "replayed_outputs_byte_identical": true,
+    "durable_attempt_ledger_verified": true,
+    "lineage_databases_verified": true,
+    "fresh_run_roots_verified": true,
+    "limitation": "The frozen auditor validates recorded check chains but permits a solver_rollout_completed event to contain an empty local_lean_checks list. It therefore did not detect the checker-runtime defect recorded below."
+  },
+  "solver_candidate_outcomes": {
+    "candidate_instances": 36,
+    "passed_candidate_instances": 6,
+    "failed_candidate_instances": 30,
+    "grouped": [
+      {
+        "task": "entry-game-direct",
+        "condition": "static",
+        "passed_candidates": 0,
+        "candidate_instances": 6,
+        "successful_cells": 0,
+        "cells": 2
+      },
+      {
+        "task": "entry-game-direct",
+        "condition": "fixed",
+        "passed_candidates": 0,
+        "candidate_instances": 6,
+        "successful_cells": 0,
+        "cells": 2
+      },
+      {
+        "task": "entry-game-direct",
+        "condition": "evolved",
+        "passed_candidates": 0,
+        "candidate_instances": 6,
+        "successful_cells": 0,
+        "cells": 2
+      },
+      {
+        "task": "entry-game-transport",
+        "condition": "static",
+        "passed_candidates": 3,
+        "candidate_instances": 6,
+        "successful_cells": 1,
+        "cells": 2
+      },
+      {
+        "task": "entry-game-transport",
+        "condition": "fixed",
+        "passed_candidates": 2,
+        "candidate_instances": 6,
+        "successful_cells": 1,
+        "cells": 2
+      },
+      {
+        "task": "entry-game-transport",
+        "condition": "evolved",
+        "passed_candidates": 1,
+        "candidate_instances": 6,
+        "successful_cells": 1,
+        "cells": 2
+      }
+    ]
+  },
+  "guidance_liveness": {
+    "evolved_cells": 4,
+    "failure_derived_candidates_produced": 4,
+    "candidates_admitted_to_population": 4,
+    "candidates_selected_in_a_strictly_later_iteration": 1,
+    "cells_with_guidance_produced_and_selected_later": 1,
+    "observed_cell_ordinal": 6,
+    "observed_cell": "entry-game-direct / seed 2718 / evolved",
+    "observed_candidate_id": "optimizer_2507e8392dc3",
+    "observed_candidate_source_iteration": 1,
+    "observed_candidate_selected_later_iterations": [2, 3],
+    "local_mechanism_observed": true,
+    "whole_matrix_clean_replication": false
+  },
+  "blocking_checker_defect": {
+    "classification": "post-execution blocking protocol defect",
+    "checker_sha256": "2382021ea4839974c5f53ae577599e5eb9524d7a4f0cb956ac35b795f307009d",
+    "affected_routes": ["direct", "transport"],
+    "frozen_source_expression": "dt.datetime.now(dt.UTC).isoformat()",
+    "solver_python": "3.9.6",
+    "cause": "datetime.UTC is unavailable in Python 3.9, so the immutable checker ran Lean but crashed before it could record and display the captured result unless the solver discovered a runtime compatibility workaround.",
+    "sessions_triggering_defect": 36,
+    "failed_checker_invocations": 91,
+    "sessions_with_recorded_check_chain": 11,
+    "recorded_check_events": 57,
+    "rollouts_with_zero_recorded_checks": 25,
+    "protocol_contract_breached": "The frozen contract requires every genuine local Lean check to be recorded in the contiguous hash chain and requires a real local check after candidate edits. The executed matrix contains genuine Lean subprocesses whose results were not recorded because the checker crashed.",
+    "preflight_gap": "The safe preflight verified the checker hash and solver Lean availability but did not execute the immutable checker with the exact isolated solver Python runtime.",
+    "audit_gap": "The post-run auditor validates nonempty chains when present but accepts empty local_lean_checks arrays.",
+    "effect_on_results": "The raw external evaluator scores, attempt order, and the valid recorded ordinal-6 liveness chain remain historical observations. The full DEV-002 matrix is not a clean protocol execution and cannot support a comparative, causal, model-capability, or Sol-replication claim."
+  },
+  "handoff_reproducibility_at_audit": {
+    "canonical_repository": "https://github.com/lyw-ops/EconCSLib",
+    "protocol_and_execution_audit_ready_to_track": true,
+    "fresh_clone_frozen_environment_verification_ready": false,
+    "locally_modified_frozen_lean_closure_files_not_in_task_commit": 47,
+    "reason": "The DEV-002 Lean environment manifest freezes the current mixed worktree. Forty-seven files in that closure are pre-existing, non-EVE working-tree changes and are not owned by this handoff task, so they must not be staged without separate authorization.",
+    "required_resolution": "Either authorize and review a separate commit of the exact frozen closure inputs or prepare a successor protocol against a clean committed Lean source tree. Until then, the pushed EVE code and audit preserve identity and findings but do not make a fresh clone reproduce the frozen local environment."
+  },
+  "cells": [
+    {
+      "ordinal": 1,
+      "task": "entry-game-direct",
+      "seed": 1729,
+      "condition": "static",
+      "run_root": "experiments/eve/.runtime/stage5a-dev002-runs/20260821T091617_115065Z",
+      "scores": [0.0, 0.0, 0.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "b7a79dace103d606d1e16d742cc835b4d13aec5960bbffe359859167a1ed1942",
+      "lineage_sha256": "425e6e2c6dfd296f579afd3280eb500a39b89397c6376c83f99667226ab02046",
+      "machine_audit_sha256": "f4444be4016c94880c260604fe55764c3286622ce4a60acc47f39b95e828ccef"
+    },
+    {
+      "ordinal": 2,
+      "task": "entry-game-direct",
+      "seed": 1729,
+      "condition": "fixed",
+      "run_root": "experiments/eve/.runtime/stage5a-dev002-runs/20260821T093023_706556Z",
+      "scores": [0.0, 0.0, 0.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "36d7b08bc0db4f5632d8a806f8d84e501da8d6ec3880946b2b4a081412f8008a",
+      "lineage_sha256": "58b4c31df34fbc4f9de870f8a3bfaa986ab3f9e662161c9cd0de746e1e3c4aec",
+      "machine_audit_sha256": "bbff98f281617e6e2499e03b28629168d9f46c39a3c1b6144b7c962b11d4e420"
+    },
+    {
+      "ordinal": 3,
+      "task": "entry-game-direct",
+      "seed": 1729,
+      "condition": "evolved",
+      "run_root": "experiments/eve/.runtime/stage5a-dev002-runs/20260821T093514_712590Z",
+      "scores": [0.0, 0.0, 0.0],
+      "audit_status": "PRODUCED_NOT_SELECTED_LATER",
+      "launch_sha256": "b08067a69822de5241d8099f365b05daab3218f70c318433e11b284e74c8983c",
+      "lineage_sha256": "4c42080fed2fa87e53b932cfc115a5b387df1a13de70c82dd3b723d9c240c753",
+      "machine_audit_sha256": "68067f04844ac952e2d29ec8b53fb361f7d228df373150b03fcc0951e25cb29a"
+    },
+    {
+      "ordinal": 4,
+      "task": "entry-game-direct",
+      "seed": 2718,
+      "condition": "static",
+      "run_root": "experiments/eve/.runtime/stage5a-dev002-runs/20260821T094325_276421Z",
+      "scores": [0.0, 0.0, 0.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "a6b8e4d12f857f5e4aa9b2496ab2b7bfac6b13bf6a3e0465b027dec3dc6a682e",
+      "lineage_sha256": "7d7f0d74f088bbc55edbe3f4487edeb74522e64d14b1ef8fff002c520f9861fd",
+      "machine_audit_sha256": "8ca4406ddc532a8744bfa86e49d40a2862d1f087346b31b2a4949f466ba58bf5"
+    },
+    {
+      "ordinal": 5,
+      "task": "entry-game-direct",
+      "seed": 2718,
+      "condition": "fixed",
+      "run_root": "experiments/eve/.runtime/stage5a-dev002-runs/20260821T095640_345507Z",
+      "scores": [0.0, 0.0, 0.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "1878812db9126967b3113ee2c556cacb948b8351a1c360f1e5c4ad45ae9baeea",
+      "lineage_sha256": "7db26c1a03a0c996a410f5a46760fb831bf744760f4713d27763c7a1c71b237d",
+      "machine_audit_sha256": "28363327ce2d9ae43e7714840bd8914d4ff0b39089be5cce859c5816c569b478"
+    },
+    {
+      "ordinal": 6,
+      "task": "entry-game-direct",
+      "seed": 2718,
+      "condition": "evolved",
+      "run_root": "experiments/eve/.runtime/stage5a-dev002-runs/20260821T100410_283761Z",
+      "scores": [0.0, 0.0, 0.0],
+      "audit_status": "GUIDANCE_PRODUCED_AND_SELECTED_LATER",
+      "launch_sha256": "9bbc91b5733b74b3099384d4ed25c0ace4090ecc1726d3108e57edfc3b8ea873",
+      "lineage_sha256": "2bd9d06b27cba98ce8959d7ba1d5de855cfe95205d2e728397f5e58dfb710861",
+      "machine_audit_sha256": "602da57deef23943bdd6dd7518a68febe339cab091dae4a7c22f0e5d50359e8c"
+    },
+    {
+      "ordinal": 7,
+      "task": "entry-game-transport",
+      "seed": 1729,
+      "condition": "static",
+      "run_root": "experiments/eve/.runtime/stage5a-dev002-runs/20260821T101343_994998Z",
+      "scores": [1.0, 1.0, 1.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "1aab9e1452417d76f7d71e5e8e12edb45d50510ef21d95e30dcb6190d2f6adfa",
+      "lineage_sha256": "6d5294ff966a91458e43f928f2cd0f4e75d326fb948854845b4c644edfb8e141",
+      "machine_audit_sha256": "e03994de08e9569aec02b5a1c1a9a9d558f749e481c9d99e9c2ce940910f050e"
+    },
+    {
+      "ordinal": 8,
+      "task": "entry-game-transport",
+      "seed": 1729,
+      "condition": "fixed",
+      "run_root": "experiments/eve/.runtime/stage5a-dev002-runs/20260821T101848_514013Z",
+      "scores": [0.0, 0.0, 0.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "3a5cc2e52ba0955de0b7532969f14c3eb239ba00ee9396dc37576208b54ab45c",
+      "lineage_sha256": "29175aab3074d705cd222a9e47b41b520a31c167349d71874e3caf7fc92ab301",
+      "machine_audit_sha256": "1e66c098efb83f964b75d7de93567ce6e92588f17cf761c3c332f1371575772a"
+    },
+    {
+      "ordinal": 9,
+      "task": "entry-game-transport",
+      "seed": 1729,
+      "condition": "evolved",
+      "run_root": "experiments/eve/.runtime/stage5a-dev002-runs/20260821T103003_929014Z",
+      "scores": [0.0, 0.0, 0.0],
+      "audit_status": "NO_GUIDANCE_PRODUCED",
+      "launch_sha256": "29651c60beaf6151c2940deaa4c1a9ee215d6b766a87dc70adc88754018eda87",
+      "lineage_sha256": "d9cf9e077253e0e2df0f2b0551257df1f8c58afa4ed975f446f9adb0b14880af",
+      "machine_audit_sha256": "56efc9562b9403412b94a1ed3baccbefb67cb2be5427eb27fcc52c114f07c745"
+    },
+    {
+      "ordinal": 10,
+      "task": "entry-game-transport",
+      "seed": 2718,
+      "condition": "static",
+      "run_root": "experiments/eve/.runtime/stage5a-dev002-runs/20260821T103900_401962Z",
+      "scores": [0.0, 0.0, 0.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "d33e41692800d99e3843237d6385699dbdd392b4415c5c4aa3254f1fb553b263",
+      "lineage_sha256": "af35dbdb042394bc4ee986a677dbf15b34b829e6f9b5a0434a525aebb03192bb",
+      "machine_audit_sha256": "78895aa706e00dd3e6666242c6d01ce655814eaa65cac3131b7c7b861677b7a1"
+    },
+    {
+      "ordinal": 11,
+      "task": "entry-game-transport",
+      "seed": 2718,
+      "condition": "fixed",
+      "run_root": "experiments/eve/.runtime/stage5a-dev002-runs/20260821T104856_384333Z",
+      "scores": [1.0, 1.0, 0.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "8cd58e6eefda41c95d892031fd95091c4dc7dfb0f989654e5d3fd8e005c6ae55",
+      "lineage_sha256": "25ab9f65fb5fbead17d061b0e30fc1c4a3bfbddfaf89cf540e8ed71dafa150e2",
+      "machine_audit_sha256": "1a911dbbad6dd1a0ba4f191f8bed79b0d1c8db89bee80c07fea3d774f112a874"
+    },
+    {
+      "ordinal": 12,
+      "task": "entry-game-transport",
+      "seed": 2718,
+      "condition": "evolved",
+      "run_root": "experiments/eve/.runtime/stage5a-dev002-runs/20260821T105606_555327Z",
+      "scores": [0.0, 0.0, 1.0],
+      "audit_status": "PRODUCED_WITHOUT_LATER_OPPORTUNITY",
+      "launch_sha256": "d7cd3532ba0e2f690d78d34f0ccfd96ac02a4656d1e05d60b14114e8d969556a",
+      "lineage_sha256": "be7c4c3ac1d5392d8ed43bcba84ecf3b5a59ee8f30d0297ce780dcdce54973ee",
+      "machine_audit_sha256": "6040580e3bce9d652c846d3b0140bf916536360d03c6929a4d51f145da2975e4"
+    }
+  ],
+  "disposition": {
+    "dev002_attempts_consumed": true,
+    "dev002_must_not_be_retried": true,
+    "historical_runtime_evidence_must_be_preserved": true,
+    "sol_replication_ready": false,
+    "recommended_successor": "Prepare a new protocol identity, normally DEV-003, that replaces dt.UTC with a Python-3.9-compatible UTC expression, executes the immutable checker under the exact isolated solver runtime during preflight, fails audit on missing required check evidence, uses fresh roots and a fresh ledger, and receives separate review and execution authorization."
+  },
+  "claim_boundary": "DEV-002 is a completed public development execution with preserved raw evaluator outcomes and one valid local guidance production/admission/later-selection chain. Because every Luna session encountered the frozen checker-runtime defect and 25 rollouts retained no recorded check chain, the whole matrix is not a clean protocol execution. It establishes neither a causal EvE effect nor model capability, benchmark readiness, evaluation completion, or authorization for Sol replication."
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "records": [
+    {
+      "protocol_id": "EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-001",
+      "version": "1.0.0",
+      "protocol_sha256": "24364d551e68d3dde03579147f0c8abd89c81199d4b99845ffc0cfd260885fc0",
+      "protocol_checkpoint_commit": "07a48d3",
+      "review_sha256": "4cd4312d0c29b9a636e92bb4cba2354fa8816d818092b51674b76c400d908f1b",
+      "classification": "invalidated-before-execution",
+      "stage5a_execute_invocations": 0,
+      "stage5a_model_sessions_started": 0,
+      "stage5a_run_roots_created": 0,
+      "blocking_findings": [
+        "The frozen artifact set omitted the transitive EconCSLib Lean import closure and Lake dependency state.",
+        "The timestamped run-root launcher did not durably enforce one attempt per matrix cell or the frozen execution order before model access.",
+        "Lean-check evidence did not record guidance hashes in a protected sequence, so it could not establish that a guidance change followed a genuine Lean failure.",
+        "The route prompts contradicted themselves by allowing only Candidate.lean edits while also requiring a learned-guidance edit."
+      ],
+      "disposition": "DEV-001 is invalidated in full before execution. Its checkpoint commit, detached protocol hash, and original Codex AI review remain historical evidence. Repairs are frozen under DEV-002; no DEV-001 result exists or may be pooled with DEV-002."
+    }
+  ]
+}

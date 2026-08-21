@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0.0",
-  "id": "EVE-STAGE5A-UPSTREAM-SEMANTICS-001",
+  "id": "EVE-STAGE5A-UPSTREAM-SEMANTICS-002",
   "upstream": {
     "repository": "https://github.com/scaling-group/eve",
     "tag": "v0.2.0",
@@ -67,19 +67,19 @@
     "Before iteration 1, runner seeds exactly one optimizer from optimizer.initial_guidance and ensures a seed solver exists.",
     "At the start of iteration i Phase 2, EvE samples a working optimizer and solver examples from the current run-scoped populations.",
     "EvE copies the sampled optimizer file tree to guidance/, exposes prior deterministic evaluation logs in example trees, and starts one solver rollout in that workspace.",
-    "During that rollout the solver can observe genuine local Lean command failures and can edit both solver/Candidate.lean and guidance/. The current iteration's external deterministic evaluation has not run yet and therefore cannot be read by that same rollout.",
+    "During that rollout the solver can edit exactly solver/Candidate.lean and, only after a recorded failing Lean check, guidance/docs/learned.md. The current iteration's external deterministic evaluation has not run yet and therefore cannot be read by that same rollout.",
     "After the rollout, EvE boundary-checks and deterministically evaluates the solver candidate, then extracts guidance/. Production disabled yields no optimizer candidate; production enabled still yields none unless the extracted tree differs from the sampled optimizer tree.",
     "A produced optimizer selected by the produced-optimizer sampler enters the optimizer population in iteration i. Phase 3 then synchronizes scores.",
     "Only iteration j greater than i can sample that candidate as working guidance for a solver. Its stored logs can also be exposed through guidance_examples/ when configured."
   ],
   "failure_information_boundary": {
-    "current_rollout": "A real local Lean check invoked by the solver exposes its actual stdout, stderr, and exit code during the rollout. Stage 5A supplies a condition-neutral wrapper that records the command, candidate hash, output hashes, byte counts, and exit code.",
+    "current_rollout": "A real local Lean check invoked by the solver exposes its actual stdout, stderr, and exit code during the rollout. Stage 5A supplies a condition-neutral immutable wrapper that records a contiguous hash-chained sequence, the checker, candidate, and guidance hashes at each check, output hashes, byte counts, and exit code.",
     "external_evaluator": "The deterministic evaluator runs only after the rollout. Its logs enter the produced solver and optimizer log trees for later iterations; they cannot cause a guidance edit retroactively in the same rollout.",
-    "no_fabrication_rule": "A Stage 5A guidance candidate is classified as failure-derived only when the source rollout contains at least one recorded nonzero local Lean check event. Natural-language claims alone are insufficient."
+    "no_fabrication_rule": "A Stage 5A guidance candidate is classified as failure-derived only when a valid recorded nonzero local Lean check has a guidance-tree hash different from the final produced tree, proving that the retained guidance change occurred after that failure snapshot. A failure count or natural-language claim alone is insufficient."
   },
   "event_definitions": {
     "guidance_tree_changed": "The final extracted guidance file tree hash differs from the sampled working optimizer file tree hash in the same Phase 2 workspace.",
-    "produced": "Pinned Phase2Runner returns a non-null optimizer candidate after production is enabled, the extracted guidance tree is nonempty, and it differs from the sampled optimizer; Stage 5A records source iteration, parent id/hash, candidate id/hash, solver id, and local-failure evidence.",
+    "produced": "Pinned Phase2Runner returns a non-null optimizer candidate after production is enabled, the extracted guidance tree is nonempty, and it differs from the sampled optimizer; Stage 5A records source iteration, parent id/hash, candidate id/hash, solver id, and the exact prior failure sequences whose guidance snapshots differ from the produced tree.",
     "entered_population": "The produced candidate survives pinned produced-optimizer sampling, is added to the current run's optimizer population, and the same id/hash is verified in optimizer_lineage.db and its referenced artifact.",
     "selected_later": "A working_optimizer_sampled event at iteration j selects the exact admitted candidate id and guidance hash whose source iteration i satisfies j > i. Production or admission at i is never counted as later selection.",
     "solver_used_guidance": "Before the rollout, the workspace guidance hash must equal the sampled optimizer guidance hash; both are recorded and compared."
@@ -98,7 +98,7 @@
   "observation_design": {
     "algorithm_semantics_changed": false,
     "sidecar": "experiments/eve/scripts/run_stage5a_eve.py",
-    "method": "Call the pinned methods unchanged, then append id/hash/iteration observations around sampling, workspace materialization, rollout completion, production, and population admission. Post-run audit opens optimizer_lineage.db read-only and verifies the admitted artifact hash.",
+    "method": "Call the pinned methods unchanged, then append id/hash/iteration observations around sampling, workspace materialization, rollout completion, production, and population admission. The immutable local checker emits a contiguous hash chain with candidate and guidance snapshots. Post-run audit validates that chain, failure-before-change ordering, the durable pre-launch attempt ledger, and optimizer_lineage.db in read-only mode.",
     "upstream_information_gap": "The v0.2.0 population database stores entry ids and artifacts but not parent iteration or each working selection. The sidecar therefore records these missing lineage joins without changing sampling, candidate construction, admission, or scoring."
   },
   "rng_semantics": {
@@ -114,5 +114,5 @@
     "kind": "codex-ai-review",
     "independent_human_review": false
   },
-  "status": "source-semantics-established-with-produced-selected-separation-and-provider-rng-limit"
+  "status": "source-semantics-established-with-failure-order-produced-selected-separation-and-provider-rng-limit"
 }

@@ -12,10 +12,13 @@ from typing import Any
 
 
 SIDECAR_ROOT = Path(__file__).resolve().parents[1]
-RUNS_ROOT = (SIDECAR_ROOT / ".runtime" / "stage5a-runs").resolve()
+RUNS_ROOT = (SIDECAR_ROOT / ".runtime" / "stage5a-dev002-runs").resolve()
+ATTEMPT_LEDGER_PATH = (
+    SIDECAR_ROOT / ".runtime" / "stage5a-dev002-attempt-ledger.sqlite3"
+).resolve()
 PROTOCOL_PATH = SIDECAR_ROOT / "stage5a_protocol.json"
 PROTOCOL_HASH_PATH = SIDECAR_ROOT / "stage5a_protocol.sha256"
-PROTOCOL_ID = "EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-001"
+PROTOCOL_ID = "EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-002"
 
 
 class AuditError(RuntimeError):
@@ -62,6 +65,33 @@ def load_events(path: Path) -> list[dict[str, Any]]:
     return events
 
 
+def event_sha256(event: dict[str, Any]) -> str:
+    payload = {key: value for key, value in event.items() if key != "event_sha256"}
+    encoded = json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def validate_lean_check_chain(
+    events: list[dict[str, Any]], *, checker_sha256: str
+) -> None:
+    previous: str | None = None
+    for sequence, event in enumerate(events, start=1):
+        if event.get("sequence") != sequence:
+            raise AuditError("local Lean check sequence is not contiguous")
+        if event.get("previous_event_sha256") != previous:
+            raise AuditError("local Lean check hash-chain predecessor mismatch")
+        if event.get("checker_sha256") != checker_sha256:
+            raise AuditError("local Lean check did not use the immutable checker")
+        if event.get("event_sha256") != event_sha256(event):
+            raise AuditError("local Lean check event hash mismatch")
+        guidance_hash = event.get("guidance_sha256")
+        if not isinstance(guidance_hash, str) or len(guidance_hash) != 64:
+            raise AuditError("local Lean check guidance hash is missing")
+        previous = str(event["event_sha256"])
+
+
 def classify_events(
     events: list[dict[str, Any]], *, condition: str, iterations: int
 ) -> dict[str, Any]:
@@ -99,6 +129,10 @@ def classify_events(
             "recorded_local_lean_failures": int(
                 event.get("recorded_local_lean_failures", 0)
             ),
+            "failure_before_guidance_change": event.get(
+                "failure_before_guidance_change"
+            )
+            is True,
             "has_later_opportunity": source_iteration < iterations,
             "selected_later_iterations": later_iterations,
         }
@@ -107,7 +141,7 @@ def classify_events(
             selected_later.append(record)
 
     failure_derived = [
-        item for item in produced_records if item["recorded_local_lean_failures"] > 0
+        item for item in produced_records if item["failure_before_guidance_change"]
     ]
     admitted_failure_derived = [
         item for item in failure_derived if item["admitted_to_population"]
@@ -128,7 +162,7 @@ def classify_events(
     elif not produced_records:
         status = "NO_GUIDANCE_PRODUCED"
     elif not failure_derived:
-        status = "PRODUCED_WITHOUT_RECORDED_LEAN_FAILURE"
+        status = "PRODUCED_WITHOUT_POST_FAILURE_GUIDANCE_CHANGE"
     elif not admitted_failure_derived:
         status = "PRODUCED_NOT_ADMITTED_TO_POPULATION"
     elif not with_later_opportunity:
@@ -187,6 +221,58 @@ def _optimizer_db_entries(run_root: Path) -> dict[str, str]:
     return entries
 
 
+def _verify_attempt_ledger(
+    launch: dict[str, Any],
+    protocol: dict[str, Any],
+    *,
+    ledger_path: Path | None = None,
+) -> None:
+    ledger_path = ATTEMPT_LEDGER_PATH if ledger_path is None else ledger_path
+    if not ledger_path.is_file():
+        raise AuditError("Stage 5A durable attempt ledger is missing")
+    connection = sqlite3.connect(f"file:{ledger_path}?mode=ro", uri=True)
+    try:
+        metadata = dict(connection.execute("SELECT key, value FROM protocol_meta"))
+        rows = connection.execute(
+            "SELECT ordinal, task, seed, condition, run_root, status, exit_code "
+            "FROM attempts ORDER BY ordinal"
+        ).fetchall()
+    finally:
+        connection.close()
+    if metadata != {
+        "protocol_id": PROTOCOL_ID,
+        "protocol_sha256": launch.get("protocol_sha256"),
+    }:
+        raise AuditError("Stage 5A attempt ledger protocol identity mismatch")
+    for expected_ordinal, row in enumerate(rows, start=1):
+        if expected_ordinal > len(protocol.get("run_matrix", [])):
+            raise AuditError("Stage 5A attempt ledger exceeds the frozen matrix")
+        cell = protocol["run_matrix"][expected_ordinal - 1]
+        if row[:4] != (
+            expected_ordinal,
+            cell["task"],
+            cell["seed"],
+            cell["condition"],
+        ):
+            raise AuditError("Stage 5A attempt ledger order or cell identity drifted")
+        if row[5] not in {"completed", "failed", "reserved"}:
+            raise AuditError("Stage 5A attempt ledger has an invalid status")
+        if row[5] == "reserved" and expected_ordinal != len(rows):
+            raise AuditError("Stage 5A attempt ledger has a nonterminal interior row")
+    launch_rows = [row for row in rows if row[0] == launch.get("matrix_ordinal")]
+    expected_launch = (
+        launch.get("matrix_ordinal"),
+        launch.get("experiment"),
+        launch.get("experiment_seed"),
+        launch.get("condition"),
+        launch.get("run_root"),
+        "completed",
+        0,
+    )
+    if launch_rows != [expected_launch]:
+        raise AuditError("Stage 5A launch does not match its durable attempt ledger")
+
+
 def audit_run(run_root: Path) -> dict[str, Any]:
     resolved = run_root.resolve()
     if resolved.parent != RUNS_ROOT or not _is_relative_to(resolved, RUNS_ROOT):
@@ -218,6 +304,9 @@ def audit_run(run_root: Path) -> dict[str, Any]:
         raise AuditError("resume/import is forbidden")
     if launch.get("attempt_limit") != 1 or launch.get("retry") is not False:
         raise AuditError("retry or multiple attempts are forbidden")
+    if launch.get("attempt_reserved_before_model_access") is not True:
+        raise AuditError("attempt was not reserved before model access")
+    _verify_attempt_ledger(launch, protocol)
     if launch.get("provider_model_seed_controlled") is not False:
         raise AuditError("provider RNG limitation was not preserved")
     events = load_events(telemetry_path)
@@ -231,6 +320,17 @@ def audit_run(run_root: Path) -> dict[str, Any]:
         raise AuditError("launch route is not frozen")
     if experiment != f"entry-game-{route}":
         raise AuditError("launch task/route mismatch")
+    matrix_matches = [
+        cell
+        for cell in protocol.get("run_matrix", [])
+        if cell.get("task") == experiment
+        and cell.get("seed") == launch.get("experiment_seed")
+        and cell.get("condition") == condition
+    ]
+    if len(matrix_matches) != 1 or launch.get("matrix_ordinal") != matrix_matches[0].get(
+        "ordinal"
+    ):
+        raise AuditError("launch matrix ordinal does not match the frozen order")
     expected_prompt_hash = protocol.get("solver_prompt_bundle_hashes", {}).get(route)
     if launch.get("solver_prompt_bundle_sha256") != expected_prompt_hash:
         raise AuditError("launch solver prompt hash mismatch")
@@ -305,6 +405,30 @@ def audit_run(run_root: Path) -> dict[str, Any]:
         if event.get("event") == "solver_rollout_completed":
             if event.get("lean_checker_unchanged") is not True:
                 raise AuditError("immutable local Lean checker changed during rollout")
+            checks = event.get("local_lean_checks")
+            if not isinstance(checks, list):
+                raise AuditError("local Lean check evidence is not a list")
+            checker_hash = event.get("lean_checker_sha256")
+            if not isinstance(checker_hash, str):
+                raise AuditError("immutable local Lean checker hash is missing")
+            validate_lean_check_chain(checks, checker_sha256=checker_hash)
+            qualifying = [
+                check
+                for check in checks
+                if check.get("failed") is True
+                and check.get("guidance_sha256")
+                != event.get("final_guidance_sha256")
+            ]
+            if event.get("recorded_local_lean_failures") != sum(
+                check.get("failed") is True for check in checks
+            ):
+                raise AuditError("local Lean failure count is inconsistent")
+            if event.get("failure_before_guidance_change") is not bool(qualifying):
+                raise AuditError("post-failure guidance ordering evidence is inconsistent")
+            if event.get("failure_before_guidance_change_sequences") != [
+                check["sequence"] for check in qualifying
+            ]:
+                raise AuditError("post-failure guidance sequence evidence drifted")
     produced_events = {
         str(event.get("candidate_id")): event
         for event in events
@@ -328,6 +452,14 @@ def audit_run(run_root: Path) -> dict[str, Any]:
             "recorded_local_lean_failures"
         ):
             raise AuditError("produced optimizer local-failure evidence mismatch")
+        if event.get("failure_before_guidance_change") != rollout.get(
+            "failure_before_guidance_change"
+        ):
+            raise AuditError("produced optimizer failure/guidance ordering mismatch")
+        if event.get("failure_before_guidance_change_sequences") != rollout.get(
+            "failure_before_guidance_change_sequences"
+        ):
+            raise AuditError("produced optimizer failure sequence mismatch")
     db_entries = _optimizer_db_entries(resolved)
     for event in events:
         if event.get("event") != "optimizer_population_admission":
@@ -374,6 +506,7 @@ def audit_run(run_root: Path) -> dict[str, Any]:
         "run_root": str(resolved),
         "condition": condition,
         "fresh_stage5a_root_verified": True,
+        "durable_attempt_ledger_verified": True,
         "provider_model_seed_controlled": False,
         "lineage_database_verified": True,
         **classification,

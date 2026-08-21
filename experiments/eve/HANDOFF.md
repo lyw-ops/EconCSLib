@@ -7,7 +7,8 @@ Last updated: 2026-08-21
 - Local repository: `/Users/lyuyuwei/Documents/EconCSlib`
 - Fork: <https://github.com/lyw-ops/EconCSLib>
 - Experimental branch: `experiment/eve-stage5a`
-- Published WIP checkpoint: `07a48d3` (`WIP: prepare Stage 5A guidance liveness protocol`)
+- Handoff-policy checkpoint: `1258e05` (`docs(eve): define handoff repository policy`)
+- DEV-001 WIP checkpoint: `07a48d3` (`WIP: prepare Stage 5A guidance liveness protocol`)
 - Long-term route authority: `experiments/eve/README.md`
 - Current gate authority: `experiments/eve/READINESS.md`
 
@@ -70,63 +71,67 @@ not be rewritten or deleted.
 
 ## Current Stage 5A state
 
-The WIP branch contains protocol
-`EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-001`, prompts, configs,
-lineage observer/auditor, tests, README/READINESS updates, and a protocol review
-record. No Stage 5A run root, EvE execution, Luna session, new guidance, or Sol
-replication exists.
+Protocol `EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-001` is invalidated
+in full before execution. The WIP checkpoint, detached hash, original Codex AI
+review, and four blockers are preserved; it created zero Stage 5A run roots and
+started zero model sessions.
 
-The current 001 protocol is **not authorized for execution**. A Codex review
-found four blocking defects:
+The executed protocol is
+`EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-002`, version `2.0.0`, hash
+`6dafcb0d2476cd2f21df0c976f4f380488f1dcec067d7a0e7ba0802631045a05`.
+Its immutable launch status remains `FROZEN_NOT_YET_EXECUTED`; do not rewrite
+that frozen historical input after execution. The pre-execution review is
+`stage5a_review/dev002-audit.json`, and the tracked post-execution record is
+`stage5a_review/dev002-execution-audit.json`.
 
-1. The frozen artifact set does not freeze the transitive EconCSLib Lean import
-   closure. Several imported EFG modules are currently modified in the mixed
-   worktree, while the protocol verifier can still pass.
-2. `run_stage5a.py` creates a new timestamped root on every invocation but does
-   not enforce one attempt per cell or the frozen matrix order.
-3. The liveness audit observes a failure and a guidance change in the same
-   rollout but cannot prove that the guidance change happened after the real
-   Lean failure.
-4. Both route prompts say to work only in `solver/Candidate.lean` and later
-   require writing `guidance/docs/learned.md`, creating an edit-boundary
-   contradiction that can suppress guidance production.
+All 12 cells and 36 Luna sessions completed once in frozen order with fresh run
+roots, zero retry/resume/import, and ledger exit code zero. The 12 machine
+audits reproduced byte-identically. Raw candidate passes were direct static
+`0/6`, fixed `0/6`, evolved `0/6`; transport static `3/6`, fixed `2/6`, evolved
+`1/6`. Four failure-derived guidance candidates were produced and admitted.
+One candidate from direct/2718/evolved iteration 1 was selected in iterations 2
+and 3, giving one valid local `GUIDANCE_PRODUCED_AND_SELECTED_LATER` chain.
 
-Do not silently repair and continue using 001 as though it had always been
-valid. Preserve the WIP checkpoint, record the pre-execution invalidation or
-supersession, and prepare a new protocol ID/version (normally DEV-002) with new
-hashes and review evidence.
+Post-run review found a blocking frozen-checker defect. The isolated solver used
+Python 3.9.6, while both immutable checkers record timestamps through
+`datetime.UTC`, which is unavailable before Python 3.11. All 36 sessions hit the
+defect at least once (91 failed invocations). Runtime workarounds yielded 57
+valid recorded events in 11 sessions, but 25 rollouts retained an empty check
+list. The existing auditor permits an empty list, so its pass does not establish
+the full per-edit feedback contract. Preserve DEV-002 as executed historical
+evidence: do not retry it or silently repair its frozen artifacts. The ordinal-6
+chain is a genuine local mechanism observation, but the whole matrix is not a
+clean protocol execution and does not authorize Sol replication.
 
 ## Last verified evidence
 
-Before this handoff was created:
+At this handoff:
 
-- 69 EVE tests passed; 2 environment-dependent tests were skipped as designed.
-- Stage 4 machine audit and review verification passed with local evidence.
-- The existing Stage 5A detached protocol hash verified.
+- The frozen Lean entry target built successfully (`3096` jobs).
+- 75 EVE tests passed; 2 environment-dependent tests were skipped as designed.
+- The DEV-002 detached protocol hash and all frozen inputs verified.
 - All 12 planned Stage 5A `--check` calls passed.
-- All 12 planned Stage 5A `--dry-run` calls passed.
-- The checks made zero Stage 5A model calls and wrote no Stage 5A run root.
+- Preflight wrote no DEV-002 run root or ledger and made zero model calls.
+- All 12 execution attempts completed with exit code zero and consumed exactly
+  36 Luna sessions; no retry, resume, or import occurred.
+- The ledger contains exactly the frozen 12-cell order, and all 12 post-run
+  audits reproduced byte-identically.
+- Post-run transcript review found the checker-runtime defect above in all 36
+  sessions; 25/36 rollouts have no recorded check event.
 
-These successes establish implementation loading and safe preflight only. They
-do not override the four protocol blockers above.
+These records establish raw public-development execution and one local liveness
+chain only. They do not establish a clean comparison, causal EvE effect, model
+capability, benchmark readiness, evaluation completion, or Sol readiness.
 
 ## Next bounded task
 
-Repair the four blockers without touching unrelated worktree changes:
-
-1. choose a reproducible clean Git tree or freeze and verify the complete Lean
-   dependency closure and build metadata;
-2. add a durable pre-launch attempt/order ledger that fails before model access;
-3. record protected event ordering and guidance hashes at each genuine Lean
-   check so failure-derived changes are auditable;
-4. make the Candidate and guidance edit surfaces explicit and non-contradictory;
-5. add negative regression tests for every repair;
-6. invalidate/supersede 001, freeze the new protocol and hashes, update review,
-   README, READINESS, and this handoff;
-7. rerun the full EVE suite and all 12 safe checks/dry-runs.
-
-Stop after review and freeze. Do not execute Luna until the user explicitly
-authorizes the new protocol.
+Stop after recording the executed DEV-002 defect. Preserve all Stage 4 and
+Stage 5A runtime evidence and unrelated worktree changes. The next bounded task
+is review-only preparation of a new protocol identity, normally DEV-003: use a
+Python-3.9-compatible UTC expression, execute the immutable checker with the
+exact solver runtime during preflight, make missing required check evidence fail
+closed, add regressions, use fresh roots and a fresh ledger, and obtain a new
+review. Do not execute DEV-003 or start Sol without separate user authorization.
 
 ## Local versus GitHub evidence
 
@@ -134,4 +139,15 @@ GitHub stores tracked code, documentation, and commit history. Runtime evidence
 under `experiments/eve/.runtime/` is ignored and remains only on this machine.
 A fresh clone or cloud task must not claim that the missing runtime directory
 means the historical runs did not occur; use tracked audit hashes and request
-the local evidence when full re-verification is required.
+the local evidence when full re-verification is required. The DEV-002 execution
+hashes, raw outcomes, liveness events, and checker defect are tracked in
+`stage5a_review/dev002-execution-audit.json`.
+
+The current mixed worktree also contains 47 locally modified Lean files whose
+hashes are frozen by `stage5a_lean_environment.json` but whose changes are not
+owned by the EVE handoff task. They must not be staged without separate
+authorization. Consequently, the EVE protocol and execution audit can be pushed
+independently, but a fresh clone of the handoff repository cannot yet reproduce
+the frozen local Lean environment. Resolve that scope explicitly or prepare a
+successor protocol against a clean committed Lean tree before claiming a
+repository-complete handoff.

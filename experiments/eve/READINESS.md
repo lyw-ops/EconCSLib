@@ -1,21 +1,22 @@
 # EvE experiment readiness
 
-- **Current status:** `STAGE5A_GUIDANCE_LIVENESS_PROTOCOL_FROZEN_NOT_YET_EXECUTED`;
+- **Current status:** `STAGE5A_DEV002_EXECUTED_PROTOCOL_DEFECT_DETECTED`;
   Stage 1 smoke 002 is closed at score one, Stage 2 direct/transport/pair and
   12 mutations are closed, Stage 3 Codex review verifies at score one, and
   all 12 Stage 4 Luna development cells completed and passed machine re-audit;
-  the independent Stage 5A protocol is locally verified and hash-frozen but
-  has made zero model calls and zero EvE executions
+  Stage 5A DEV-001 is invalidated before execution, while all 12 DEV-002 cells
+  and 36 Luna sessions executed once before post-run review found a blocking
+  Python-3.9 checker defect
 - **Not valid statuses:** `benchmark-ready`, `evaluation-complete`,
   `internal-pilot-complete`, or any model-capability conclusion
 - **Formal pilot default:** disabled and not configured
-- **Paid/long EvE execution:** the 12-cell public Stage 4 development matrix is
-  complete; Stage 5A has not run; no benchmark, private evaluation, or formal
-  run has occurred
-- **EvE runner / `--execute`:** 14 executions: two Stage 1 smokes plus 12 fresh
-  Stage 4 cells; Stage 0 has not run
+- **Paid/long EvE execution:** the 12-cell public Stage 4 and 12-cell public
+  Stage 5A development matrices are complete; no benchmark, private evaluation,
+  formal run, or Sol replication has occurred
+- **EvE runner / `--execute`:** 26 executions: two Stage 1 smokes, 12 fresh
+  Stage 4 cells, and 12 fresh Stage 5A cells; Stage 0 has not run
 - **Luna sessions:** one read-only access smoke, two Stage 1 solver sessions,
-  and 24 Stage 4 solver sessions; zero Stage 5A sessions
+  24 Stage 4 solver sessions, and 36 Stage 5A solver sessions
 
 ## What is ready
 
@@ -30,9 +31,9 @@ The external checkout at `/Users/lyuyuwei/Documents/eve-v0.2.0` matches the
 official repository, annotated tag object, peeled commit, LICENSE, NOTICE,
 `pyproject.toml`, `uv.lock`, and `.python-version`. `uv sync --locked`, the real
 Hydra loader, the historical 45-test Stage 1 suite plus the current Stage 2--5A
-extensions (latest full result: 69 tests run, 2 skipped), `--check`, `--dry-run`, the
+extensions (latest full result: 75 tests run, 2 skipped), `--check`, `--dry-run`, the
 launcher accepted fixture, and accepted-fixture compilation under an isolated
-solver HOME pass. Exactly two EvE/Luna solver executions were invoked and are
+solver HOME pass. Twenty-six EvE executions and their bounded Luna sessions are
 recorded below; the only other model call is the separately bounded access
 smoke.
 
@@ -136,35 +137,65 @@ unchanged. Codex/provider model sampling has no exposed seed, so only EvE
 sampling is paired and end-to-end determinism is not claimed.
 
 This is sufficient for Stage 0--4 public implementation and prompt-development
-gates. It does not close the EvE guidance-evolution effect gate: all eight
-evolved rollouts left guidance unchanged and produced zero optimizer candidates.
-It does not establish that an agent can repair Mathlib or EFG code reliably,
-that EvE improves an agent, that a model has a capability, that the minimal
-core should change, or that the formal pilot is ready to evaluate.
+gates. Stage 4 itself does not close the EvE guidance-evolution effect gate: all
+eight evolved rollouts left guidance unchanged and produced zero optimizer
+candidates. Stage 5A later observed one local liveness chain but is not a clean
+replication because of the checker defect recorded below. None of this
+establishes that an agent can repair Mathlib or EFG code reliably, that EvE
+improves an agent, that a model has a capability, that the minimal core should
+change, or that the formal pilot is ready to evaluate.
 
-Stage 5A protocol preparation is also ready. The pinned-source audit now records
-the exact Phase 2/Phase 3 order, the local-failure information boundary, the
+Stage 5A DEV-001 is invalidated in full before execution: its artifact set did
+not freeze transitive Lean dependencies, its timestamped roots did not enforce
+attempt/order, its evidence did not prove failure-before-guidance-change, and
+its edit instructions contradicted one another. The invalidation record anchors
+the old protocol/review hashes and records zero run roots and zero model
+sessions.
+
+DEV-002 protocol preparation froze the pinned-source audit's exact Phase 2/Phase
+3 order, the local-failure information boundary, the
 minimum two iterations needed for production followed by selection, and the
 provider RNG limitation. The frozen protocol uses three iterations, one worker,
 8 turns, 900 seconds, no retry/resume/import, fresh roots under the dedicated
-`stage5a-runs/` parent, and at most 36 Luna sessions across 12 cells. The same
-route prompt bundle is byte-identical across all conditions; fixed and evolved
-share initial guidance; static is empty; only evolved retains changed guidance.
+`stage5a-dev002-runs/` parent, and at most 36 Luna sessions across 12 cells. A
+protocol-specific SQLite ledger reserves the exact next ordinal before model
+access. The same route prompt bundle is byte-identical across all conditions;
+fixed and evolved share initial guidance; static is empty; only evolved retains
+changed guidance.
 
-Read-only lineage observation distinguishes changed, produced, admitted, and
-selected-later events by iteration plus exact optimizer/guidance hashes and
-verifies admission against the current run's optimizer database and artifact.
-The public checker records genuine local Lean exit codes; a natural-language
-claim is not failure evidence. Static/fixed retention, cross-run leakage,
-terminal-iteration no-opportunity, and provider-RNG declarations fail closed.
-The transport route exposes all ten frozen certificate and equality-reflection
-checkpoints. Protocol hash verification and `--check`/`--dry-run` are safe and
-make no model call, consume no quota, and write no formal run result.
+The Lean environment manifest freezes and re-verifies the complete 109-file
+local import closure, Lake/toolchain metadata, and exact clean dependency
+commits; the entry target builds before any reservation. The immutable checker
+records a contiguous chain with checker, candidate, guidance-tree, exit, and
+output hashes. Failure-derived classification requires a valid failing check
+whose guidance snapshot differs from the final produced tree. Read-only audit
+validates the complete ledger history and distinguishes changed, produced,
+admitted, and selected-later events by exact ids/hashes. Static/fixed retention,
+cross-run leakage, terminal-iteration no-opportunity, and provider-RNG
+declarations fail closed. Both route prompts explicitly separate the candidate
+and conditional guidance edit surfaces. Protocol hash verification and
+`--check`/`--dry-run` are safe and make no model call, consume no quota, touch no
+attempt ledger, and write no formal run result.
 
-This readiness is implementation readiness only. No Stage 5A Luna session has
-run, no new guidance has been produced or selected, the liveness gate is not
-closed, and Sol replication has not started. Review is `codex-ai-review`, not
-independent human review.
+After explicit authorization, all 12 DEV-002 cells and 36 Luna sessions ran once
+in order with fresh roots and zero retry/resume/import. All ledger rows are
+completed with exit code zero, and all 12 machine-audit outputs reproduced
+byte-identically. Four failure-derived guidance candidates were produced and
+admitted. One direct/2718/evolved candidate produced in iteration 1 was selected
+in iterations 2 and 3, yielding a valid local
+`GUIDANCE_PRODUCED_AND_SELECTED_LATER` chain.
+
+Post-run review nevertheless found a blocking checker defect. The exact solver
+runtime was Python 3.9.6, but the frozen checker records timestamps with
+`datetime.UTC`. All 36 sessions triggered the exception at least once, for 91
+failed checker invocations. Runtime workarounds left 57 valid chained events in
+11 sessions; 25 rollouts retained an empty check list. The auditor verifies a
+nonempty chain when present but accepts an empty list, and the preflight did not
+run the checker with the exact solver Python. DEV-002 is therefore an executed
+but unclean protocol, not a clean liveness replication. Raw evaluator outcomes
+and the ordinal-6 chain remain historical observations; they do not establish a
+causal effect or model capability and do not authorize Sol. Review remains
+Codex AI, not independent human review.
 
 ## Hard-disabled formal experiment boundary
 
@@ -178,11 +209,13 @@ is no formal/private Phase 4/5 application/evaluation config to enable accidenta
 request to run the 16-case formal pilot through this sidecar must hard-fail
 until a separately reviewed implementation satisfies every gate below.
 
-The dedicated `run_stage5a.py` accepts only the two Entry Game tasks, the exact
-Stage 5A protocol id, conditions `static|fixed|evolved`, and seeds `1729|2718`.
+The dedicated `run_stage5a.py` accepts only the two Entry Game tasks, exact
+protocol `EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-002`, conditions
+`static|fixed|evolved`, and seeds `1729|2718`.
 Unknown task, protocol, condition, or seed hard-fails. Its check/dry-run paths
-never dispatch the execution function. A future `--execute` additionally
-requires explicit quota acknowledgement; this document does not authorize it.
+never dispatch the execution function. All 12 DEV-002 attempt slots are now
+consumed; the ledger rejects a rerun. Repair requires a new protocol identity,
+fresh roots and ledger, new review, and separate execution authorization.
 
 ## Public Stage 4 Entry Game three-condition study
 
@@ -226,19 +259,32 @@ freeze/governance human decision process; the micro-pilot cannot authorize it.
 
 ## Public Stage 5A guidance-liveness protocol
 
-Protocol: `EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-001`, version
-`1.0.0`, state `FROZEN_NOT_YET_EXECUTED`. It relates to Stage 4 only as a new
-development successor motivated by Stage 4's zero guidance changes. It does
-not supersede, modify, resume, import, or reclassify DEV-002 evidence.
+Protocol: `EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-002`, version
+`2.0.0`. Its frozen file retains launch state `FROZEN_NOT_YET_EXECUTED`; that
+historical input is not rewritten after execution. It supersedes only the
+unexecuted, invalidated Stage 5A DEV-001 protocol. It relates to Stage 4 only as
+a new development successor motivated by Stage 4's zero guidance changes and
+does not supersede, modify, resume, import, or reclassify Stage 4 DEV-002
+evidence.
 
 The full matrix remains direct/transport × static/fixed/evolved × seeds
 1729/2718 in frozen order. Each cell has three solver iterations and one
-attempt. The maximum is 36 Stage 5A model sessions, but the observed count is
-currently zero. If evolved produces no candidate, report
+attempt. All 12 attempts and 36 Stage 5A model sessions are complete. If evolved
+produces no candidate, report
 `NO_GUIDANCE_PRODUCED`; if an admitted candidate is never sampled in a strictly
 later iteration, report `PRODUCED_NOT_SELECTED_LATER`; if it is first produced
 in iteration 3, report `PRODUCED_WITHOUT_LATER_OPPORTUNITY`. Production and
-selection may never be collapsed into one event.
+selection may never be collapsed into one event. A failure count without a
+later guidance-tree change reports
+`PRODUCED_WITHOUT_POST_FAILURE_GUIDANCE_CHANGE` and cannot satisfy liveness.
+
+The four evolved-cell statuses are, in ordinal order,
+`PRODUCED_NOT_SELECTED_LATER`, `GUIDANCE_PRODUCED_AND_SELECTED_LATER`,
+`NO_GUIDANCE_PRODUCED`, and `PRODUCED_WITHOUT_LATER_OPPORTUNITY`. This gives one
+valid local production/admission/later-selection chain, but the blocking
+checker-runtime defect above prevents classifying DEV-002 as a clean matrix or
+authorizing Sol replication. The tracked execution record is
+`stage5a_review/dev002-execution-audit.json`.
 
 ## Gates before a real Mathlib-style experiment
 

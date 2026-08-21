@@ -1,8 +1,11 @@
 # Entry Game transport route
 
-Complete every declaration required by `solver/README.md`. Work only in
-`solver/Candidate.lean`, preserving the fixed exercise and abstract theorem
-prefix. Follow all ten immutable checkpoints in `TRANSPORT_CHECKPOINTS.md`:
+Complete every declaration required by `solver/README.md`. The candidate edit
+surface is exactly `solver/Candidate.lean`; preserve the fixed exercise and
+abstract theorem prefix. The separate guidance edit surface is exactly
+`guidance/docs/learned.md`, and it may be changed only after a recorded failing
+Lean check. Do not edit any other path. Follow all ten immutable checkpoints in
+`TRANSPORT_CHECKPOINTS.md`:
 construct the complete `RefinementCertificate`, explicitly consume its Nash and
 SPE preservation projections, use the fixed `AbstractTwoStage` theorems, prove
 encoded-profile equality reflection, and return the exact concrete theorem

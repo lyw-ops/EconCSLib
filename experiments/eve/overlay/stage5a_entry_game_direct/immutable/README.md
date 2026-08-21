@@ -5,6 +5,10 @@ benchmark. Prove the exact direct-route declarations in `solver/README.md`.
 
 {editable_files_block}
 {editable_folders_block}
+The two edit surfaces are distinct: the solver candidate surface is exactly
+`solver/Candidate.lean`; the optimizer-guidance surface is exactly
+`guidance/docs/learned.md` and is available only after a recorded failing Lean
+check. Do not edit any other path.
 Use this command after every change to the candidate:
 
 ```bash

@@ -1,3 +1,3 @@
-Restore the exact solver edit boundary. Keep only the permitted candidate-file
-change and retain any concise, general guidance written after a recorded local
-Lean failure.
+Restore the two exact edit surfaces: `solver/Candidate.lean`, plus
+`guidance/docs/learned.md` only when it records a concise, general principle
+written after a recorded local Lean failure. Revert every other changed path.

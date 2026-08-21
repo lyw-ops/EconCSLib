@@ -1,9 +1,11 @@
 # Entry Game direct route
 
-Complete the exact declarations required by `solver/README.md`. Work only in
-`solver/Candidate.lean`, preserve its fixed prefix and imports, and prove the
+Complete the exact declarations required by `solver/README.md` and prove the
 claims directly from the concrete payoff table. Do not introduce the abstract
-transport template.
+transport template. The candidate edit surface is exactly
+`solver/Candidate.lean`; preserve its fixed prefix and imports. The separate
+guidance edit surface is exactly `guidance/docs/learned.md`, and it may be
+changed only after a recorded failing Lean check. Do not edit any other path.
 
 After every candidate edit, run `python3 STAGE5A_LEAN_CHECK.py`. When an actual
 recorded Lean failure occurs, distill one concise, generally reusable repair

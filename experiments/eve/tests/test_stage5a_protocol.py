@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import importlib.util
 import io
@@ -42,6 +43,32 @@ def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def lean_check_event(
+    *,
+    sequence: int,
+    previous: str | None,
+    checker_hash: str,
+    guidance_hash: str,
+    failed: bool,
+) -> dict[str, object]:
+    event: dict[str, object] = {
+        "schema_version": "1.0.0",
+        "sequence": sequence,
+        "previous_event_sha256": previous,
+        "checker_sha256": checker_hash,
+        "candidate_sha256": "c" * 64,
+        "guidance_sha256": guidance_hash,
+        "exit_code": 1 if failed else 0,
+        "failed": failed,
+        "stdout_sha256": "d" * 64,
+        "stderr_sha256": "e" * 64,
+        "stdout_bytes": 0,
+        "stderr_bytes": 1 if failed else 0,
+    }
+    event["event_sha256"] = AUDITOR.event_sha256(event)
+    return event
+
+
 class Stage5AProtocolTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -77,6 +104,48 @@ class Stage5AProtocolTests(unittest.TestCase):
         self.assertEqual(self.protocol["status"], "FROZEN_NOT_YET_EXECUTED")
         RUNNER.verify_protocol_assets()
 
+    def test_dev001_is_preserved_as_invalidated_pre_execution_evidence(self) -> None:
+        record = json.loads(
+            (SIDECAR_ROOT / "stage5a_invalidated_protocols.json").read_text(
+                encoding="utf-8"
+            )
+        )["records"][0]
+        self.assertEqual(
+            record["protocol_id"],
+            "EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-001",
+        )
+        self.assertEqual(record["classification"], "invalidated-before-execution")
+        self.assertEqual(record["stage5a_model_sessions_started"], 0)
+        self.assertEqual(len(record["blocking_findings"]), 4)
+
+    def test_dev002_codex_review_matches_frozen_unexecuted_protocol(self) -> None:
+        review = json.loads(
+            (SIDECAR_ROOT / "stage5a_review/dev002-audit.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        protocol_hash = (SIDECAR_ROOT / "stage5a_protocol.sha256").read_text(
+            encoding="utf-8"
+        ).split()[0]
+        self.assertEqual(review["protocol"]["id"], RUNNER.PROTOCOL_ID)
+        self.assertEqual(review["protocol"]["sha256"], protocol_hash)
+        self.assertEqual(review["review"]["kind"], "codex-ai-review")
+        self.assertFalse(review["review"]["independent_human_review"])
+        self.assertEqual(len(review["blocking_repairs"]), 4)
+        self.assertEqual(review["execution_facts"]["stage5a_execute_invocations"], 0)
+
+    def test_local_lean_closure_or_build_metadata_drift_fails_closed(self) -> None:
+        closure_drift = copy.deepcopy(RUNNER.load_lean_environment(self.protocol))
+        first = next(iter(closure_drift["local_import_closure"]))
+        closure_drift["local_import_closure"][first] = "0" * 64
+        with self.assertRaises(RUNNER.CheckError):
+            RUNNER.verify_lean_environment_data(closure_drift)
+
+        metadata_drift = copy.deepcopy(RUNNER.load_lean_environment(self.protocol))
+        metadata_drift["build_metadata"]["lean-toolchain"] = "0" * 64
+        with self.assertRaises(RUNNER.CheckError):
+            RUNNER.verify_lean_environment_data(metadata_drift)
+
     def test_prompt_is_byte_identical_across_conditions_for_each_route(self) -> None:
         recorded = self.protocol["solver_prompt_bundle_hashes"]
         for spec in RUNNER.SPECS.values():
@@ -101,6 +170,15 @@ class Stage5AProtocolTests(unittest.TestCase):
                 "you are in the evolved",
             ):
                 self.assertNotIn(forbidden, lowered)
+            self.assertRegex(
+                lowered,
+                r"candidate edit\s+surface is exactly\s+`solver/candidate\.lean`",
+            )
+            self.assertRegex(
+                lowered,
+                r"guidance edit surface is exactly\s+`guidance/docs/learned\.md`",
+            )
+            self.assertNotIn("work only in\n`solver/candidate.lean`", lowered)
 
     def test_local_checker_is_common_and_prompts_require_real_failure(self) -> None:
         direct = (
@@ -152,6 +230,40 @@ class Stage5AProtocolTests(unittest.TestCase):
             self.assertTrue(event["failed"])
             self.assertNotEqual(event["stderr_bytes"] + event["stdout_bytes"], 0)
             self.assertEqual(event["candidate_sha256"], sha256(candidate))
+            self.assertEqual(event["sequence"], 1)
+            self.assertIsNone(event["previous_event_sha256"])
+            self.assertEqual(event["guidance_sha256"], hashlib.sha256().hexdigest())
+            self.assertEqual(event["event_sha256"], AUDITOR.event_sha256(event))
+
+    def test_local_lean_check_chain_rejects_reordering_or_tampering(self) -> None:
+        checker_hash = "f" * 64
+        first = lean_check_event(
+            sequence=1,
+            previous=None,
+            checker_hash=checker_hash,
+            guidance_hash="0" * 64,
+            failed=True,
+        )
+        second = lean_check_event(
+            sequence=2,
+            previous=str(first["event_sha256"]),
+            checker_hash=checker_hash,
+            guidance_hash="1" * 64,
+            failed=False,
+        )
+        AUDITOR.validate_lean_check_chain(
+            [first, second], checker_sha256=checker_hash
+        )
+        tampered = dict(second)
+        tampered["guidance_sha256"] = "2" * 64
+        with self.assertRaises(AUDITOR.AuditError):
+            AUDITOR.validate_lean_check_chain(
+                [first, tampered], checker_sha256=checker_hash
+            )
+        with self.assertRaises(AUDITOR.AuditError):
+            AUDITOR.validate_lean_check_chain(
+                [second, first], checker_sha256=checker_hash
+            )
 
     def test_state_retention_semantics_are_exact(self) -> None:
         expected = {"static": 0, "fixed": 0, "evolved": 1}
@@ -187,6 +299,7 @@ class Stage5AProtocolTests(unittest.TestCase):
             "candidate_guidance_sha256": "a" * 64,
             "source_iteration": 1,
             "recorded_local_lean_failures": 1,
+            "failure_before_guidance_change": True,
         }
         admitted = {
             "event": "optimizer_population_admission",
@@ -224,6 +337,7 @@ class Stage5AProtocolTests(unittest.TestCase):
             "candidate_id": "optimizer_nonfailure",
             "candidate_guidance_sha256": "d" * 64,
             "recorded_local_lean_failures": 0,
+            "failure_before_guidance_change": False,
         }
         nonfailure_admitted = {
             **admitted,
@@ -262,6 +376,7 @@ class Stage5AProtocolTests(unittest.TestCase):
                 "candidate_guidance_sha256": "b" * 64,
                 "source_iteration": 3,
                 "recorded_local_lean_failures": 1,
+                "failure_before_guidance_change": True,
             },
             {
                 "event": "optimizer_population_admission",
@@ -287,6 +402,39 @@ class Stage5AProtocolTests(unittest.TestCase):
         self.assertEqual(report["selected_later_count"], 0)
         self.assertEqual(report["status"], "PRODUCED_WITHOUT_LATER_OPPORTUNITY")
 
+    def test_failure_without_later_guidance_change_is_not_failure_derived(self) -> None:
+        produced = {
+            "event": "optimizer_candidate_produced",
+            "candidate_id": "optimizer_early_guidance",
+            "candidate_guidance_sha256": "a" * 64,
+            "source_iteration": 1,
+            "recorded_local_lean_failures": 1,
+            "failure_before_guidance_change": False,
+        }
+        admitted = {
+            "event": "optimizer_population_admission",
+            "candidate_id": "optimizer_early_guidance",
+            "candidate_guidance_sha256": "a" * 64,
+            "source_iteration": 1,
+            "admitted": True,
+        }
+        selected = {
+            "event": "working_optimizer_sampled",
+            "iteration": 2,
+            "sampled": [
+                {
+                    "optimizer_id": "optimizer_early_guidance",
+                    "guidance_sha256": "a" * 64,
+                }
+            ],
+        }
+        report = AUDITOR.classify_events(
+            [produced, admitted, selected], condition="evolved", iterations=3
+        )
+        self.assertEqual(
+            report["status"], "PRODUCED_WITHOUT_POST_FAILURE_GUIDANCE_CHANGE"
+        )
+
     def test_controls_cannot_retain_changed_guidance(self) -> None:
         produced = {
             "event": "optimizer_candidate_produced",
@@ -294,6 +442,7 @@ class Stage5AProtocolTests(unittest.TestCase):
             "candidate_guidance_sha256": "c" * 64,
             "source_iteration": 1,
             "recorded_local_lean_failures": 1,
+            "failure_before_guidance_change": True,
         }
         for condition in ("static", "fixed"):
             report = AUDITOR.classify_events(
@@ -323,6 +472,8 @@ class Stage5AProtocolTests(unittest.TestCase):
                 "import": False,
                 "retry": False,
                 "attempt_limit": 1,
+                "matrix_ordinal": 3,
+                "attempt_reserved_before_model_access": True,
                 "provider_model_seed_controlled": False,
                 "solver_prompt_bundle_sha256": self.protocol[
                     "solver_prompt_bundle_hashes"
@@ -338,6 +489,14 @@ class Stage5AProtocolTests(unittest.TestCase):
             )
             guidance_files = {"docs/learned.md": "Use the compiler error shape.\n"}
             guidance_hash = AUDITOR.tree_sha256(guidance_files)
+            checker_hash = "f" * 64
+            failed_check = lean_check_event(
+                sequence=1,
+                previous=None,
+                checker_hash=checker_hash,
+                guidance_hash="0" * 64,
+                failed=True,
+            )
             (run_root / "eve-stage5a-sampler-seed.json").write_text(
                 json.dumps(
                     {
@@ -374,7 +533,11 @@ class Stage5AProtocolTests(unittest.TestCase):
                     "initial_guidance_sha256": "0" * 64,
                     "final_guidance_sha256": guidance_hash,
                     "guidance_tree_changed": True,
+                    "local_lean_checks": [failed_check],
                     "recorded_local_lean_failures": 1,
+                    "failure_before_guidance_change": True,
+                    "failure_before_guidance_change_sequences": [1],
+                    "lean_checker_sha256": checker_hash,
                     "lean_checker_unchanged": True,
                 },
                 {
@@ -385,6 +548,8 @@ class Stage5AProtocolTests(unittest.TestCase):
                     "workspace_id": "workspace_1",
                     "parent_guidance_sha256": "0" * 64,
                     "recorded_local_lean_failures": 1,
+                    "failure_before_guidance_change": True,
+                    "failure_before_guidance_change_sequences": [1],
                 },
                 {
                     "event": "optimizer_population_admission",
@@ -415,7 +580,11 @@ class Stage5AProtocolTests(unittest.TestCase):
                     "initial_guidance_sha256": guidance_hash,
                     "final_guidance_sha256": guidance_hash,
                     "guidance_tree_changed": False,
+                    "local_lean_checks": [],
                     "recorded_local_lean_failures": 0,
+                    "failure_before_guidance_change": False,
+                    "failure_before_guidance_change_sequences": [],
+                    "lean_checker_sha256": checker_hash,
                     "lean_checker_unchanged": True,
                 },
                 {
@@ -440,7 +609,11 @@ class Stage5AProtocolTests(unittest.TestCase):
                     "initial_guidance_sha256": "0" * 64,
                     "final_guidance_sha256": "0" * 64,
                     "guidance_tree_changed": False,
+                    "local_lean_checks": [],
                     "recorded_local_lean_failures": 0,
+                    "failure_before_guidance_change": False,
+                    "failure_before_guidance_change_sequences": [],
+                    "lean_checker_sha256": checker_hash,
                     "lean_checker_unchanged": True,
                 },
             ]
@@ -473,9 +646,63 @@ class Stage5AProtocolTests(unittest.TestCase):
             )
             connection.commit()
             connection.close()
-            with mock.patch.object(AUDITOR, "RUNS_ROOT", runs_root.resolve()):
+            ledger_path = Path(raw_temp) / "attempt-ledger.sqlite3"
+            connection = sqlite3.connect(ledger_path)
+            connection.execute(
+                "CREATE TABLE protocol_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)"
+            )
+            connection.executemany(
+                "INSERT INTO protocol_meta VALUES (?, ?)",
+                [
+                    ("protocol_id", RUNNER.PROTOCOL_ID),
+                    ("protocol_sha256", protocol_hash),
+                ],
+            )
+            connection.execute(
+                "CREATE TABLE attempts (ordinal INTEGER PRIMARY KEY, task TEXT, "
+                "seed INTEGER, condition TEXT, run_root TEXT, status TEXT, exit_code INTEGER)"
+            )
+            connection.executemany(
+                "INSERT INTO attempts VALUES (?, ?, ?, ?, ?, ?, ?)",
+                [
+                    (
+                        1,
+                        "entry-game-direct",
+                        1729,
+                        "static",
+                        str(Path(raw_temp) / "prior-1"),
+                        "completed",
+                        0,
+                    ),
+                    (
+                        2,
+                        "entry-game-direct",
+                        1729,
+                        "fixed",
+                        str(Path(raw_temp) / "prior-2"),
+                        "failed",
+                        1,
+                    ),
+                    (
+                        3,
+                        "entry-game-direct",
+                        1729,
+                        "evolved",
+                        str(run_root.resolve()),
+                        "completed",
+                        0,
+                    ),
+                ],
+            )
+            connection.commit()
+            connection.close()
+            with (
+                mock.patch.object(AUDITOR, "RUNS_ROOT", runs_root.resolve()),
+                mock.patch.object(AUDITOR, "ATTEMPT_LEDGER_PATH", ledger_path),
+            ):
                 report = AUDITOR.audit_run(run_root)
             self.assertTrue(report["lineage_database_verified"])
+            self.assertTrue(report["durable_attempt_ledger_verified"])
             self.assertEqual(report["status"], "GUIDANCE_PRODUCED_AND_SELECTED_LATER")
 
     def test_transport_has_all_ten_frozen_checkpoints(self) -> None:
@@ -502,7 +729,10 @@ class Stage5AProtocolTests(unittest.TestCase):
 
     def test_fresh_root_and_no_retry_resume_or_import(self) -> None:
         compute = self.protocol["shared_compute"]
-        self.assertEqual(compute["fresh_run_root_parent"], "experiments/eve/.runtime/stage5a-runs")
+        self.assertEqual(
+            compute["fresh_run_root_parent"],
+            "experiments/eve/.runtime/stage5a-dev002-runs",
+        )
         self.assertFalse(compute["retry"])
         self.assertFalse(compute["resume"])
         self.assertFalse(compute["import"])
@@ -512,6 +742,66 @@ class Stage5AProtocolTests(unittest.TestCase):
         self.assertFalse(root.exists())
         source = (SIDECAR_ROOT / "scripts/run_stage5a.py").read_text(encoding="utf-8")
         self.assertNotIn(".runtime/runs/", source)
+
+    def test_attempt_ledger_rejects_out_of_order_and_duplicate_cells(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="stage5a-ledger-") as raw_temp:
+            temp = Path(raw_temp)
+            out_of_order = temp / "out-of-order.sqlite3"
+            with self.assertRaises(RUNNER.CheckError):
+                RUNNER.reserve_attempt(
+                    self.protocol,
+                    task="entry-game-direct",
+                    condition="evolved",
+                    seed=1729,
+                    run_root=temp / "wrong-first",
+                    ledger_path=out_of_order,
+                )
+
+            ledger = temp / "ordered.sqlite3"
+            ordinal = RUNNER.reserve_attempt(
+                self.protocol,
+                task="entry-game-direct",
+                condition="static",
+                seed=1729,
+                run_root=temp / "run-1",
+                ledger_path=ledger,
+            )
+            self.assertEqual(ordinal, 1)
+            with self.assertRaises(RUNNER.CheckError):
+                RUNNER.reserve_attempt(
+                    self.protocol,
+                    task="entry-game-direct",
+                    condition="static",
+                    seed=1729,
+                    run_root=temp / "duplicate",
+                    ledger_path=ledger,
+                )
+            with self.assertRaises(RUNNER.CheckError):
+                RUNNER.reserve_attempt(
+                    self.protocol,
+                    task="entry-game-direct",
+                    condition="fixed",
+                    seed=1729,
+                    run_root=temp / "before-terminal",
+                    ledger_path=ledger,
+                )
+            RUNNER.finish_attempt(
+                1,
+                status="failed",
+                exit_code=1,
+                ledger_path=ledger,
+            )
+            self.assertEqual(
+                RUNNER.reserve_attempt(
+                    self.protocol,
+                    task="entry-game-direct",
+                    condition="fixed",
+                    seed=1729,
+                    run_root=temp / "run-2",
+                    ledger_path=ledger,
+                ),
+                2,
+            )
 
     def test_check_and_dry_run_dispatch_never_execute(self) -> None:
         identity = SimpleNamespace(root=Path("/tmp/eve"), commit="0" * 40)

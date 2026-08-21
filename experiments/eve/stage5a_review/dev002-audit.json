@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.0.0",
+  "status": "FROZEN_NOT_YET_EXECUTED",
+  "protocol": {
+    "id": "EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-002",
+    "version": "2.0.0",
+    "sha256": "6dafcb0d2476cd2f21df0c976f4f380488f1dcec067d7a0e7ba0802631045a05",
+    "detached_hash_verified": true,
+    "superseded_protocol": "EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-001",
+    "superseded_protocol_disposition": "invalidated before execution with zero run roots and zero model sessions"
+  },
+  "review": {
+    "kind": "codex-ai-review",
+    "independent_human_review": false,
+    "review_scope": "DEV-001 invalidation evidence; transitive Lean dependency freezing; durable attempt/order enforcement; local Lean failure and guidance-change ordering; explicit edit surfaces; negative regressions; safe preflight and claim boundaries. No model-generated candidate or Stage 5A run exists to review."
+  },
+  "stage4_preservation": {
+    "stage4_protocol_sha256": "946c556ee5f2a13eafe57a5a5b7db55c3118febb715eaf34aaddd91caf74c037",
+    "stage4_invalidated_attempts_sha256": "12593f39a625bfbeb362b264b746cbc95555b27537b7864e4831ddaf9dc3560d",
+    "stage4_review_sha256": "beae7fb17f06566b890b4a08635eafefc307276073afba4fdf46fcff4a86b9ad",
+    "local_stage4_machine_audit_sha256": "edc5332e822918bcf2635e01320f150825ad1d4e0c0b82a3acf20bc39b86142c",
+    "tracked_stage4_diff_empty": true,
+    "stage4_run_roots_read_by_stage5a_runner": false,
+    "stage4_run_roots_written_by_stage5a_runner": false
+  },
+  "blocking_repairs": [
+    {
+      "id": "S5A-DEV002-R1",
+      "original_blocker": "The transitive EconCSLib Lean import closure was not frozen.",
+      "repair": "A detached environment manifest freezes 109 repository-local Lean modules, lakefile.toml, lake-manifest.json, lean-toolchain, and every manifest dependency revision. Verification recomputes the closure, requires clean dependency checkouts at exact commits, and the frozen entry target builds before any attempt reservation.",
+      "negative_regression": "Closure-hash and build-metadata drift each fail closed.",
+      "review_result": "passed"
+    },
+    {
+      "id": "S5A-DEV002-R2",
+      "original_blocker": "Timestamped roots did not enforce one attempt per cell or matrix order.",
+      "repair": "A protocol-specific SQLite ledger atomically reserves the exact next matrix ordinal before the model subprocess and refuses duplicate, skipped, reordered, or nonterminal-predecessor launches. The post-run auditor opens the ledger read-only and validates its ordered history.",
+      "negative_regression": "Out-of-order, duplicate, and next-cell-before-terminal reservations each fail before model access.",
+      "review_result": "passed"
+    },
+    {
+      "id": "S5A-DEV002-R3",
+      "original_blocker": "A failure and guidance change in one rollout did not prove failure-before-change order.",
+      "repair": "The immutable Lean checker records a contiguous hash chain with checker, candidate, and guidance-tree hashes at each genuine check. A candidate is failure-derived only when a valid failed check has a guidance snapshot different from the final produced tree; the observer and auditor independently enforce that relation.",
+      "negative_regression": "Reordered or tampered check chains fail, and a recorded failure without a later guidance-tree change cannot satisfy liveness.",
+      "review_result": "passed"
+    },
+    {
+      "id": "S5A-DEV002-R4",
+      "original_blocker": "Prompts contradicted Candidate-only editing with a required guidance edit.",
+      "repair": "Both route bundles explicitly distinguish solver/Candidate.lean from the conditional guidance/docs/learned.md surface and forbid every other path.",
+      "negative_regression": "Prompt tests require both surfaces and reject the prior Candidate-only contradiction.",
+      "review_result": "passed"
+    }
+  ],
+  "validation": {
+    "frozen_lean_entry_build": "passed (3096 jobs)",
+    "eve_tests_run": 75,
+    "eve_tests_skipped": 2,
+    "eve_test_failures": 0,
+    "stage5a_targeted_tests": 21,
+    "stage5a_targeted_test_failures": 0,
+    "stage4_machine_audit_no_recheck": "passed",
+    "stage4_review_verifier_with_local_evidence": "passed",
+    "stage5a_protocol_verifier": "passed",
+    "planned_cell_checks": 12,
+    "planned_cell_checks_passed": 12,
+    "planned_cell_dry_runs": 12,
+    "planned_cell_dry_runs_passed": 12,
+    "dry_run_attempt_ledger_touched": false,
+    "stage5a_dev002_runtime_root_exists": false,
+    "dry_run_calls_model": false,
+    "dry_run_consumes_quota": false,
+    "dry_run_writes_formal_results": false
+  },
+  "execution_facts": {
+    "stage5a_execute_invocations": 0,
+    "stage5a_luna_sessions": 0,
+    "stage5a_optimizer_candidates_produced": 0,
+    "stage5a_guidance_selected_later": 0,
+    "sol_replication_started": false
+  },
+  "findings": [
+    {
+      "id": "S5A-DEV002-F1",
+      "severity": "none",
+      "finding": "All four DEV-001 execution blockers have explicit fail-closed repairs and negative regressions under the new protocol identity."
+    },
+    {
+      "id": "S5A-DEV002-F2",
+      "severity": "P1-execution-gate",
+      "finding": "Protocol review does not authorize execution. A later explicit user authorization is still required before the first ledger reservation or Luna session."
+    },
+    {
+      "id": "S5A-DEV002-F3",
+      "severity": "P1-claim-boundary",
+      "finding": "Provider model RNG remains uncontrolled. Even a future liveness observation cannot by itself establish a causal EvE effect, hidden-test generalization, independent review, or model capability."
+    }
+  ],
+  "claim_boundary": "This Codex AI review freezes a repaired public protocol before execution. It does not review a Stage 5A candidate, establish that guidance was produced or selected, authorize --execute, begin Sol replication, or represent independent human review."
+}

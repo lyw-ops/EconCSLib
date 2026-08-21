@@ -39,6 +39,14 @@ def tree_sha256(files: dict[str, str]) -> str:
     return digest.hexdigest()
 
 
+def local_event_sha256(event: dict[str, object]) -> str:
+    payload = {key: value for key, value in event.items() if key != "event_sha256"}
+    encoded = json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
 def derive_stream_seed(experiment_seed: int, stream_name: str) -> int:
     if stream_name not in STREAM_NAMES:
         raise ValueError("unknown EvE RNG stream")
@@ -134,6 +142,25 @@ def _load_lean_check_events(workspace: Path) -> list[dict[str, object]]:
     return events
 
 
+def _validate_lean_check_events(
+    events: list[dict[str, object]], *, checker_sha256: str
+) -> None:
+    previous: str | None = None
+    for sequence, event in enumerate(events, start=1):
+        if event.get("sequence") != sequence:
+            raise RuntimeError("Stage 5A Lean check sequence is not contiguous")
+        if event.get("previous_event_sha256") != previous:
+            raise RuntimeError("Stage 5A Lean check hash chain is invalid")
+        if event.get("checker_sha256") != checker_sha256:
+            raise RuntimeError("Stage 5A Lean check used a different checker")
+        if event.get("event_sha256") != local_event_sha256(event):
+            raise RuntimeError("Stage 5A Lean check event hash is invalid")
+        guidance_hash = event.get("guidance_sha256")
+        if not isinstance(guidance_hash, str) or len(guidance_hash) != 64:
+            raise RuntimeError("Stage 5A Lean check guidance hash is missing")
+        previous = str(event["event_sha256"])
+
+
 def _observed_run_single(self, **kwargs):
     result = _ORIGINAL_RUN_SINGLE(self, **kwargs)
     if self.workspace is None or self.optimizer is None:
@@ -150,6 +177,15 @@ def _observed_run_single(self, **kwargs):
         else None
     )
     initial_checker_hash = getattr(self, "_stage5a_checker_sha256", None)
+    if final_checker_hash is None or final_checker_hash != initial_checker_hash:
+        raise RuntimeError("Stage 5A immutable Lean checker changed during rollout")
+    _validate_lean_check_events(lean_checks, checker_sha256=final_checker_hash)
+    final_guidance_hash = tree_sha256(final_files)
+    failure_before_change = [
+        event
+        for event in failures
+        if event.get("guidance_sha256") != final_guidance_hash
+    ]
     _record(
         {
             "event": "solver_rollout_completed",
@@ -157,10 +193,14 @@ def _observed_run_single(self, **kwargs):
             "workspace_id": self.workspace.name,
             "working_optimizer_id": self.optimizer.id,
             "initial_guidance_sha256": tree_sha256(self.optimizer.files),
-            "final_guidance_sha256": tree_sha256(final_files),
+            "final_guidance_sha256": final_guidance_hash,
             "guidance_tree_changed": final_files != self.optimizer.files,
             "local_lean_checks": lean_checks,
             "recorded_local_lean_failures": len(failures),
+            "failure_before_guidance_change": bool(failure_before_change),
+            "failure_before_guidance_change_sequences": [
+                event["sequence"] for event in failure_before_change
+            ],
             "lean_checker_sha256": final_checker_hash,
             "lean_checker_unchanged": (
                 final_checker_hash is not None
@@ -188,11 +228,12 @@ def _observed_run_single(self, **kwargs):
                     else None
                 ),
                 "recorded_local_lean_failures": len(failures),
+                "failure_before_guidance_change": bool(failure_before_change),
+                "failure_before_guidance_change_sequences": [
+                    event["sequence"] for event in failure_before_change
+                ],
                 "failure_event_hashes": [
-                    hashlib.sha256(
-                        json.dumps(event, sort_keys=True).encode("utf-8")
-                    ).hexdigest()
-                    for event in failures
+                    str(event["event_sha256"]) for event in failure_before_change
                 ],
             }
         )

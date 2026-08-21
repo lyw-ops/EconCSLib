@@ -9,7 +9,9 @@ import hashlib
 import importlib.util
 import json
 import os
+import re
 import shutil
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -22,15 +24,24 @@ SIDECAR_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = SIDECAR_ROOT.parents[1]
 CONFIG_ROOT = SIDECAR_ROOT / "configs" / "eve"
 OVERLAY_ROOT = SIDECAR_ROOT / "overlay"
-RUNS_ROOT = SIDECAR_ROOT / ".runtime" / "stage5a-runs"
+RUNS_ROOT = SIDECAR_ROOT / ".runtime" / "stage5a-dev002-runs"
+ATTEMPT_LEDGER_PATH = (
+    SIDECAR_ROOT / ".runtime" / "stage5a-dev002-attempt-ledger.sqlite3"
+)
 PROTOCOL_PATH = SIDECAR_ROOT / "stage5a_protocol.json"
 PROTOCOL_HASH_PATH = SIDECAR_ROOT / "stage5a_protocol.sha256"
 SEMANTICS_PATH = SIDECAR_ROOT / "stage5a_upstream_semantics.json"
-PROTOCOL_ID = "EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-001"
-PROTOCOL_VERSION = "1.0.0"
+PROTOCOL_ID = "EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-002"
+PROTOCOL_VERSION = "2.0.0"
 CONDITIONS = ("static", "fixed", "evolved")
 SEEDS = (1729, 2718)
 ITERATIONS = 3
+LEAN_ENTRY_MODULE = (
+    "EconCSLib.GameTheory.ExtensiveGame.Interface.Compilation.Discrete"
+)
+LEAN_BUILD_METADATA = ("lakefile.toml", "lake-manifest.json", "lean-toolchain")
+LEAN_ENVIRONMENT_PATH = SIDECAR_ROOT / "stage5a_lean_environment.json"
+_IMPORT_LINE = re.compile(r"^\s*import\s+(.+?)\s*(?:--.*)?$")
 
 
 def _load_stage4_runner():
@@ -138,6 +149,103 @@ def _is_relative_to(path: Path, parent: Path) -> bool:
         return False
 
 
+def _module_path(module: str) -> Path:
+    return REPO_ROOT / Path(*module.split(".")).with_suffix(".lean")
+
+
+def local_lean_import_closure(entry_modules: tuple[str, ...]) -> dict[str, str]:
+    """Return the complete repository-local Lean import closure and hashes."""
+    pending = list(entry_modules)
+    seen: set[str] = set()
+    closure: dict[str, str] = {}
+    while pending:
+        module = pending.pop()
+        if module in seen or not module.startswith("EconCSLib"):
+            continue
+        seen.add(module)
+        path = _module_path(module)
+        if not path.is_file():
+            raise CheckError(f"Frozen local Lean module is missing: {module}")
+        relative = path.relative_to(REPO_ROOT).as_posix()
+        closure[relative] = sha256(path)
+        for line in path.read_text(encoding="utf-8").splitlines():
+            match = _IMPORT_LINE.match(line)
+            if match is None:
+                continue
+            for imported in match.group(1).split():
+                if imported.startswith("EconCSLib") and imported not in seen:
+                    pending.append(imported)
+    return dict(sorted(closure.items()))
+
+
+def _git_stdout(path: Path, *args: str) -> str:
+    result = subprocess.run(
+        ["git", *args],
+        cwd=path,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise CheckError(f"Could not verify frozen dependency checkout: {path.name}")
+    return result.stdout.strip()
+
+
+def load_lean_environment(protocol: dict[str, Any]) -> dict[str, Any]:
+    record = protocol.get("lean_environment_manifest")
+    expected_record = {
+        "path": "experiments/eve/stage5a_lean_environment.json",
+        "sha256": sha256(LEAN_ENVIRONMENT_PATH),
+    }
+    if record != expected_record:
+        raise CheckError("Stage 5A Lean environment manifest hash drifted")
+    try:
+        environment = json.loads(LEAN_ENVIRONMENT_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise CheckError("Stage 5A Lean environment manifest is invalid") from exc
+    if not isinstance(environment, dict):
+        raise CheckError("Stage 5A Lean environment manifest is not an object")
+    return environment
+
+
+def verify_lean_environment_data(environment: dict[str, Any]) -> None:
+    """Fail closed on local imports, Lake metadata, or dependency checkout drift."""
+    entry_modules = environment.get("entry_modules")
+    if entry_modules != [LEAN_ENTRY_MODULE]:
+        raise CheckError("Stage 5A Lean entry modules are not frozen")
+    expected_closure = environment.get("local_import_closure")
+    actual_closure = local_lean_import_closure(tuple(entry_modules))
+    if expected_closure != actual_closure:
+        raise CheckError("Stage 5A local Lean import closure drifted")
+    metadata = environment.get("build_metadata")
+    expected_metadata = {
+        relative: sha256(REPO_ROOT / relative) for relative in LEAN_BUILD_METADATA
+    }
+    if metadata != expected_metadata:
+        raise CheckError("Stage 5A Lean build metadata drifted")
+    manifest = json.loads((REPO_ROOT / "lake-manifest.json").read_text(encoding="utf-8"))
+    expected_packages = environment.get("dependency_checkouts")
+    manifest_packages = {
+        str(item["name"]): str(item["rev"]) for item in manifest.get("packages", [])
+    }
+    if expected_packages != manifest_packages:
+        raise CheckError("Stage 5A Lake dependency revisions drifted")
+    packages_root = REPO_ROOT / str(manifest.get("packagesDir", ".lake/packages"))
+    for name, revision in sorted(manifest_packages.items()):
+        checkout = packages_root / name
+        if not checkout.is_dir():
+            raise CheckError(f"Frozen Lake dependency checkout is missing: {name}")
+        if _git_stdout(checkout, "rev-parse", "HEAD") != revision:
+            raise CheckError(f"Frozen Lake dependency commit drifted: {name}")
+        if _git_stdout(checkout, "status", "--porcelain", "--untracked-files=no"):
+            raise CheckError(f"Frozen Lake dependency checkout is dirty: {name}")
+
+
+def verify_lean_environment(protocol: dict[str, Any]) -> None:
+    verify_lean_environment_data(load_lean_environment(protocol))
+
+
 def _protocol_hash() -> str:
     record = PROTOCOL_HASH_PATH.read_text(encoding="utf-8").split()
     if len(record) != 2 or record[1] != "experiments/eve/stage5a_protocol.json":
@@ -182,6 +290,14 @@ def verify_protocol_assets() -> dict[str, Any]:
     }
     if prompt_hashes != expected_prompt_hashes:
         raise CheckError("Stage 5A solver prompt bundle hash mismatch")
+    if protocol.get("edit_surfaces") != {
+        "solver_candidate": "solver/Candidate.lean",
+        "failure_derived_guidance": "guidance/docs/learned.md",
+        "guidance_requires_prior_recorded_failure": True,
+        "all_other_paths_editable": False,
+    }:
+        raise CheckError("Stage 5A edit surfaces are not explicit and frozen")
+    verify_lean_environment(protocol)
     return protocol
 
 
@@ -442,6 +558,9 @@ def dry_run(identity, spec: Stage5ASpec, *, condition: str, seed: int) -> int:
         "import": False,
         "retry": False,
         "fresh_run_root_parent": str(RUNS_ROOT),
+        "attempt_ledger": str(ATTEMPT_LEDGER_PATH),
+        "attempt_ledger_touched": False,
+        "execution_order_enforced_before_model_access": True,
         "reads_stage4_run_roots": False,
         "provider_model_seed_controlled": False,
         "solver_prompt_bundle_sha256": prompt_bundle_sha256(spec),
@@ -456,6 +575,148 @@ def _new_run_root() -> Path:
     if candidate.parent != RUNS_ROOT.resolve() or candidate.exists():
         raise CheckError("Stage 5A fresh run root is invalid or already exists")
     return candidate
+
+
+def _matrix_cell(
+    protocol: dict[str, Any], *, task: str, condition: str, seed: int
+) -> dict[str, Any]:
+    matches = [
+        item
+        for item in protocol.get("run_matrix", [])
+        if item.get("task") == task
+        and item.get("condition") == condition
+        and item.get("seed") == seed
+    ]
+    if len(matches) != 1:
+        raise CheckError("Stage 5A selection is not one frozen matrix cell")
+    return matches[0]
+
+
+def reserve_attempt(
+    protocol: dict[str, Any],
+    *,
+    task: str,
+    condition: str,
+    seed: int,
+    run_root: Path,
+    ledger_path: Path = ATTEMPT_LEDGER_PATH,
+) -> int:
+    """Atomically reserve the only allowed attempt in the frozen matrix order."""
+    cell = _matrix_cell(protocol, task=task, condition=condition, seed=seed)
+    ordinal = int(cell["ordinal"])
+    ledger_path.parent.mkdir(parents=True, exist_ok=True)
+    connection = sqlite3.connect(ledger_path, timeout=30, isolation_level=None)
+    try:
+        connection.execute("BEGIN IMMEDIATE")
+        connection.execute(
+            "CREATE TABLE IF NOT EXISTS protocol_meta ("
+            "key TEXT PRIMARY KEY, value TEXT NOT NULL)"
+        )
+        connection.execute(
+            "CREATE TABLE IF NOT EXISTS attempts ("
+            "ordinal INTEGER PRIMARY KEY, task TEXT NOT NULL, seed INTEGER NOT NULL, "
+            "condition TEXT NOT NULL, run_root TEXT NOT NULL UNIQUE, "
+            "reserved_at TEXT NOT NULL, status TEXT NOT NULL, exit_code INTEGER, "
+            "UNIQUE(task, seed, condition))"
+        )
+        protocol_hash = _protocol_hash()
+        metadata = dict(connection.execute("SELECT key, value FROM protocol_meta"))
+        expected_metadata = {
+            "protocol_id": PROTOCOL_ID,
+            "protocol_sha256": protocol_hash,
+        }
+        if metadata and metadata != expected_metadata:
+            raise CheckError("Stage 5A attempt ledger belongs to another protocol")
+        if not metadata:
+            connection.executemany(
+                "INSERT INTO protocol_meta(key, value) VALUES (?, ?)",
+                sorted(expected_metadata.items()),
+            )
+        rows = connection.execute(
+            "SELECT ordinal, task, seed, condition, status FROM attempts ORDER BY ordinal"
+        ).fetchall()
+        for expected_ordinal, row in enumerate(rows, start=1):
+            frozen = protocol["run_matrix"][expected_ordinal - 1]
+            if (
+                row[0] != expected_ordinal
+                or row[1] != frozen["task"]
+                or row[2] != frozen["seed"]
+                or row[3] != frozen["condition"]
+            ):
+                raise CheckError("Stage 5A attempt ledger has invalid matrix history")
+        if any(row[0] == ordinal for row in rows):
+            raise CheckError("Stage 5A matrix cell already consumed its only attempt")
+        expected_next = len(rows) + 1
+        if ordinal != expected_next:
+            raise CheckError(
+                f"Stage 5A execution order violation: expected ordinal {expected_next}"
+            )
+        if rows and rows[-1][4] == "reserved":
+            raise CheckError("Previous Stage 5A attempt has no terminal ledger status")
+        connection.execute(
+            "INSERT INTO attempts(ordinal, task, seed, condition, run_root, "
+            "reserved_at, status, exit_code) VALUES (?, ?, ?, ?, ?, ?, 'reserved', NULL)",
+            (
+                ordinal,
+                task,
+                seed,
+                condition,
+                str(run_root.resolve()),
+                dt.datetime.now(dt.UTC).isoformat(),
+            ),
+        )
+        connection.execute("COMMIT")
+        return ordinal
+    except Exception:
+        if connection.in_transaction:
+            connection.execute("ROLLBACK")
+        raise
+    finally:
+        connection.close()
+
+
+def finish_attempt(
+    ordinal: int,
+    *,
+    status: str,
+    exit_code: int,
+    ledger_path: Path = ATTEMPT_LEDGER_PATH,
+) -> None:
+    if status not in {"completed", "failed"}:
+        raise CheckError("Stage 5A terminal attempt status is invalid")
+    connection = sqlite3.connect(ledger_path, timeout=30, isolation_level=None)
+    try:
+        connection.execute("BEGIN IMMEDIATE")
+        cursor = connection.execute(
+            "UPDATE attempts SET status = ?, exit_code = ? "
+            "WHERE ordinal = ? AND status = 'reserved'",
+            (status, exit_code, ordinal),
+        )
+        if cursor.rowcount != 1:
+            raise CheckError("Stage 5A attempt ledger reservation is missing")
+        connection.execute("COMMIT")
+    except Exception:
+        if connection.in_transaction:
+            connection.execute("ROLLBACK")
+        raise
+    finally:
+        connection.close()
+
+
+def _build_frozen_lean_entry(protocol: dict[str, Any]) -> None:
+    target = load_lean_environment(protocol).get("prelaunch_build_target")
+    if target != LEAN_ENTRY_MODULE:
+        raise CheckError("Stage 5A pre-launch Lean build target drifted")
+    completed = subprocess.run(
+        ["lake", "build", target],
+        cwd=REPO_ROOT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise CheckError("Frozen Stage 5A Lean dependency closure did not build")
 
 
 def _materialize_route_overlay(run_root: Path, spec: Stage5ASpec) -> Path:
@@ -489,8 +750,21 @@ def execute(
     ):
         raise CheckError("Pinned Lean toolchain is unavailable in solver isolation")
 
+    _build_frozen_lean_entry(protocol)
+
     run_root = _new_run_root()
-    run_root.mkdir(parents=True)
+    ordinal = reserve_attempt(
+        protocol,
+        task=spec.cli_name,
+        condition=condition,
+        seed=seed,
+        run_root=run_root,
+    )
+    try:
+        run_root.mkdir(parents=True)
+    except Exception:
+        finish_attempt(ordinal, status="failed", exit_code=-1)
+        raise
     runtime_overlay = _materialize_route_overlay(run_root, spec)
     if condition == "static":
         guidance_root = run_root / "static-empty-guidance"
@@ -547,6 +821,9 @@ def execute(
         "turn_budget": 8,
         "timeout_seconds": 900,
         "attempt_limit": 1,
+        "matrix_ordinal": ordinal,
+        "attempt_ledger": str(ATTEMPT_LEDGER_PATH),
+        "attempt_reserved_before_model_access": True,
         "retry": False,
         "resume": False,
         "import": False,
@@ -568,6 +845,11 @@ def execute(
     launch["exit_code"] = completed.returncode
     launch_path.write_text(
         json.dumps(launch, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    finish_attempt(
+        ordinal,
+        status="completed" if completed.returncode == 0 else "failed",
+        exit_code=completed.returncode,
     )
     if completed.returncode == 0:
         audit = subprocess.run(
