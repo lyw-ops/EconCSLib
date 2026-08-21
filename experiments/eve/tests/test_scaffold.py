@@ -641,6 +641,30 @@ assert not bool(transport_evolved.loop.enable_resume)
         )
         self.assertEqual(result.returncode, 0, result.stdout)
 
+        cli_result = RUNNER._run_with_isolated_uv_cache(
+            [
+                uv,
+                "run",
+                "--offline",
+                "--frozen",
+                "--no-sync",
+                "python",
+                str(SIDECAR_ROOT / "scripts" / "run_seeded_eve.py"),
+                f"--config-dir={RUNNER.CONFIG_ROOT}",
+                "--config-name=entry_game_direct",
+                "condition=static",
+                "experiment_seed=1729",
+                "--cfg=job",
+                "--resolve",
+            ],
+            cwd=identity.root,
+            env=env,
+            timeout=60,
+        )
+        self.assertEqual(cli_result.returncode, 0, cli_result.stdout)
+        self.assertIn("label: entry-game-direct-stage4", cli_result.stdout)
+        self.assertIn("experiment_seed: 1729", cli_result.stdout)
+
     def test_accepted_efg_fixture_compiles_in_isolated_solver_home(self) -> None:
         raw_checkout = os.environ.get("EVE_V020_TEST_CHECKOUT")
         if raw_checkout is None:

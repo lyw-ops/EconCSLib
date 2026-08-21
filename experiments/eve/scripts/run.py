@@ -364,7 +364,7 @@ def verify_stage4_protocol_assets() -> None:
         protocol = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise CheckError("Stage 4 protocol is invalid") from exc
-    if protocol.get("id") != "EVE-STAGE4-LUNA-ENTRY-GAME-DEV-001":
+    if protocol.get("id") != "EVE-STAGE4-LUNA-ENTRY-GAME-DEV-002":
         raise CheckError("Stage 4 protocol identity mismatch")
     frozen = protocol.get("frozen_artifacts")
     if not isinstance(frozen, dict) or not frozen:
@@ -917,7 +917,7 @@ def execute(
         )
         launch_record = {
             "schema_version": "1.0.0",
-            "protocol_id": "EVE-STAGE4-LUNA-ENTRY-GAME-DEV-001",
+            "protocol_id": "EVE-STAGE4-LUNA-ENTRY-GAME-DEV-002",
             "protocol_sha256": _sha256(SIDECAR_ROOT / "stage4_protocol.json"),
             "experiment": spec.cli_name,
             "condition": condition,

@@ -1,7 +1,12 @@
 {
   "schema_version": "1.0.0",
-  "id": "EVE-STAGE4-LUNA-ENTRY-GAME-DEV-001",
+  "id": "EVE-STAGE4-LUNA-ENTRY-GAME-DEV-002",
   "status": "FROZEN_NOT_YET_EXECUTED",
+  "supersedes": {
+    "protocol_id": "EVE-STAGE4-LUNA-ENTRY-GAME-DEV-001",
+    "reason": "Invalidated before any model session because the seeded CLI wrapper could not resolve the sidecar Hydra primary config.",
+    "audit": "experiments/eve/stage4_invalidated_attempts.json"
+  },
   "experiment_kind": "public Stage 4 development experiment",
   "tasks": ["entry-game-direct", "entry-game-transport"],
   "conditions": ["static", "fixed", "evolved"],
@@ -35,8 +40,9 @@
     "entry-game-transport-fixed-and-evolved": "458d4ab45a20b57594a70f7ec62f72ba54ea1cdd635091091a70813e0edfaf24"
   },
   "frozen_artifacts": {
-    "experiments/eve/scripts/run.py": "a34293e1646fc27024833e7dac37fae69db357792780c2317abd59dc3f310869",
-    "experiments/eve/scripts/run_seeded_eve.py": "c4af3f9897f6c59df5271f47d58e87db340ec38cbad3c31635892959bbe7fef5",
+    "experiments/eve/scripts/run.py": "fa2371205eadd1271a4b7b548aaef6ba33a025ab44be9860db6806b6b3d4c19a",
+    "experiments/eve/scripts/run_seeded_eve.py": "a719fc6e490b74a2439c09cf000f03d7c70f56721f592e4733e0cdd5778420e5",
+    "experiments/eve/stage4_invalidated_attempts.json": "12593f39a625bfbeb362b264b746cbc95555b27537b7864e4831ddaf9dc3560d",
     "experiments/eve/scripts/evaluate_stage2_entry_game.py": "7dd10441541593ea63d9de70595b786e130a67327a33c8d6cf4c91d63d6c256f",
     "experiments/eve/scripts/evaluate_stage2_pair.py": "51c691f8dda3465532afad59c54714e066c09ba098673473d6ee030c2f891307",
     "experiments/eve/stage4_upstream_semantics.json": "fcc3cf99bfccea259ef0dadc103ed889883dfc4ee1a873a230f7eec194c3449c",

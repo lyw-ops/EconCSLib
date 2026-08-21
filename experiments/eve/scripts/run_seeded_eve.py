@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+import hydra
 from omegaconf import OmegaConf
 
 from scaling_evolve.algorithms.eve import runner
@@ -77,5 +78,11 @@ EveFactory.from_config = classmethod(_seeded_from_config)
 runner.EveFactory = EveFactory
 
 
+@hydra.main(version_base="1.3", config_path=None)
+def main(config) -> None:
+    """Load the caller-supplied absolute config directory, then run pinned EvE."""
+    runner.run(config)
+
+
 if __name__ == "__main__":
-    runner.main()
+    main()

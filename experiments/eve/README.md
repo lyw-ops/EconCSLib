@@ -524,7 +524,7 @@ upstream。Codex/provider adapter 不暴露模型 seed，因此模型采样仍�
 - static/fixed/evolved 语义已由固定 EvE v0.2.0 源码哈希和真实 loader 验证；
   sidecar 为 upstream 原本无配置入口的三个 EvE `random.Random` 流增加了运行前
   domain-separated 播种。模型 RNG 仍不可配置；
-- `EVE-STAGE4-LUNA-ENTRY-GAME-DEV-001` 已冻结 12-cell、24-session 上限和零 retry
+- `EVE-STAGE4-LUNA-ENTRY-GAME-DEV-002` 已冻结 12-cell、24-session 上限和零 retry
   协议；在协议执行前，所有 cell 仍为 not-run；
 - 当前 EFG driver/manifest 已记录显式 `gpt-5.6-luna`、low effort 和
   Codex-default/unpinned verbosity；清单保留 001 score-zero、002 score-one 和

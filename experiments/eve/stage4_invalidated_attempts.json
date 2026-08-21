@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "records": [
+    {
+      "protocol_id": "EVE-STAGE4-LUNA-ENTRY-GAME-DEV-001",
+      "matrix_cell": {
+        "ordinal": 1,
+        "task": "entry-game-direct",
+        "seed": 1729,
+        "condition": "static"
+      },
+      "run_root": "experiments/eve/.runtime/runs/20260821T043941_948015Z",
+      "exit_code": 1,
+      "classification": "invalidated-infrastructure-failure",
+      "failure": "The seeded wrapper reused the upstream Hydra entry point whose relative primary config path resolved as the unavailable configs.eve Python package.",
+      "model_sessions_started": 0,
+      "candidate_outcome": null,
+      "evidence": {
+        "launch_record": "experiments/eve/.runtime/runs/20260821T043941_948015Z/stage4-launch.json",
+        "sampler_seed_audit_created": false,
+        "stdout_prefix": "Primary config module 'configs.eve' not found."
+      },
+      "disposition": "DEV-001 is invalidated in full. The launch defect is repaired and the complete matrix is re-frozen under DEV-002; no DEV-001 result is pooled with DEV-002."
+    }
+  ]
+}
