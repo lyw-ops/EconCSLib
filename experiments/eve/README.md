@@ -1,6 +1,6 @@
 # EvE sidecar for EconCSLib
 
-> **Status: `stage5a-dev002-executed-protocol-defect-detected`.
+> **Status: `stage5a-dev003-frozen-review-ready-not-executed`.
 > Stage 1 smoke 002 is
 > closed at score `1.0`; the public Entry Game direct/transport pair and its 12
 > mutations pass Stage 2; the Stage 3 Codex review record verifies at `1.0`.
@@ -11,12 +11,15 @@
 > evolution result. Stage 5A DEV-002 executed all 12 cells and 36 Luna sessions;
 > one valid local produced/admitted/selected-later chain was observed, but all
 > sessions encountered a frozen Python-3.9 checker defect and 25 rollouts lack a
-> recorded check chain. DEV-002 is preserved as an executed, unclean protocol
-> and does not authorize Sol. Codex review is AI review, not independent human
+> recorded check chain. DEV-002 is preserved as executed-defective history.
+> DEV-003 is a new zero-model-call identity with a Python-3.9-compatible,
+> fail-closed checker contract and a clean committed Lean boundary; all 12
+> checks and dry-runs pass, but it has not executed and does not authorize Sol.
+> Codex review is AI review, not independent human
 > review, and none of this is a hidden benchmark, causal condition result,
 > formal EvE-effect result, or general model-capability claim.**
 
-## 总体技术路线（v3.4，权威入口）
+## 总体技术路线（v3.5，权威入口）
 
 本节是 EconCSLib EVE 研究计划的**唯一技术路线入口**。后续关于研究目标、
 证明路线、实验设计、模型顺序、阶段门槛和任务扩展的决定，都应更新在本节，
@@ -436,7 +439,7 @@ upstream。Codex/provider adapter 不暴露模型 seed，因此模型采样仍�
 观测。fixed/evolved 与 static 的差异也不能作因果解释，因为 provider model RNG
 不可控且每组仅 `n=2`。
 
-#### Stage 5A：Luna guidance-liveness DEV-002（已执行，发现阻断性协议缺陷）
+#### Stage 5A：DEV-002 历史缺陷与 DEV-003 新冻结协议
 
 `EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-001` 经执行前审查发现四项
 阻断缺陷，已在零 run root、零模型 session 的状态下整版作废；其 checkpoint、hash、
@@ -498,7 +501,25 @@ solver Python 为 3.9.6。36/36 session 均至少触发一次异常，共 91 次
 evaluator 得分与 ordinal 6 的有效链作为历史观测保留，但不能形成条件比较、因果、
 模型能力或 Sol replication 结论。`stage5a_review/dev002-audit.json` 是执行前 AI 审查，
 `stage5a_review/dev002-execution-audit.json` 是执行后收口记录。下一步只能准备新的
-协议身份（通常 DEV-003）并另行审查；未经单独授权不得执行或启动 Sol。
+协议身份并另行审查；未经单独授权不得执行或启动 Sol。
+
+后继协议 `EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-003` 版本
+`3.0.0`、SHA-256
+`4c407b3e654d4e38f6f35b48e924863b5a9ef72c1e6b9569996e86f00105ad49`
+现已冻结为 `FROZEN_NOT_YET_EXECUTED`。它使用全新的 config/overlay、RNG domain、
+run-root parent 和 SQLite ledger，不读取或写入 DEV-002 执行状态。两个 immutable
+checker entrypoint 字节一致，使用 Python 3.9.6 可用的 `datetime.timezone.utc`；wrapper
+与 auditor 对缺失、空、畸形、hash/runtime/output 不一致或 final-candidate 不匹配的
+check evidence 全部 fail closed，且未验证的 failure flag 不能伪造 liveness。
+
+DEV-003 将 Lean source 固定到 canonical fork 的 clean commit
+`b490317186ef435670c2eeb16050a214cdbf9fe5`，从 Git object 重算 109-file closure，禁止
+把当前混合用户工作区作为执行源。独立 fresh clone 构建冻结入口并通过 exact-runtime
+safe preflight；该 preflight 在正式 root/ledger 预约前，用 `/usr/bin/python3` 3.9.6、
+同一 checker 和 Lean 工具链记录真实非零 Lean exit 与 stdout/stderr/event hashes。
+12/12 `--check`、12/12 `--dry-run` 与完整 EVE suite 均通过，正式 DEV-003 root/ledger
+仍不存在，模型调用、Luna session/quota 与 DEV-002 state reuse 均为零。审查记录为
+`stage5a_review/dev003-audit.json`；准备完成不是执行授权。
 
 #### Stage 6：七题 EFG 任务扩展
 
@@ -612,6 +633,9 @@ evaluator 得分与 ordinal 6 的有效链作为历史观测保留，但不能�
   failure-derived guidance candidate，其中 1 个在严格后续轮次被选择；但 36/36
   session 均触发 Python-3.9 `datetime.UTC` checker 缺陷，25 个 rollout 没有记录
   check chain，因此 DEV-002 作为 executed-but-unclean 历史证据保留，不授权 Sol；
+- Stage 5A DEV-003 以全新 identity 修复 Python 3.9 checker、exact-runtime safe
+  preflight、required-evidence fail-closed、no-false-liveness、fresh ledger/order 与 clean
+  committed Lean boundary；review/check/dry-run 完成，但零模型调用且未执行；
 - 当前 EFG driver/manifest 已记录显式 `gpt-5.6-luna`、low effort 和
   Codex-default/unpinned verbosity；清单保留 001 score-zero、002 score-one 和
   comparative conditions 的历史 not-run 事实。两次都没有 guidance 更新。冻结 case
@@ -637,6 +661,14 @@ evaluator 得分与 ordinal 6 的有效链作为历史观测保留，但不能�
 
 #### 变更记录
 
+- **2026-08-21 · v3.5**：冻结并审查独立 Stage 5A DEV-003（protocol v3.0.0）。两份
+  checker 兼容 exact Python 3.9.6；safe preflight 在正式状态前以相同 runtime、checker、
+  Lean toolchain 与 clean committed source 记录真实失败事件；wrapper/auditor 对空、
+  畸形、漂移或候选不匹配证据 fail closed，未验证的 failure 不能建立 liveness。新的
+  roots/ledger/order/RNG domain 不继承 DEV-002。独立 fresh clone 验证 109-file closure
+  并构建入口；12 项 DEV-003 定向测试、87 项完整 EVE 测试（2 项逐项记录跳过）、12 个
+  check 与 12 个 dry-run 通过。零 DEV-003 模型调用、session、quota、正式 root/ledger；
+  状态停在 `FROZEN_NOT_YET_EXECUTED`，执行与 Sol 均需另行授权。
 - **2026-08-21 · v3.4**：经明确授权一次性执行 Stage 5A DEV-002 全部 12-cell、
   36-session Luna 矩阵，零 retry/resume/import，账本与 12 份 machine audit 均通过
   且重跑逐字节一致。候选得分为 direct 三条件均 `0/6`，transport static `3/6`、
@@ -1005,6 +1037,34 @@ execution 使用 fresh ignored run root，并写 `stage4-launch.json` 与
 `eve-sampler-seed.json`。Stage 4 matrix 由当前用户授权执行；执行记录仍需逐 cell
 审计，不因某一 cell 成功而自动补跑失败 cell。
 
+Stage 5A DEV-003 的安全入口还要求一个 detached-at-frozen-commit、tracked-clean 的
+Lean checkout。下面两个命令均为零模型调用；`--check` 会实际构建冻结入口并在一次性
+workspace 中运行 deliberately-failing exact-runtime checker，`--dry-run` 只预览：
+
+```bash
+python3 experiments/eve/scripts/run_stage5a_dev003.py \
+  --eve-checkout /absolute/path/eve-v0.2.0 \
+  --lean-checkout /absolute/path/clean-econcslib-at-b490317 \
+  --experiment entry-game-direct \
+  --protocol-id EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-003 \
+  --condition static \
+  --experiment-seed 1729 \
+  --check
+
+python3 experiments/eve/scripts/run_stage5a_dev003.py \
+  --eve-checkout /absolute/path/eve-v0.2.0 \
+  --lean-checkout /absolute/path/clean-econcslib-at-b490317 \
+  --experiment entry-game-direct \
+  --protocol-id EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-003 \
+  --condition static \
+  --experiment-seed 1729 \
+  --dry-run
+```
+
+不得把当前 mixed worktree 传给 `--lean-checkout`。DEV-003 的 `--execute` 路径虽被
+fail-closed launcher 保护，但本次 freeze/review 没有授予调用权限，也不得附加
+`--acknowledge-model-quota`。
+
 Execution remains offline at the dependency and web-search layers
 (`uv --offline --frozen --no-sync`, Codex web search disabled), but Codex agent
 calls can still consume the authentication and quota configured by the user.
@@ -1080,7 +1140,7 @@ development outcomes at `n=2`, not significance or causal claims. All eight
 evolved rollouts left guidance unchanged and produced zero optimizer
 candidates; evolved was enabled but inactive.
 
-## Stage 5A guidance-liveness protocol (executed with a blocking defect)
+## Stage 5A guidance-liveness protocols
 
 `stage5a_protocol.json` and `stage5a_protocol.sha256` freeze the independent
 protocol `EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-002`. Its frozen
@@ -1148,6 +1208,24 @@ Any repair requires a new protocol identity, fresh roots and ledger, exact
 isolated-runtime checker preflight, fail-closed missing-check evidence, review,
 and separate execution authorization.
 
+That repair is frozen as `stage5a_dev003_protocol.json` plus its detached hash,
+under identity `EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-003` version
+`3.0.0`. DEV-003 supersedes DEV-002 only as a possible future clean execution;
+it does not rewrite, retry, resume, import, or reclassify DEV-002 evidence. Its
+status is `FROZEN_NOT_YET_EXECUTED` and its review is
+`stage5a_review/dev003-audit.json`.
+
+DEV-003 freezes Python-3.9-compatible byte-identical checkers, exact-runtime
+preflight before formal state, mandatory nonempty and final-candidate-matched
+evidence, and a post-run auditor that revalidates the clean source/preflight
+record as well as every rollout chain. It also freezes a fresh matrix ledger,
+run-root parent, RNG domain, and clean canonical Lean source commit. An
+independent fresh clone at that commit reproduced the 109-file environment,
+built the entry target, and ran the real checker preflight. Every planned cell
+passed `--check` and `--dry-run`; this consumed zero model calls or Luna quota
+and created no formal DEV-003 root or ledger. These are readiness facts, not
+guidance-liveness outcomes or execution authorization.
+
 Any proposed `Arena`, controlled-carrier, StructuralCore-closure, or
 Canonical/Frontend API change discovered later must return to the documented
 EFG freeze/governance human decision process. A micro-pilot score never
@@ -1189,6 +1267,7 @@ python3 -m unittest discover -s experiments/eve/tests -v
 python3 experiments/eve/scripts/audit_stage4.py --no-recheck
 python3 experiments/eve/scripts/verify_stage4_review.py --require-local-evidence
 python3 experiments/eve/scripts/verify_stage5a_protocol.py
+python3 experiments/eve/scripts/verify_stage5a_dev003_protocol.py
 python3 -m json.tool experiments/eve/UPSTREAM.lock.json >/dev/null
 python3 -m json.tool experiments/eve/smoke/case.json >/dev/null
 python3 -m json.tool experiments/eve/efg_reachability_micro/case.json >/dev/null
@@ -1203,9 +1282,11 @@ the task's validation record.
 - Exactly two bounded evolved-labelled Stage 1 engineering smokes and 12
   Stage 4 public development cells have run. Stage 4 produced no optimizer
   candidate, so guidance-evolution effectiveness remains untested.
-- Stage 5A is frozen but has not executed. It has produced and selected zero
-  guidance candidates; its lineage and liveness claims are protocol properties
-  awaiting a later authorized Luna run, not experimental outcomes.
+- Stage 5A DEV-001 was invalidated before execution. DEV-002 executed but has a
+  blocking checker/auditor defect; its one local liveness chain is historical,
+  not a clean comparison. DEV-003 is frozen but unexecuted and has produced or
+  selected zero guidance candidates; its lineage and liveness contracts await
+  a separately authorized Luna run.
 - Neither public synthetic/local task can support a benchmark,
   model-capability, EvE-improvement, or minimal-core optimization conclusion.
 - EvE has no native dry-run at the pin; the sidecar prevents invocation.

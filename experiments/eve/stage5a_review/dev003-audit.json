@@ -1,0 +1,98 @@
+{
+  "schema_version": "1.0.0",
+  "reviewed_at": "2026-08-21T12:09:34Z",
+  "status": "FROZEN_REVIEW_READY_NOT_EXECUTED",
+  "review": {
+    "kind": "codex-ai-review-plus-deterministic-machine-validation",
+    "independent_human_review": false,
+    "blocking_findings": 0,
+    "conclusion": "DEV-003 closes the identified DEV-002 protocol-engineering defects and is frozen for review. This is not execution authorization."
+  },
+  "protocol": {
+    "id": "EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-003",
+    "version": "3.0.0",
+    "status": "FROZEN_NOT_YET_EXECUTED",
+    "sha256": "4c407b3e654d4e38f6f35b48e924863b5a9ef72c1e6b9569996e86f00105ad49",
+    "lean_environment_sha256": "d22f9e0f2b7e1cfcee51b5877c86c76520f0522c5d4ed20eee83b742a9e80896",
+    "upstream_semantics_sha256": "c6f48faf2b330e6d54d68d82b0928706f060b4e1acac727c8c8c4bb31531cb96"
+  },
+  "history": {
+    "stage5a_dev001": "invalidated-before-execution; zero run roots and zero model sessions",
+    "stage5a_dev002": "executed-but-defective historical evidence; 12 cells and 36 Luna sessions are consumed and immutable",
+    "stage5a_dev003": "new identity with no imported DEV-002 runtime, population, guidance, candidate, session, run root, or ledger state"
+  },
+  "defects_closed": [
+    "Both immutable checker entrypoints use datetime.timezone.utc and compile under the exact Python 3.9.6 runtime.",
+    "Safe preflight runs the exact checker through /usr/bin/python3 against a deliberately invalid candidate in a disposable workspace using the pinned clean Lean source and toolchain.",
+    "Safe preflight validates the real Lean exit status, stdout and stderr hashes and byte counts, and one hash-chained checker event before any formal run root or ledger reservation; recursive state snapshots and exact ledger hashes must remain unchanged even when prior formal state exists.",
+    "The runtime wrapper and post-run auditor reject missing, empty, malformed, runtime-drifted, hash-chain-invalid, output-mismatched, or final-candidate-mismatched checker evidence.",
+    "Failure flags without validated nonempty failure events cannot establish failure-derived guidance or liveness.",
+    "DEV-003 uses a new RNG domain, run-root parent, durable attempt ledger, exact transactional matrix order, and rejects DEV-002 ledger identity.",
+    "The Lean boundary is the canonical repository at commit b490317186ef435670c2eeb16050a214cdbf9fe5 with a 109-file committed closure; the mixed operator worktree is forbidden as an execution source."
+  ],
+  "clean_source_verification": {
+    "repository": "https://github.com/lyw-ops/EconCSLib",
+    "commit": "b490317186ef435670c2eeb16050a214cdbf9fe5",
+    "method": "A separate fresh Git clone was detached at the frozen commit, configured with the canonical remote, supplied the exact tracked-clean pinned dependency checkouts, and remained tracked-clean after verification.",
+    "committed_lean_closure_files": 109,
+    "entry_build": "passed",
+    "protocol_environment_verifier": "passed",
+    "mixed_user_worktree_files_included": false
+  },
+  "matrix_validation": {
+    "planned_cells": 12,
+    "check_passed": 12,
+    "dry_run_passed": 12,
+    "execute_invocations": 0,
+    "preflight_event_sha256_by_ordinal": [
+      "e8d3551912b92d7e749207fb6ac3ee7abdf64d65692a6cb622e57c456f6c8590",
+      "0c07055f5951af098a19c18465ca6bde08a3cd962a6bcfcadfb68856b82a9797",
+      "c1cc3556fe1bf56c676b50f60e0ccfd548eb5f38b7b650daf79b9df726c9e8e3",
+      "ab0f9924b6426e4f762ae78aa10fe7b07bc4e51916bedc37815e40231bf4ef90",
+      "e817becc4201c0dd5e01ee2a9d61286face9e8db38bce089b6bc6da5f03181fb",
+      "e07b97b44f98aa1fe63ef2ab598d46810a529cce91c2516452160accde62e3ba",
+      "bcc52c9a6890d1a3c64ff546685079be52dc0b908d54f420d3baaa3cedd187a7",
+      "c6333be013753cbfd56c82203da8c797e7323b2226cb6b7af57919fdebc4c25f",
+      "9436af8e97999fc316a71631afccbc46f56a67f32e79830db68307babe757ee3",
+      "27ee4b23ec154cbee4a4dea7617e8adc7f669218eb7521d5454e814fbf61cf12",
+      "063950a2705f86aa6877c013dbe9ac17faf777ecf0174affb7d4132760847620",
+      "7ec6cfc32f60a81f8de9ce95fa37e0d024e66147948579de0631be4987b26ddd"
+    ],
+    "exact_python_invocation": "/usr/bin/python3",
+    "exact_python_version": "3.9.6",
+    "exact_python_reported_executable": "/Library/Developer/CommandLineTools/usr/bin/python3",
+    "checker_sha256": "65470a92468dd255879d4fe795a0ae03bb4203bd10a13191e2c1ac3bdcf89f34",
+    "each_preflight_observed_nonzero_real_lean_exit": true,
+    "each_preflight_captured_real_output": true
+  },
+  "zero_model_and_state_evidence": {
+    "dev003_model_calls": 0,
+    "dev003_luna_sessions": 0,
+    "dev003_luna_quota_consumed": 0,
+    "formal_dev003_run_root_exists": false,
+    "formal_dev003_attempt_ledger_exists": false,
+    "dev002_state_inherited_or_written": false,
+    "dev002_ledger_sha256_after_validation": "e593bf5726b20aa20f1cbb15882b7c2e9e169080233f346d67b48d6543a37922"
+  },
+  "validation": {
+    "dev003_targeted_tests": "12 passed",
+    "full_eve_tests": "87 passed, 2 skipped",
+    "skips": [
+      "test_accepted_efg_fixture_compiles_in_isolated_solver_home: no explicit locked EvE v0.2.0 checkout supplied to unittest discovery",
+      "test_actual_hydra_loader_parses_both_configs_when_checkout_is_supplied: no explicit locked EvE v0.2.0 checkout supplied to unittest discovery"
+    ],
+    "stage4_local_evidence_verifier": "passed",
+    "stage4_no_recheck_audit": "passed",
+    "dev002_historical_protocol_verifier": "passed",
+    "dev003_detached_hash_and_committed_tree_verifier": "passed",
+    "dev003_clean_checkout_environment_verifier": "passed"
+  },
+  "authorization_boundary": {
+    "dev003_execution_authorized": false,
+    "dev003_model_or_quota_use_authorized": false,
+    "dev002_retry_resume_import_or_repair_authorized": false,
+    "sol_replication_authorized": false,
+    "next_required_authorization": "A separate explicit user authorization is required before any DEV-003 --execute invocation or Luna quota use."
+  },
+  "claim_boundary": "This record supports only reproducible protocol engineering and zero-model preflight readiness. It does not report DEV-003 guidance production or selection, a clean comparison, causal EvE effect, model capability, benchmark readiness, evaluation completion, independent human review, or Sol readiness."
+}

@@ -1,18 +1,19 @@
 # EvE experiment readiness
 
-- **Current status:** `STAGE5A_DEV002_EXECUTED_PROTOCOL_DEFECT_DETECTED`;
+- **Current status:** `STAGE5A_DEV003_FROZEN_REVIEW_READY_NOT_EXECUTED`;
   Stage 1 smoke 002 is closed at score one, Stage 2 direct/transport/pair and
   12 mutations are closed, Stage 3 Codex review verifies at score one, and
   all 12 Stage 4 Luna development cells completed and passed machine re-audit;
   Stage 5A DEV-001 is invalidated before execution, while all 12 DEV-002 cells
   and 36 Luna sessions executed once before post-run review found a blocking
-  Python-3.9 checker defect
+  Python-3.9 checker defect; the separate DEV-003 identity closes those
+  protocol-engineering defects and is frozen after zero-model validation
 - **Not valid statuses:** `benchmark-ready`, `evaluation-complete`,
   `internal-pilot-complete`, or any model-capability conclusion
 - **Formal pilot default:** disabled and not configured
-- **Paid/long EvE execution:** the 12-cell public Stage 4 and 12-cell public
-  Stage 5A development matrices are complete; no benchmark, private evaluation,
-  formal run, or Sol replication has occurred
+- **Paid/long EvE execution:** the 12-cell public Stage 4 and defective DEV-002
+  Stage 5A matrices are complete; DEV-003 has not executed; no benchmark,
+  private evaluation, formal run, or Sol replication has occurred
 - **EvE runner / `--execute`:** 26 executions: two Stage 1 smokes, 12 fresh
   Stage 4 cells, and 12 fresh Stage 5A cells; Stage 0 has not run
 - **Luna sessions:** one read-only access smoke, two Stage 1 solver sessions,
@@ -31,7 +32,7 @@ The external checkout at `/Users/lyuyuwei/Documents/eve-v0.2.0` matches the
 official repository, annotated tag object, peeled commit, LICENSE, NOTICE,
 `pyproject.toml`, `uv.lock`, and `.python-version`. `uv sync --locked`, the real
 Hydra loader, the historical 45-test Stage 1 suite plus the current Stage 2--5A
-extensions (latest full result: 75 tests run, 2 skipped), `--check`, `--dry-run`, the
+extensions (latest full result: 87 tests run, 2 skipped), `--check`, `--dry-run`, the
 launcher accepted fixture, and accepted-fixture compilation under an isolated
 solver HOME pass. Twenty-six EvE executions and their bounded Luna sessions are
 recorded below; the only other model call is the separately bounded access
@@ -197,6 +198,26 @@ and the ordinal-6 chain remain historical observations; they do not establish a
 causal effect or model capability and do not authorize Sol. Review remains
 Codex AI, not independent human review.
 
+DEV-003 is now the review-ready, unexecuted successor protocol:
+`EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-003` version `3.0.0`, hash
+`4c407b3e654d4e38f6f35b48e924863b5a9ef72c1e6b9569996e86f00105ad49`.
+It freezes new roots, ledger, order, RNG domain, config and overlay assets and
+imports no DEV-002 runtime state. Both checker entrypoints are byte-identical
+and Python-3.9-compatible. The wrapper and auditor require a nonempty valid
+event chain, final-candidate match, exact Python/checker/command/output/exit
+identity, and validated nonzero failures before failure-derived guidance can
+count toward liveness.
+
+The DEV-003 Lean environment is reproducible from the canonical committed tree
+at `b490317186ef435670c2eeb16050a214cdbf9fe5`, not from the mixed operator
+worktree. A separate fresh clone reproduced its 109-file closure, clean pinned
+dependencies and entry build. All 12 `--check` calls ran a real deliberately
+failing Lean candidate through exact `/usr/bin/python3` 3.9.6 in a disposable
+workspace; all 12 dry-runs also passed. They made zero model calls, consumed
+zero Luna quota, created no formal DEV-003 root or ledger, and did not inherit
+or mutate DEV-002 state. DEV-003 remains `FROZEN_NOT_YET_EXECUTED` and needs
+separate user authorization before `--execute`.
+
 ## Hard-disabled formal experiment boundary
 
 The launcher allow-list contains exactly `mathlib-style-smoke`,
@@ -216,6 +237,13 @@ Unknown task, protocol, condition, or seed hard-fails. Its check/dry-run paths
 never dispatch the execution function. All 12 DEV-002 attempt slots are now
 consumed; the ledger rejects a rerun. Repair requires a new protocol identity,
 fresh roots and ledger, new review, and separate execution authorization.
+
+The successor `run_stage5a_dev003.py` accepts only the same frozen task,
+condition, and seed matrix under the exact DEV-003 identity and additionally
+requires a separate tracked-clean Lean checkout at the frozen source commit.
+Its check path builds the frozen entry and runs safe preflight before formal
+state; its dry-run path previews only. Neither dispatches execution. DEV-003
+execution and Luna quota use are not currently authorized.
 
 ## Public Stage 4 Entry Game three-condition study
 
@@ -285,6 +313,13 @@ valid local production/admission/later-selection chain, but the blocking
 checker-runtime defect above prevents classifying DEV-002 as a clean matrix or
 authorizing Sol replication. The tracked execution record is
 `stage5a_review/dev002-execution-audit.json`.
+
+DEV-003 retains the same declared 12-cell scientific shape only for a possible
+future clean run. It has zero completed cells and zero model sessions. Its
+machine-review record `stage5a_review/dev003-audit.json` establishes protocol
+identity, clean-source reproducibility, exact-runtime preflight, fail-closed
+evidence, and zero formal state only; it contains no produced/admitted/selected
+guidance result.
 
 ## Gates before a real Mathlib-style experiment
 
