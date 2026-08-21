@@ -14,6 +14,23 @@ Last updated: 2026-08-21
 Always verify the live branch, HEAD, upstream, and worktree instead of assuming
 the checkpoint above is still current.
 
+## Handoff repository policy
+
+- Treat <https://github.com/lyw-ops/EconCSLib> as the canonical handoff
+  repository for this work.
+- At the end of every completed task, update this handoff document with the
+  completed scope, validation results, execution status, remaining blockers,
+  and next bounded task.
+- Commit and push every completed task's in-scope tracked changes to the
+  current experimental branch on that repository; completed tracked work must
+  not remain local-only.
+- Stage only files owned by the completed task. Never mix unrelated or
+  user-owned worktree changes into a handoff commit.
+- Before declaring handoff complete, verify the pushed branch and commit and
+  confirm that every tracked input needed to reproduce the result is present
+  in the handoff repository. Ignored runtime evidence remains governed by the
+  local-evidence policy below.
+
 ## Research direction
 
 EVE studies generated Lean proofs for algorithmic game theory with deterministic
