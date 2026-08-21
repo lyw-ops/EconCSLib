@@ -151,3 +151,112 @@ independently, but a fresh clone of the handoff repository cannot yet reproduce
 the frozen local Lean environment. Resolve that scope explicitly or prepare a
 successor protocol against a clean committed Lean tree before claiming a
 repository-complete handoff.
+
+## Bootstrap prompt for the next conversation
+
+Copy the following prompt into the next Codex conversation. It is intentionally
+complete enough to establish the historical result, the current blocker, the
+next bounded task, and the stop conditions without relying on chat history.
+
+```text
+打开 `/Users/lyuyuwei/Documents/EconCSlib`，在分支
+`experiment/eve-stage5a` 上继续 EVE Stage 5A。先核对事实，再修改；不要仅凭这段提示词
+假定仓库状态没有变化。
+
+首先完整阅读并遵守仓库根 `AGENTS.md`（若由系统提供，也要按其全文执行），然后完整阅读：
+
+- `experiments/eve/AGENTS.md`
+- `experiments/eve/HANDOFF.md`
+- `experiments/eve/README.md`
+- `experiments/eve/READINESS.md`
+- `experiments/eve/stage5a_review/dev002-execution-audit.json`
+
+同时检查 `git status --short --branch`、最近提交、所有 remotes、目标文件及相邻实现，核对
+分支是否仍跟踪 `fork/experiment/eve-stage5a`。交接仓库是
+`https://github.com/lyw-ops/EconCSLib`；DEV-002 的已推送执行归档点是提交
+`9269f3ea991e8e7e099dd541b870f37331796dc6`。工作区包含大量用户拥有的无关修改，
+必须完整保留；只能暂存并提交本任务实际拥有的文件，不能顺手格式化、还原或提交其他修改。
+每次任务完成后必须更新 `experiments/eve/HANDOFF.md`，将本任务改动提交并推送到该
+交接仓库的当前分支，再核对远端提交确实存在。
+
+你需要掌握的历史事实如下：
+
+1. Stage 4 已完成，但 evolved rollouts 没有产生 optimizer candidates，因此没有证明
+   guidance evolution。Stage 4 的 tracked records 和本地 `.runtime` 证据都必须保留。
+2. Stage 5A DEV-001 在执行前整体作废；它没有建立 run root，也没有启动模型会话。
+3. DEV-002 协议是
+   `EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-002`，版本 `2.0.0`，
+   hash 为
+   `6dafcb0d2476cd2f21df0c976f4f380488f1dcec067d7a0e7ba0802631045a05`。
+   其冻结输入里的 `FROZEN_NOT_YET_EXECUTED` 是不可变历史字段，执行后也不能重写。
+4. DEV-002 已按冻结顺序执行完 12/12 cells、36/36 Luna sessions；无 retry、resume、
+   import，ledger 全部 exit code 0，12 个 post-run machine audits 可字节级复现。
+   raw candidate passes 为：direct static `0/6`、fixed `0/6`、evolved `0/6`；
+   transport static `3/6`、fixed `2/6`、evolved `1/6`。共生成并 admitted 四个
+   failure-derived guidance candidates。direct/2718/evolved iteration 1 产生的
+   `optimizer_2507e8392dc3` 在 iterations 2 和 3 被再次选择，形成一个真实的本地
+   `GUIDANCE_PRODUCED_AND_SELECTED_LATER` liveness chain。
+5. DEV-002 同时存在阻断性冻结 checker 缺陷：isolated solver 是 Python 3.9.6，
+   immutable checkers 却调用 Python 3.11 才有的 `datetime.UTC`。36/36 sessions
+   至少触发一次该错误，共 91 次失败 checker invocations。运行时 workaround 只让
+   11 个 sessions 留下 57 个有效 recorded events；25/36 rollouts 的 check list 为空。
+   现有 auditor 错误地允许空 list。因此 DEV-002 只能作为“执行过但协议不干净”的历史
+   证据：它支持 raw external-evaluator observations 和一个本地 liveness mechanism
+   observation，但不支持 clean comparison、causal EvE effect、model capability、
+   benchmark readiness、evaluation completion 或 Sol readiness 的主张。
+6. DEV-002 的所有尝试和 36 个 Luna sessions 都已消耗。绝对不要 retry、resume、
+   import、修补后续跑、重写冻结工件或复用其 runtime/population/guidance/candidate/session。
+   不要删除或改写 Stage 4/DEV-001/DEV-002 历史证据。
+7. `.runtime` 被 Git 忽略，只存在于这台机器；GitHub 上的
+   `stage5a_review/dev002-execution-audit.json` 是 tracked 摘要。缺少 `.runtime` 的
+   fresh clone 不能反过来否认历史执行，但完整复核需本机证据。
+8. `stage5a_lean_environment.json` 冻结的 Lean closure 与当前混合工作区中 47 个
+   用户拥有、尚未提交的 Lean 修改相交。这 47 个文件不属于当前 EVE 任务，未经另行
+   明确授权不能暂存或提交。因此当前 fork 的 fresh clone 尚不能复现 DEV-002 当时冻结的
+   本地 Lean environment。后继协议必须解决这个来源边界，不能掩盖它。
+
+你的本次任务是：仅准备、验证、审查并冻结一个新的 Stage 5A 开发协议身份（通常命名为
+DEV-003），以修复 DEV-002 暴露的 checker/runtime、preflight 和 fail-closed 证据缺陷。
+这是 review-only / zero-model-call 的协议工程任务。完成可复核交接后立即停止；未经用户
+另行明确授权，不得执行 DEV-003，不得消耗 Luna quota，不得开始 Sol replication。
+
+DEV-003 至少必须满足以下要求：
+
+- 使用新的 protocol ID、version、detached hashes、fresh run-root parent 和 fresh
+  attempt ledger；绝不复用 DEV-002 的执行状态或工件。将 DEV-002 保留为
+  executed-but-defective historical evidence，通过新的 supersession/准备记录前进，
+  不得静默修补旧冻结协议。
+- immutable checker 必须兼容 exact isolated solver 的 Python 3.9.6，例如使用
+  `datetime.timezone.utc` 而不是 `datetime.UTC`；同时核对所有 checker entry points，
+  不能只修一份副本。
+- safe preflight 必须在 disposable workspace 中，以计划执行时完全相同的 isolated
+  solver Python、checker 文件、Lean 工具链和入口实际运行 immutable checker；必须
+  验证一次真实 check event 被记录，并检查真实 Lean stdout/stderr/exit status。这个
+  preflight 必须保持零模型调用、零 Luna quota、零正式 run root、零正式 ledger 写入。
+- wrapper、auditor 和 protocol contract 必须 fail closed：凡是冻结契约要求 checker
+  反馈的 rollout/candidate edit，缺少、为空、解析失败或与候选不匹配的 check evidence
+  都必须导致失败。明确并冻结“何时至少需要一个有效 checker event”的规则；空 check
+  list 不能再被 machine audit 接受，也不能由失败事件伪造 liveness。
+- 添加覆盖 Python 3.9 compatibility、exact-runtime safe preflight、missing/empty check
+  rejection、malformed/mismatched event rejection、no false liveness、fresh ledger/order
+  的回归测试；检查已有相邻 Stage 5A 测试，避免重复或削弱断言。
+- 解决可复现的 Lean source boundary。不要提交那 47 个用户文件。优先把 DEV-003 冻结到
+  一个干净、已提交、fresh-clone 可验证的 Lean tree；如果在不纳入这些用户修改的前提下
+  无法忠实确定目标，就停止并把准确 blocker 与所需授权写入 HANDOFF，而不是猜测、复制
+  或扩大任务范围。宣称 DEV-003 review ready 前，fresh clone 必须能验证其冻结环境。
+- 更新所有受影响的 protocol、review/audit、README、READINESS 和 HANDOFF 记录，使
+  DEV-001 invalidated、DEV-002 executed-defective、DEV-003 frozen-not-executed 三者语义
+  清楚且不可混淆。不要把 natural-language claim 当成机器验证。
+
+按改动风险运行验证，至少包括：完整 EVE tests、相关 Stage 5A targeted tests、protocol
+verifier、所有计划单元的 `--check`/`--dry-run`、detached hash/environment verification、
+`git diff --check`，并明确验证 DEV-003 的 preflight 没有模型调用、没有正式 run root、
+没有正式 ledger、没有继承 DEV-002 state。若测试依赖环境而跳过，逐项说明，不能笼统称
+“全部通过”。
+
+最终只提交本任务拥有的 tracked files，先审查 staged diff，再 commit 和 push 到
+`fork/experiment/eve-stage5a`。最后报告：新协议身份和 hash、具体修复、review 结论、
+测试结果、zero-model-call 证据、fresh-clone reproducibility 状态、提交 hash 与 GitHub
+链接，以及仍需用户授权的下一动作。停在 DEV-003 `FROZEN_NOT_YET_EXECUTED`；不要把
+“准备完成”解释为执行授权。
+```
