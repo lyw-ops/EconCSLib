@@ -1,0 +1,11 @@
+defaults:
+  - runtime: sidecar
+  - loop: smoke
+  - driver: codex_luna_offline
+  - logger: local
+  - application: efg_reachability_micro
+  - optimizer: efg_reachability_micro
+  - evaluation: efg_reachability_micro
+  - _self_
+
+label: efg-reachability-micro

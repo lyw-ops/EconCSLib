@@ -1,0 +1,220 @@
+{
+  "schema_version": "1.3.0",
+  "manifest_status": "PUBLIC_STAGE_1A_LUNA_MANUAL_SMOKE_002_COMPLETED_SCORE_ONE_STAGE1_COMPLETE",
+  "baseline_git_commit": "10341bd230c8a0f02153d0d398e57826b31df2d8",
+  "baseline_worktree_state": "dirty-user-work-preserved",
+  "task_id": "EVE-EFG-REACHABILITY-MICRO-001",
+  "paired_seed_run_id": "EVE-EFG-REACHABILITY-PAIR-001",
+  "solver": {
+    "model": "gpt-5.6-luna",
+    "model_access_status": "verified-by-access-smoke",
+    "reasoning_effort": "low",
+    "model_verbosity": "codex-default-unpinned",
+    "model_verbosity_status": "upstream-v0.2.0-driver-does-not-expose",
+    "max_turns": 10,
+    "timeout_seconds": 900,
+    "attempt_budget": 1,
+    "authentication_type": "ChatGPT subscription"
+  },
+  "eve_budget": {
+    "max_iterations": 1,
+    "phase2_workers": 1,
+    "solver_examples_per_worker": 1,
+    "optimizer_examples_per_worker": 1,
+    "produced_optimizers": 1
+  },
+  "artifacts": {
+    "seed_candidate_sha256": "ef72862105a73cbdc3911f054295479e5caa048780bffa3e6f1c27b755d77231",
+    "evaluator_sha256": "a723fbc8dd9d37b25337ea5a01d778b820a96d4498662a6768e2b654efc5cdcc",
+    "static_no_specialized_guidance_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "fixed_initial_guidance_sha256": "9efbd0f38c38cf42864d8ac55ca69de75207804c10f4bf9b08896e73db090ebe",
+    "eve_evolved_initial_guidance_sha256": "9efbd0f38c38cf42864d8ac55ca69de75207804c10f4bf9b08896e73db090ebe",
+    "luna_driver_sha256": "bdb8ad69334ba97616586bf241853569ab60148b50830386c6294f5028e5f34d",
+    "efg_top_level_config_sha256": "9b81b19fe346c23c0a7cda10cbf6af740a9f246211ce8dab94e6fe9d54abda0f",
+    "sidecar_runner_sha256": "3ba8621c205f965f2b5c6b4c66921f1ea1858127978d4948488f1e3129972cd1",
+    "manual_smoke_001_prompt_sha256": "c2e431e56934c78c94a004d1b2b50932e89a0f53cae61869c006c61fdfe65a61",
+    "manual_smoke_001_report_sha256": "a9a22193fb0868e90201af5c157021cce5d349b80e3bacf59ca7158633ec0306",
+    "manual_smoke_001_candidate_sha256": "26a9d024789d4c8b3d75c652086b368e9cd696e95e46c45c2c71e05aa75c0e1c",
+    "manual_smoke_001_evaluation_sha256": "871f6f168745a91e678a96679e9c15de28282de431825f03dbf454a1133311b1",
+    "manual_smoke_002_prompt_sha256": "9cca2dc016746bce2121f08953ecf6c6c0b716c65f8b47fa7769bd271a57c081",
+    "manual_smoke_002_report_sha256": "d944c1a9cdc6d7be073e65ed15c40a570878c10f19c9b311340d616f110767c7",
+    "manual_smoke_002_audit_sha256": "4de3a09a48fcb973a546f1b9325031efdf3f802d0674791a3a4980be525c8cb8",
+    "manual_smoke_002_candidate_sha256": "ad4ac7a17b4e885a9a94c5ca582db08d0caf9e4d588b77225fbf68875a8bcd90",
+    "manual_smoke_002_evaluation_sha256": "37c7da98a81a49f1bbe952fda9dedca7606eaf647767b2a85cf519d34423e4c9",
+    "guidance_hash_scope": "SHA-256 of the sole initial_guidance/docs/structural_core.md file; the static condition uses SHA-256 of an empty byte sequence"
+  },
+  "environment": {
+    "os": "Darwin 25.6.0",
+    "architecture": "arm64",
+    "lean_runtime_target": "x86_64-apple-darwin24.6.0",
+    "lean_toolchain": "leanprover/lean4:v4.30.0",
+    "lean_version": "4.30.0",
+    "mathlib_commit": "c5ea00351c28e24afc9f0f84379aa41082b1188f",
+    "eve_version": "v0.2.0",
+    "eve_commit": "50b2399258ab08b6225a87cd05bded9701caa23d"
+  },
+  "shared_controls": {
+    "same_solver_model": true,
+    "same_reasoning_effort": true,
+    "same_turn_limit": true,
+    "same_timeout": true,
+    "same_tool_policy": true,
+    "same_network_policy": true,
+    "same_candidate_seed": true,
+    "same_evaluator": true,
+    "same_solver_attempt_budget": true,
+    "network_policy": "offline dependencies; Codex web search disabled",
+    "editable_files": [
+      "Candidate.lean"
+    ],
+    "editable_folders": []
+  },
+  "configuration_migration": {
+    "prompt_id": "EVE-STAGE1-LUNA-CONFIG-MIGRATION-001",
+    "prompt_version": "1.0.0",
+    "prompt_path": "experiments/eve/operator_prompts/STAGE1_LUNA_CONFIG_MIGRATION.md",
+    "prompt_sha256": "1976419e5f2cd10dc7b8fa1ca9dcce39f7dcdafc2f1f989b11bf12a4fa5c1e16",
+    "source_model": "gpt-5.4-mini",
+    "target_model": "gpt-5.6-luna",
+    "access_prompt_path": "experiments/eve/operator_prompts/STAGE1_LUNA_ACCESS_SMOKE.md",
+    "access_prompt_sha256": "4395ff4f8d1ecbf7c8b6fa1d3977d1e4f696b4cc9abd9850124728c1de39ab6f",
+    "access_report_path": "experiments/eve/.runtime/stage1-luna-access-smoke-001/access-smoke.json",
+    "access_report_sha256": "dadb80549f0ebe61d4d969a9b6cf558428ae82310f618f452789a94b5b200d72",
+    "access_jsonl_path": "experiments/eve/.runtime/stage1-luna-access-smoke-001/stdout.jsonl",
+    "access_jsonl_sha256": "caec8d240df646ce2b42dfe1eba3c0788d1d5898f0df308b9687070ebeb4ca50",
+    "hooks_json_sha256": "8c46e49b4512543d7809b7f8f16572c672ca8715c4e81f804aa7bb3ad7d385f6",
+    "access_status": "LUNA_ACCESS_SMOKE_PASSED",
+    "configured_not_run": true,
+    "subsequent_execution": "manual-smoke-001-and-002"
+  },
+  "manual_smoke_001": {
+    "prompt_id": "EVE-STAGE1-LUNA-EFG-MANUAL-SMOKE-001",
+    "prompt_version": "1.0.0",
+    "prompt_path": "experiments/eve/operator_prompts/STAGE1_LUNA_EFG_MANUAL_SMOKE.md",
+    "report_path": "experiments/eve/.runtime/stage1-luna-efg-manual-smoke-001/manual-smoke.json",
+    "run_root": "experiments/eve/.runtime/runs/20260820T101007_250550Z",
+    "status": "LUNA_EFG_MANUAL_SMOKE_COMPLETED",
+    "condition_id": "EvE-evolved-guidance",
+    "eve_execute_attempts": 1,
+    "codex_sessions": 1,
+    "codex_resumes": 0,
+    "observed_agent_turns": 5,
+    "checkpoint_last_completed_iteration": 1,
+    "checkpoint_max_iterations": 1,
+    "produced_solver_evaluations": 1,
+    "candidate_score": 0.0,
+    "failure_codes": [
+      "compile-failed"
+    ],
+    "guidance_modified": false,
+    "produced_optimizer": false,
+    "candidate_compile_diagnostic": "Dependent Sigma equality yielded HEq where Eq was required in occurrences_ne.",
+    "solver_self_check": "blocked because isolated Codex HOME could not see the already-installed Lean toolchain and elan attempted an offline download",
+    "interpretation": "Completed engineering-pipeline evidence only; not a clean Luna solve-failure or EvE-improvement result."
+  },
+  "toolchain_feedback_repair": {
+    "status": "validated-no-model-call",
+    "method": "Resolve repository-selected direct lake/lean binaries with elan which, prepend their shared bin directory to the EvE process PATH, and retain the isolated Codex HOME.",
+    "isolated_home_probe": "compile accepted EFG fixture with direct toolchain PATH and assert no isolated .elan directory is created",
+    "expected_lean_version": "4.30.0",
+    "upstream_modified": false,
+    "credentials_modified": false,
+    "model_calls": 0
+  },
+  "manual_smoke_002": {
+    "prompt_id": "EVE-STAGE1-LUNA-EFG-MANUAL-SMOKE-002",
+    "prompt_version": "1.0.0",
+    "prompt_path": "experiments/eve/operator_prompts/STAGE1_LUNA_EFG_MANUAL_SMOKE_002.md",
+    "report_path": "experiments/eve/.runtime/stage1-luna-efg-manual-smoke-002/manual-smoke.json",
+    "audit_path": "experiments/eve/.runtime/stage1-luna-efg-manual-smoke-002/post-run-audit.json",
+    "run_root": "experiments/eve/.runtime/runs/20260820T111327_394088Z",
+    "status": "LUNA_EFG_MANUAL_SMOKE_002_COMPLETED",
+    "condition_id": "EvE-evolved-guidance",
+    "eve_execute_attempts": 1,
+    "codex_sessions": 1,
+    "codex_resumes": 0,
+    "observed_agent_turns": 5,
+    "checkpoint_last_completed_iteration": 1,
+    "checkpoint_max_iterations": 1,
+    "produced_solver_evaluations": 1,
+    "candidate_score": 1.0,
+    "gate_count": 15,
+    "failure_codes": [],
+    "guidance_modified": false,
+    "produced_optimizer": false,
+    "solver_self_checks": {
+      "attempts": 3,
+      "successful_attempts": 1,
+      "elan_download_observed": false,
+      "elan_lock_wait_observed": false
+    },
+    "prior_run_unchanged": true,
+    "interpretation": "Reproducible Stage 1 engineering-pipeline success only; not an EvE-improvement, comparative, benchmark, or general model-capability result."
+  },
+  "remaining_blockers": [
+    "EvE v0.2.0 static/no-optimizer semantics remain hard-disabled and unverified.",
+    "The non-evolving fixed-guidance execution path remains hard-disabled and unverified.",
+    "Paired RNG seed propagation remains hard-disabled and unverified.",
+    "Model verbosity is Codex-default and unpinned because the EvE v0.2.0 driver does not expose it; this must be held constant and disclosed for comparative runs.",
+    "Manual smoke 002 modified no guidance and produced no optimizer candidate, so it provides no evidence of guidance-evolution benefit.",
+    "The Stage 1 audit is Codex AI review, not qualified independent human review."
+  ],
+  "conditions": [
+    {
+      "condition_id": "static/no-specialized-guidance",
+      "paired_seed_run_id": "EVE-EFG-REACHABILITY-PAIR-001",
+      "config_status": "hard-disabled-unverified",
+      "paired_rng_status": "hard-disabled-unverified",
+      "model_status": "model-access-verified",
+      "guidance_artifact": "empty byte sequence",
+      "blocker": "EvE v0.2.0 static/no-optimizer semantics and paired RNG seed propagation have not been verified against the pinned upstream source and loader."
+    },
+    {
+      "condition_id": "fixed-initial-guidance",
+      "paired_seed_run_id": "EVE-EFG-REACHABILITY-PAIR-001",
+      "config_status": "hard-disabled-unverified",
+      "paired_rng_status": "hard-disabled-unverified",
+      "model_status": "model-access-verified",
+      "guidance_artifact": "experiments/eve/overlay/efg_reachability_micro/initial_guidance",
+      "blocker": "A non-evolving fixed-guidance execution path and paired RNG seed propagation have not been verified against EvE v0.2.0."
+    },
+    {
+      "condition_id": "EvE-evolved-guidance",
+      "paired_seed_run_id": "EVE-EFG-REACHABILITY-PAIR-001",
+      "config_status": "manual-smoke-002-completed-score-one-stage1-complete",
+      "paired_rng_status": "hard-disabled-unverified",
+      "model_status": "model-access-verified",
+      "guidance_artifact": "experiments/eve/overlay/efg_reachability_micro/initial_guidance",
+      "config_name": "efg_reachability_micro",
+      "blocker": "Manual smoke 002 completed with score one but no guidance change. No paired three-condition result is valid until static/fixed semantics and paired RNG propagation are implemented and verified."
+    }
+  ],
+  "execution_record": {
+    "status": "completed-score-one-stage1-complete",
+    "paid_or_model_execution": true,
+    "codex_exec_run": true,
+    "eve_runner_run": true,
+    "condition_id": "EvE-evolved-guidance",
+    "attempts": 1,
+    "codex_sessions": 1,
+    "candidate_score": 1.0,
+    "guidance_modified": false,
+    "scope_note": "This latest record covers manual smoke 002 only; manual smoke 001 remains preserved above. It supports no comparison, guidance-evolution, or general capability conclusion."
+  },
+  "execution_history": [
+    {
+      "prompt_id": "EVE-STAGE1-LUNA-EFG-MANUAL-SMOKE-001",
+      "run_root": "experiments/eve/.runtime/runs/20260820T101007_250550Z",
+      "status": "completed-score-zero",
+      "candidate_score": 0.0,
+      "guidance_modified": false
+    },
+    {
+      "prompt_id": "EVE-STAGE1-LUNA-EFG-MANUAL-SMOKE-002",
+      "run_root": "experiments/eve/.runtime/runs/20260820T111327_394088Z",
+      "status": "completed-score-one-stage1-complete",
+      "candidate_score": 1.0,
+      "guidance_modified": false
+    }
+  ]
+}

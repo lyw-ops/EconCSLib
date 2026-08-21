@@ -1,0 +1,232 @@
+# EvE experiment readiness
+
+- **Current status:** `PUBLIC_STAGE3_COMPLETE_STAGE4_LUNA_PROTOCOL_FROZEN`;
+  Stage 1 smoke 002 is closed at score one, Stage 2 direct/transport/pair and
+  12 mutations are closed, Stage 3 Codex review verifies at score one, and
+  the 12-cell Stage 4 Luna development protocol is source/loader ready
+- **Not valid statuses:** `benchmark-ready`, `evaluation-complete`,
+  `internal-pilot-complete`, or any model-capability conclusion
+- **Formal pilot default:** disabled and not configured
+- **Paid/long EvE execution:** no paired Stage 4, benchmark, or formal run yet;
+  exactly two bounded evolved-labelled Stage 1 engineering smokes completed
+- **EvE runner / `--execute`:** exactly two EFG executions, consumed by
+  manual-smoke-001 and manual-smoke-002; Stage 0 has not run
+- **Model access calls:** one read-only Luna access smoke plus two five-turn
+  Luna solver sessions, one in each bounded EFG execution
+
+## What is ready
+
+The official EvE `v0.2.0` tag and peeled commit are locked. The
+external-checkout/config-overlay architecture keeps Python and EvE state out of
+the Lean/Lake project. The existing public synthetic REPAIR seed and the new
+public local EFG seed each have an exact single-file solver boundary,
+deterministic higher-is-better scoring, equal worst evaluation/boundary scores,
+offline check/dry-run paths, and positive/negative tests.
+
+The external checkout at `/Users/lyuyuwei/Documents/eve-v0.2.0` matches the
+official repository, annotated tag object, peeled commit, LICENSE, NOTICE,
+`pyproject.toml`, `uv.lock`, and `.python-version`. `uv sync --locked`, the real
+Hydra loader, the historical 45-test Stage 1 suite plus the current Stage 2--4
+extensions (latest full result: 53 pass, 0 skip), `--check`, `--dry-run`, the
+launcher accepted fixture, and accepted-fixture compilation under an isolated
+solver HOME pass. Exactly two EvE/Luna solver executions were invoked and are
+recorded below; the only other model call is the separately bounded access
+smoke.
+
+Codex project trust and all four EvE hook events are verified for that exact
+checkout and hook payload. EvE's own trust helper reports no missing event;
+26 upstream hook/isolation/sandbox tests pass, and sidecar `--check` reports the
+trust state as available without exposing credentials. Trust confirmation ran
+the session-start guard but submitted no ordinary prompt and made no model call.
+
+On this macOS/Python 3.13 environment, uv's editable `.pth` receives a hidden
+file flag that Python skips. The sidecar now sets `PYTHONPATH` to the
+identity-verified checkout `src` for both dependency probe and execute while
+retaining `uv --offline --frozen --no-sync`; upstream source and venv metadata
+remain unchanged. Its dependency and hook probes now additionally use an
+ephemeral writable `UV_CACHE_DIR`, and any future explicit execution uses a
+per-run cache under its runtime root. This prevents a restricted outer sandbox
+from turning a denied user-level uv cache read into a false unavailable result.
+
+The EFG micro-pilot uses only `Interface.StructuralCore` and tests discovery of
+the existing reachability/history bridge plus an occurrence-sensitive diamond.
+Its accepted fixture passes; unfixed, compile failure, placeholder,
+axiom/constant spoof, boundary violation, broad/additional import, wrong bridge
+type, and missing-diamond fixtures all receive `score: 0.0`. This validates the
+local evaluator and repaired Lean feedback path, not model capability.
+
+Solver prompt `EVE-EFG-SOLVER-PROMPT-001` v1.0.0 is frozen, model-neutral, and
+hash-anchored in `case.json`. It supplies explicit outcome, success criteria,
+evidence limits, validation, and stop rules without embedding the accepted
+proof. It was executed once by manual-smoke-001 and has status
+`EXECUTED_SCORE_ZERO`; that status records a failed candidate, not a model
+capability conclusion.
+
+One user-provided manual candidate is archived under
+`.runtime/manual-stage1-efg-reachability-001/` and receives deterministic
+`score: 1.0` with every gate true after the protected seed was restored. Its
+model attribution and Codex/EvE execution provenance are unverified, so it is
+only proof/harness acceptance and not a Luna, EvE, benchmark, or capability
+result.
+
+Operator prompt `EVE-STAGE1-LUNA-PREFLIGHT-001` v1.0.0 is frozen and
+hash-anchored in `operator_prompts/manifest.json`. It authorizes only local
+preflight evidence collection and explicitly forbids `--execute`, `codex exec`,
+model calls, network installation, and model-config migration. Its repaired
+execution record is `READY_FOR_SEPARATE_MODEL_ACCESS_SMOKE`; the original
+missing-checkout report is retained alongside it.
+
+Operator prompt `EVE-STAGE1-LUNA-ACCESS-SMOKE-001` v1.0.0 remains frozen and
+hash-anchored. Its first precondition pass was blocked by the outer sandbox's
+denial of the user-level uv cache and is retained as
+`access-smoke.blocked-outer-sandbox.json`; it attempted no model call. After
+the sidecar diagnosis, the prompt's single authorized read-only, ephemeral
+`gpt-5.6-luna` turn completed with status `LUNA_ACCESS_SMOKE_PASSED`, exact
+message `EVE_LUNA_ACCESS_OK`, no tool event, and budget usage `1/1`. No retry,
+fallback, Lean solver task, EvE execution, or config migration occurred.
+
+Operator prompt `EVE-STAGE1-LUNA-CONFIG-MIGRATION-001` v1.0.0 is frozen and
+hash-anchored. It wrote a new scoped Luna driver, selected it only for the EFG
+micro-pilot, migrated the unrun manifest, and added structural coverage without
+a model call. Initial validation exposed two stale protected hashes in
+`case.json`; after explicit follow-up user authorization changed only those two
+anchors, all then-current 42 tests and the complete non-model validation passed. Its report
+is `LUNA_CONFIG_MIGRATION_READY`. The legacy Stage 0 driver remains unchanged,
+and this report does not authorize a manual smoke.
+
+Operator prompt `EVE-STAGE1-LUNA-EFG-MANUAL-SMOKE-001` v1.0.0 is frozen and
+hash-anchored with status `EXECUTED_COMPLETED`. Its only authorized
+`EvE-evolved-guidance` attempt completed one iteration and one Luna session in
+5/10 turns, with zero resume/retry, deterministic score `0.0`, and no guidance
+update. The candidate completed its first six declarations but failed the final
+dependent equality theorem because `Sigma.ext_iff` supplied `HEq` where the
+goal required `Eq`. This is completed pipeline evidence, not a solved candidate.
+
+The post-run audit also found that the solver's isolated HOME could not discover
+the already installed Lean 4.30.0 through `elan`, so its self-check attempted an
+offline toolchain download and waited on a lock. The launcher now resolves and
+version-checks the direct Lean/Lake binaries, prepends that toolchain directory
+to the isolated solver PATH, and proves the accepted fixture compiles without
+creating an isolated `.elan`. The repair and its regression tests made no model
+or EvE call.
+
+Operator prompt `EVE-STAGE1-LUNA-EFG-MANUAL-SMOKE-002` v1.0.0 is frozen and
+hash-anchored with status `EXECUTED_COMPLETED`. Its fresh attempt used one Luna
+session and 5/10 turns, resumed nothing, preserved the 001 run root, and passed
+all 15 deterministic gates with score `1.0`. Independent re-execution of the
+candidate and evaluator produced the same hashes, and the elan download/lock
+failure did not recur. The audit was performed by Codex and is explicitly not
+independent human review.
+
+The Entry Game direct and transport accepted candidates each score `1.0`, their
+pair agreement scores `1.0`, and all 12 mutation candidates are rejected at the
+predeclared gates. The transport candidate constructs every refinement
+certificate field and uses the fixed abstract theorems before returning the
+conclusions to concrete profiles. Stage 3 records a complete Codex AI review
+with no blocking finding on accepted candidates and no mutation false accept;
+this is explicitly not independent human review.
+
+Pinned-source and real-loader evidence now establish Stage 4 static, fixed,
+and evolved semantics. A sidecar-only wrapper seeds the three `random.Random`
+instances actually consumed by EvE sampling before the loop; upstream remains
+unchanged. Codex/provider model sampling has no exposed seed, so only EvE
+sampling is paired and end-to-end determinism is not claimed.
+
+This is sufficient for Stage 0--3 public development exit gates and Stage 4
+protocol readiness.
+It does not establish that an agent can repair Mathlib or EFG code reliably,
+that EvE improves an agent, that a model has a capability, that the minimal
+core should change, or that the formal pilot is ready to evaluate.
+
+## Hard-disabled formal experiment boundary
+
+The launcher allow-list contains exactly `mathlib-style-smoke`,
+`efg-reachability-micro`, `entry-game-direct`, and `entry-game-transport`.
+Stage 4 routes additionally require a frozen condition, one of the two frozen
+EvE sampler seeds, and `--acknowledge-model-quota`. The launcher does not accept an
+arbitrary config name, case directory, seed, evaluator, reference, gold, or
+pilot path. It never reads `benchmarks/mathlib-style/heldout/private/`. There
+is no formal/private Phase 4/5 application/evaluation config to enable accidentally. Any
+request to run the 16-case formal pilot through this sidecar must hard-fail
+until a separately reviewed implementation satisfies every gate below.
+
+## Public Stage 4 Entry Game three-condition study
+
+Stage 1a permits only this public synthetic/local task. It adds no declaration
+under `EconCSLib/`, changes no carrier, leaves the exact StructuralCore closure
+untouched, and does not update the Canonical/Frontend API-growth baseline. The
+evaluator protects its facade/source/checker/config/seed/guidance assets before
+Lean, requires the sole StructuralCore import and exact local declaration
+types, checks empty target axiom output, then runs API-growth and governance.
+
+`stage4_protocol.json` prepares `static`, `fixed`, and `evolved` for the Entry
+Game direct and transport routes under shared model, effort, 6-turn limit,
+timeout, tools, evaluator, two iterations, and one-attempt budget. Seeds `1729`
+and `2718` control the three EvE sampler/worker-selection RNG streams and are
+paired across conditions within each task. The adapter exposes no Codex model
+seed or verbosity field, so provider sampling remains uncontrolled and no
+end-to-end deterministic claim is permitted.
+
+Pinned source hashes and real Hydra composition establish the three conditions:
+static starts from an empty runtime guidance tree with optimizer production
+disabled; fixed starts from the frozen route guidance with production disabled;
+evolved starts from that same guidance with production enabled only for an
+actually changed tree. Both Stage 4 task preflights report checkout identity,
+locked environment, isolated Lean, authentication, and hook trust available.
+
+The protocol is frozen but the 12 cells are not yet executed. Every cell must
+use a fresh run root and may not resume, import, retry, or share caches,
+populations, logs, or evolved guidance. Any resulting
+carrier, StructuralCore, or public-API proposal must go through the EFG
+freeze/governance human decision process; the micro-pilot cannot authorize it.
+
+## Gates before a real Mathlib-style experiment
+
+1. Retain actual Phase 4 Linux hard-gate evidence for the same frozen public
+   hashes, including OS/architecture, Lean/Mathlib identity, command, exit
+   status, and log hashes.
+2. Complete qualified, independent human review and retain its record under
+   private custody. Existing AI-agent annotation is not human review.
+3. Pass a new Phase 5 readiness audit; do not rewrite the existing failed audit
+   into a pass.
+4. Standardize a reproducible default Python dependency entrypoint, including
+   the pinned `jsonschema` overlay required by the Phase 4 harness.
+5. Define independent train, development, and evaluation splits grouped to
+   prevent theorem-, module-, and source-PR leakage.
+6. Physically isolate workers from the private evaluator, gold, provenance,
+   adjudication, and all answer-revealing score intermediates. Hook and prompt
+   instructions alone are not physical isolation.
+7. Prove that prompts, logs, populations, guidance, reference candidates,
+   scores, crashes, retries, caches, and resume/import state cannot leak private
+   material across conditions or runs.
+8. Freeze budgets, concurrency, provider/model identity, timeouts, failure and
+   retry policy, boundary handling, and stopping conditions before unsealing
+   evaluation data.
+9. Compare static/no-evolution, fixed-initial-guidance, and EvE conditions under
+   the same tasks, model substrate, context, tool access, and compute budget.
+10. Use at least two independent random seeds per condition and predeclare how
+    stochastic results will be summarized.
+11. Preserve formal REPAIR hard gates: compilation, placeholders/trusted
+    declarations, warning allow-lists, target issue resolution, no new blocking
+    findings, statement/specification preservation, axiom deltas, hashes, and
+    deterministic scoring.
+12. Treat smoke success only as harness evidence. Never use it as a benchmark,
+    scientific, performance, or model-capability conclusion.
+
+## Current blockers inherited from Phase 4/5
+
+The repository's readiness audit remains `blocked-by-phase4-readiness` because
+the frozen pilot lacks actual Linux evidence and qualified independent human
+review. The default Python runtime also lacks the pinned Phase 4 `jsonschema`
+dependency unless the documented overlay is used. Those blockers are not
+changed by this sidecar.
+
+## Stage 1 threat-model limitations
+
+For this public smoke, the evaluator is external to the candidate and EvE's
+workspace boundary plus post-evaluation protected hashes provide defense in
+depth. This is not an OS-level security boundary against arbitrary hostile Lean
+metaprograms. A real private evaluation requires a separate account/container
+or equivalent isolation with one-way candidate transfer and sanitized score
+return. Until that architecture exists and is tested, private gold must remain
+disconnected.

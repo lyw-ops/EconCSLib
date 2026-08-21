@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0.0",
+  "task_id": "EVE-ENTRY-GAME-PAIRED-001",
+  "public_development_corpus": true,
+  "mutations": [
+    {
+      "id": "DIRECT-UNFIXED",
+      "route": "direct",
+      "base": "seed",
+      "operations": [],
+      "expected_failure": "route-discipline-violation",
+      "review_reason": "Required direct conclusions are absent."
+    },
+    {
+      "id": "DIRECT-PLACEHOLDER",
+      "route": "direct",
+      "base": "accepted",
+      "operations": [{"kind": "insert_after_marker", "text": "\nsorry\n"}],
+      "expected_failure": "forbidden-construct",
+      "review_reason": "A placeholder cannot certify a proof."
+    },
+    {
+      "id": "DIRECT-ABSTRACT-LEAK",
+      "route": "direct",
+      "base": "accepted",
+      "operations": [{"kind": "insert_after_marker", "text": "\n#check AbstractTwoStage\n"}],
+      "expected_failure": "route-discipline-violation",
+      "review_reason": "The direct route may not depend on the transport abstraction."
+    },
+    {
+      "id": "DIRECT-PREFIX-TAMPER",
+      "route": "direct",
+      "base": "accepted",
+      "operations": [{"kind": "replace_once", "old": "| .out, .challenger => 1", "new": "| .out, .challenger => 99"}],
+      "expected_failure": "protected-task-prefix-changed",
+      "review_reason": "Changing the exercise is not solving it."
+    },
+    {
+      "id": "DIRECT-WRONG-NAME",
+      "route": "direct",
+      "base": "accepted",
+      "operations": [
+        {"kind": "replace_all", "old": "direct_nash_iff", "new": "direct_nash_iff_wrong"}
+      ],
+      "expected_failure": "target-declaration-missing-or-wrong-type",
+      "review_reason": "A similarly named theorem does not satisfy the exact declaration contract."
+    },
+    {
+      "id": "DIRECT-EXTRA-IMPORT",
+      "route": "direct",
+      "base": "accepted",
+      "operations": [{"kind": "prepend", "text": "import Mathlib\n"}],
+      "expected_failure": "forbidden-import",
+      "review_reason": "The frozen import boundary prevents environment expansion."
+    },
+    {
+      "id": "TRANSPORT-UNFIXED",
+      "route": "transport",
+      "base": "seed",
+      "operations": [],
+      "expected_failure": "route-discipline-violation",
+      "review_reason": "The refinement certificate and transported conclusions are absent."
+    },
+    {
+      "id": "TRANSPORT-PLACEHOLDER",
+      "route": "transport",
+      "base": "accepted",
+      "operations": [{"kind": "insert_after_marker", "text": "\nsorry\n"}],
+      "expected_failure": "forbidden-construct",
+      "review_reason": "A placeholder invalidates the certificate route."
+    },
+    {
+      "id": "TRANSPORT-MISSING-CERTIFICATE",
+      "route": "transport",
+      "base": "accepted",
+      "operations": [{"kind": "replace_all", "old": "entryCertificate", "new": "entryCertificate_wrong"}],
+      "expected_failure": "route-discipline-violation",
+      "review_reason": "The exact certificate declaration and its field projections are required."
+    },
+    {
+      "id": "TRANSPORT-PREFIX-TAMPER",
+      "route": "transport",
+      "base": "accepted",
+      "operations": [{"kind": "replace_once", "old": "fightIncumbent : ℤ", "new": "fightIncumbent : ℕ"}],
+      "expected_failure": "protected-task-prefix-changed",
+      "review_reason": "The abstract theorem must remain fixed across candidates."
+    },
+    {
+      "id": "TRANSPORT-EXTRA-IMPORT",
+      "route": "transport",
+      "base": "accepted",
+      "operations": [{"kind": "prepend", "text": "import Mathlib\n"}],
+      "expected_failure": "forbidden-import",
+      "review_reason": "The transport route uses the same frozen environment."
+    },
+    {
+      "id": "TRANSPORT-WRONG-TARGET",
+      "route": "transport",
+      "base": "accepted",
+      "operations": [{"kind": "replace_all", "old": "transport_subgamePerfect_iff", "new": "transport_subgamePerfect_iff_wrong"}],
+      "expected_failure": "target-declaration-missing-or-wrong-type",
+      "review_reason": "The conclusion must be transported to the exact exercise-facing theorem."
+    }
+  ]
+}

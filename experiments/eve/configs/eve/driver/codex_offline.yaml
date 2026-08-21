@@ -1,0 +1,14 @@
+# @package _global_
+
+driver:
+  driver: codex_exec
+  executable: codex
+  model: gpt-5.4-mini
+  reasoning_effort: low
+  rollout_max_turns: 10
+  web_search: disabled
+  timeout_seconds: 900
+  overrides:
+    solver:
+      reasoning_effort: low
+

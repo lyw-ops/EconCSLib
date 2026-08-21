@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.0.0",
+  "id": "EVE-STAGE4-LUNA-ENTRY-GAME-DEV-001",
+  "status": "FROZEN_NOT_YET_EXECUTED",
+  "experiment_kind": "public Stage 4 development experiment",
+  "tasks": ["entry-game-direct", "entry-game-transport"],
+  "conditions": ["static", "fixed", "evolved"],
+  "experiment_seeds": [1729, 2718],
+  "run_matrix_size": 12,
+  "model_sessions_per_run": 2,
+  "maximum_model_sessions": 24,
+  "model": {
+    "name": "gpt-5.6-luna",
+    "reasoning_effort": "low",
+    "verbosity": "Codex-default; pinned adapter has no verbosity field",
+    "rollout_max_turns": 6,
+    "web_search": "disabled",
+    "timeout_seconds": 900,
+    "authentication": "ChatGPT subscription"
+  },
+  "shared_compute": {
+    "iterations": 2,
+    "workers_per_iteration": 1,
+    "solver_examples": 1,
+    "optimizer_examples": 1,
+    "boundary_repairs": 0,
+    "resume": false,
+    "import": false,
+    "retry": false,
+    "attempts_per_matrix_cell": 1
+  },
+  "initial_guidance_tree_hashes": {
+    "static": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "entry-game-direct-fixed-and-evolved": "47a43ca03b7266a112257d064af7d1968dbe7a09e9ec2ecae20b164285c0e743",
+    "entry-game-transport-fixed-and-evolved": "458d4ab45a20b57594a70f7ec62f72ba54ea1cdd635091091a70813e0edfaf24"
+  },
+  "frozen_artifacts": {
+    "experiments/eve/scripts/run.py": "a34293e1646fc27024833e7dac37fae69db357792780c2317abd59dc3f310869",
+    "experiments/eve/scripts/run_seeded_eve.py": "c4af3f9897f6c59df5271f47d58e87db340ec38cbad3c31635892959bbe7fef5",
+    "experiments/eve/scripts/evaluate_stage2_entry_game.py": "7dd10441541593ea63d9de70595b786e130a67327a33c8d6cf4c91d63d6c256f",
+    "experiments/eve/scripts/evaluate_stage2_pair.py": "51c691f8dda3465532afad59c54714e066c09ba098673473d6ee030c2f891307",
+    "experiments/eve/stage4_upstream_semantics.json": "fcc3cf99bfccea259ef0dadc103ed889883dfc4ee1a873a230f7eec194c3449c",
+    "experiments/eve/configs/eve/loop/stage4.yaml": "8bd91e844e762603fc8484a250695b1f6fa31fa6b537afb13766ab3aaf7f1b3b",
+    "experiments/eve/configs/eve/driver/codex_luna_stage4.yaml": "1a3b8fc07c6a2eab540392d3227498fba34d56764e9d82bd8395151c34df2708",
+    "experiments/eve/configs/eve/entry_game_direct.yaml": "bf6fc7f9f06b674ca695eee9ff5ec2619f4a13230c7533659fe1089033a29209",
+    "experiments/eve/configs/eve/entry_game_transport.yaml": "e950036c5bb4dbcfca76fb2de6de32af386d2c4f47ffb8ba09c72d629d05a5bb",
+    "experiments/eve/configs/eve/condition/static.yaml": "6dd8c67b829f6cf90f0252527e33709afe6ee62b07d237ba8a6abf3c6eb42487",
+    "experiments/eve/configs/eve/condition/fixed.yaml": "106be2e520396dcd36a561e6032843b72c62b332f9bc14b03cb26439ebf75829",
+    "experiments/eve/configs/eve/condition/evolved.yaml": "24d1549eb9697ccd56dcfd387a6a298bfe305749b21e6ee1dd2e418558e82c25",
+    "experiments/eve/stage2_entry_game/direct/case.json": "7de31d85c925ed4e5d0128f8ad1cbc557b893c1b00a369ba3b6148937202597c",
+    "experiments/eve/stage2_entry_game/transport/case.json": "31f28e01ece383775832f3b5aa0dd4a3a6488dc6338d6d7feaee07a4be875850",
+    "experiments/eve/overlay/entry_game_direct/prompt/ENTRYPOINT.md": "6daa8ee7c52ddb43b3b4ff6ca6a3c5555c3453400372ccd0bf7c2c4c4bd9ec9a",
+    "experiments/eve/overlay/entry_game_transport/prompt/ENTRYPOINT.md": "9f37f4635a1f69b6bf0f1046c49469398ddba8845a5db02a91cd1cd022e0f4de"
+  },
+  "pairing": {
+    "same_eve_sampler_seed_across_conditions_within_task": true,
+    "independent_eve_sampler_seeds": 2,
+    "provider_model_seed_controlled": false,
+    "fresh_run_root_per_cell": true,
+    "cross_cell_resume_cache_population_or_guidance": false
+  },
+  "primary_outcome": "For each run, whether any non-seed solver candidate obtains deterministic score 1.0.",
+  "secondary_outcomes": [
+    "score by iteration",
+    "first successful iteration",
+    "guidance candidate produced",
+    "produced guidance selected in a later iteration",
+    "turn count and wall-clock duration",
+    "deterministic evaluator failure codes"
+  ],
+  "summary_rule": "Report raw 2-seed outcomes and descriptive proportions by task and condition; do not perform significance claims at n=2.",
+  "execution_order": "direct then transport; within each task seed 1729 then 2718; within each seed static then fixed then evolved",
+  "run_matrix": [
+    {"ordinal": 1, "task": "entry-game-direct", "seed": 1729, "condition": "static"},
+    {"ordinal": 2, "task": "entry-game-direct", "seed": 1729, "condition": "fixed"},
+    {"ordinal": 3, "task": "entry-game-direct", "seed": 1729, "condition": "evolved"},
+    {"ordinal": 4, "task": "entry-game-direct", "seed": 2718, "condition": "static"},
+    {"ordinal": 5, "task": "entry-game-direct", "seed": 2718, "condition": "fixed"},
+    {"ordinal": 6, "task": "entry-game-direct", "seed": 2718, "condition": "evolved"},
+    {"ordinal": 7, "task": "entry-game-transport", "seed": 1729, "condition": "static"},
+    {"ordinal": 8, "task": "entry-game-transport", "seed": 1729, "condition": "fixed"},
+    {"ordinal": 9, "task": "entry-game-transport", "seed": 1729, "condition": "evolved"},
+    {"ordinal": 10, "task": "entry-game-transport", "seed": 2718, "condition": "static"},
+    {"ordinal": 11, "task": "entry-game-transport", "seed": 2718, "condition": "fixed"},
+    {"ordinal": 12, "task": "entry-game-transport", "seed": 2718, "condition": "evolved"}
+  ],
+  "review": {
+    "kind": "codex-ai-review",
+    "independent_human_review": false
+  },
+  "claim_boundary": "Public, answer-visible development data. It can validate implementation and generate hypotheses, but not hidden-test generalization, independent review, or a formal EvE/model capability claim."
+}

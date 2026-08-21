@@ -1,0 +1,102 @@
+{
+  "schema_version": "1.0.0",
+  "prompts": [
+    {
+      "id": "EVE-STAGE1-LUNA-PREFLIGHT-001",
+      "version": "1.0.0",
+      "path": "experiments/eve/operator_prompts/STAGE1_LUNA_PREFLIGHT.md",
+      "sha256": "d6913a4638ad109254f1df7d5825ee664a226c3fc370cd0ec6267344853a7a32",
+      "role": "operator-preflight",
+      "status": "EXECUTED_READY",
+      "execution_status": "READY_FOR_SEPARATE_MODEL_ACCESS_SMOKE",
+      "execution_report": "experiments/eve/.runtime/stage1-luna-preflight-001/preflight.json",
+      "model_target": "gpt-5.6-luna",
+      "model_call_authorized": false,
+      "eve_execute_authorized": false
+    },
+    {
+      "id": "EVE-STAGE1-LUNA-ACCESS-SMOKE-001",
+      "version": "1.0.0",
+      "path": "experiments/eve/operator_prompts/STAGE1_LUNA_ACCESS_SMOKE.md",
+      "sha256": "4395ff4f8d1ecbf7c8b6fa1d3977d1e4f696b4cc9abd9850124728c1de39ab6f",
+      "role": "operator-model-access-smoke",
+      "status": "EXECUTED_PASSED",
+      "execution_status": "LUNA_ACCESS_SMOKE_PASSED",
+      "execution_report": "experiments/eve/.runtime/stage1-luna-access-smoke-001/access-smoke.json",
+      "model_call_attempts": 1,
+      "model_target": "gpt-5.6-luna",
+      "model_call_authorized": true,
+      "eve_execute_authorized": false
+    },
+    {
+      "id": "EVE-STAGE1-LUNA-CONFIG-MIGRATION-001",
+      "version": "1.0.0",
+      "path": "experiments/eve/operator_prompts/STAGE1_LUNA_CONFIG_MIGRATION.md",
+      "sha256": "1976419e5f2cd10dc7b8fa1ca9dcce39f7dcdafc2f1f989b11bf12a4fa5c1e16",
+      "role": "operator-model-config-migration",
+      "status": "EXECUTED_READY",
+      "execution_status": "LUNA_CONFIG_MIGRATION_READY",
+      "execution_report": "experiments/eve/.runtime/stage1-luna-config-migration-001/config-migration.json",
+      "model_call_attempts": 0,
+      "model_target": "gpt-5.6-luna",
+      "model_call_authorized": false,
+      "eve_execute_authorized": false
+    },
+    {
+      "id": "EVE-STAGE1-LUNA-EFG-MANUAL-SMOKE-001",
+      "version": "1.0.0",
+      "path": "experiments/eve/operator_prompts/STAGE1_LUNA_EFG_MANUAL_SMOKE.md",
+      "sha256": "c2e431e56934c78c94a004d1b2b50932e89a0f53cae61869c006c61fdfe65a61",
+      "role": "operator-efg-manual-smoke",
+      "status": "EXECUTED_COMPLETED",
+      "execution_status": "LUNA_EFG_MANUAL_SMOKE_COMPLETED",
+      "execution_report": "experiments/eve/.runtime/stage1-luna-efg-manual-smoke-001/manual-smoke.json",
+      "execution_report_sha256": "a9a22193fb0868e90201af5c157021cce5d349b80e3bacf59ca7158633ec0306",
+      "post_run_audit": "experiments/eve/.runtime/stage1-luna-efg-manual-smoke-001/post-run-audit.json",
+      "post_run_audit_sha256": "4f9485272f993d1b2e09da7a954f65f4ecec7ea3c7df4c78a868c84e56d296e5",
+      "model_target": "gpt-5.6-luna",
+      "model_call_authorized": true,
+      "eve_execute_authorized": true,
+      "authorized_eve_execute_attempts": 1,
+      "authorized_codex_sessions": 1,
+      "agent_turn_limit": 10,
+      "eve_execute_attempts": 1,
+      "codex_session_attempts": 1,
+      "observed_agent_turns": 5,
+      "candidate_score": 0.0,
+      "guidance_modified": false,
+      "authorized_conditions": [
+        "EvE-evolved-guidance"
+      ]
+    },
+    {
+      "id": "EVE-STAGE1-LUNA-EFG-MANUAL-SMOKE-002",
+      "version": "1.0.0",
+      "path": "experiments/eve/operator_prompts/STAGE1_LUNA_EFG_MANUAL_SMOKE_002.md",
+      "sha256": "9cca2dc016746bce2121f08953ecf6c6c0b716c65f8b47fa7769bd271a57c081",
+      "role": "operator-efg-post-toolchain-repair-manual-smoke",
+      "status": "EXECUTED_COMPLETED",
+      "execution_status": "LUNA_EFG_MANUAL_SMOKE_002_COMPLETED",
+      "execution_report": "experiments/eve/.runtime/stage1-luna-efg-manual-smoke-002/manual-smoke.json",
+      "execution_report_sha256": "d944c1a9cdc6d7be073e65ed15c40a570878c10f19c9b311340d616f110767c7",
+      "post_run_audit": "experiments/eve/.runtime/stage1-luna-efg-manual-smoke-002/post-run-audit.json",
+      "post_run_audit_sha256": "4de3a09a48fcb973a546f1b9325031efdf3f802d0674791a3a4980be525c8cb8",
+      "model_target": "gpt-5.6-luna",
+      "model_call_authorized": true,
+      "eve_execute_authorized": true,
+      "authorized_eve_execute_attempts": 1,
+      "authorized_codex_sessions": 1,
+      "agent_turn_limit": 10,
+      "predecessor_prompt": "EVE-STAGE1-LUNA-EFG-MANUAL-SMOKE-001",
+      "prior_prompt_budget_reused": false,
+      "eve_execute_attempts": 1,
+      "codex_session_attempts": 1,
+      "observed_agent_turns": 5,
+      "candidate_score": 1.0,
+      "guidance_modified": false,
+      "authorized_conditions": [
+        "EvE-evolved-guidance"
+      ]
+    }
+  ]
+}

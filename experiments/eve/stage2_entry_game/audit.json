@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0.0",
+  "task_id": "EVE-ENTRY-GAME-PAIRED-001",
+  "status": "PUBLIC_STAGE2_DEVELOPMENT_COMPLETED",
+  "completed_at": "2026-08-21",
+  "results": {
+    "direct": {
+      "score": 1.0,
+      "report": "experiments/eve/.runtime/stage2-evaluator-smoke/direct-report.json",
+      "report_sha256": "e164cc2c9b4822696f66b203ea142c298c6c3472c388dd1a507c5d91d46748fb",
+      "accepted_candidate_sha256": "0cd03b9ebe597abd70904e9bc7a2251acc7e7e7b87b9498d7c67d0e956db738c"
+    },
+    "transport": {
+      "score": 1.0,
+      "report": "experiments/eve/.runtime/stage2-evaluator-smoke/transport-report.json",
+      "report_sha256": "31454949c27d6a9269ec14873dccf2fc1a7268718e0d4107e984e2faf08271b3",
+      "accepted_candidate_sha256": "3230b70f25df4f393498599dea048eb146fb72483f1bf1e2fed9e0717d647d52"
+    },
+    "pair": {
+      "score": 1.0,
+      "report": "experiments/eve/.runtime/stage2-evaluator-smoke/pair-report.json",
+      "report_sha256": "076a52a4f8415162eead2141f1682e51f707ef2156cf3a29dbc6f5f5cf942dc9"
+    }
+  },
+  "mutation_corpus": {
+    "path": "experiments/eve/stage2_entry_game/mutations.json",
+    "sha256": "bf5cce8e4058e8bc305a401121523a4f9267f018e4749dfbb18ca070e0ea8e43",
+    "count": 12,
+    "all_rejected_as_expected": true
+  },
+  "test": {
+    "command": "python3 -m unittest experiments.eve.tests.test_stage2_entry_game -v",
+    "tests": 4,
+    "status": "passed"
+  },
+  "review": {
+    "kind": "codex-ai-review",
+    "independent_human_review": false
+  },
+  "claim_boundary": "Public development evidence for one paired micro-task only; not a private benchmark, an EvE comparative result, or a general model-capability claim."
+}

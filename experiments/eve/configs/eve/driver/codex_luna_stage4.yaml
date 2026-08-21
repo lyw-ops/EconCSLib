@@ -1,0 +1,13 @@
+# @package _global_
+
+driver:
+  driver: codex_exec
+  executable: codex
+  model: gpt-5.6-luna
+  reasoning_effort: low
+  rollout_max_turns: 6
+  web_search: disabled
+  timeout_seconds: 900
+  overrides:
+    solver:
+      reasoning_effort: low

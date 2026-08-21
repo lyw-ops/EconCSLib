@@ -1,0 +1,11 @@
+# @package _global_
+
+application:
+  name: econcslib-entry-game-direct
+  path: ${oc.env:EVE_ECONCSLIB_ROOT}/experiments/eve/stage2_entry_game/direct/seed
+  editable:
+    files: [Candidate.lean]
+    folders: []
+  boundary_failure_score:
+    score: 0.0
+    summary: boundary check failed

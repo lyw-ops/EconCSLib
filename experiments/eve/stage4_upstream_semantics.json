@@ -1,0 +1,66 @@
+{
+  "schema_version": "1.0.0",
+  "id": "EVE-STAGE4-UPSTREAM-SEMANTICS-001",
+  "upstream": {
+    "repository": "https://github.com/scaling-group/eve",
+    "tag": "v0.2.0",
+    "commit": "50b2399258ab08b6225a87cd05bded9701caa23d",
+    "tracked_modifications_allowed": false
+  },
+  "source_evidence": [
+    {
+      "path": "src/scaling_evolve/algorithms/eve/runner.py",
+      "sha256": "06bc35d16f0ab80c48b27491c83b3830c4e2449c5ccedb83fe2f025ca3f9911d",
+      "lines": "154-177,252-285",
+      "establishes": "fresh run_config construction, factory creation, initial-guidance seeding before factory.run, and no resume/import in the Stage 4 protocol"
+    },
+    {
+      "path": "src/scaling_evolve/algorithms/eve/factory.py",
+      "sha256": "c7874da9be0ffaa6b3c8f7b2fa9707fd408953712b23f8f4ab35ddee3c9b2a68",
+      "lines": "274-354",
+      "establishes": "the solver population, optimizer population, and solver workspace builder are all constructed before the loop begins"
+    },
+    {
+      "path": "src/scaling_evolve/algorithms/eve/populations/base.py",
+      "sha256": "881044a5d74decc4c3ae586ba452ecc036152b0bd13c79274ab4d53c7a9dea4d",
+      "lines": "26-40",
+      "establishes": "each population owns a random.Random stream but upstream supplies no config seed"
+    },
+    {
+      "path": "src/scaling_evolve/algorithms/eve/workspace/solver_workspace.py",
+      "sha256": "391dc7176b5dc462a706c980849a2c2c63ad2139af076b2428c0b95bf1e83bc3",
+      "lines": "52-107",
+      "establishes": "worker selection owns a third random.Random stream"
+    },
+    {
+      "path": "src/scaling_evolve/algorithms/eve/workflow/loop.py",
+      "sha256": "8412b734b5a71503c9e1b55c34c94586996ac9c8d9dbacd78187c45a221b1a90",
+      "lines": "61-102",
+      "establishes": "produce_optimizer_in_phase2 is passed into every iteration and the same iteration budget applies to all conditions"
+    },
+    {
+      "path": "src/scaling_evolve/algorithms/eve/workflow/phase2.py",
+      "sha256": "3bdd7ece65b5fc787c7adccda6f310306deb55f932fc51de740c2d6f1aa13002",
+      "lines": "326-355,510-575",
+      "establishes": "value zero prevents optimizer construction/addition; value one admits only changed guidance; all population/prefill sampling consumes the seeded streams"
+    }
+  ],
+  "condition_semantics": {
+    "static": "Seed one optimizer from an empty runtime directory and set produce_optimizer_in_phase2=0. The solver receives an empty guidance tree and no changed guidance can enter the optimizer population.",
+    "fixed": "Seed the frozen route guidance and set produce_optimizer_in_phase2=0. Every iteration may solve candidates, but changed workspace guidance cannot become an optimizer candidate.",
+    "evolved": "Seed the same frozen route guidance and set produce_optimizer_in_phase2=1. A guidance tree enters the optimizer population only when it differs from the working optimizer, after which later sampling can select it."
+  },
+  "rng_semantics": {
+    "upstream_native_config_seed": false,
+    "sidecar_wrapper": "experiments/eve/scripts/run_seeded_eve.py",
+    "seeded_streams": ["solver_population", "optimizer_population", "worker_selection"],
+    "seed_timing": "immediately after EveFactory.from_config and before seed_initial_guidance/factory.run",
+    "provider_model_seed_available": false,
+    "claim_boundary": "Pairing controls EvE sampling only. Codex/provider sampling remains an independent, unseeded source of run-to-run variation and is never described as deterministic."
+  },
+  "review": {
+    "kind": "codex-ai-review",
+    "independent_human_review": false
+  },
+  "status": "source-semantics-established-with-explicit-model-rng-limit"
+}

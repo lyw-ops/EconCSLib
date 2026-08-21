@@ -1,0 +1,9 @@
+# @package _global_
+
+stage4_condition:
+  id: eve-evolved-guidance
+  initial_guidance_mode: frozen-route-guidance
+  optimizer_evolution: true
+
+loop:
+  produce_optimizer_in_phase2: 1

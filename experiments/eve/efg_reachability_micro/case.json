@@ -1,0 +1,118 @@
+{
+  "schema_version": "1.0.0",
+  "id": "EVE-EFG-REACHABILITY-MICRO-001",
+  "status": "PUBLIC_STAGE_1A_MANUAL_SMOKE_002_COMPLETED_SCORE_ONE_STAGE1_COMPLETE",
+  "task": "LOCAL_STRUCTURAL_CORE_USABILITY",
+  "solver_prompt": {
+    "id": "EVE-EFG-SOLVER-PROMPT-001",
+    "version": "1.0.0",
+    "entrypoint": "experiments/eve/overlay/efg_reachability_micro/prompt/ENTRYPOINT.md",
+    "entrypoint_sha256": "e87b99b7b67183062962d8c0fcddb362373642eaed84339564c1cc294fbb2bb2",
+    "model_neutral": true,
+    "status": "EXECUTED_SCORE_ZERO_THEN_SCORE_ONE",
+    "latest_execution_prompt_id": "EVE-STAGE1-LUNA-EFG-MANUAL-SMOKE-002",
+    "latest_execution_report": "experiments/eve/.runtime/stage1-luna-efg-manual-smoke-002/manual-smoke.json",
+    "execution_history": [
+      {
+        "prompt_id": "EVE-STAGE1-LUNA-EFG-MANUAL-SMOKE-001",
+        "score": 0.0
+      },
+      {
+        "prompt_id": "EVE-STAGE1-LUNA-EFG-MANUAL-SMOKE-002",
+        "score": 1.0
+      }
+    ]
+  },
+  "manual_smoke_001": {
+    "status": "LUNA_EFG_MANUAL_SMOKE_COMPLETED",
+    "condition_id": "EvE-evolved-guidance",
+    "candidate_score": 0.0,
+    "failure_codes": [
+      "compile-failed"
+    ],
+    "guidance_modified": false,
+    "solver_compile_feedback_available": false,
+    "interpretation": "Engineering-pipeline completion only; not a benchmark, clean model solve-failure, or EvE-improvement result."
+  },
+  "toolchain_feedback_repair": {
+    "status": "VALIDATED_NO_MODEL_CALL",
+    "expected_lean_version": "4.30.0",
+    "isolated_home_accepted_fixture_compiles": true,
+    "isolated_home_elan_fallback_created": false,
+    "upstream_modified": false,
+    "model_calls": 0
+  },
+  "manual_smoke_002": {
+    "status": "LUNA_EFG_MANUAL_SMOKE_002_COMPLETED",
+    "condition_id": "EvE-evolved-guidance",
+    "candidate_score": 1.0,
+    "gate_count": 15,
+    "failure_codes": [],
+    "guidance_modified": false,
+    "solver_compile_feedback_available": true,
+    "elan_download_or_lock_recurrence": false,
+    "prior_run_reused": false,
+    "audit_kind": "codex-ai-review",
+    "independent_human_review": false,
+    "interpretation": "Stage 1 engineering-pipeline success only; not a benchmark, EvE-improvement, comparative result, or general model capability claim."
+  },
+  "source_adjustment": "The current StructuralCore already exposes Arena.reachable_iff_nonempty_history; the task tests discovery and correct use instead of adding or duplicating core API.",
+  "seed_candidate_sha256": "ef72862105a73cbdc3911f054295479e5caa048780bffa3e6f1c27b755d77231",
+  "protected_prefix_sha256": "22118b2efa14051874c75ade38f8bf6a48f597f93e6884b2c2caa6db7ef9c4cb",
+  "evaluation_environment": {
+    "id": "ECONCSLIB-LEAN-4.30.0",
+    "lean_toolchain": "leanprover/lean4:v4.30.0",
+    "mathlib_commit": "c5ea00351c28e24afc9f0f84379aa41082b1188f"
+  },
+  "allowed_imports": [
+    "EconCSLib.GameTheory.ExtensiveGame.Interface.StructuralCore"
+  ],
+  "required_declarations": [
+    "EconCSLibEvEEFGReachabilityMicro.reachability_history_bridge",
+    "EconCSLibEvEEFGReachabilityMicro.left_reachable",
+    "EconCSLibEvEEFGReachabilityMicro.right_reachable",
+    "EconCSLibEvEEFGReachabilityMicro.reachability_proofs_eq",
+    "EconCSLibEvEEFGReachabilityMicro.histories_ne",
+    "EconCSLibEvEEFGReachabilityMicro.occurrence_endpoints_eq",
+    "EconCSLibEvEEFGReachabilityMicro.occurrences_ne"
+  ],
+  "editable_files": [
+    "Candidate.lean"
+  ],
+  "editable_folders": [],
+  "warning_allowlist": [],
+  "protected_assets": {
+    "EconCSLib/GameTheory/ExtensiveGame/Interface/StructuralCore.lean": "d3f3f9acaec26bcb7018f2e8a207a0b175f503b0470b253ddad71036bc0d297d",
+    "EconCSLib/GameTheory/ExtensiveGame/Structural/History.lean": "69ef7158b449427e9a51032a5f9fe0754d891bb02020375eb5e5268b2934f170",
+    "benchmarks/mathlib-style/scripts/static_lean_guard.py": "784fb22e34cd30d4acfcb1835700aeca4d33f1000138b30901c20b83a20afc03",
+    "experiments/eve/configs/eve/application/efg_reachability_micro.yaml": "439479b119a56aa94495f49325e9f6bb54efb3c3c58078b7362a46adc60dd42d",
+    "experiments/eve/configs/eve/efg_reachability_micro.yaml": "9b81b19fe346c23c0a7cda10cbf6af740a9f246211ce8dab94e6fe9d54abda0f",
+    "experiments/eve/configs/eve/evaluation/efg_reachability_micro.yaml": "f46debeae0e84e70289632f986272cac6b0ded3ec1fce6243eaa4a59e725e808",
+    "experiments/eve/configs/eve/optimizer/efg_reachability_micro.yaml": "816aca0d28442623fdbb3feb069ceee714849a139c717a0b24fe8f2de31db068",
+    "experiments/eve/efg_reachability_micro/expected/Accepted.lean": "ec43042705b95458bb7160a9fa7036d5213d7a30592f1b3e606eb9acdf4b2495",
+    "experiments/eve/efg_reachability_micro/run-manifest.json": "de53805ed4c9a61ad3bfa368f94aa6acecbe3c8ae202eca0b39afd4d1b75a7e6",
+    "experiments/eve/efg_reachability_micro/seed/Candidate.lean": "ef72862105a73cbdc3911f054295479e5caa048780bffa3e6f1c27b755d77231",
+    "experiments/eve/efg_reachability_micro/seed/README.md": "0def7bb4fb62305563c214a0c476e0de7d1741a623e8bb7202369ebfd1732c5e",
+    "experiments/eve/overlay/efg_reachability_micro/immutable/AGENTS.md": "caa5d249a53fbaca304e5affe12f3e088d50f7edf758e7a35077d485bc1549ba",
+    "experiments/eve/overlay/efg_reachability_micro/immutable/README.md": "18d068351a19950977b24b892d8d80826b002be8130f3c70c580be8ee16e65b4",
+    "experiments/eve/overlay/efg_reachability_micro/initial_guidance/docs/structural_core.md": "9efbd0f38c38cf42864d8ac55ca69de75207804c10f4bf9b08896e73db090ebe",
+    "experiments/eve/overlay/efg_reachability_micro/prompt/BOUNDARY_REPAIR.md": "a8580c53899e88cf47919afef5f9d77d657c2951fb71226ad8f491efad80f8ed",
+    "experiments/eve/overlay/efg_reachability_micro/prompt/ENTRYPOINT.md": "e87b99b7b67183062962d8c0fcddb362373642eaed84339564c1cc294fbb2bb2",
+    "experiments/eve/overlay/efg_reachability_micro/prompt/budget/TURN.md": "11b91058534fbdfff7832530059ea5e213923bc45ca2bfb9609b0247129710a5",
+    "experiments/eve/overlay/efg_reachability_micro/prompt/budget/USER.md": "cd2e95ca2acf1e97c1a520f36616bf41665735243a2a3b25259d29e3f9d602c0",
+    "experiments/eve/scripts/evaluate_efg_reachability_micro.py": "a723fbc8dd9d37b25337ea5a01d778b820a96d4498662a6768e2b654efc5cdcc",
+    "experiments/eve/scripts/evaluation_efg_reachability_micro.sh": "a235faaadba5eec3142cb6e566e3dca5321532e20bc4660cbb5058c2f887a8f3",
+        "experiments/eve/scripts/evaluator_common.py": "4d3d51d21b08e8a49554e476d5782b424575d80d4c57616eb319789a9514cfa4",
+        "experiments/eve/scripts/run.py": "a34293e1646fc27024833e7dac37fae69db357792780c2317abd59dc3f310869",
+    "scripts/check_efg_api_growth.py": "48b4890ee4c2a340c43416de414adefc4af71875754308797f0e5188ed28be07",
+    "scripts/check_efg_governance.py": "25f8bf2bd0bae2a3502eab6e9af5abcf9bb523c9dc20ee15091ef7b47c7180be",
+    "scripts/efg_api_growth_baseline.json": "b2241fa213ba2532d1f64b53e86d11b8390c82694e15b92ec7fdca5fe59d2888"
+  },
+  "score": {
+    "direction": "higher-is-better",
+    "pass": 1.0,
+    "failure": 0.0,
+    "boundary_failure": 0.0
+  },
+  "purpose": "Completed public deterministic Stage 1a minimal-core engineering pilot only; not a comparative benchmark, EvE-improvement result, general model-capability result, independent human review, or minimal-core optimization result."
+}

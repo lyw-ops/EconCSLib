@@ -1,0 +1,10 @@
+# @package _global_
+
+logger:
+  csv:
+    _target_: scaling_evolve.algorithms.eve.logger.CSVEveLogger
+    enabled: true
+    output_dir: ${run_root}/telemetry
+    excluded_score_fields:
+      - info
+

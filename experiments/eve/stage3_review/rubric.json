@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "id": "EVE-STAGE3-CODEX-REVIEW-RUBRIC-001",
+  "scope": "Stage 2 Entry Game paired public development corpus",
+  "decisions": ["accept", "reject"],
+  "blocking_checks": [
+    "candidate stays within the frozen edit and import boundary",
+    "candidate compiles with no default Lean warnings",
+    "exact exercise-facing theorem declarations are present",
+    "direct route stays concrete and does not use the transport abstraction",
+    "transport route constructs the refinement certificate, proves the hypothesis bridge, applies the fixed general theorems, and transports both conclusions",
+    "observed axioms stay within the frozen Lean foundation allowlist",
+    "both routes target the same source lock and are evaluated independently"
+  ],
+  "severity": {
+    "P1": "invalidates proof, task identity, trust boundary, or route identity",
+    "P2": "violates an exact output or reproducibility contract",
+    "P3": "non-blocking clarity or maintainability issue"
+  },
+  "acceptance_rule": "Accept only if there are no P1 or P2 findings and the deterministic evaluator score is 1.0.",
+  "reviewer_kind": "codex-ai-review",
+  "independent_human_review": false
+}

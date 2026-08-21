@@ -1,0 +1,12 @@
+defaults:
+  - runtime: sidecar
+  - loop: smoke
+  - driver: codex_offline
+  - logger: local
+  - application: mathlib_style_smoke
+  - optimizer: mathlib_style_smoke
+  - evaluation: mathlib_style_smoke
+  - _self_
+
+label: mathlib-style-repair-smoke
+

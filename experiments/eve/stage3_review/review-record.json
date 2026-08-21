@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0.0",
+  "id": "EVE-STAGE3-CODEX-REVIEW-001",
+  "reviewed_at": "2026-08-21",
+  "reviewer": {
+    "kind": "codex-ai-review",
+    "identity": "current Codex session",
+    "independent_human_review": false
+  },
+  "rubric": "experiments/eve/stage3_review/rubric.json",
+  "protected_inputs": {
+    "source_lock_sha256": "023e3f3838fd9c350e99a03189bd7cb11bbb0420626834c45213c1167468a596",
+    "mutations_sha256": "bf5cce8e4058e8bc305a401121523a4f9267f018e4749dfbb18ca070e0ea8e43",
+    "direct_accepted_sha256": "0cd03b9ebe597abd70904e9bc7a2251acc7e7e7b87b9498d7c67d0e956db738c",
+    "transport_accepted_sha256": "3230b70f25df4f393498599dea048eb146fb72483f1bf1e2fed9e0717d647d52"
+  },
+  "accepted_candidates": [
+    {
+      "id": "DIRECT-ACCEPTED",
+      "route": "direct",
+      "decision": "accept",
+      "blocking_findings": [],
+      "review": "Concrete payoff-table case analysis proves the exact Nash characterization, unique SPE result, and off-path-threat separation without using the abstract route."
+    },
+    {
+      "id": "TRANSPORT-ACCEPTED",
+      "route": "transport",
+      "decision": "accept",
+      "blocking_findings": [],
+      "review": "The candidate defines both encoders and utilities, proves payoff preservation and strict-entry hypotheses, packages every RefinementCertificate field, invokes both fixed AbstractTwoStage theorems, and transports the SPE and Nash-separation conclusions back."
+    }
+  ],
+  "mutation_reviews": [
+    {"id": "DIRECT-UNFIXED", "decision": "reject", "severity": "P1", "finding": "Required conclusions absent."},
+    {"id": "DIRECT-PLACEHOLDER", "decision": "reject", "severity": "P1", "finding": "Forbidden placeholder."},
+    {"id": "DIRECT-ABSTRACT-LEAK", "decision": "reject", "severity": "P1", "finding": "Direct-route identity violated."},
+    {"id": "DIRECT-PREFIX-TAMPER", "decision": "reject", "severity": "P1", "finding": "Exercise payoff changed."},
+    {"id": "DIRECT-WRONG-NAME", "decision": "reject", "severity": "P2", "finding": "Exact declaration contract missing."},
+    {"id": "DIRECT-EXTRA-IMPORT", "decision": "reject", "severity": "P1", "finding": "Frozen import boundary expanded."},
+    {"id": "TRANSPORT-UNFIXED", "decision": "reject", "severity": "P1", "finding": "Certificate and transported conclusions absent."},
+    {"id": "TRANSPORT-PLACEHOLDER", "decision": "reject", "severity": "P1", "finding": "Forbidden placeholder."},
+    {"id": "TRANSPORT-MISSING-CERTIFICATE", "decision": "reject", "severity": "P1", "finding": "Exact refinement certificate missing."},
+    {"id": "TRANSPORT-PREFIX-TAMPER", "decision": "reject", "severity": "P1", "finding": "Fixed abstract theorem changed."},
+    {"id": "TRANSPORT-EXTRA-IMPORT", "decision": "reject", "severity": "P1", "finding": "Frozen import boundary expanded."},
+    {"id": "TRANSPORT-WRONG-TARGET", "decision": "reject", "severity": "P2", "finding": "Exercise-facing transported theorem missing."}
+  ],
+  "metrics": {
+    "accepted_candidates": 2,
+    "accepted_correctly": 2,
+    "mutations": 12,
+    "mutations_rejected": 12,
+    "blocking_false_accepts": 0
+  },
+  "limitations": [
+    "This is a public development corpus, so it does not estimate hidden-test generalization.",
+    "Route provenance is checked by frozen source structure, exact declarations, evaluator route discipline, and Codex proof review; Lean's kernel establishes theorem truth but does not label a proof as direct or transported.",
+    "This review is AI review by Codex, not independent human review.",
+    "One paired micro-task cannot support broad comparative claims about EvE or model capability."
+  ],
+  "status": "reviewed-no-blocking-findings-on-accepted-candidates"
+}

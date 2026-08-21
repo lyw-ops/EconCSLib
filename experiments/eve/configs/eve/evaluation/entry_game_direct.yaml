@@ -1,0 +1,11 @@
+# @package _global_
+
+evaluation:
+  steps:
+    - ${oc.env:EVE_ECONCSLIB_ROOT}/experiments/eve/scripts/evaluation_stage2_entry_direct.sh
+  failure_score:
+    score: 0.0
+    summary: evaluation failed
+  seed_solver_score: null
+  seed_solver_skip_evaluation: false
+  include_solver_examples: false

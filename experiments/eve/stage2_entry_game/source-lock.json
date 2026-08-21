@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "id": "EVE-ENTRY-GAME-SOURCE-LOCK-001",
+  "source_kind": "lawful paraphrase of a standard two-stage entry-deterrence game",
+  "source_reference": "Osborne, An Introduction to Game Theory, entry-deterrence extensive-form example",
+  "redistributable_source_text_included": false,
+  "interpretation": {
+    "players": ["challenger", "incumbent"],
+    "challenger_actions": ["enter", "stayOut"],
+    "incumbent_actions_after_entry": ["acquiesce", "fight"],
+    "terminal_payoffs": {
+      "stayOut": [1, 2],
+      "enterAcquiesce": [2, 1],
+      "enterFight": [0, 0]
+    },
+    "target": "The unique pure subgame-perfect profile is (enter, acquiesce), while (stayOut, fight) is Nash but not subgame-perfect."
+  },
+  "routes": ["direct", "transport"],
+  "route_independence": "Each route has a separate seed, solver workspace, candidate, and evaluation. Neither candidate may import the other route.",
+  "reviewer": "codex-ai-review",
+  "independent_human_review": false
+}

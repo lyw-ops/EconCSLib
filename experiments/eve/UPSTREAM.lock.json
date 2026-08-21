@@ -1,0 +1,52 @@
+{
+  "schema_version": "1.0.0",
+  "status": "scaffold-ready",
+  "verified_at": "2026-08-17",
+  "upstream": {
+    "repository": "https://github.com/scaling-group/eve",
+    "tag": "v0.2.0",
+    "tag_object_sha": "74e59e489bd918f109ffe2a9ccdc8beb4a977e01",
+    "commit_sha": "50b2399258ab08b6225a87cd05bded9701caa23d"
+  },
+  "license": {
+    "spdx": "Apache-2.0",
+    "license_file_sha256": "59cde600d9ffa8bbb9929c151efed5ffcf2af1caf869acf4797a22b1314be538",
+    "notice_file_sha256": "bb035c889ab02de3c8e8483f53d37e1f927aba7522cc65ef03f1d327a672c1f6",
+    "notice_required_for_redistribution": true,
+    "local_policy": "Keep LICENSE and NOTICE in the external checkout; do not vendor or redistribute EvE from EconCSLib."
+  },
+  "runtime_requirements": {
+    "python": ">=3.11,<3.15",
+    "upstream_python_version_file": "3.13",
+    "uv": "Required by upstream; no minimum uv version is declared. Use uv sync --locked against the pinned uv.lock.",
+    "codex": "Default agent backend; upstream declares no minimum Codex version. Its manual hook-trust procedure applies to Codex >=0.130.0.",
+    "pyproject_sha256": "1066826fad62c0e6badb6d0bcc258b76beb6bb1dc3d71c7cce1c4208c2dd5f41",
+    "uv_lock_sha256": "49ce2edda224da7dce886f54597384ab97c4d399f114f61ae585b40f40815bfd"
+  },
+  "configuration_contract": {
+    "version": "EvE 0.2.0 Hydra 1.3 four-layer application/evaluation/optimizer/experiment contract",
+    "application_source": "Exactly one of path or github_url plus commit",
+    "editable_boundary": "application.editable.files and application.editable.folders; any non-ignored out-of-bound change is rejected before evaluation",
+    "evaluation_steps": "Ordered shell .sh paths or judge prompt mappings",
+    "score_file": "logs/evaluate/score.yaml",
+    "score_schema": "Arbitrary YAML PyTree whose numeric leaves include every numeric path present in evaluation.failure_score",
+    "score_direction": "Higher numeric values rank better",
+    "evaluation_failure": "An evaluation exception returns evaluation.failure_score",
+    "boundary_failure": "A failed boundary check skips evaluation and returns application.boundary_failure_score",
+    "native_dry_run": false
+  },
+  "verified_examples": {
+    "math_proof_quickstart": "configs/eve/math_proof_quickstart.yaml composes application/math_proof_quickstart, evaluation/math_proof, optimizer/math_proof, and loop/math_proof; its solver boundary is the proof folder and its score is a five-dimension PyTree.",
+    "minimum_smoke": "configs/eve/circle_packing.smoke.yaml overrides the full circle_packing composition with driver/codex_smoke and a two-iteration loop. This sidecar further narrows the public plumbing smoke to one worker and one iteration."
+  },
+  "integration": {
+    "mode": "external-checkout plus EconCSLib Hydra config-dir overlay",
+    "checkout_argument": "--eve-checkout",
+    "overlay_root": "experiments/eve",
+    "run_root": "experiments/eve/.runtime/runs",
+    "network_policy": "check, dry-run, and fixture evaluation are offline; execute uses uv --offline --frozen --no-sync",
+    "vendored": false,
+    "submodule": false,
+    "no_vendoring_reason": "An immutable external checkout preserves upstream history, license/NOTICE, and dependency locking while keeping Python and EvE artifacts outside the Lean/Lake project."
+  }
+}

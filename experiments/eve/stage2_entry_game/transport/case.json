@@ -1,0 +1,64 @@
+{
+  "schema_version": "1.0.0",
+  "id": "EVE-ENTRY-GAME-TRANSPORT-001",
+  "paired_task_id": "EVE-ENTRY-GAME-PAIRED-001",
+  "route": "transport",
+  "status": "PUBLIC_STAGE2_DEVELOPMENT_COMPLETED_SCORE_ONE",
+  "source_lock": {
+    "id": "EVE-ENTRY-GAME-SOURCE-LOCK-001",
+    "path": "experiments/eve/stage2_entry_game/source-lock.json",
+    "sha256": "023e3f3838fd9c350e99a03189bd7cb11bbb0420626834c45213c1167468a596"
+  },
+  "seed_candidate_sha256": "97dae10a00291b487e68e0194babced2abf0ceffd0e7e41b6015349784114b84",
+  "protected_prefix_sha256": "a598c0c4c985ea717405dd6101597d6b00125f47dad7dbea04a4363a429c64a6",
+  "evaluation_environment": {
+    "id": "ECONCSLIB-LEAN-4.30.0",
+    "lean_toolchain": "leanprover/lean4:v4.30.0",
+    "mathlib_commit": "c5ea00351c28e24afc9f0f84379aa41082b1188f"
+  },
+  "allowed_imports": [
+    "EconCSLib.GameTheory.ExtensiveGame.Interface.Compilation.Discrete",
+    "Mathlib.Tactic"
+  ],
+  "required_declarations": [
+    "EconCSLibEVEEntryGameTransport.encodeChallenger",
+    "EconCSLibEVEEntryGameTransport.encodeIncumbent",
+    "EconCSLibEVEEntryGameTransport.encodeProfile",
+    "EconCSLibEVEEntryGameTransport.entryUtilities",
+    "EconCSLibEVEEntryGameTransport.payoff_preserved",
+    "EconCSLibEVEEntryGameTransport.hypothesis_bridge",
+    "EconCSLibEVEEntryGameTransport.nash_preserved",
+    "EconCSLibEVEEntryGameTransport.subgamePerfect_preserved",
+    "EconCSLibEVEEntryGameTransport.entryCertificate",
+    "EconCSLibEVEEntryGameTransport.abstract_nash_for_entry",
+    "EconCSLibEVEEntryGameTransport.abstract_unique_spe_for_entry",
+    "EconCSLibEVEEntryGameTransport.transport_subgamePerfect_iff",
+    "EconCSLibEVEEntryGameTransport.transport_out_fight_separation"
+  ],
+  "editable_files": ["Candidate.lean"],
+  "editable_folders": [],
+  "warning_allowlist": [],
+  "axiom_allowlist": ["Classical.choice", "Quot.sound", "propext"],
+  "protected_assets": {
+    "EconCSLib/GameTheory/ExtensiveGame/Interface/Compilation/Discrete.lean": "8b7293c28261a2a0e6983a3e34101f53720fd9c160864668db32d73de920b292",
+    "benchmarks/mathlib-style/scripts/static_lean_guard.py": "784fb22e34cd30d4acfcb1835700aeca4d33f1000138b30901c20b83a20afc03",
+    "experiments/eve/scripts/evaluate_stage2_entry_game.py": "7dd10441541593ea63d9de70595b786e130a67327a33c8d6cf4c91d63d6c256f",
+    "experiments/eve/scripts/evaluation_stage2_entry_transport.sh": "88cb70500029ca3863660416c380b10fe7eb82bcbf3edd8dba836812642bbb4a",
+    "experiments/eve/scripts/evaluator_common.py": "4d3d51d21b08e8a49554e476d5782b424575d80d4c57616eb319789a9514cfa4",
+    "experiments/eve/stage2_entry_game/TASK_SPEC.md": "0a6b440b4af9eabc2433ca3f4ba5ad66b34dab137f2b2954e602c2ce18f81b21",
+    "experiments/eve/stage2_entry_game/source-lock.json": "023e3f3838fd9c350e99a03189bd7cb11bbb0420626834c45213c1167468a596",
+    "experiments/eve/stage2_entry_game/transport/seed/Candidate.lean": "97dae10a00291b487e68e0194babced2abf0ceffd0e7e41b6015349784114b84",
+    "experiments/eve/stage2_entry_game/transport/seed/README.md": "e04add330caa8539401e9303feec418f9505ae9ce2d5b1323b139618476bc886"
+  },
+  "score": {
+    "direction": "higher-is-better",
+    "pass": 1.0,
+    "failure": 0.0,
+    "boundary_failure": 0.0
+  },
+  "review": {
+    "kind": "codex-ai-review",
+    "independent_human_review": false
+  },
+  "purpose": "Public paired-route development fixture; not a private benchmark or comparative model-capability result."
+}

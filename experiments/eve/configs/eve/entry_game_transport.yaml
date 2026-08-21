@@ -1,0 +1,13 @@
+defaults:
+  - runtime: sidecar
+  - loop: stage4
+  - driver: codex_luna_stage4
+  - logger: local
+  - application: entry_game_transport
+  - optimizer: entry_game_transport
+  - evaluation: entry_game_transport
+  - condition: static
+  - _self_
+
+label: entry-game-transport-stage4
+experiment_seed: 0

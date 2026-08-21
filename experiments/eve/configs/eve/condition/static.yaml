@@ -1,0 +1,9 @@
+# @package _global_
+
+stage4_condition:
+  id: static-no-specialized-guidance
+  initial_guidance_mode: empty-runtime-directory
+  optimizer_evolution: false
+
+loop:
+  produce_optimizer_in_phase2: 0

@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0.0",
+  "id": "EVE-MATHLIB-STYLE-REPAIR-SMOKE-001",
+  "status": "SYNTHETIC_SMOKE",
+  "task": "REPAIR",
+  "source_fixture": "benchmarks/mathlib-style/fixtures/repair/rep_dollar_syntax",
+  "source_before_sha256": "d73eb2e5a5276fa5652eecdaf3340dfca47256e320b9be2defe3d2f03e32337b",
+  "source_after_sha256": "3d8ad8a4f060de5669547a29ecc1349827ccd9c719ca5a866fee43725e13503b",
+  "seed_candidate_sha256": "e1d59debe16b3caeb73ee2afa1494e479cec0e7c88bbbc699881bea18ab45ed3",
+  "evaluation_environment": {
+    "id": "MATHLIB-4.30.0",
+    "lean_toolchain": "leanprover/lean4:v4.30.0",
+    "mathlib_commit": "c5ea00351c28e24afc9f0f84379aa41082b1188f"
+  },
+  "normative_manual": "docs/research/mathlib-style/MANUAL_EN.md",
+  "target_rule_ids": [
+    "FMT-008"
+  ],
+  "expected_validator_ids": [
+    "linter.style.dollarSyntax"
+  ],
+  "editable_files": [
+    "Candidate.lean"
+  ],
+  "editable_folders": [],
+  "warning_allowlist": [],
+  "score": {
+    "direction": "higher-is-better",
+    "pass": 1.0,
+    "failure": 0.0,
+    "boundary_failure": 0.0
+  },
+  "purpose": "Public deterministic plumbing smoke only; not a formal benchmark case or capability evaluation."
+}
