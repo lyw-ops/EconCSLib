@@ -1,0 +1,118 @@
+{
+  "schema_version": "1.0.0",
+  "id": "EVE-STAGE5A-UPSTREAM-SEMANTICS-001",
+  "upstream": {
+    "repository": "https://github.com/scaling-group/eve",
+    "tag": "v0.2.0",
+    "commit": "50b2399258ab08b6225a87cd05bded9701caa23d",
+    "tracked_modifications_allowed": false
+  },
+  "source_evidence": [
+    {
+      "path": "src/scaling_evolve/algorithms/eve/runner.py",
+      "sha256": "06bc35d16f0ab80c48b27491c83b3830c4e2449c5ccedb83fe2f025ca3f9911d",
+      "lines": "154-177,252-285",
+      "establishes": "A fresh factory is built from one run root; initial guidance is seeded before the EvE loop; resume and import are separately resolved lifecycle inputs rather than implicit population reuse."
+    },
+    {
+      "path": "src/scaling_evolve/algorithms/eve/factory.py",
+      "sha256": "c7874da9be0ffaa6b3c8f7b2fa9707fd408953712b23f8f4ab35ddee3c9b2a68",
+      "lines": "183-218,274-354",
+      "establishes": "Initial guidance becomes one optimizer population entry, and the solver population, optimizer population, workspace builder, samplers, and loop are assembled before iteration one."
+    },
+    {
+      "path": "src/scaling_evolve/algorithms/eve/workflow/loop.py",
+      "sha256": "8412b734b5a71503c9e1b55c34c94586996ac9c8d9dbacd78187c45a221b1a90",
+      "lines": "61-112",
+      "establishes": "Each iteration runs one Phase 2 batch, then Phase 3 scoring, before the next iteration can sample the updated populations."
+    },
+    {
+      "path": "src/scaling_evolve/algorithms/eve/workflow/phase2.py",
+      "sha256": "3bdd7ece65b5fc787c7adccda6f310306deb55f932fc51de740c2d6f1aa13002",
+      "lines": "103-197,248-366,457-575",
+      "establishes": "Phase 2 samples the working optimizer first, builds one solver workspace, runs the solver agent, evaluates the solver, extracts changed guidance, constructs an optimizer candidate only when production is enabled and the tree differs, admits selected produced candidates to the optimizer population, and uses the population RNG for later working-optimizer sampling."
+    },
+    {
+      "path": "src/scaling_evolve/algorithms/eve/workspace/solver_workspace.py",
+      "sha256": "391dc7176b5dc462a706c980849a2c2c63ad2139af076b2428c0b95bf1e83bc3",
+      "lines": "140-231,338-459",
+      "establishes": "The sampled optimizer files are copied into guidance/, prior solver examples expose deterministic evaluation logs, the working optimizer can appear with its logs under guidance_examples/, and final guidance is read back from the same workspace."
+    },
+    {
+      "path": "src/scaling_evolve/algorithms/eve/workflow/phase3.py",
+      "sha256": "f5308251b1a573eaa4a8bb601e16cff96645c5e3f251784709f79c3264b918f1",
+      "lines": "14-54",
+      "establishes": "After Phase 2 admission, the parent and produced optimizer scores are updated before the next iteration samples the population."
+    },
+    {
+      "path": "src/scaling_evolve/algorithms/eve/populations/base.py",
+      "sha256": "881044a5d74decc4c3ae586ba452ecc036152b0bd13c79274ab4d53c7a9dea4d",
+      "lines": "26-85,99-155",
+      "establishes": "Optimizer entries and their file trees are persisted in the run-scoped lineage database and artifact store; the population owns the random.Random stream used by samplers."
+    },
+    {
+      "path": "src/scaling_evolve/algorithms/eve/populations/samplers/rank_softmax.py",
+      "sha256": "036ed8dd70ea74a01e7ccdedfefb11798668e90228a3fd2696c67aa146d2aa45",
+      "lines": "142-179",
+      "establishes": "Working-optimizer selection is a real score-ranked probabilistic sample; candidate admission does not itself imply later selection."
+    },
+    {
+      "path": "src/scaling_evolve/providers/agent/drivers/codex_exec.py",
+      "sha256": "7e9d4f614b9ce78156537c44fbc4c26391fc44632d611d19c08244e55eb39c3a",
+      "lines": "71-111,195-310",
+      "establishes": "The pinned Codex adapter exposes model, reasoning, turn, timeout, and web-search controls but no provider model seed; the solver runs inside the Phase 2 workspace and its transcript and changed paths are archived."
+    }
+  ],
+  "phase_and_iteration_order": [
+    "Before iteration 1, runner seeds exactly one optimizer from optimizer.initial_guidance and ensures a seed solver exists.",
+    "At the start of iteration i Phase 2, EvE samples a working optimizer and solver examples from the current run-scoped populations.",
+    "EvE copies the sampled optimizer file tree to guidance/, exposes prior deterministic evaluation logs in example trees, and starts one solver rollout in that workspace.",
+    "During that rollout the solver can observe genuine local Lean command failures and can edit both solver/Candidate.lean and guidance/. The current iteration's external deterministic evaluation has not run yet and therefore cannot be read by that same rollout.",
+    "After the rollout, EvE boundary-checks and deterministically evaluates the solver candidate, then extracts guidance/. Production disabled yields no optimizer candidate; production enabled still yields none unless the extracted tree differs from the sampled optimizer tree.",
+    "A produced optimizer selected by the produced-optimizer sampler enters the optimizer population in iteration i. Phase 3 then synchronizes scores.",
+    "Only iteration j greater than i can sample that candidate as working guidance for a solver. Its stored logs can also be exposed through guidance_examples/ when configured."
+  ],
+  "failure_information_boundary": {
+    "current_rollout": "A real local Lean check invoked by the solver exposes its actual stdout, stderr, and exit code during the rollout. Stage 5A supplies a condition-neutral wrapper that records the command, candidate hash, output hashes, byte counts, and exit code.",
+    "external_evaluator": "The deterministic evaluator runs only after the rollout. Its logs enter the produced solver and optimizer log trees for later iterations; they cannot cause a guidance edit retroactively in the same rollout.",
+    "no_fabrication_rule": "A Stage 5A guidance candidate is classified as failure-derived only when the source rollout contains at least one recorded nonzero local Lean check event. Natural-language claims alone are insufficient."
+  },
+  "event_definitions": {
+    "guidance_tree_changed": "The final extracted guidance file tree hash differs from the sampled working optimizer file tree hash in the same Phase 2 workspace.",
+    "produced": "Pinned Phase2Runner returns a non-null optimizer candidate after production is enabled, the extracted guidance tree is nonempty, and it differs from the sampled optimizer; Stage 5A records source iteration, parent id/hash, candidate id/hash, solver id, and local-failure evidence.",
+    "entered_population": "The produced candidate survives pinned produced-optimizer sampling, is added to the current run's optimizer population, and the same id/hash is verified in optimizer_lineage.db and its referenced artifact.",
+    "selected_later": "A working_optimizer_sampled event at iteration j selects the exact admitted candidate id and guidance hash whose source iteration i satisfies j > i. Production or admission at i is never counted as later selection.",
+    "solver_used_guidance": "Before the rollout, the workspace guidance hash must equal the sampled optimizer guidance hash; both are recorded and compared."
+  },
+  "condition_semantics": {
+    "static": "Seed from a fresh empty guidance directory and set produce_optimizer_in_phase2=0. Workspace guidance edits may occur, but no changed guidance can be retained in the optimizer population.",
+    "fixed": "Seed the frozen route guidance and set produce_optimizer_in_phase2=0. Workspace guidance edits may occur, but the fixed population remains the only retained guidance state.",
+    "evolved": "Seed the byte-identical route guidance used by fixed and set produce_optimizer_in_phase2=1. Only a real changed tree can become a candidate; admission and later working selection remain separate auditable events."
+  },
+  "later_selection_opportunity": {
+    "minimum_iterations": 2,
+    "reason": "A candidate produced and admitted in iteration 1 first exists for working-optimizer sampling at the start of iteration 2.",
+    "protocol_iterations": 3,
+    "protocol_reason": "Three iterations preserve a later-selection opportunity for a candidate first produced in iteration 1 or 2; a candidate first produced in terminal iteration 3 is reported as produced without a later opportunity and cannot satisfy liveness."
+  },
+  "observation_design": {
+    "algorithm_semantics_changed": false,
+    "sidecar": "experiments/eve/scripts/run_stage5a_eve.py",
+    "method": "Call the pinned methods unchanged, then append id/hash/iteration observations around sampling, workspace materialization, rollout completion, production, and population admission. Post-run audit opens optimizer_lineage.db read-only and verifies the admitted artifact hash.",
+    "upstream_information_gap": "The v0.2.0 population database stores entry ids and artifacts but not parent iteration or each working selection. The sidecar therefore records these missing lineage joins without changing sampling, candidate construction, admission, or scoring."
+  },
+  "rng_semantics": {
+    "eve_sampler_streams_seeded": [
+      "solver_population",
+      "optimizer_population",
+      "worker_selection"
+    ],
+    "provider_model_seed_available": false,
+    "claim_boundary": "Paired experiment_seed values control only EvE's three random.Random streams. ChatGPT/Codex provider sampling remains uncontrolled, so repeated cells are not deterministic model replications and no causal condition claim follows from this development protocol."
+  },
+  "review": {
+    "kind": "codex-ai-review",
+    "independent_human_review": false
+  },
+  "status": "source-semantics-established-with-produced-selected-separation-and-provider-rng-limit"
+}

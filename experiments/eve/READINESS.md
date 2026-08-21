@@ -1,18 +1,21 @@
 # EvE experiment readiness
 
-- **Current status:** `PUBLIC_STAGE4_LUNA_DEV_COMPLETE_CODEX_REVIEWED`;
+- **Current status:** `STAGE5A_GUIDANCE_LIVENESS_PROTOCOL_FROZEN_NOT_YET_EXECUTED`;
   Stage 1 smoke 002 is closed at score one, Stage 2 direct/transport/pair and
   12 mutations are closed, Stage 3 Codex review verifies at score one, and
-  all 12 Stage 4 Luna development cells completed and passed machine re-audit
+  all 12 Stage 4 Luna development cells completed and passed machine re-audit;
+  the independent Stage 5A protocol is locally verified and hash-frozen but
+  has made zero model calls and zero EvE executions
 - **Not valid statuses:** `benchmark-ready`, `evaluation-complete`,
   `internal-pilot-complete`, or any model-capability conclusion
 - **Formal pilot default:** disabled and not configured
 - **Paid/long EvE execution:** the 12-cell public Stage 4 development matrix is
-  complete; no benchmark, private evaluation, or formal run has occurred
+  complete; Stage 5A has not run; no benchmark, private evaluation, or formal
+  run has occurred
 - **EvE runner / `--execute`:** 14 executions: two Stage 1 smokes plus 12 fresh
   Stage 4 cells; Stage 0 has not run
 - **Luna sessions:** one read-only access smoke, two Stage 1 solver sessions,
-  and 24 Stage 4 solver sessions
+  and 24 Stage 4 solver sessions; zero Stage 5A sessions
 
 ## What is ready
 
@@ -26,8 +29,8 @@ offline check/dry-run paths, and positive/negative tests.
 The external checkout at `/Users/lyuyuwei/Documents/eve-v0.2.0` matches the
 official repository, annotated tag object, peeled commit, LICENSE, NOTICE,
 `pyproject.toml`, `uv.lock`, and `.python-version`. `uv sync --locked`, the real
-Hydra loader, the historical 45-test Stage 1 suite plus the current Stage 2--4
-extensions (latest full result: 53 pass, 0 skip), `--check`, `--dry-run`, the
+Hydra loader, the historical 45-test Stage 1 suite plus the current Stage 2--5A
+extensions (latest full result: 69 tests run, 2 skipped), `--check`, `--dry-run`, the
 launcher accepted fixture, and accepted-fixture compilation under an isolated
 solver HOME pass. Exactly two EvE/Luna solver executions were invoked and are
 recorded below; the only other model call is the separately bounded access
@@ -139,6 +142,30 @@ It does not establish that an agent can repair Mathlib or EFG code reliably,
 that EvE improves an agent, that a model has a capability, that the minimal
 core should change, or that the formal pilot is ready to evaluate.
 
+Stage 5A protocol preparation is also ready. The pinned-source audit now records
+the exact Phase 2/Phase 3 order, the local-failure information boundary, the
+minimum two iterations needed for production followed by selection, and the
+provider RNG limitation. The frozen protocol uses three iterations, one worker,
+8 turns, 900 seconds, no retry/resume/import, fresh roots under the dedicated
+`stage5a-runs/` parent, and at most 36 Luna sessions across 12 cells. The same
+route prompt bundle is byte-identical across all conditions; fixed and evolved
+share initial guidance; static is empty; only evolved retains changed guidance.
+
+Read-only lineage observation distinguishes changed, produced, admitted, and
+selected-later events by iteration plus exact optimizer/guidance hashes and
+verifies admission against the current run's optimizer database and artifact.
+The public checker records genuine local Lean exit codes; a natural-language
+claim is not failure evidence. Static/fixed retention, cross-run leakage,
+terminal-iteration no-opportunity, and provider-RNG declarations fail closed.
+The transport route exposes all ten frozen certificate and equality-reflection
+checkpoints. Protocol hash verification and `--check`/`--dry-run` are safe and
+make no model call, consume no quota, and write no formal run result.
+
+This readiness is implementation readiness only. No Stage 5A Luna session has
+run, no new guidance has been produced or selected, the liveness gate is not
+closed, and Sol replication has not started. Review is `codex-ai-review`, not
+independent human review.
+
 ## Hard-disabled formal experiment boundary
 
 The launcher allow-list contains exactly `mathlib-style-smoke`,
@@ -150,6 +177,12 @@ pilot path. It never reads `benchmarks/mathlib-style/heldout/private/`. There
 is no formal/private Phase 4/5 application/evaluation config to enable accidentally. Any
 request to run the 16-case formal pilot through this sidecar must hard-fail
 until a separately reviewed implementation satisfies every gate below.
+
+The dedicated `run_stage5a.py` accepts only the two Entry Game tasks, the exact
+Stage 5A protocol id, conditions `static|fixed|evolved`, and seeds `1729|2718`.
+Unknown task, protocol, condition, or seed hard-fails. Its check/dry-run paths
+never dispatch the execution function. A future `--execute` additionally
+requires explicit quota acknowledgement; this document does not authorize it.
 
 ## Public Stage 4 Entry Game three-condition study
 
@@ -190,6 +223,22 @@ is unseeded. All evolved cells produced zero optimizer candidates, so no later
 selection of evolved guidance occurred. Any resulting
 carrier, StructuralCore, or public-API proposal must go through the EFG
 freeze/governance human decision process; the micro-pilot cannot authorize it.
+
+## Public Stage 5A guidance-liveness protocol
+
+Protocol: `EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-001`, version
+`1.0.0`, state `FROZEN_NOT_YET_EXECUTED`. It relates to Stage 4 only as a new
+development successor motivated by Stage 4's zero guidance changes. It does
+not supersede, modify, resume, import, or reclassify DEV-002 evidence.
+
+The full matrix remains direct/transport × static/fixed/evolved × seeds
+1729/2718 in frozen order. Each cell has three solver iterations and one
+attempt. The maximum is 36 Stage 5A model sessions, but the observed count is
+currently zero. If evolved produces no candidate, report
+`NO_GUIDANCE_PRODUCED`; if an admitted candidate is never sampled in a strictly
+later iteration, report `PRODUCED_NOT_SELECTED_LATER`; if it is first produced
+in iteration 3, report `PRODUCED_WITHOUT_LATER_OPPORTUNITY`. Production and
+selection may never be collapsed into one event.
 
 ## Gates before a real Mathlib-style experiment
 

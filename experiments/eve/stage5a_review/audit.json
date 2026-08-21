@@ -1,0 +1,91 @@
+{
+  "schema_version": "1.0.0",
+  "status": "FROZEN_NOT_YET_EXECUTED",
+  "protocol": {
+    "id": "EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-001",
+    "version": "1.0.0",
+    "sha256": "24364d551e68d3dde03579147f0c8abd89c81199d4b99845ffc0cfd260885fc0",
+    "detached_hash_verified": true
+  },
+  "review": {
+    "kind": "codex-ai-review",
+    "independent_human_review": false,
+    "review_scope": "Protocol implementation, pinned-source lifecycle evidence, condition-neutral prompts, runtime observation joins, failure handling, tests, and public claim boundaries. No model-generated candidate or Stage 5A run exists to review."
+  },
+  "stage4_preservation": {
+    "stage4_protocol_sha256": "946c556ee5f2a13eafe57a5a5b7db55c3118febb715eaf34aaddd91caf74c037",
+    "stage4_invalidated_attempts_sha256": "12593f39a625bfbeb362b264b746cbc95555b27537b7864e4831ddaf9dc3560d",
+    "stage4_review_sha256": "beae7fb17f06566b890b4a08635eafefc307276073afba4fdf46fcff4a86b9ad",
+    "local_stage4_machine_audit_sha256": "edc5332e822918bcf2635e01320f150825ad1d4e0c0b82a3acf20bc39b86142c",
+    "tracked_stage4_diff_empty": true,
+    "stage4_run_roots_read_by_stage5a_runner": false,
+    "stage4_run_roots_written_by_stage5a_runner": false
+  },
+  "implementation_review": {
+    "upstream_commit": "50b2399258ab08b6225a87cd05bded9701caa23d",
+    "upstream_source_hashes_verified": true,
+    "minimum_iterations_for_real_later_selection": 2,
+    "predeclared_iterations": 3,
+    "same_route_prompt_hash_across_all_conditions": true,
+    "fixed_evolved_initial_guidance_hash_equal": true,
+    "transport_checkpoint_count": 10,
+    "produced_admitted_selected_later_are_distinct": true,
+    "local_lean_failure_exit_status_and_hashes_recorded": true,
+    "immutable_local_checker_hash_preserved_across_rollout": true,
+    "population_admission_verified_from_read_only_sqlite_and_artifact": true,
+    "selected_later_requires_exact_id_hash_and_strictly_greater_iteration": true,
+    "failure_derived_candidate_required_for_liveness_success": true,
+    "cross_run_optimizer_leakage_check": true,
+    "provider_model_seed_controlled": false,
+    "upstream_algorithm_semantics_modified": false
+  },
+  "validation": {
+    "eve_tests_run": 69,
+    "eve_tests_skipped": 2,
+    "eve_test_failures": 0,
+    "stage5a_targeted_tests": 15,
+    "stage5a_targeted_test_failures": 0,
+    "real_local_lean_failure_fixture": "passed",
+    "synthetic_full_lineage_join": "passed",
+    "stage4_machine_audit_no_recheck": "passed",
+    "stage4_review_verifier_with_local_evidence": "passed",
+    "stage5a_protocol_verifier": "passed",
+    "planned_cell_checks": 12,
+    "planned_cell_checks_passed": 12,
+    "planned_cell_dry_runs": 12,
+    "planned_cell_dry_runs_passed": 12,
+    "dry_run_calls_model": false,
+    "dry_run_consumes_quota": false,
+    "dry_run_writes_formal_results": false
+  },
+  "execution_facts": {
+    "stage5a_execute_invocations": 0,
+    "stage5a_luna_sessions": 0,
+    "stage5a_optimizer_candidates_produced": 0,
+    "stage5a_guidance_selected_later": 0,
+    "sol_replication_started": false
+  },
+  "findings": [
+    {
+      "id": "S5A-R1",
+      "severity": "none",
+      "finding": "The condition differences are confined to fresh initial-guidance state and pinned optimizer-production retention; the route-local prompt bundle is condition-neutral and hash-identical."
+    },
+    {
+      "id": "S5A-R2",
+      "severity": "none",
+      "finding": "Machine observation separates changed, produced, population-admitted, and selected-later events and joins them by source iteration plus exact optimizer/guidance hashes."
+    },
+    {
+      "id": "S5A-R3",
+      "severity": "P1-execution-gate",
+      "finding": "Protocol preparation cannot demonstrate guidance liveness. A later explicitly authorized Luna execution must still produce, admit, and later select at least one failure-derived candidate; no such outcome is claimed now."
+    },
+    {
+      "id": "S5A-R4",
+      "severity": "P1-claim-boundary",
+      "finding": "Provider model RNG remains uncontrolled. Even a future liveness observation in this public answer-visible development matrix will not by itself establish a causal EvE effect, hidden-test generalization, independent review, or model capability."
+    }
+  ],
+  "claim_boundary": "This record reviews a public protocol frozen before execution. It does not review a Stage 5A candidate, establish that guidance was produced or selected, authorize --execute, begin Sol replication, or represent independent human review."
+}

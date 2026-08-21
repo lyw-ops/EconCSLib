@@ -1,17 +1,21 @@
 # EvE sidecar for EconCSLib
 
-> **Status: `stage4-luna-dev-complete-codex-reviewed`. Stage 1 smoke 002 is
+> **Status: `stage5a-guidance-liveness-protocol-frozen-not-yet-executed`.
+> Stage 1 smoke 002 is
 > closed at score `1.0`; the public Entry Game direct/transport pair and its 12
 > mutations pass Stage 2; the Stage 3 Codex review record verifies at `1.0`.
 > Stage 4 completed and re-audited all 12 Luna development cells: direct-route
 > run success is static `1/2`, fixed `2/2`, evolved `2/2`; transport-route run
 > success is static `1/2`, fixed `0/2`, evolved `0/2`. No rollout changed
 > guidance, so this is an implementation/prompt baseline rather than an EvE
-> evolution result. Codex review is AI review, not independent human review,
-> and none of this is a hidden benchmark, causal condition result, formal
-> EvE-effect result, or general model-capability claim.**
+> evolution result. Stage 5A now freezes an independent three-iteration
+> guidance-liveness protocol with produced/admitted/selected-later lineage
+> checks, but it has not executed Luna or EvE. Codex review is AI review, not
+> independent human review, and none of this is a hidden benchmark, causal
+> condition result, formal EvE-effect result, or general model-capability
+> claim.**
 
-## 总体技术路线（v3.1，权威入口）
+## 总体技术路线（v3.2，权威入口）
 
 本节是 EconCSLib EVE 研究计划的**唯一技术路线入口**。后续关于研究目标、
 证明路线、实验设计、模型顺序、阶段门槛和任务扩展的决定，都应更新在本节，
@@ -431,17 +435,47 @@ upstream。Codex/provider adapter 不暴露模型 seed，因此模型采样仍�
 观测。fixed/evolved 与 static 的差异也不能作因果解释，因为 provider model RNG
 不可控且每组仅 `n=2`。
 
-#### Stage 5：先修订 Luna 公开协议，再做 Sol 复制
+#### Stage 5A：Luna guidance-liveness 协议修订（已验证、已冻结、尚未执行）
 
-- 保留 DEV-002 不变，另建新协议，不回写本批结果；
-- 所有条件使用同一提示：本地 Lean 检查失败后必须沉淀一条简短、可复用 guidance，
-  static/fixed 丢弃变化，evolved 才允许保留；
-- transport 模版固定 encoded-equality reflection、certificate projection 消费和最终
-  具体声明签名三个检查点；
-- 增加足够的后续选择机会，分开统计 guidance produced 与 selected；
-- 先用 Luna 验证至少一条 guidance 确实产生并在后续迭代被选中，再冻结协议；
-- Sol 使用该修订后的同一协议完整复制；
-- 只在模型内部比较 EvE 效果，跨模型比较作为第二层分析。
+新协议 `EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-001` 与 DEV-002
+完全独立；Stage 4 的 protocol、audit、population、guidance、candidate、session 和
+run root 均不复用，也不回写历史结果。`stage5a_protocol.json` 及 detached SHA-256
+冻结两条 Entry Game 路线、三个条件、两个 EvE sampler seed 和 12-cell 顺序。
+
+同一路线三个条件共享字节完全相同的 prompt bundle。solver 每次修改后必须运行
+真实本地 Lean checker；只有记录到非零 exit code 时，才能把实际错误提炼为一条
+简短、可复用且不同于完整答案的 guidance。没有真实失败时禁止伪造。static 从空
+guidance 开始且不保留变化；fixed 与 evolved 从相同 route guidance 开始，fixed
+不保留变化，只有 evolved 允许 upstream 对真实 changed tree 产生 optimizer
+candidate。
+
+固定 upstream 生命周期证明 candidate 在第 `i` 轮加入 population 后，最早只能在
+第 `i+1` 轮成为 working optimizer；理论最少需要两轮。本协议预声明三轮、单
+worker、每轮一次 solver session、8-turn budget、900 秒 timeout、零
+retry/resume/import，每 cell 最多 3 sessions，全矩阵最多 36 sessions。这样第 1
+或第 2 轮产生的 candidate 都有后续选择机会；第 3 轮才产生则必须报告
+`PRODUCED_WITHOUT_LATER_OPPORTUNITY`，不得误报 selected。
+
+`run_stage5a_eve.py` 只在 pinned 方法调用前后增加 id/hash/iteration 观测，不改变
+采样、candidate 构造、population admission 或 Phase 3 评分。`audit_stage5a.py`
+再以只读方式连接 optimizer lineage database，并区分：guidance tree changed、
+candidate produced、entered population、以及 exact candidate id/hash 在更大
+iteration 被 selected。upstream database 没有保存 parent iteration 或每次 working
+selection，因此这些缺失 join 由 sidecar JSONL 补充；自然语言日志不能单独证明
+selected later。provider model RNG 仍不可控并写入每次 launch/seed/audit 记录。
+
+transport 的公共不可变模板固定全部十项 checkpoint：最终 concrete theorem 精确
+签名、action/profile encoder、payoff preservation、严格假设 bridge、Nash/SPE
+preservation、完整 `RefinementCertificate`、显式消费 certificate projections、调用
+固定一般定理、encoded equality reflection/完整具体 action 分类、以及回运到原题
+concrete profile 类型和精确声明。
+
+Stage 5A 仅完成协议实现、测试、Codex AI 审查与冻结。尚未产生或选择任何新
+guidance，尚未运行 Stage 5A Luna，也尚未开始 Sol 复制。下一阶段只能在另行明确
+授权下按冻结顺序运行 Luna；只有观测到至少一条 failure-derived guidance 确实
+produced、进入同一 fresh population 并在后续 iteration 被选择，才可讨论 Luna
+liveness gate。`stage5a_review/audit.json` 只记录本轮 protocol 的 Codex AI 审查，
+不是独立人工审查。Sol 必须在此之后使用等条件完整复制，不能只跑 evolved。
 
 #### Stage 6：七题 EFG 任务扩展
 
@@ -550,6 +584,10 @@ upstream。Codex/provider adapter 不暴露模型 seed，因此模型采样仍�
   `static 1/2, fixed 0/2, evolved 0/2`；失败候选为 compile `9`、route discipline
   `3`、target contract `2`。所有 evolved rollout 均未更新 guidance，optimizer
   candidate 总数为 `0`；
+- Stage 5A 的独立 protocol、condition-neutral prompts、三轮 lifecycle、真实本地
+  Lean failure 记录器和 produced/admitted/selected-later lineage audit 已验证并冻结
+  为 `FROZEN_NOT_YET_EXECUTED`；本轮模型调用、EvE execution、新 guidance 和 Sol
+  replication 均为 `0`；
 - 当前 EFG driver/manifest 已记录显式 `gpt-5.6-luna`、low effort 和
   Codex-default/unpinned verbosity；清单保留 001 score-zero、002 score-one 和
   comparative conditions 的历史 not-run 事实。两次都没有 guidance 更新。冻结 case
@@ -575,6 +613,15 @@ upstream。Codex/provider adapter 不暴露模型 seed，因此模型采样仍�
 
 #### 变更记录
 
+- **2026-08-21 · v3.2**：新增并冻结独立 Stage 5A Luna guidance-liveness 公开开发
+  协议 `EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-001`。从 pinned EvE
+  v0.2.0 源码建立完整 phase/iteration 证据，确认 produced 与 later-selected 的最小
+  两轮顺序，并为协议预声明三轮。两条路线分别使用跨 condition 字节相同的 prompt；
+  公共 Lean checker 记录真实 exit status 和 candidate/output hashes；只读 sidecar
+  lineage 把 changed、produced、population admission 和严格后续 working selection
+  分开验证。transport 固定十项 certificate/transport checkpoints。协议、输入和
+  detached hash 已冻结，审查身份仅为 `codex-ai-review`。没有运行 `--execute`，没有
+  Stage 5A Luna session，没有新 guidance produced/selected，也没有开始 Sol 复制。
 - **2026-08-21 · v3.1**：完整执行并收口 `DEV-002` Stage 4 Luna 公开开发矩阵。
   第一次 `DEV-001` 启动在任何模型 session 前暴露 Hydra primary-config 解析缺陷，
   已记录、整版作废并修复为显式 absolute-config CLI；真实 CLI 零模型预检和 53 项
@@ -991,6 +1038,44 @@ development outcomes at `n=2`, not significance or causal claims. All eight
 evolved rollouts left guidance unchanged and produced zero optimizer
 candidates; evolved was enabled but inactive.
 
+## Stage 5A guidance-liveness protocol (frozen, not yet executed)
+
+`stage5a_protocol.json` and `stage5a_protocol.sha256` freeze the independent
+protocol `EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-001`. Its 12 cells
+retain the Entry Game direct/transport scope, three conditions, and seeds
+`1729`/`2718`, but use three iterations and a fresh dedicated run-root parent
+`experiments/eve/.runtime/stage5a-runs/`. No Stage 4 run root, population,
+guidance candidate, cache, session, resume, or import is a Stage 5 input.
+
+The route-local prompt bundle hash is identical across static, fixed, and
+evolved. A common local checker records real Lean command failures. Runtime
+observation records the sampled guidance id/hash before the solver, the changed
+tree and produced candidate at its source iteration, population admission, and
+the exact later iteration that samples the same id/hash. The post-run auditor
+opens optimizer lineage storage read-only. Production without a later
+selection is reported as such; a terminal-iteration candidate has no later
+opportunity; no candidate is `NO_GUIDANCE_PRODUCED`.
+
+Safe validation uses the dedicated runner and never invokes the model:
+
+```bash
+python3 experiments/eve/scripts/verify_stage5a_protocol.py
+python3 experiments/eve/scripts/run_stage5a.py \
+  --eve-checkout /Users/lyuyuwei/Documents/eve-v0.2.0 \
+  --experiment entry-game-direct \
+  --protocol-id EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-001 \
+  --condition static --experiment-seed 1729 --check
+python3 experiments/eve/scripts/run_stage5a.py \
+  --eve-checkout /Users/lyuyuwei/Documents/eve-v0.2.0 \
+  --experiment entry-game-direct \
+  --protocol-id EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-001 \
+  --condition static --experiment-seed 1729 --dry-run
+```
+
+The protocol remains `FROZEN_NOT_YET_EXECUTED`. These commands report zero
+model calls, quota use, network access, and formal-result writes. Do not add
+`--execute` during protocol validation.
+
 Any proposed `Arena`, controlled-carrier, StructuralCore-closure, or
 Canonical/Frontend API change discovered later must return to the documented
 EFG freeze/governance human decision process. A micro-pilot score never
@@ -1030,6 +1115,7 @@ From the EconCSLib repository root:
 python3 -m unittest discover -s experiments/eve/tests -v
 python3 experiments/eve/scripts/audit_stage4.py --no-recheck
 python3 experiments/eve/scripts/verify_stage4_review.py --require-local-evidence
+python3 experiments/eve/scripts/verify_stage5a_protocol.py
 python3 -m json.tool experiments/eve/UPSTREAM.lock.json >/dev/null
 python3 -m json.tool experiments/eve/smoke/case.json >/dev/null
 python3 -m json.tool experiments/eve/efg_reachability_micro/case.json >/dev/null
@@ -1044,6 +1130,9 @@ the task's validation record.
 - Exactly two bounded evolved-labelled Stage 1 engineering smokes and 12
   Stage 4 public development cells have run. Stage 4 produced no optimizer
   candidate, so guidance-evolution effectiveness remains untested.
+- Stage 5A is frozen but has not executed. It has produced and selected zero
+  guidance candidates; its lineage and liveness claims are protocol properties
+  awaiting a later authorized Luna run, not experimental outcomes.
 - Neither public synthetic/local task can support a benchmark,
   model-capability, EvE-improvement, or minimal-core optimization conclusion.
 - EvE has no native dry-run at the pin; the sidecar prevents invocation.

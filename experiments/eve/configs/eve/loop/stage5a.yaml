@@ -1,0 +1,41 @@
+# @package _global_
+
+loop:
+  max_iterations: 3
+  n_workers_phase2: 1
+  n_solver_examples_phase2: 1
+  n_optimizer_examples_phase2: 1
+  exclude_all_working_optimizers_from_examples: true
+  produce_optimizer_in_phase2: 0
+  boundary_repair_attempts: 0
+  enable_resume: false
+  sampling:
+    working_optimizer:
+      _target_: scaling_evolve.algorithms.eve.populations.samplers.rank_softmax.RankSoftmaxSampler
+      temperature: 1.0
+      replacement_mode: auto
+    solver_examples:
+      _target_: scaling_evolve.algorithms.eve.populations.samplers.rank_softmax.RankExponentialSumSampler
+      features:
+        score:
+          weight: 1.0
+          temperature: 1.0
+      replacement_mode: no_replacement
+    solver_prefill:
+      _target_: scaling_evolve.algorithms.eve.populations.samplers.uniform.UniformSampler
+      replacement_mode: no_replacement
+    optimizer_examples:
+      _target_: scaling_evolve.algorithms.eve.populations.samplers.rank_softmax.RankSoftmaxSampler
+      temperature: 1.0
+      replacement_mode: no_replacement
+    produced_optimizers:
+      _target_: scaling_evolve.algorithms.eve.populations.samplers.rank_softmax.RankExponentialSumSampler
+      features:
+        score:
+          weight: 1.0
+          temperature: 1.0
+      replacement_mode: no_replacement
+  workspace_root: ${run_root}
+  artifact_root: ${loop.workspace_root}/artifacts
+  solver_db_path: ${loop.workspace_root}/solver_lineage.db
+  optimizer_db_path: ${loop.workspace_root}/optimizer_lineage.db

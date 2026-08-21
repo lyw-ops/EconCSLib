@@ -1,0 +1,201 @@
+{
+  "schema_version": "1.0.0",
+  "id": "EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-001",
+  "version": "1.0.0",
+  "status": "FROZEN_NOT_YET_EXECUTED",
+  "experiment_kind": "public Stage 5A guidance-liveness development experiment",
+  "relationship_to_stage4": {
+    "protocol_id": "EVE-STAGE4-LUNA-ENTRY-GAME-DEV-002",
+    "disposition": "Stage 4 remains completed historical development evidence and is neither overwritten, corrected, reclassified, resumed, imported, nor counted as Stage 5 data.",
+    "stage4_finding": "All four evolved cells left guidance unchanged; guidance_tree_changes=0, optimizer_candidates_produced=0, evolved_guidance_selected_later=0.",
+    "stage5a_scope": "Independent protocol preparation for guidance liveness only; no Stage 5A Luna or EvE execution has occurred."
+  },
+  "tasks": [
+    "entry-game-direct",
+    "entry-game-transport"
+  ],
+  "conditions": [
+    "static",
+    "fixed",
+    "evolved"
+  ],
+  "experiment_seeds": [
+    1729,
+    2718
+  ],
+  "run_matrix_size": 12,
+  "model_sessions_per_run": 3,
+  "maximum_model_sessions": 36,
+  "model": {
+    "name": "gpt-5.6-luna",
+    "reasoning_effort": "low",
+    "rollout_max_turns": 8,
+    "web_search": "disabled",
+    "timeout_seconds": 900,
+    "authentication": "ChatGPT subscription",
+    "provider_model_seed_controlled": false
+  },
+  "shared_compute": {
+    "iterations": 3,
+    "minimum_iterations_for_produced_then_selected": 2,
+    "workers_per_iteration": 1,
+    "solver_examples": 1,
+    "optimizer_examples": 1,
+    "produced_optimizers_per_iteration": {
+      "static": 0,
+      "fixed": 0,
+      "evolved": 1
+    },
+    "boundary_repairs": 0,
+    "resume": false,
+    "import": false,
+    "retry": false,
+    "attempts_per_matrix_cell": 1,
+    "fresh_run_root_parent": "experiments/eve/.runtime/stage5a-runs",
+    "reuse_stage4_population_guidance_candidate_session_or_run_root": false
+  },
+  "condition_neutral_prompt_contract": {
+    "same_route_prompt_byte_identical_across_conditions": true,
+    "route_prompts_may_differ": true,
+    "condition_names_or_condition_specific_answers_tools_budgets_in_prompt": false,
+    "real_local_lean_check_after_each_candidate_edit": true,
+    "failure_derived_guidance_only_after_recorded_nonzero_check": true,
+    "guidance_is_short_reusable_and_not_the_final_proof": true,
+    "no_failure_fabrication": true,
+    "exact_target_declarations_still_required": true
+  },
+  "solver_prompt_bundle_hashes": {
+    "direct": "3e55bb32584a9ccaed6dfa3ae8fff4a66e28568888b9e3a8a177d4a049635d64",
+    "transport": "9c4385eba854f635e5e8e7c359376c2932c4c68efabe9a719fd01533180ac596"
+  },
+  "initial_guidance_tree_hashes": {
+    "static": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "entry-game-direct-fixed-and-evolved": "47a43ca03b7266a112257d064af7d1968dbe7a09e9ec2ecae20b164285c0e743",
+    "entry-game-transport-fixed-and-evolved": "458d4ab45a20b57594a70f7ec62f72ba54ea1cdd635091091a70813e0edfaf24"
+  },
+  "condition_state_semantics": {
+    "static": "Fresh empty initial guidance; changed workspace guidance is not retained because optimizer production is zero.",
+    "fixed": "Frozen route guidance; changed workspace guidance is not retained because optimizer production is zero.",
+    "evolved": "Starts from the same frozen route guidance as fixed; a genuinely changed tree may be produced, admitted, and sampled in a later iteration."
+  },
+  "transport_checkpoints": [
+    "freeze exact final concrete theorem signatures",
+    "define action and profile encoders",
+    "establish payoff preservation",
+    "bridge strict exercise hypotheses to general theorem hypotheses",
+    "establish Nash and SPE preservation",
+    "construct the complete RefinementCertificate",
+    "explicitly consume certificate preservation projections",
+    "invoke the fixed general AbstractTwoStage theorems",
+    "prove encoded-profile equality reflection or reflect by complete concrete action cases",
+    "transport conclusions to the concrete profile type and exact declarations"
+  ],
+  "event_definitions": {
+    "guidance_tree_changed": "Final workspace guidance hash differs from the sampled working optimizer guidance hash in the same rollout.",
+    "produced": "Pinned Phase2Runner returns a non-null optimizer candidate; record source iteration, parent and candidate ids/hashes, solver id, and recorded local Lean failure hashes.",
+    "entered_population": "Candidate survives pinned produced-optimizer sampling and its exact id/hash is present in the current fresh run's optimizer lineage database and artifact store.",
+    "selected_later": "The exact admitted candidate id/hash is sampled as working optimizer in iteration j strictly greater than its source iteration i.",
+    "not_equivalent": "Production, admission, and later selection are three separate events; none substitutes for another."
+  },
+  "stopping_and_reporting": {
+    "run_all_predeclared_iterations": true,
+    "no_early_success_stop": true,
+    "no_retry_after_failure": true,
+    "evolved_no_candidate": "NO_GUIDANCE_PRODUCED",
+    "candidate_without_recorded_failure": "PRODUCED_WITHOUT_RECORDED_LEAN_FAILURE",
+    "candidate_not_admitted": "PRODUCED_NOT_ADMITTED_TO_POPULATION",
+    "terminal_iteration_candidate": "PRODUCED_WITHOUT_LATER_OPPORTUNITY",
+    "admitted_but_never_selected_later": "PRODUCED_NOT_SELECTED_LATER",
+    "liveness_observed": "GUIDANCE_PRODUCED_AND_SELECTED_LATER",
+    "controls_retaining_change": "INVALID_CONTROL_GUIDANCE_RETENTION"
+  },
+  "execution_order": "direct then transport; within each task seed 1729 then 2718; within each seed static then fixed then evolved",
+  "run_matrix": [
+    {"ordinal": 1, "task": "entry-game-direct", "seed": 1729, "condition": "static"},
+    {"ordinal": 2, "task": "entry-game-direct", "seed": 1729, "condition": "fixed"},
+    {"ordinal": 3, "task": "entry-game-direct", "seed": 1729, "condition": "evolved"},
+    {"ordinal": 4, "task": "entry-game-direct", "seed": 2718, "condition": "static"},
+    {"ordinal": 5, "task": "entry-game-direct", "seed": 2718, "condition": "fixed"},
+    {"ordinal": 6, "task": "entry-game-direct", "seed": 2718, "condition": "evolved"},
+    {"ordinal": 7, "task": "entry-game-transport", "seed": 1729, "condition": "static"},
+    {"ordinal": 8, "task": "entry-game-transport", "seed": 1729, "condition": "fixed"},
+    {"ordinal": 9, "task": "entry-game-transport", "seed": 1729, "condition": "evolved"},
+    {"ordinal": 10, "task": "entry-game-transport", "seed": 2718, "condition": "static"},
+    {"ordinal": 11, "task": "entry-game-transport", "seed": 2718, "condition": "fixed"},
+    {"ordinal": 12, "task": "entry-game-transport", "seed": 2718, "condition": "evolved"}
+  ],
+  "audit": {
+    "runtime_observer": "experiments/eve/scripts/run_stage5a_eve.py",
+    "post_run_auditor": "experiments/eve/scripts/audit_stage5a.py",
+    "lineage_database_open_mode": "read-only",
+    "upstream_algorithm_semantics_modified": false,
+    "cross_run_leakage_check": true,
+    "solver_guidance_hash_check": true,
+    "provider_rng_limit_must_be_preserved": true
+  },
+  "review": {
+    "kind": "codex-ai-review",
+    "independent_human_review": false
+  },
+  "claim_boundary": "Public, answer-visible, low-cost development protocol. Preparation can validate lifecycle instrumentation, deterministic filters, and liveness event definitions only. Until a later authorized execution, no new guidance has been produced or selected, Luna has not run under Stage 5A, Sol replication has not begun, provider RNG remains uncontrolled, and no causal EvE or model-capability claim is permitted.",
+  "protected_stage4_history": {
+    "experiments/eve/stage4_protocol.json": "946c556ee5f2a13eafe57a5a5b7db55c3118febb715eaf34aaddd91caf74c037",
+    "experiments/eve/stage4_invalidated_attempts.json": "12593f39a625bfbeb362b264b746cbc95555b27537b7864e4831ddaf9dc3560d",
+    "experiments/eve/stage4_review/audit.json": "beae7fb17f06566b890b4a08635eafefc307276073afba4fdf46fcff4a86b9ad"
+  },
+  "frozen_artifacts": {
+    "experiments/eve/UPSTREAM.lock.json": "ef7b211cc5413fa8782af5c73ca1df229881676ba7d145433e7b2dd820e8f5a3",
+    "experiments/eve/stage5a_upstream_semantics.json": "e7f0961e9159402e42e0f30d6fab1f44ff3a22c9d9ad367b2ff265a44ff10fcc",
+    "experiments/eve/scripts/run.py": "fa2371205eadd1271a4b7b548aaef6ba33a025ab44be9860db6806b6b3d4c19a",
+    "experiments/eve/scripts/run_stage5a.py": "bec9fcdf65897cd1861ece0a83160d03d924bf0de181757762fdf9accf230153",
+    "experiments/eve/scripts/run_stage5a_eve.py": "ce60d44f93962af80f2346f2a3c9c4312928ecaec7eb18e5f7cef100e4a6113d",
+    "experiments/eve/scripts/audit_stage5a.py": "5bb17f26969a7093116f802cbe5867752efa7488714bc2aaec5dc23a0a5643eb",
+    "experiments/eve/scripts/verify_stage5a_protocol.py": "8690c9b309dd60801a309d1a8d8a23b2f1040c3d2f7fd305f4a52c4ec7385cca",
+    "experiments/eve/scripts/evaluate_stage2_entry_game.py": "7dd10441541593ea63d9de70595b786e130a67327a33c8d6cf4c91d63d6c256f",
+    "experiments/eve/scripts/evaluation_stage2_entry_direct.sh": "bd1707b2a8b1b136dcd1a2c131cdd6b7991ab9ed7324c852c4dd01abc6d390a5",
+    "experiments/eve/scripts/evaluation_stage2_entry_transport.sh": "88cb70500029ca3863660416c380b10fe7eb82bcbf3edd8dba836812642bbb4a",
+    "experiments/eve/scripts/evaluator_common.py": "4d3d51d21b08e8a49554e476d5782b424575d80d4c57616eb319789a9514cfa4",
+    "experiments/eve/configs/eve/runtime/sidecar.yaml": "2f29cf57c9e0529a8a0c73eff5758cb2e941dd5850dc0a3fa6d7cc471f385d2f",
+    "experiments/eve/configs/eve/logger/local.yaml": "dda1d30c5942fcd4975abe19748ab6e964a1ebdc8812f68002bd0f59acfc2ef3",
+    "experiments/eve/configs/eve/loop/stage5a.yaml": "bdce0c15de2838b89c75189551e4fc2729e31fe96ef0651f9b797d7ecac4fae7",
+    "experiments/eve/configs/eve/driver/codex_luna_stage5a.yaml": "9ce549a56658ea937daccc905352b52287424cdf16c860180399fe44385bdf0b",
+    "experiments/eve/configs/eve/entry_game_direct_stage5a.yaml": "e299608c87b3b2e8e2d9a871e8423b26e29990e640ca07c3a4527050ddfffaff",
+    "experiments/eve/configs/eve/entry_game_transport_stage5a.yaml": "699a3d2fe05a42cb7515a58869cf78438907dff25cc130c4fe492d618c1cbe29",
+    "experiments/eve/configs/eve/application/entry_game_direct.yaml": "199eb00db3877b7a587877bd7d361009e6343c03465570dffb9c32a101aa870e",
+    "experiments/eve/configs/eve/application/entry_game_transport.yaml": "2ff56a348a4e8448d8390f0eee4cfa7a22b3da571b2cbf178477ca8f416a095a",
+    "experiments/eve/configs/eve/evaluation/entry_game_direct.yaml": "9dd2217a5c4c08e89e4df9d45625282c92bc1d7394e5e73bd443c4142e16660a",
+    "experiments/eve/configs/eve/evaluation/entry_game_transport.yaml": "f53ebfcb643a2e68cb0b541d513e49acd548f58c4fb7199fa29ce224035d46dc",
+    "experiments/eve/configs/eve/optimizer/entry_game_direct_stage5a.yaml": "f4d0d7a0ef6a3137e8ba983b91d109090c737196d1460443653902bd52970bb7",
+    "experiments/eve/configs/eve/optimizer/entry_game_transport_stage5a.yaml": "67e79b3e60db7a2eddf133837b37c699a8848e279364c525d2ce2e89262870c2",
+    "experiments/eve/configs/eve/stage5a_condition/static.yaml": "cafe1edb0aee36dcbc2da2ced482e228111b8c3a0fafbd5af0c8c99d64d9b8b3",
+    "experiments/eve/configs/eve/stage5a_condition/fixed.yaml": "a04398aa9b628121f6f9d7be818fbac49831b0d45c1bb61c4b595c4bb83217b7",
+    "experiments/eve/configs/eve/stage5a_condition/evolved.yaml": "cf80e58d7172e14012080815a10c6f1e09aa0dedc211bf019b5d03391b3ed3ca",
+    "experiments/eve/stage2_entry_game/TASK_SPEC.md": "0a6b440b4af9eabc2433ca3f4ba5ad66b34dab137f2b2954e602c2ce18f81b21",
+    "experiments/eve/stage2_entry_game/source-lock.json": "023e3f3838fd9c350e99a03189bd7cb11bbb0420626834c45213c1167468a596",
+    "experiments/eve/stage2_entry_game/direct/case.json": "7de31d85c925ed4e5d0128f8ad1cbc557b893c1b00a369ba3b6148937202597c",
+    "experiments/eve/stage2_entry_game/direct/seed/Candidate.lean": "16c6d82ff1cea9f4903ff39a62b546aad4a7ef2f15c69008aacf5a7acea654ff",
+    "experiments/eve/stage2_entry_game/direct/seed/README.md": "d5cf9129a5083cea12179883ba09667119747e5c2f5eb826865d905c29c8964a",
+    "experiments/eve/stage2_entry_game/direct/expected/Accepted.lean": "0cd03b9ebe597abd70904e9bc7a2251acc7e7e7b87b9498d7c67d0e956db738c",
+    "experiments/eve/stage2_entry_game/transport/case.json": "31f28e01ece383775832f3b5aa0dd4a3a6488dc6338d6d7feaee07a4be875850",
+    "experiments/eve/stage2_entry_game/transport/seed/Candidate.lean": "97dae10a00291b487e68e0194babced2abf0ceffd0e7e41b6015349784114b84",
+    "experiments/eve/stage2_entry_game/transport/seed/README.md": "e04add330caa8539401e9303feec418f9505ae9ce2d5b1323b139618476bc886",
+    "experiments/eve/stage2_entry_game/transport/expected/Accepted.lean": "3230b70f25df4f393498599dea048eb146fb72483f1bf1e2fed9e0717d647d52",
+    "experiments/eve/overlay/stage5a_entry_game_direct/immutable/AGENTS.md": "d748900d7b7d354207196b9255b188124eed12a6dbafe24d3183a99b58295250",
+    "experiments/eve/overlay/stage5a_entry_game_direct/immutable/README.md": "dec8a67beb417a53726f169fc13946428acbd6a42b7a55b4cde3d9aabdfe1804",
+    "experiments/eve/overlay/stage5a_entry_game_direct/immutable/STAGE5A_LEAN_CHECK.py": "eede22d796fca988d00b9c29f1f6fe609b231027289549f9a402fa2cfca72af8",
+    "experiments/eve/overlay/stage5a_entry_game_direct/initial_guidance/docs/direct.md": "151ce99b66dc3c662d2f9a95babc0e166759dc3f1e01944f0524c77a1983f243",
+    "experiments/eve/overlay/stage5a_entry_game_direct/prompt/BOUNDARY_REPAIR.md": "ddfe642d03aec51d183cb76ee4d6bd1d88d83f15ea795f59ec8dd192d0ed464a",
+    "experiments/eve/overlay/stage5a_entry_game_direct/prompt/ENTRYPOINT.md": "18a48437dd76a8968a48ce42b31170df715d964be197ed932be8611383731e81",
+    "experiments/eve/overlay/stage5a_entry_game_direct/prompt/budget/TURN.md": "11b91058534fbdfff7832530059ea5e213923bc45ca2bfb9609b0247129710a5",
+    "experiments/eve/overlay/stage5a_entry_game_direct/prompt/budget/USER.md": "f31cb12ac6f0a2f85c4da6ac59be33048d65f2f5b001487e6409e651bf57c531",
+    "experiments/eve/overlay/stage5a_entry_game_transport/immutable/AGENTS.md": "b73214cc9d5abbec2cbcba491414abf3709dc24a09f2a527e65337a35bbeaac4",
+    "experiments/eve/overlay/stage5a_entry_game_transport/immutable/README.md": "4b25bb6a9fd4283e6518e608ea5231651eb7d2a7c0590529d0991bff5f12d306",
+    "experiments/eve/overlay/stage5a_entry_game_transport/immutable/STAGE5A_LEAN_CHECK.py": "eede22d796fca988d00b9c29f1f6fe609b231027289549f9a402fa2cfca72af8",
+    "experiments/eve/overlay/stage5a_entry_game_transport/immutable/TRANSPORT_CHECKPOINTS.md": "e33203403ea0f74d974cdc28c0446b8cab9b1c5c73509ef2ff44ff66857e495b",
+    "experiments/eve/overlay/stage5a_entry_game_transport/initial_guidance/docs/transport.md": "91d4b8a9c87ac820399ae63558673fee723b2e752d48c28e223d2ef83f50e105",
+    "experiments/eve/overlay/stage5a_entry_game_transport/prompt/BOUNDARY_REPAIR.md": "ddfe642d03aec51d183cb76ee4d6bd1d88d83f15ea795f59ec8dd192d0ed464a",
+    "experiments/eve/overlay/stage5a_entry_game_transport/prompt/ENTRYPOINT.md": "1620c34d33291b2ee70afee9cbd4fab1dabe4f07faff972614b5f62d5452d655",
+    "experiments/eve/overlay/stage5a_entry_game_transport/prompt/budget/TURN.md": "11b91058534fbdfff7832530059ea5e213923bc45ca2bfb9609b0247129710a5",
+    "experiments/eve/overlay/stage5a_entry_game_transport/prompt/budget/USER.md": "fb92f3bf20cb8a4b49fa9854c1d2edc3a120ab2db9db1a0215316a11b226da22"
+  }
+}
