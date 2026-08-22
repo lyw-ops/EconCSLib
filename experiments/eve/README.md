@@ -1,6 +1,6 @@
 # EvE sidecar for EconCSLib
 
-> **Status: `stage5b-sol-rep001-executed-post-run-audit-incomplete`.
+> **Status: `stage5b-sol-rep002-frozen-not-yet-executed-zero-model-validated`.
 > Stage 1 smoke 002 is
 > closed at score `1.0`; the public Entry Game direct/transport pair and its 12
 > mutations pass Stage 2; the Stage 3 Codex review record verifies at `1.0`.
@@ -23,11 +23,17 @@
 > solver rollout telemetry is absent after a final-checker-event/final-candidate
 > mismatch. The execution is preserved with exact quota accounting, but it is
 > not a clean whole-matrix replication or complete cross-model comparison.
+> Read-only diagnosis proved that the ordinal-12 model changed Candidate.lean
+> after its last checker call. The separate REP-002 successor now forces a
+> wrapper-owned checker call after the agent and before evaluation, emits one
+> terminal event per rollout, and classifies evidence rejection without
+> optimizer production. REP-002 passes all zero-model gates but has made no
+> model call and is not authorized for execution.
 > Codex review is AI review, not independent human
 > review, and none of this is a hidden benchmark, causal condition result,
 > formal EvE-effect result, or general model-capability claim.**
 
-## 总体技术路线（v3.8，权威入口）
+## 总体技术路线（v3.9，权威入口）
 
 本节是 EconCSLib EVE 研究计划的**唯一技术路线入口**。后续关于研究目标、
 证明路线、实验设计、模型顺序、阶段门槛和任务扩展的决定，都应更新在本节，
@@ -671,6 +677,13 @@ sidecar 的 snapshot/quiescence 行为。当前结果是干净 checker 与本地
   的第 1 轮因 final checker event 与 final candidate 不匹配而 fail closed，缺少该轮
   rollout telemetry，终局 audit 以 exit 2 拒绝；全部三次 session 和 raw `0,1,1`
   得分保留但不得重跑或称为 clean whole-matrix replication；
+- 对 ordinal 12 的只读诊断确认：最后一条 checker event 覆盖 candidate
+  `37db0198...`，模型随后用 `apply_patch` 写成 `b19c421a...`，且没有再调用 checker；
+  这不是 snapshot race。独立 REP-002 identity 在 agent 返回、evaluation 开始前由
+  wrapper 强制追加一次 checker event，并在 evaluation 后重验 snapshot；每个 rollout
+  必须有唯一 terminal event，证据拒绝明确分类且不能生产 optimizer。19 项定向测试、
+  122 项全量测试（2 skip）、12/12 check 与 12/12 dry-run 已通过；0 模型、0 quota、
+  0 REP-002 root/ledger，执行仍需另行明确授权；
 - 当前 EFG driver/manifest 已记录显式 `gpt-5.6-luna`、low effort 和
   Codex-default/unpinned verbosity；清单保留 001 score-zero、002 score-one 和
   comparative conditions 的历史 not-run 事实。两次都没有 guidance 更新。冻结 case
@@ -696,6 +709,16 @@ sidecar 的 snapshot/quiescence 行为。当前结果是干净 checker 与本地
 
 #### 变更记录
 
+- **2026-08-23 · v3.9**：完成 REP-001 ordinal-12 只读诊断并冻结独立 Sol
+  REP-002（protocol v1.0.0，SHA-256
+  `318557e77f6b2126b813e522eea15bce03cb792639b2f537e4d53893749f7a8f`）。诊断
+  确认模型在最后一次 checker 后修改 candidate；REP-002 因此在 `_run_agent` 返回后、
+  `evaluate_workspace` 前由 wrapper 强制运行 immutable checker，evaluation 后再次
+  验证 candidate/checker/event snapshot，并为成功或拒绝写入唯一 terminal event。
+  拒绝状态 `RUN_FAILED_CHECK_EVIDENCE_CONTRACT` 可由 auditor 直接分类，且被拒 rollout
+  不产生 optimizer。科学输入和模型预算不变，roots/ledger/RNG domain 全新。19 项
+  定向回归、122 项完整 EVE 测试（2 项逐项记录 skip）、历史 verifier、12 个 check
+  和 12 个 dry-run 全部通过；零模型调用、零 quota、零正式 root/ledger，未授权执行。
 - **2026-08-22 · v3.8**：经明确授权执行 SHA-256
   `f532789fc76d282a386c6719bd16fd9da75ea05904d16035df06bfbde52e4a2f`
   的完整 Sol REP-001 12-cell matrix。12 个底层 EvE attempt 均按冻结顺序 exit 0，
@@ -1341,6 +1364,25 @@ rollout event makes its post-run audit fail closed. All attempts are consumed.
 This is preserved incomplete evidence, not a clean whole-matrix Sol replication
 or complete cross-model result.
 
+Read-only diagnosis is tracked in
+`stage5b_review/sol-rep001-ordinal12-diagnosis.json`. It deterministically joins
+the final checker event to candidate `37db0198...`, the subsequent model
+`apply_patch`, and the evaluated candidate `b19c421a...`; no snapshot race is
+needed to explain the mismatch.
+
+The separately frozen successor is `stage5b_sol_rep002_protocol.json`, identity
+`EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-002` version `1.0.0`, SHA-256
+`318557e77f6b2126b813e522eea15bce03cb792639b2f537e4d53893749f7a8f`.
+It preserves REP-001's scientific inputs and budget while using fresh protocol
+paths, RNG domain, run-root parent, and ledger. Its wrapper invokes the exact
+checker after the agent and before evaluation, revalidates the immutable
+snapshot afterward, and writes exactly one terminal event per rollout. Explicit
+checker-evidence rejection cannot produce an optimizer and is classified by the
+auditor rather than reported as generic missing telemetry. The 19 targeted and
+122 full-suite tests (two recorded skips), historical verifiers, 12 checks, and
+12 dry-runs pass with zero model calls, zero quota, and no formal REP-002 state.
+Execution is not authorized.
+
 Any proposed `Arena`, controlled-carrier, StructuralCore-closure, or
 Canonical/Frontend API change discovered later must return to the documented
 EFG freeze/governance human decision process. A micro-pilot score never
@@ -1387,6 +1429,7 @@ python3 experiments/eve/scripts/verify_stage4_review.py --require-local-evidence
 python3 experiments/eve/scripts/verify_stage5a_protocol.py
 python3 experiments/eve/scripts/verify_stage5a_dev003_protocol.py
 python3 experiments/eve/scripts/verify_stage5b_sol_rep001_protocol.py
+python3 experiments/eve/scripts/verify_stage5b_sol_rep002_protocol.py
 python3 -m json.tool experiments/eve/UPSTREAM.lock.json >/dev/null
 python3 -m json.tool experiments/eve/smoke/case.json >/dev/null
 python3 -m json.tool experiments/eve/efg_reachability_micro/case.json >/dev/null
@@ -1412,6 +1455,9 @@ the task's validation record.
   post-run audit because iteration-1 rollout telemetry is incomplete. Its 11
   audited cells and three local liveness chains do not make the whole matrix a
   clean replication or complete cross-model comparison.
+- Sol REP-002 repairs only that evidence-order boundary under a fresh identity.
+  It is zero-model validated and unexecuted, so it contributes no experimental
+  outcome and historical REP-001 authorization does not transfer.
 - Neither public synthetic/local task can support a benchmark,
   model-capability, EvE-improvement, or minimal-core optimization conclusion.
 - EvE has no native dry-run at the pin; the sidecar prevents invocation.

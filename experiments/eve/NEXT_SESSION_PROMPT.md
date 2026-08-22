@@ -23,6 +23,9 @@ read, in order:
 - experiments/eve/stage5b_sol_rep001_protocol.json
 - experiments/eve/stage5b_review/sol-rep001-audit.json
 - experiments/eve/stage5b_review/sol-rep001-execution-audit.json
+- experiments/eve/stage5b_review/sol-rep001-ordinal12-diagnosis.json
+- experiments/eve/stage5b_sol_rep002_protocol.json
+- experiments/eve/stage5b_review/sol-rep002-audit.json
 
 Inspect git status --short --branch, recent commits, every remote, the upstream
 tracking relationship, and the exact target files before changing anything.
@@ -33,8 +36,9 @@ execution-archive commit is
 zero-model protocol-freeze commit is
 5c8dc1fab267baaf61b0175cb8103cb3ac7bea7f. The expected Sol REP-001 execution
 archive commit is c1c933d654b66176751725a83aac7368d14f5ebe. The live local
-HEAD, upstream, and remote branch must contain that execution archive and agree;
-verify rather than trusting these expected values.
+branch must also contain ordinal-12 diagnosis handoff 7172a54 and the later
+REP-002 zero-model freeze commit recorded in HANDOFF.md. Verify the live HEAD,
+upstream, and remote rather than trusting these expected values.
 
 The worktree contains extensive user-owned changes outside experiments/eve/.
 Preserve all of them. Never restore, format, stage, commit, or otherwise absorb
@@ -125,6 +129,29 @@ Immutable historical facts:
     16/16; the full EVE suite passed 103 tests with the same two
     checkout-dependent skips; all 12 Sol cells passed zero-model --check and
     --dry-run before execution.
+18. Read-only ordinal-12 diagnosis is tracked in
+    stage5b_review/sol-rep001-ordinal12-diagnosis.json. The last checker event
+    covered candidate 37db01983134fada694c78a91d4752826de09de094e961a5ade7bb01f0e546a4;
+    the model then applied a patch producing final/evaluated candidate
+    b19c421a71f049a078413e7fcdb8e06a1ad934c9d39fd0f7daec2f4eb30ca9e6
+    and made no later checker call. This is deterministic post-check mutation,
+    not a snapshot race.
+19. The separate successor is
+    EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-002 v1.0.0, SHA-256
+    318557e77f6b2126b813e522eea15bce03cb792639b2f537e4d53893749f7a8f.
+    It uses fresh configs, overlays, RNG domain, run-root parent, and attempt
+    ledger. Neither formal REP-002 root nor ledger exists.
+20. REP-002 preserves REP-001's model, effort, scientific inputs, matrix,
+    prompts, initial guidance, checker, evaluator, pinned sources, compute,
+    turn/timeout, and no-retry policy. Its wrapper alone adds an immutable
+    checker call after _run_agent and before evaluate_workspace, followed by
+    post-evaluation snapshot revalidation and exactly one terminal event per
+    rollout. Invalid evidence is RUN_FAILED_CHECK_EVIDENCE_CONTRACT and cannot
+    produce an optimizer.
+21. REP-002 pre-execution validation passed 19 targeted tests, 122 full-suite
+    tests with the same two checkout-dependent skips, all historical and new
+    protocol verifiers, all 12 zero-model checks, and all 12 dry-runs. It made
+    zero model calls, consumed zero quota, and wrote zero formal state.
 
 Claim boundary:
 
@@ -139,42 +166,28 @@ Claim boundary:
   or complete Sol-versus-Luna comparison.
 - Provider model sampling remains uncontrolled, and the answer-visible matrix
   has only n=2 seeds per condition.
+- REP-002 establishes only a reviewed protocol repair and zero-model gate
+  success. It has no result and no inherited execution authorization.
 
 Start in read-only review mode. All DEV-003 and Sol REP-001 attempts are
-consumed: do not retry, resume, import, repair in place, or invoke either
---execute path. The next bounded action is read-only diagnosis of the ordinal-12
-checker-event/final-candidate mismatch. Any repaired execution requires a new
-protocol identity, fresh roots and ledger, separate review, and separate
-explicit model/quota authorization. Historical authorization never transfers to
-a successor.
+consumed: do not retry, resume, import, repair in place, or invoke either old
+--execute path. REP-002 is frozen and zero-model validated but unexecuted. Do
+not invoke its --execute path, start a model, consume quota, or create its
+formal root/ledger unless the user gives new explicit authorization naming
+REP-002 and acknowledging model/quota use. Historical authorization never
+transfers to a successor.
 
-For that diagnosis, inspect the preserved local root
-experiments/eve/.runtime/stage5b-sol-rep001-runs/20260822T153115_454482Z.
-Prioritize:
-
-- runner.log and the exact RuntimeError raised by
-  scripts/run_stage5b_sol_rep001_eve.py;
-- stage5a-guidance-lineage.jsonl, especially the absent iteration-1
-  solver_rollout_completed event;
-- iteration-1 workspace 20260822_153115_step_1_af3c91f0562f, its immutable
-  checker-event chain, final Candidate.lean bytes, evaluation score, and hashes;
-- the ordering of final candidate hashing, checker-event validation, workspace
-  evaluation, lineage emission, and Phase 2 task admission/skip behavior.
-
-Answer these questions from read-only evidence: which bytes changed between the
-last recorded checker event and the final candidate; which component changed
-them; whether the mismatch is deterministic in the preserved artifacts; and
-the minimum code/protocol boundary for a future REP-002 repair. Do not mutate or
-checkpoint a database, change hidden flags, edit the run root, patch the frozen
-wrapper/auditor/checker, or create a successor protocol in the diagnosis task.
-Stop after an evidence-backed cause and repair proposal. The diagnosis itself
-must make zero model calls and consume zero quota.
+The next bounded action is independent read-only REP-002 review or a user
+decision at that authorization gate. Before any separately authorized
+execution, verify the exact protocol SHA, clean EvE and Lean checkouts, absent
+REP-002 formal state, frozen ordinal-1 matrix selection, authentication, and
+quota acknowledgement. Never modify or reuse REP-001 runtime evidence.
 
 For any task, run validation proportionate to the changed files. For EVE
 protocol work, at minimum run the full experiments/eve test suite, relevant
 targeted tests, Stage 4 local-evidence verification/no-recheck audit, DEV-002
-and DEV-003 historical protocol verifiers, the Sol REP-001 clean-checkout
-verifier, detached hashes/environment checks,
+and DEV-003 historical protocol verifiers, the Sol REP-001 and REP-002
+clean-checkout verifiers, detached hashes/environment checks,
 all planned zero-model checks/dry-runs when relevant, and git diff --check.
 Record every skip individually. Never claim natural-language statements are
 machine verification.

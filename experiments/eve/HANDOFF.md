@@ -13,7 +13,8 @@ Last updated: 2026-08-23
 - Sol REP-001 zero-model protocol freeze: `5c8dc1fab267baaf61b0175cb8103cb3ac7bea7f`
 - Sol REP-001 pre-execution handoff refresh: `3d930d2f448e8ed1c53c928a9fd61417f130d6f3`
 - Sol REP-001 execution archive: `c1c933d654b66176751725a83aac7368d14f5ebe`
-- Ordinal-12 diagnosis handoff refresh: this commit
+- Ordinal-12 diagnosis handoff refresh: `7172a54`
+- Sol REP-002 zero-model protocol freeze: this commit
 - Long-term route authority: `experiments/eve/README.md`
 - Current gate authority: `experiments/eve/READINESS.md`
 - Copy-paste next-session prompt: `experiments/eve/NEXT_SESSION_PROMPT.md`
@@ -139,6 +140,38 @@ a passing zero-model check, each cell executed once. These are not retries and
 created no extra session, but they show the repaired snapshot contract did not
 eliminate every settling event.
 
+## Current Stage 5B Sol REP-002 state
+
+Read-only diagnosis is frozen in
+`stage5b_review/sol-rep001-ordinal12-diagnosis.json`. The last ordinal-12
+iteration-1 checker event covered candidate SHA-256 `37db0198...`; at 15:33:26Z
+the model used `apply_patch` to replace the two proof bodies, producing final
+candidate `b19c421a...`, and made no subsequent checker call. The preserved
+evaluator used those final bytes and Lean rejected the replacement proofs.
+This deterministically explains the mismatch without a snapshot race.
+
+The independent successor protocol is
+`EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-002`, version `1.0.0`, SHA-256
+`318557e77f6b2126b813e522eea15bce03cb792639b2f537e4d53893749f7a8f`.
+It has fresh configs, overlays, RNG domain, root parent
+`.runtime/stage5b-sol-rep002-runs`, and attempt ledger
+`.runtime/stage5b-sol-rep002-attempt-ledger.sqlite3`; neither formal path exists.
+
+The REP-002 wrapper invokes the exact immutable checker after `_run_agent`
+returns and before `evaluate_workspace`, then revalidates candidate, checker,
+and event chain after evaluation. Every rollout emits exactly one
+`solver_rollout_terminal` event. Invalid evidence is explicitly
+`RUN_FAILED_CHECK_EVIDENCE_CONTRACT`; the rejected task cannot reach evaluation,
+finalization, or optimizer production. The auditor recognizes terminal
+rejection directly rather than reporting generic incomplete telemetry.
+
+Scientific inputs are unchanged from REP-001: model `gpt-5.6-sol`, low effort,
+tasks, cases, seeds, conditions, matrix order, three iterations, one worker,
+prompt/guidance/checker bytes, evaluator, pinned EvE/Lean source, eight turns,
+900 seconds, and zero retry/resume/import. Preparation and validation made zero
+model calls and consumed zero Sol quota. Execution is not authorized, and the
+old REP-001 authorization does not transfer.
+
 ## Last verified evidence
 
 - The Sol attempt ledger has 12 unique completed exit-zero rows, SHA-256
@@ -158,6 +191,14 @@ eliminate every settling event.
   full EVE suite 103 passed with exactly the same two checkout-dependent skips;
   all 12 `--check`/`--dry-run` cells and the Stage 4, DEV-002, DEV-003, and Sol
   protocol verifiers passed.
+- REP-002 validation: 19 targeted tests pass; the full EVE suite passes 122
+  tests with the same two checkout-dependent skips; Stage 4 local evidence,
+  DEV-002, DEV-003, REP-001, and REP-002 verifiers pass; all 12 REP-002 checks
+  and all 12 dry-runs pass against the clean pinned Lean checkout.
+- The post-check-mutation regression proves the wrapper appends a new event for
+  the mutated candidate, and the rejection regression proves the auditor
+  classifies `RUN_FAILED_CHECK_EVIDENCE_CONTRACT` instead of incomplete
+  telemetry.
 - The two full-suite skips are unchanged and individually recorded:
   `test_accepted_efg_fixture_compiles_in_isolated_solver_home` and
   `test_actual_hydra_loader_parses_both_configs_when_checkout_is_supplied`.
@@ -185,22 +226,16 @@ completion.
 
 ## Next bounded action and stop condition
 
-Stop at the preserved Sol execution. All Sol REP-001 attempt slots are consumed;
-do not retry, resume, import, repair in place, or reuse its runtime state. The
-next bounded action is read-only diagnosis of the ordinal-12 final-checker-event
-versus final-candidate mismatch. Any repaired execution requires a new protocol
-identity, fresh roots and ledger, separate review, and separate explicit
-model/quota authorization.
+Stop at the frozen, zero-model-validated REP-002 protocol. All REP-001 attempt
+slots remain consumed and immutable; do not retry, resume, import, repair in
+place, or reuse their runtime state. Do not call REP-002 `--execute`, start a
+model, consume quota, or create its formal root/ledger without a new explicit
+user authorization naming REP-002 and acknowledging model/quota use.
 
-The diagnosis target is the immutable local run root
-`experiments/eve/.runtime/stage5b-sol-rep001-runs/20260822T153115_454482Z`.
-Begin with `runner.log`, `stage5a-guidance-lineage.jsonl`, the iteration-1
-workspace `20260822_153115_step_1_af3c91f0562f`, and the wrapper validation
-order in `scripts/run_stage5b_sol_rep001_eve.py`. Determine whether the mismatch
-comes from a post-check candidate mutation, event/file snapshot timing, or a
-different evidence-order defect. Do not modify the run root, databases, frozen
-protocol, wrapper, auditor, or checker during diagnosis. Stop after reporting
-the evidence-backed cause and the minimum prospective REP-002 repair boundary.
+The next bounded action is independent read-only review of REP-002 or a user
+decision at that authorization gate. If execution is authorized, reverify the
+exact protocol SHA, clean checkouts, absent REP-002 formal state, frozen matrix
+order, authentication, and quota acknowledgement before reserving ordinal 1.
 
 ## Session cleanup and repository state
 
@@ -209,9 +244,9 @@ the evidence-backed cause and the minimum prospective REP-002 repair boundary.
   reproducible audit-output copies; no formal run evidence was removed.
 - `experiments/eve/.runtime`, the clean Lean checkout, and every historical
   Stage 4/5A/5B root and ledger remain preserved.
-- At handoff generation, local HEAD, upstream, and the canonical fork branch all
-  resolve to `c1c933d654b66176751725a83aac7368d14f5ebe` before this handoff-only
-  update. The mixed non-EVE worktree remains user-owned and untouched.
+- At handoff generation, the remote branch contains diagnosis handoff
+  `7172a54`; the REP-002 freeze is the current task-owned update pending its
+  final commit/push. The mixed non-EVE worktree remains user-owned and untouched.
 
 ## Local versus GitHub evidence
 
@@ -220,7 +255,8 @@ history. Runtime evidence under `experiments/eve/.runtime/` is ignored and
 remains only on this machine. A fresh clone cannot reconstruct historical
 Stage 4/DEV-002/DEV-003/Sol transcripts, but their tracked audit hashes remain
 authoritative summaries. Sol REP-001 runtime evidence now exists only on this
-machine and must be preserved. Its Lean environment is tied to a clean committed
+machine and must be preserved. REP-002 has no runtime evidence because it has
+not executed. Both protocols' Lean environments are tied to a clean committed
 source tree rather than the user's uncommitted Lean work.
 
 ## Bootstrap prompt for the next conversation

@@ -1,0 +1,89 @@
+{
+  "schema_version": "1.0.0",
+  "reviewed_at": "2026-08-22T17:37:49Z",
+  "status": "FROZEN_NOT_YET_EXECUTED_ZERO_MODEL_VALIDATED",
+  "review": {
+    "kind": "codex-ai-pre-execution-review-plus-deterministic-machine-validation",
+    "independent_human_review": false,
+    "conclusion": "REP-002 is a fresh, zero-model successor protocol. Its wrapper-owned post-agent/pre-evaluation checker closes the deterministic REP-001 ordinal-12 evidence-order gap, every rollout has a unique terminal-event contract, rejection cannot produce an optimizer, and all frozen zero-model gates pass."
+  },
+  "protocol": {
+    "id": "EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-002",
+    "version": "1.0.0",
+    "sha256": "318557e77f6b2126b813e522eea15bce03cb792639b2f537e4d53893749f7a8f",
+    "status": "FROZEN_NOT_YET_EXECUTED"
+  },
+  "predecessor": {
+    "id": "EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-001",
+    "sha256": "f532789fc76d282a386c6719bd16fd9da75ea05904d16035df06bfbde52e4a2f",
+    "attempts_consumed": 12,
+    "model_sessions_consumed": 36,
+    "immutable": true,
+    "diagnosis": "experiments/eve/stage5b_review/sol-rep001-ordinal12-diagnosis.json",
+    "diagnosis_sha256": "ccf0d9790944d70ddb34e1962910b5055e4191efaffa9e734fe5d5db7d2a5337"
+  },
+  "repair": {
+    "cause": "REP-001 ordinal 12 iteration 1 mutated Candidate.lean after its final recorded checker call; the old observer checked only after upstream evaluation/finalization and raised before completed-rollout telemetry.",
+    "terminal_checker_phase": "post-agent-pre-evaluation",
+    "post_evaluation_snapshot_revalidation": true,
+    "exactly_one_solver_rollout_terminal_event": true,
+    "explicit_check_evidence_rejection": "RUN_FAILED_CHECK_EVIDENCE_CONTRACT",
+    "rejected_rollout_can_produce_optimizer": false,
+    "rejection_aware_auditor": true,
+    "model_prompt_or_checker_changed": false
+  },
+  "fresh_state": {
+    "run_root_parent": "experiments/eve/.runtime/stage5b-sol-rep002-runs",
+    "attempt_ledger": "experiments/eve/.runtime/stage5b-sol-rep002-attempt-ledger.sqlite3",
+    "rng_domain": "EconCSlib-EvE-Stage5B-Sol-REP002-v1",
+    "formal_run_roots_at_review": 0,
+    "formal_attempt_ledger_exists_at_review": false,
+    "historical_runtime_state_reused": false
+  },
+  "scientific_input_equality": {
+    "model": "gpt-5.6-sol",
+    "reasoning_effort": "low",
+    "tasks_cases_conditions_seeds_and_matrix_order_unchanged": true,
+    "iterations_workers_and_turn_budget_unchanged": true,
+    "prompt_initial_guidance_and_checker_bytes_unchanged": true,
+    "evaluator_pinned_eve_and_clean_lean_source_unchanged": true,
+    "retry_resume_import_policy_unchanged": true
+  },
+  "source_boundary": {
+    "upstream_eve_commit": "50b2399258ab08b6225a87cd05bded9701caa23d",
+    "clean_lean_source_commit": "b490317186ef435670c2eeb16050a214cdbf9fe5",
+    "clean_checkout_verified": true,
+    "mixed_operator_worktree_used_as_lean_source": false,
+    "exact_checker_python_invocation": "/usr/bin/python3",
+    "exact_checker_python_version": "3.9.6"
+  },
+  "validation": {
+    "rep002_targeted_tests": "19 passed",
+    "post_check_mutation_regression": "passed; a second wrapper-owned check appended evidence for the mutated candidate hash",
+    "terminal_rejection_classification_regression": "passed",
+    "full_eve_test_suite": "122 passed, 2 skipped",
+    "full_suite_skips": [
+      "test_accepted_efg_fixture_compiles_in_isolated_solver_home: no explicit locked EvE v0.2.0 checkout supplied to unittest discovery",
+      "test_actual_hydra_loader_parses_both_configs_when_checkout_is_supplied: no explicit locked EvE v0.2.0 checkout supplied to unittest discovery"
+    ],
+    "stage4_no_recheck_audit": "passed",
+    "stage4_local_evidence_verifier": "passed",
+    "dev002_historical_protocol_verifier": "passed",
+    "dev003_clean_checkout_protocol_verifier": "passed",
+    "sol_rep001_clean_checkout_protocol_verifier": "passed",
+    "sol_rep002_clean_checkout_protocol_verifier": "passed",
+    "zero_model_checks": "12/12 passed",
+    "zero_model_dry_runs": "12/12 passed",
+    "model_calls": 0,
+    "sol_quota_consumed": 0,
+    "formal_run_roots_written": 0,
+    "formal_attempt_ledger_writes": 0
+  },
+  "authorization": {
+    "execution_authorized": false,
+    "model_calls_authorized": false,
+    "historical_rep001_authorization_transfers": false,
+    "required_next_authorization": "Separate explicit authorization for REP-002 model/quota consumption and execution of the frozen matrix."
+  },
+  "claim_boundary": "This record validates only the frozen REP-002 protocol engineering and zero-model gates. It establishes no REP-002 outcome, cross-model replication, causal EvE effect, model capability, benchmark readiness, independent human review, or evaluation completion."
+}

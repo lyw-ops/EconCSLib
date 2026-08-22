@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0.0",
+  "diagnosed_at": "2026-08-23T00:00:00Z",
+  "status": "DETERMINISTIC_POST_CHECK_CANDIDATE_MUTATION_CONFIRMED",
+  "scope": "Read-only diagnosis of Sol REP-001 ordinal 12, iteration 1. No historical artifact, runtime database, protocol, checker, or ledger was modified.",
+  "protocol": {
+    "id": "EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-001",
+    "sha256": "f532789fc76d282a386c6719bd16fd9da75ea05904d16035df06bfbde52e4a2f",
+    "matrix_ordinal": 12,
+    "task": "entry-game-transport",
+    "seed": 2718,
+    "condition": "evolved"
+  },
+  "runtime": {
+    "run_root": "experiments/eve/.runtime/stage5b-sol-rep001-runs/20260822T153115_454482Z",
+    "workspace": "20260822_153115_step_1_af3c91f0562f",
+    "runner_log_sha256": "8ab9b6139bbeb94de5e1ca6a10ddf3ef29144c2be09af5dc1d5d32c4f852695f",
+    "lineage_sha256": "4e54a467d173df984496fb1bb0048c544aa4b0ee5d1f4f7237d1c051349a1578",
+    "lean_check_chain_sha256": "b0e3cb11627039182cdf8acb76e6b7fba995cd0f21825f22b850d3052719fc2e"
+  },
+  "timeline": [
+    {
+      "observed_at": "2026-08-22T15:33:10Z",
+      "event": "last immutable-checker event",
+      "candidate_sha256": "37db01983134fada694c78a91d4752826de09de094e961a5ade7bb01f0e546a4"
+    },
+    {
+      "observed_at": "2026-08-22T15:33:26Z",
+      "event": "gpt-5.6-sol apply_patch tool call changed solver/Candidate.lean after that checker event",
+      "change": "Two proof bodies totaling 28 old lines were replaced with two cases first <;> cases reply <;> decide lines."
+    },
+    {
+      "event": "agent final response claimed it was running the checker, but no subsequent checker tool call or event exists",
+      "agent_turns_consumed": 8,
+      "turn_budget": 8
+    },
+    {
+      "event": "evaluation and preserved workspace used the post-patch candidate",
+      "candidate_sha256": "b19c421a71f049a078413e7fcdb8e06a1ad934c9d39fd0f7daec2f4eb30ca9e6",
+      "candidate_bytes": 8635,
+      "candidate_lines": 252,
+      "lean_result": "failed because the replacement proofs require unavailable Decidable instances"
+    }
+  ],
+  "cause": {
+    "primary": "The solver mutated Candidate.lean after its last recorded checker invocation.",
+    "wrapper_order_defect": "REP-001 called the upstream Phase2Runner.run_single first, allowing agent, evaluation, and result finalization to complete before the observer compared the final candidate to the last checker event.",
+    "audit_surface_defect": "The observer raised before solver_rollout_completed, and the upstream batch runner caught and skipped the task. The auditor then reported generic incomplete rollout telemetry instead of a protocol-owned terminal rejection.",
+    "snapshot_race": false,
+    "reconstruction_deterministic": true
+  },
+  "repair_boundary": {
+    "new_identity_required": true,
+    "successor": "EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-002",
+    "fresh_run_root_and_attempt_ledger_required": true,
+    "wrapper_owned_terminal_checker": "Invoke the exact immutable checker after _run_agent returns and before evaluate_workspace starts, then revalidate that candidate/checker/evidence snapshot after evaluation.",
+    "terminal_event": "Emit exactly one solver_rollout_terminal event for every rollout, including explicit RUN_FAILED_CHECK_EVIDENCE_CONTRACT rejection.",
+    "optimizer_safety": "A rejected rollout must never produce an optimizer candidate.",
+    "auditor_behavior": "Validate terminal-event completeness and classify explicit checker-evidence rejection instead of collapsing it to missing rollout telemetry.",
+    "unchanged_inputs": "Tasks, cases, matrix order, seeds, conditions, prompts, initial guidance, checker bytes, evaluator, Lean source, model, reasoning effort, turn budget, timeout, and retry/resume/import policy remain unchanged."
+  },
+  "claim_boundary": "This diagnosis identifies the preserved ordinal-12 evidence-order cause and a prospective zero-model repair. It does not repair or reclassify REP-001, authorize REP-002 model calls, or establish a complete cross-model comparison."
+}

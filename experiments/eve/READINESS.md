@@ -1,6 +1,6 @@
 # EvE experiment readiness
 
-- **Current status:** `STAGE5B_SOL_REP001_EXECUTED_POST_RUN_AUDIT_INCOMPLETE`;
+- **Current status:** `STAGE5B_SOL_REP002_FROZEN_NOT_YET_EXECUTED_ZERO_MODEL_VALIDATED`;
   Stage 1 smoke 002 is closed at score one, Stage 2 direct/transport/pair and
   12 mutations are closed, Stage 3 Codex review verifies at score one, and
   all 12 Stage 4 Luna development cells completed and passed machine re-audit;
@@ -10,7 +10,9 @@
   and has completed its 12-cell, 36-session Luna matrix with clean checker
   evidence and three local guidance-liveness chains; Stage 5B Sol REP-001 then
   consumed all 12 cells and 36 Sol sessions exactly once, but ordinal 12 lacks
-  complete rollout telemetry and its mandatory post-run audit fails closed
+  complete rollout telemetry and its mandatory post-run audit fails closed;
+  the separately frozen REP-002 successor closes the diagnosed evidence-order
+  gap in zero-model tests but has no execution authorization or result
 - **Not valid statuses:** `benchmark-ready`, `evaluation-complete`,
   `internal-pilot-complete`, or any model-capability conclusion
 - **Formal pilot default:** disabled and not configured
@@ -24,7 +26,8 @@
 - **Luna sessions:** one read-only access smoke, two Stage 1 solver sessions,
   24 Stage 4 solver sessions, and 72 Stage 5A solver sessions
 - **Sol sessions:** 36 Stage 5B solver sessions; 206 agent turns, 6,924,408
-  input tokens, 5,800,192 cache-read tokens, and 125,536 output tokens
+  input tokens, 5,800,192 cache-read tokens, and 125,536 output tokens; REP-002
+  has 0 sessions and 0 quota consumption
 
 ## What is ready
 
@@ -39,9 +42,9 @@ The external checkout at `/Users/lyuyuwei/Documents/eve-v0.2.0` matches the
 official repository, annotated tag object, peeled commit, LICENSE, NOTICE,
 `pyproject.toml`, `uv.lock`, and `.python-version`. `uv sync --locked`, the real
 Hydra loader, the historical 45-test Stage 1 suite plus the current Stage 2--5B
-extensions (latest full result: 103 tests passed, 2 skipped), `--check`, `--dry-run`,
+extensions (latest full result: 122 tests passed, 2 skipped), `--check`, `--dry-run`,
 the launcher accepted fixture, and accepted-fixture compilation under an
-isolated solver HOME pass. Thirty-eight completed EvE executions and their
+isolated solver HOME pass. Fifty completed EvE executions and their
 bounded Luna sessions are recorded below; the only other model call is the
 separately bounded access smoke.
 
@@ -264,6 +267,32 @@ retry: this is not a clean whole-matrix replication or complete cross-model
 comparison. The tracked record is
 `stage5b_review/sol-rep001-execution-audit.json`.
 
+Read-only diagnosis established the precise ordinal-12 ordering defect: the
+last checker event covered candidate `37db0198...`, the model subsequently
+patched it to `b19c421a...`, and no later checker call occurred. The old wrapper
+noticed only after evaluation/finalization and raised before completed-rollout
+telemetry. The diagnosis is frozen at
+`stage5b_review/sol-rep001-ordinal12-diagnosis.json`; REP-001 remains immutable
+and consumed.
+
+The separate REP-002 successor is
+`EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-002` version `1.0.0`, hash
+`318557e77f6b2126b813e522eea15bce03cb792639b2f537e4d53893749f7a8f`.
+Its wrapper invokes the exact immutable checker after `_run_agent` and before
+`evaluate_workspace`, then revalidates candidate, checker, and terminal event
+after evaluation. Every rollout must emit exactly one terminal event. Invalid
+evidence is classified as `RUN_FAILED_CHECK_EVIDENCE_CONTRACT`, and a rejected
+rollout cannot produce an optimizer. Tasks, model, effort, prompts, guidance,
+checker, evaluator, Lean source, matrix, compute, and no-retry policy remain
+unchanged; identity, paths, RNG domain, roots, and ledger are fresh.
+
+REP-002 passes 19 targeted tests, the 122-test full EVE suite with two recorded
+checkout-dependent skips, all historical protocol verifiers, and all 12
+`--check` plus 12 `--dry-run` cells. These gates made zero model calls, consumed
+zero Sol quota, and created no formal REP-002 root or ledger. Its pre-execution
+record is `stage5b_review/sol-rep002-audit.json`. Execution remains blocked on
+separate explicit model/quota authorization.
+
 ## Hard-disabled formal experiment boundary
 
 The launcher allow-list contains exactly `mathlib-style-smoke`,
@@ -296,6 +325,11 @@ the Sol REP-001 identity and requires the same clean Lean checkout. Its check
 and dry-run paths remain zero-model. All 12 Sol attempt slots are consumed, and
 the ledger rejects a rerun. Repair requires a new protocol identity, fresh
 roots/ledger, new review, and separate execution authorization.
+
+The unexecuted `run_stage5b_sol_rep002.py` accepts only the frozen REP-002
+identity and the same exact matrix, with a separate root parent and ledger. Its
+check/dry-run paths are zero-model and validated. `--execute` is not authorized;
+REP-001 authorization does not transfer.
 
 ## Public Stage 4 Entry Game three-condition study
 
@@ -386,6 +420,11 @@ iteration-1 rollout telemetry. The tracked pre-execution review is
 `stage5b_review/sol-rep001-audit.json`, and the post-execution disposition is
 `stage5b_review/sol-rep001-execution-audit.json`. These records are not a clean
 whole-matrix Sol result or complete cross-model comparison.
+
+Sol REP-002 is frozen and zero-model validated as an evidence-order repair. It
+has no formal attempts or model sessions, so it adds no scientific result. The
+immediate protocol gate is separate explicit authorization before any REP-002
+model/quota use.
 
 ## Gates before a real Mathlib-style experiment
 
