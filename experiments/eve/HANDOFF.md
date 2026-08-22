@@ -10,7 +10,8 @@ Last updated: 2026-08-22
 - DEV-002 execution archive: `9269f3ea991e8e7e099dd541b870f37331796dc6`
 - DEV-003 frozen-protocol handoff: `3517eeba2f48ff2ad8fd7eab59d9f5025a408d16`
 - DEV-003 execution archive: `2fa7ef17e3b9efaf891a77c63797e18ad09e1fa3`
-- Sol REP-001 zero-model protocol freeze and handoff: this commit
+- Sol REP-001 zero-model protocol freeze: `5c8dc1fab267baaf61b0175cb8103cb3ac7bea7f`
+- Sol REP-001 handoff/prompt refresh: this commit
 - Long-term route authority: `experiments/eve/README.md`
 - Current gate authority: `experiments/eve/READINESS.md`
 - Copy-paste next-session prompt: `experiments/eve/NEXT_SESSION_PROMPT.md`
@@ -88,7 +89,8 @@ drift: one `--execute` invocation and three zero-model `--check` invocations.
 All four stopped before attempt reservation and model access. After state
 quiescence and a passing zero-model check, the next frozen cell ran once. This
 did not create a retry or duplicate cell, but a successor or Sol protocol must
-repair the snapshot/quiescence handling for mutable SQLite sidecars.
+repair the snapshot/quiescence handling for mutable SQLite sidecars. Sol
+REP-001 is that separate repaired successor; it does not alter DEV-003 history.
 
 ## Current Stage 5B Sol REP-001 state
 
@@ -129,14 +131,9 @@ preflight.
 - Sol run root and ledger remain absent. DEV-002 and DEV-003 ledger SHA-256 are
   respectively `e593bf5726b20aa20f1cbb15882b7c2e9e169080233f346d67b48d6543a37922`
   and `3d0ab59f2022d6bdbb04774688e3ab2cd9981a2f31a6f34bd2b1772950f2d664`.
-
-- All 12 DEV-003 targeted tests passed.
-- Full EVE suite: 87 tests passed; exactly two checkout-dependent tests skipped
-  because unittest discovery supplied no explicit EvE checkout:
+- The two full-suite skips are unchanged and individually recorded:
   `test_accepted_efg_fixture_compiles_in_isolated_solver_home` and
   `test_actual_hydra_loader_parses_both_configs_when_checkout_is_supplied`.
-- Stage 4 local evidence verification and no-recheck audit passed.
-- The immutable DEV-002 protocol verifier passed.
 - DEV-003 detached protocol, frozen assets, committed Lean closure, dependency
   revisions, clean-checkout environment verification, and ledger order passed.
 - All 12 completed launches satisfy the frozen identity, Luna/low model,
@@ -181,6 +178,7 @@ than the user's uncommitted Lean work.
 
 Use the authoritative copy-paste prompt in
 [`NEXT_SESSION_PROMPT.md`](NEXT_SESSION_PROMPT.md). It includes the repository
-checkpoint, immutable history, DEV-003 results, claim boundary, SQLite-sidecar
-follow-up, validation expectations, and the explicit stop before any Sol model
-call. Keep that standalone prompt synchronized whenever this handoff changes.
+checkpoint, immutable history, DEV-003 results, repaired Sol snapshot contract,
+claim boundary, validation expectations, and the explicit stop before any Sol
+model call. Keep that standalone prompt synchronized whenever this handoff
+changes.

@@ -28,8 +28,11 @@ tracking relationship, and the exact target files before changing anything.
 The canonical handoff repository is https://github.com/lyw-ops/EconCSLib, and
 the branch must track fork/experiment/eve-stage5a. The expected DEV-003
 execution-archive commit is
-2fa7ef17e3b9efaf891a77c63797e18ad09e1fa3; verify the live local and remote
-state instead of trusting the expected value.
+2fa7ef17e3b9efaf891a77c63797e18ad09e1fa3. The expected Sol REP-001
+zero-model protocol-freeze commit is
+5c8dc1fab267baaf61b0175cb8103cb3ac7bea7f. The live local HEAD, upstream, and
+remote branch must contain that commit and agree; verify rather than trusting
+these expected values.
 
 The worktree contains extensive user-owned changes outside experiments/eve/.
 Preserve all of them. Never restore, format, stage, commit, or otherwise absorb
@@ -70,8 +73,8 @@ Immutable historical facts:
    one execute invocation and three zero-model checks. Each stopped before
    attempt reservation and model access, so it consumed no cell or session and
    caused no retry. The observed trigger involved mutable SQLite sidecar state
-   settling or being opened. Any successor must fix snapshot/quiescence handling
-   under a new protocol identity and add regression coverage.
+   settling or being opened. Sol REP-001 fixes this under a separate identity;
+   never backport the repair into DEV-003 or rewrite its historical evidence.
 9. experiments/eve/.runtime is Git-ignored and local to this machine. Preserve
    all Stage 4, DEV-001, DEV-002, and DEV-003 runtime evidence. A fresh GitHub
    clone cannot reconstruct local transcripts merely from tracked summaries.
@@ -117,7 +120,8 @@ authority.
 For any task, run validation proportionate to the changed files. For EVE
 protocol work, at minimum run the full experiments/eve test suite, relevant
 targeted tests, Stage 4 local-evidence verification/no-recheck audit, DEV-002
-DEV-003 and Sol REP-001 protocol verifiers, detached hashes/environment checks,
+and DEV-003 historical protocol verifiers, the Sol REP-001 clean-checkout
+verifier, detached hashes/environment checks,
 all planned zero-model checks/dry-runs when relevant, and git diff --check.
 Record every skip individually. Never claim natural-language statements are
 machine verification.
