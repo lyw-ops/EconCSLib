@@ -1,6 +1,6 @@
 # EvE sidecar for EconCSLib
 
-> **Status: `stage5a-dev003-executed-evidence-validated-sol-not-authorized`.
+> **Status: `stage5b-sol-rep001-frozen-zero-model-not-executed`.
 > Stage 1 smoke 002 is
 > closed at score `1.0`; the public Entry Game direct/transport pair and its 12
 > mutations pass Stage 2; the Stage 3 Codex review record verifies at `1.0`.
@@ -17,13 +17,15 @@
 > Three of four evolved cells produced, admitted, and later selected guidance;
 > the fourth produced and admitted guidance without a later selection. Four
 > pre-reservation preflights failed closed on formal-state drift without
-> starting a model or consuming a cell; successor snapshot/quiescence behavior
-> must be repaired before separately authorized Sol work.
+> starting a model or consuming a cell. Stage 5B Sol REP-001 now freezes the
+> exact cross-model replication and repairs that guard using logical SQLite
+> snapshots plus bounded quiescence. Its 12 checks and dry-runs pass, but no Sol
+> execution or model call is authorized or reported.
 > Codex review is AI review, not independent human
 > review, and none of this is a hidden benchmark, causal condition result,
 > formal EvE-effect result, or general model-capability claim.**
 
-## 总体技术路线（v3.6，权威入口）
+## 总体技术路线（v3.7，权威入口）
 
 本节是 EconCSLib EVE 研究计划的**唯一技术路线入口**。后续关于研究目标、
 证明路线、实验设计、模型顺序、阶段门槛和任务扩展的决定，都应更新在本节，
@@ -685,6 +687,15 @@ sidecar 的 snapshot/quiescence 行为。当前结果是干净 checker 与本地
 
 #### 变更记录
 
+- **2026-08-22 · v3.7**：按零模型授权冻结 Stage 5B Sol REP-001（protocol
+  v1.0.0）。任务、case、condition、seed、12-cell 顺序、三轮/单 worker、prompt、
+  guidance、checker、evaluator、EvE/Lean source、turn/timeout 与 `low` effort 均与
+  DEV-003 相同，仅模型身份改为 `gpt-5.6-sol`；protocol-owned paths、RNG domain、
+  root 和 ledger 全新且不继承历史状态。以 ordinary durable contents + committed
+  SQLite logical contents 取代物理 metadata hash，忽略 WAL/SHM/journal/checkpoint
+  噪声，并要求预检前后三次稳定采样和跨边界相等。16 项定向回归、103 项完整 EVE
+  测试（2 项逐项记录跳过）、12 个最终哈希 check 与 12 个 dry-run 均通过；零模型
+  调用/session/quota，Sol root/ledger 不存在，未授权或执行 `--execute`。
 - **2026-08-22 · v3.6**：经明确授权用 ChatGPT subscription 认证执行并收口
   Stage 5A DEV-003 全部 12-cell、36-session Luna matrix。12 个 attempt 按冻结顺序
   exit 0，零 retry/resume/import，36 个 rollout 均有必需 checker evidence；12 份
@@ -1274,6 +1285,30 @@ Sol protocol. The tracked result is
 liveness-mechanism observations, not a causal, capability, benchmark,
 evaluation-complete, or Sol-replication claim.
 
+Stage 5B freezes the separate Sol replication as
+`stage5b_sol_rep001_protocol.json` plus its detached hash, under identity
+`EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-001` version `1.0.0`.
+The protocol remains `FROZEN_NOT_YET_EXECUTED`; its review record is
+`stage5b_review/sol-rep001-audit.json`. Preparation made zero model calls,
+created no Sol run root or ledger, and grants no execution authority.
+
+The scientific inputs remain matched to DEV-003: tasks, cases, conditions,
+seeds, matrix order, three iterations, one worker, prompt/guidance/checker
+bytes, evaluator, pinned EvE and Lean source, eight-turn budget, timeout, and
+`low` reasoning effort. Only the explicit model changes to `gpt-5.6-sol`;
+protocol-owned paths, RNG domain, fresh root, and ledger are new and import no
+historical runtime state.
+
+Its preflight uses the frozen
+`durable-files-and-sqlite-logical-content-v1` projection. Ordinary durable
+contents and committed SQLite schema/rows are hashed, while directory mtimes,
+SQLite page layout, WAL/SHM/journal sidecars, and checkpoint transitions are
+normalized. Three consecutive identical samples are required before and after
+the checker, followed by exact projected equality. Regression tests prove that
+physical checkpoint churn is stable while committed SQLite and ordinary-file
+mutations fail closed. All 12 planned `--check` and `--dry-run` cells pass with
+zero model calls and no attempt-ledger touch.
+
 Any proposed `Arena`, controlled-carrier, StructuralCore-closure, or
 Canonical/Frontend API change discovered later must return to the documented
 EFG freeze/governance human decision process. A micro-pilot score never
@@ -1317,6 +1352,7 @@ python3 experiments/eve/scripts/audit_stage4.py --no-recheck
 python3 experiments/eve/scripts/verify_stage4_review.py --require-local-evidence
 python3 experiments/eve/scripts/verify_stage5a_protocol.py
 python3 experiments/eve/scripts/verify_stage5a_dev003_protocol.py
+python3 experiments/eve/scripts/verify_stage5b_sol_rep001_protocol.py
 python3 -m json.tool experiments/eve/UPSTREAM.lock.json >/dev/null
 python3 -m json.tool experiments/eve/smoke/case.json >/dev/null
 python3 -m json.tool experiments/eve/efg_reachability_micro/case.json >/dev/null
@@ -1336,8 +1372,9 @@ the task's validation record.
   not a clean comparison. DEV-003 completed with clean mandatory checker
   evidence and three local liveness chains, but the small answer-visible matrix,
   uncontrolled provider sampling, lack of independent human review, and four
-  pre-reservation guard activations do not establish a causal comparison or
-  authorize Sol.
+  pre-reservation guard activations do not establish a causal comparison. Sol
+  REP-001 repairs the guard at protocol level and passes zero-model checks, but
+  remains unexecuted and unauthorized for model/quota use.
 - Neither public synthetic/local task can support a benchmark,
   model-capability, EvE-improvement, or minimal-core optimization conclusion.
 - EvE has no native dry-run at the pin; the sidecar prevents invocation.

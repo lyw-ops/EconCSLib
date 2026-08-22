@@ -1,6 +1,6 @@
 # EvE experiment readiness
 
-- **Current status:** `STAGE5A_DEV003_EXECUTED_EVIDENCE_VALIDATED_SOL_NOT_AUTHORIZED`;
+- **Current status:** `STAGE5B_SOL_REP001_FROZEN_ZERO_MODEL_NOT_EXECUTED`;
   Stage 1 smoke 002 is closed at score one, Stage 2 direct/transport/pair and
   12 mutations are closed, Stage 3 Codex review verifies at score one, and
   all 12 Stage 4 Luna development cells completed and passed machine re-audit;
@@ -8,13 +8,14 @@
   and 36 Luna sessions executed once before post-run review found a blocking
   Python-3.9 checker defect; the separate DEV-003 identity closed those defects
   and has completed its 12-cell, 36-session Luna matrix with clean checker
-  evidence and three local guidance-liveness chains
+  evidence and three local guidance-liveness chains; Stage 5B Sol REP-001 is
+  frozen and passes its zero-model matrix checks but has not executed
 - **Not valid statuses:** `benchmark-ready`, `evaluation-complete`,
   `internal-pilot-complete`, or any model-capability conclusion
 - **Formal pilot default:** disabled and not configured
 - **Paid/long EvE execution:** the 12-cell public Stage 4, defective DEV-002,
   and clean-evidence DEV-003 Stage 5A matrices are complete; no benchmark,
-  private evaluation, formal pilot, or Sol replication has occurred
+  private evaluation, formal pilot, or Sol replication execution has occurred
 - **EvE runner / `--execute`:** 38 completed executions: two Stage 1 smokes, 12
   fresh Stage 4 cells, 12 fresh DEV-002 cells, and 12 fresh DEV-003 cells; Stage
   0 has not run
@@ -33,8 +34,8 @@ offline check/dry-run paths, and positive/negative tests.
 The external checkout at `/Users/lyuyuwei/Documents/eve-v0.2.0` matches the
 official repository, annotated tag object, peeled commit, LICENSE, NOTICE,
 `pyproject.toml`, `uv.lock`, and `.python-version`. `uv sync --locked`, the real
-Hydra loader, the historical 45-test Stage 1 suite plus the current Stage 2--5A
-extensions (latest full result: 87 tests run, 2 skipped), `--check`, `--dry-run`,
+Hydra loader, the historical 45-test Stage 1 suite plus the current Stage 2--5B
+extensions (latest full result: 103 tests passed, 2 skipped), `--check`, `--dry-run`,
 the launcher accepted fixture, and accepted-fixture compilation under an
 isolated solver HOME pass. Thirty-eight completed EvE executions and their
 bounded Luna sessions are recorded below; the only other model call is the
@@ -230,6 +231,23 @@ checks. They caused no formal retry or duplicate ledger row. This is a
 nonblocking execution anomaly, but mutable SQLite sidecar snapshot/quiescence
 handling must be repaired under a new identity before any Sol replication.
 
+That repair is now frozen, but not executed, as Stage 5B Sol REP-001:
+`EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-001` version `1.0.0`, hash
+`f532789fc76d282a386c6719bd16fd9da75ea05904d16035df06bfbde52e4a2f`.
+It preserves DEV-003's scientific inputs and `low` reasoning effort while
+changing the model identity to `gpt-5.6-sol` and using fresh protocol-owned
+paths, RNG domain, run-root parent, and ledger. No historical runtime state is
+reused.
+
+The new preflight hashes durable ordinary-file contents and committed SQLite
+schema/rows, normalizes directory mtimes and SQLite WAL/SHM/journal/checkpoint
+layout, and requires three identical samples before and after the real checker.
+It fails closed on durable mutation, committed database mutation, unreadable
+state, non-quiescence, or different before/after projections. The targeted 16
+tests, full 103-test EVE suite, clean 109-file Lean closure verifier, and all 12
+`--check`/`--dry-run` cells pass. The Sol run root and ledger remain absent;
+execution and model/quota use still require separate explicit authorization.
+
 ## Hard-disabled formal experiment boundary
 
 The launcher allow-list contains exactly `mathlib-style-smoke`,
@@ -255,8 +273,13 @@ condition, and seed matrix under the exact DEV-003 identity and additionally
 requires a separate tracked-clean Lean checkout at the frozen source commit.
 Its check path builds the frozen entry and runs safe preflight before formal
 state; its dry-run path previews only. Neither dispatches execution. All 12
-DEV-003 attempt slots are consumed, and the ledger rejects a rerun. Sol is not
-configured or authorized.
+DEV-003 attempt slots are consumed, and the ledger rejects a rerun.
+
+The frozen `run_stage5b_sol_rep001.py` accepts the same exact matrix only under
+the Sol REP-001 identity and requires the same clean Lean checkout. Its check
+and dry-run paths are zero-model and leave formal state absent. The execute path
+still requires `--acknowledge-model-quota`, but that mechanical gate is not
+authorization: no Sol execution or model/quota use is currently authorized.
 
 ## Public Stage 4 Entry Game three-condition study
 
@@ -339,6 +362,11 @@ iteration. The tracked post-execution record is
 `stage5a_review/dev003-execution-audit.json`. This is clean local checker and
 liveness-mechanism evidence, not a causal condition effect, model-capability
 claim, independent human review, or authorization/result for Sol replication.
+
+Sol REP-001 mirrors that exact matrix as a fresh unexecuted identity. Its
+tracked review is `stage5b_review/sol-rep001-audit.json`; 12 checks and 12
+dry-runs establish only zero-model protocol readiness and the repaired snapshot
+guard. They are not a Sol result or cross-model comparison.
 
 ## Gates before a real Mathlib-style experiment
 

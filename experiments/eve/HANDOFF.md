@@ -10,7 +10,7 @@ Last updated: 2026-08-22
 - DEV-002 execution archive: `9269f3ea991e8e7e099dd541b870f37331796dc6`
 - DEV-003 frozen-protocol handoff: `3517eeba2f48ff2ad8fd7eab59d9f5025a408d16`
 - DEV-003 execution archive: `2fa7ef17e3b9efaf891a77c63797e18ad09e1fa3`
-- Post-execution handoff and next-session prompt: this commit
+- Sol REP-001 zero-model protocol freeze and handoff: this commit
 - Long-term route authority: `experiments/eve/README.md`
 - Current gate authority: `experiments/eve/READINESS.md`
 - Copy-paste next-session prompt: `experiments/eve/NEXT_SESSION_PROMPT.md`
@@ -90,7 +90,45 @@ quiescence and a passing zero-model check, the next frozen cell ran once. This
 did not create a retry or duplicate cell, but a successor or Sol protocol must
 repair the snapshot/quiescence handling for mutable SQLite sidecars.
 
+## Current Stage 5B Sol REP-001 state
+
+Protocol `EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-001`, version
+`1.0.0`, SHA-256
+`f532789fc76d282a386c6719bd16fd9da75ea05904d16035df06bfbde52e4a2f`
+is frozen at `FROZEN_NOT_YET_EXECUTED`. This task performed protocol engineering
+only: zero Sol model calls, zero Sol sessions, zero quota use, zero formal run
+roots, and zero attempt-ledger writes. Execution remains unauthorized.
+
+The replication preserves DEV-003's two tasks, cases, 12-cell order, seeds,
+condition semantics, three iterations, one worker, exact prompt/guidance/checker
+bytes, evaluator, pinned EvE and Lean sources, eight-turn budget, 900-second
+timeout, and `low` reasoning effort. The model identity alone changes from
+`gpt-5.6-luna` to `gpt-5.6-sol`; protocol-owned paths, RNG domain, run-root
+parent, and ledger are fresh. No historical runtime state is imported.
+
+The successor repairs the four DEV-003 guard activations with the frozen
+`durable-files-and-sqlite-logical-content-v1` contract. It hashes durable file
+contents and committed SQLite schema/rows while normalizing directory mtimes,
+page layout, WAL/SHM/journal sidecars, and checkpoint transitions. A bounded
+barrier requires three identical logical samples before and after preflight,
+then requires exact projected equality across it. Durable file changes,
+committed SQLite changes, unreadable state, or failure to settle reject the
+preflight.
+
 ## Last verified evidence
+
+- Sol REP-001 targeted suite: 16 tests passed, including byte-identical input,
+  WAL checkpoint,
+  committed SQLite mutation, durable-file mutation, and quiescence regressions.
+- Full EVE suite: 103 tests passed; exactly the same two checkout-dependent
+  tests skipped under discovery.
+- All 12 Sol REP-001 cells passed `--check` and `--dry-run`; every preview
+  reported `calls_model: false` and `attempt_ledger_touched: false`.
+- Stage 4 local evidence/no-recheck audit, DEV-002 verifier, DEV-003 clean
+  checkout verifier, and Sol clean-checkout verifier passed.
+- Sol run root and ledger remain absent. DEV-002 and DEV-003 ledger SHA-256 are
+  respectively `e593bf5726b20aa20f1cbb15882b7c2e9e169080233f346d67b48d6543a37922`
+  and `3d0ab59f2022d6bdbb04774688e3ab2cd9981a2f31a6f34bd2b1772950f2d664`.
 
 - All 12 DEV-003 targeted tests passed.
 - Full EVE suite: 87 tests passed; exactly two checkout-dependent tests skipped
@@ -122,12 +160,12 @@ or Sol-replication result.
 
 ## Next bounded action and stop condition
 
-Stop after archiving DEV-003. All 12 DEV-003 attempt slots are consumed; do not
-retry, resume, import, or rewrite them. Do not start Sol: no separate Sol
-replication protocol has been frozen or explicitly authorized. The next bounded
-action is read-only review of the execution archive, followed by a new protocol
-identity that repairs inter-cell snapshot/quiescence handling if Sol replication
-is desired.
+Stop at the frozen Sol protocol. All historical attempt slots remain consumed;
+do not retry, resume, import, repair in place, or reuse their runtime state. Do
+not invoke `--execute`: the current authorization covers zero-model protocol
+engineering only. The next bounded action is read-only review of
+`stage5b_review/sol-rep001-audit.json`. Any Sol execution or model/quota use
+requires a separate explicit user authorization for this exact protocol hash.
 
 ## Local versus GitHub evidence
 
@@ -135,8 +173,9 @@ GitHub stores the tracked protocols, code, reviews, documentation, and commit
 history. Runtime evidence under `experiments/eve/.runtime/` is ignored and
 remains only on this machine. A fresh clone cannot reconstruct historical
 Stage 4/DEV-002/DEV-003 transcripts, but their tracked audit hashes remain
-authoritative summaries. DEV-003's Lean environment is tied to a clean committed
-source tree rather than the user's uncommitted Lean work.
+authoritative summaries. Sol REP-001 has no runtime evidence because it has not
+executed. Its Lean environment is tied to a clean committed source tree rather
+than the user's uncommitted Lean work.
 
 ## Bootstrap prompt for the next conversation
 

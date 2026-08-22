@@ -1,0 +1,13 @@
+defaults:
+  - runtime: sidecar
+  - loop: stage5a
+  - driver: codex_sol_stage5b
+  - logger: local
+  - application: entry_game_transport
+  - optimizer: entry_game_transport_stage5b_sol_rep001
+  - evaluation: entry_game_transport
+  - stage5a_condition: static
+  - _self_
+
+label: entry-game-transport-stage5b-sol-rep001
+experiment_seed: 0

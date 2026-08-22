@@ -4,7 +4,7 @@ Last updated: 2026-08-22
 
 Copy the text below into the next Codex task. This prompt transfers repository
 state and safety boundaries. It does not authorize a model call, a DEV-003
-retry, or Sol replication.
+retry, or Sol REP-001 execution.
 
 ```text
 Open /Users/lyuyuwei/Documents/EconCSlib and continue on branch
@@ -20,6 +20,8 @@ read, in order:
 - experiments/eve/stage5a_review/dev002-execution-audit.json
 - experiments/eve/stage5a_review/dev003-audit.json
 - experiments/eve/stage5a_review/dev003-execution-audit.json
+- experiments/eve/stage5b_sol_rep001_protocol.json
+- experiments/eve/stage5b_review/sol-rep001-audit.json
 
 Inspect git status --short --branch, recent commits, every remote, the upstream
 tracking relationship, and the exact target files before changing anything.
@@ -73,6 +75,25 @@ Immutable historical facts:
 9. experiments/eve/.runtime is Git-ignored and local to this machine. Preserve
    all Stage 4, DEV-001, DEV-002, and DEV-003 runtime evidence. A fresh GitHub
    clone cannot reconstruct local transcripts merely from tracked summaries.
+10. Stage 5B Sol REP-001 is
+    EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-001 v1.0.0, SHA-256
+    f532789fc76d282a386c6719bd16fd9da75ea05904d16035df06bfbde52e4a2f.
+    It is frozen at FROZEN_NOT_YET_EXECUTED after zero-model protocol
+    engineering. No Sol model call, session, quota use, formal run root, or
+    attempt-ledger write has occurred.
+11. Sol REP-001 exactly preserves DEV-003's tasks, cases, conditions, seeds,
+    matrix order, compute, prompt/guidance/checker bytes, evaluator, pinned EvE
+    and Lean sources, turn budget, timeout, and low reasoning effort. Only the
+    model identity changes to gpt-5.6-sol; protocol paths, RNG domain, root, and
+    ledger are fresh and no historical runtime state is reused.
+12. Its durable-files-and-sqlite-logical-content-v1 snapshot contract ignores
+    directory mtimes, SQLite page layout, WAL/SHM/journal sidecars, and
+    checkpoint transitions while detecting ordinary-file and committed SQLite
+    changes. Three identical samples are required before and after preflight.
+13. Sol targeted tests passed 16/16; the full EVE suite passed 103 tests with
+    the same two checkout-dependent skips. All 12 Sol cells passed --check and
+    --dry-run, every path reported zero model calls, and the Sol root/ledger
+    remain absent.
 
 Claim boundary:
 
@@ -81,29 +102,25 @@ Claim boundary:
   mechanism observations.
 - It does not establish a causal EvE effect, model capability, benchmark
   readiness, evaluation completion, independent human review, or a Sol result.
+- Sol REP-001 preparation establishes only reproducible zero-model protocol and
+  preflight readiness. It is not a cross-model comparison or execution result.
 - Provider model sampling remains uncontrolled, and the answer-visible matrix
   has only n=2 seeds per condition.
 
 Start in read-only review mode. All DEV-003 attempts are consumed: do not retry,
-resume, import, or execute DEV-003. Do not start Sol, make a Sol model call, or
-consume quota. No separate Sol protocol is currently frozen or authorized.
-
-If the user later asks only to prepare Sol replication, treat that as
-review-only/zero-model protocol engineering unless they separately and
-explicitly authorize execution. Use a new protocol ID/version, fresh roots and
-ledger, a clean committed Lean boundary, and a repaired inter-cell
-snapshot/quiescence contract. Do not reuse DEV-002 or DEV-003 runtime,
-population, guidance, candidates, sessions, or attempt state. Preparation must
-end at a frozen-not-executed state with detached hashes, regression tests,
-fresh-clone verification, all planned check/dry-run calls, and a new review
-record. A prepared protocol never implies execution authority.
+resume, import, or execute DEV-003. Sol REP-001 is prepared but not authorized
+for execution. Do not invoke its --execute path, make a Sol model call, or
+consume quota without a new separate and explicit user authorization naming
+this exact frozen protocol. A prepared protocol never implies execution
+authority.
 
 For any task, run validation proportionate to the changed files. For EVE
 protocol work, at minimum run the full experiments/eve test suite, relevant
 targeted tests, Stage 4 local-evidence verification/no-recheck audit, DEV-002
-and DEV-003 protocol verifiers, detached hashes/environment checks, and git
-diff --check. Record every skip individually. Never claim natural-language
-statements are machine verification.
+DEV-003 and Sol REP-001 protocol verifiers, detached hashes/environment checks,
+all planned zero-model checks/dry-runs when relevant, and git diff --check.
+Record every skip individually. Never claim natural-language statements are
+machine verification.
 
 After completing an authorized task, update experiments/eve/HANDOFF.md and this
 prompt if the handoff state changed. Commit only task-owned tracked files, push

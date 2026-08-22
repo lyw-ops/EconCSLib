@@ -1,0 +1,353 @@
+{
+  "schema_version": "3.0.0",
+  "id": "EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-001",
+  "version": "1.0.0",
+  "status": "FROZEN_NOT_YET_EXECUTED",
+  "experiment_kind": "public Stage 5B exact Sol replication of the Stage 5A DEV-003 guidance-liveness experiment",
+  "relationship_to_history": {
+    "stage4": "Completed historical evidence is unchanged; no Stage 4 runtime, population, guidance, candidate, session, or result is imported.",
+    "stage5a_dev001": "Invalidated before execution with zero run roots and zero model sessions; its checkpoint, detached identity, and findings remain historical.",
+    "stage5a_dev002": "Executed once, then classified executed-but-defective; all DEV-002 evidence remains historical and is neither retried nor reused.",
+    "stage5a_dev003": "Completed all 12 cells and 36 Luna sessions with clean checker evidence, including three local guidance production/admission/later-selection chains and four pre-reservation snapshot-guard activations. Its artifacts and runtime evidence remain immutable historical inputs; no population, guidance, candidate, session, run root, or ledger is reused.",
+    "stage5b_sol_rep001": "New frozen replication identity with separate configs, overlays, RNG domain, run-root parent, attempt ledger, and logical snapshot contract. Preparation makes zero model calls and confers no execution authorization."
+  },
+  "tasks": [
+    "entry-game-direct",
+    "entry-game-transport"
+  ],
+  "conditions": [
+    "static",
+    "fixed",
+    "evolved"
+  ],
+  "experiment_seeds": [
+    1729,
+    2718
+  ],
+  "run_matrix_size": 12,
+  "model_sessions_per_run": 3,
+  "maximum_model_sessions": 36,
+  "model": {
+    "name": "gpt-5.6-sol",
+    "reasoning_effort": "low",
+    "rollout_max_turns": 8,
+    "web_search": "disabled",
+    "timeout_seconds": 900,
+    "authentication": "ChatGPT subscription",
+    "provider_model_seed_controlled": false
+  },
+  "shared_compute": {
+    "iterations": 3,
+    "minimum_iterations_for_produced_then_selected": 2,
+    "workers_per_iteration": 1,
+    "solver_examples": 1,
+    "optimizer_examples": 1,
+    "produced_optimizers_per_iteration": {
+      "static": 0,
+      "fixed": 0,
+      "evolved": 1
+    },
+    "boundary_repairs": 0,
+    "resume": false,
+    "import": false,
+    "retry": false,
+    "attempts_per_matrix_cell": 1,
+    "fresh_run_root_parent": "experiments/eve/.runtime/stage5b-sol-rep001-runs",
+    "durable_attempt_ledger": "experiments/eve/.runtime/stage5b-sol-rep001-attempt-ledger.sqlite3",
+    "attempt_reserved_before_model_access": true,
+    "frozen_order_enforced_transactionally": true,
+    "rng_domain": "EconCSlib-EvE-Stage5B-Sol-REP001-v1",
+    "reuse_historical_population_guidance_candidate_session_run_root_or_ledger": false
+  },
+  "lean_source_boundary": {
+    "repository": "https://github.com/lyw-ops/EconCSLib",
+    "commit": "b490317186ef435670c2eeb16050a214cdbf9fe5",
+    "tracked_clean_checkout_required": true,
+    "mixed_operator_worktree_allowed_as_lean_root": false,
+    "uncommitted_user_lean_files_included": false,
+    "fresh_clone_verification": "The verifier recomputes all 109 closure hashes and Lake metadata from the pinned Git object. Check/preflight/execute additionally require a separate tracked-clean checkout at that exact commit with pinned clean dependency checkouts."
+  },
+  "exact_checker_runtime": {
+    "python_invocation": "/usr/bin/python3",
+    "python_version": "3.9.6",
+    "python_reported_executable": "/Library/Developer/CommandLineTools/usr/bin/python3",
+    "utc_expression": "datetime.datetime.now(datetime.timezone.utc).isoformat()",
+    "lean_command": [
+      "lake",
+      "env",
+      "lean",
+      "solver/Candidate.lean"
+    ],
+    "checker_entrypoints_byte_identical": true
+  },
+  "safe_preflight_contract": {
+    "runs_before_formal_run_root_or_ledger_reservation": true,
+    "disposable_workspace_outside_formal_runtime": true,
+    "uses_exact_execution_python_checker_lean_toolchain_and_clean_source": true,
+    "requires_real_lean_stdout_stderr_exit_and_recorded_event": true,
+    "model_calls": 0,
+    "sol_quota": 0,
+    "formal_run_roots": 0,
+    "formal_ledger_writes": 0,
+    "historical_state_inherited_or_written": false,
+    "snapshot_contract": "durable-files-and-sqlite-logical-content-v1",
+    "sqlite_page_layout_wal_shm_journal_and_checkpoint_normalized": true,
+    "durable_file_and_committed_sqlite_changes_rejected": true,
+    "quiescence_stable_samples_before_and_after": 3,
+    "bounded_quiescence_timeout_seconds": 5,
+    "formal_and_historical_projected_snapshots_must_be_unchanged": true
+  },
+  "checker_evidence_contract": {
+    "at_least_one_valid_event_per_rollout": true,
+    "final_event_matches_final_candidate": true,
+    "missing_empty_malformed_or_mismatched_fails": true,
+    "event_chain_checker_python_command_output_and_exit_validated": true,
+    "failure_must_precede_retained_guidance_change": true,
+    "failed_event_alone_cannot_establish_liveness": true,
+    "candidate_production_admission_and_later_selection_are_distinct": true
+  },
+  "condition_neutral_prompt_contract": {
+    "same_route_prompt_byte_identical_across_conditions": true,
+    "route_prompts_may_differ": true,
+    "condition_names_or_condition_specific_answers_tools_budgets_in_prompt": false,
+    "exact_checker_after_each_candidate_edit": true,
+    "at_least_one_valid_checker_event_per_rollout": true,
+    "failure_derived_guidance_only_after_validated_nonzero_check": true,
+    "guidance_is_short_reusable_and_not_the_final_proof": true,
+    "no_failure_fabrication": true,
+    "exact_target_declarations_still_required": true
+  },
+  "edit_surfaces": {
+    "solver_candidate": "solver/Candidate.lean",
+    "failure_derived_guidance": "guidance/docs/learned.md",
+    "guidance_requires_prior_recorded_failure": true,
+    "all_other_paths_editable": false
+  },
+  "solver_prompt_bundle_hashes": {
+    "direct": "da2896e7c06ccd6842751d99407b5481c00571b26c5350f336b48d2a6010cb41",
+    "transport": "58c894ba751cb8164456f6d0002aff8dd6e1b32f4eeff68894a227954c03ca94"
+  },
+  "initial_guidance_tree_hashes": {
+    "static": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "entry-game-direct-fixed-and-evolved": "47a43ca03b7266a112257d064af7d1968dbe7a09e9ec2ecae20b164285c0e743",
+    "entry-game-transport-fixed-and-evolved": "458d4ab45a20b57594a70f7ec62f72ba54ea1cdd635091091a70813e0edfaf24"
+  },
+  "condition_state_semantics": {
+    "static": "Fresh empty initial guidance; changed workspace guidance is never retained because optimizer production is zero.",
+    "fixed": "Fresh copy of frozen route guidance; changed workspace guidance is never retained because optimizer production is zero.",
+    "evolved": "Fresh copy of the same frozen route guidance as fixed; only a changed tree backed by valid required check evidence may be produced, admitted, and sampled later."
+  },
+  "event_definitions": {
+    "required_check_evidence": "Every rollout has at least one schema-valid, contiguous, immutable-checker event; the final event candidate hash equals the final candidate.",
+    "failure_before_guidance_change": "A validated nonzero event has a guidance hash different from the final produced tree and is joined by exact sequence and event hash.",
+    "produced": "Pinned Phase2Runner returns a non-null changed-guidance candidate with the validated source-rollout evidence join.",
+    "entered_population": "The exact candidate id/hash survives sampling and is verified in the fresh Sol REP-001 lineage database and artifact store.",
+    "selected_later": "The exact admitted candidate id/hash is sampled at iteration j strictly greater than source iteration i.",
+    "not_equivalent": "A failure flag, production, admission, and later selection are separate events; none substitutes for another."
+  },
+  "stopping_and_reporting": {
+    "run_all_predeclared_iterations": true,
+    "no_early_success_stop": true,
+    "no_retry_after_failure": true,
+    "evolved_no_candidate": "NO_GUIDANCE_PRODUCED",
+    "candidate_without_validated_post_failure_change": "PRODUCED_WITHOUT_POST_FAILURE_GUIDANCE_CHANGE",
+    "candidate_not_admitted": "PRODUCED_NOT_ADMITTED_TO_POPULATION",
+    "terminal_iteration_candidate": "PRODUCED_WITHOUT_LATER_OPPORTUNITY",
+    "admitted_but_never_selected_later": "PRODUCED_NOT_SELECTED_LATER",
+    "liveness_observed": "GUIDANCE_PRODUCED_AND_SELECTED_LATER",
+    "controls_retaining_change": "INVALID_CONTROL_GUIDANCE_RETENTION",
+    "invalid_check_evidence": "RUN_FAILED_CHECK_EVIDENCE_CONTRACT"
+  },
+  "execution_order": "direct then transport; within each task seed 1729 then 2718; within each seed static then fixed then evolved",
+  "run_matrix": [
+    {
+      "ordinal": 1,
+      "task": "entry-game-direct",
+      "seed": 1729,
+      "condition": "static"
+    },
+    {
+      "ordinal": 2,
+      "task": "entry-game-direct",
+      "seed": 1729,
+      "condition": "fixed"
+    },
+    {
+      "ordinal": 3,
+      "task": "entry-game-direct",
+      "seed": 1729,
+      "condition": "evolved"
+    },
+    {
+      "ordinal": 4,
+      "task": "entry-game-direct",
+      "seed": 2718,
+      "condition": "static"
+    },
+    {
+      "ordinal": 5,
+      "task": "entry-game-direct",
+      "seed": 2718,
+      "condition": "fixed"
+    },
+    {
+      "ordinal": 6,
+      "task": "entry-game-direct",
+      "seed": 2718,
+      "condition": "evolved"
+    },
+    {
+      "ordinal": 7,
+      "task": "entry-game-transport",
+      "seed": 1729,
+      "condition": "static"
+    },
+    {
+      "ordinal": 8,
+      "task": "entry-game-transport",
+      "seed": 1729,
+      "condition": "fixed"
+    },
+    {
+      "ordinal": 9,
+      "task": "entry-game-transport",
+      "seed": 1729,
+      "condition": "evolved"
+    },
+    {
+      "ordinal": 10,
+      "task": "entry-game-transport",
+      "seed": 2718,
+      "condition": "static"
+    },
+    {
+      "ordinal": 11,
+      "task": "entry-game-transport",
+      "seed": 2718,
+      "condition": "fixed"
+    },
+    {
+      "ordinal": 12,
+      "task": "entry-game-transport",
+      "seed": 2718,
+      "condition": "evolved"
+    }
+  ],
+  "audit": {
+    "runtime_observer": "experiments/eve/scripts/run_stage5b_sol_rep001_eve.py",
+    "post_run_auditor": "experiments/eve/scripts/audit_stage5b_sol_rep001.py",
+    "attempt_ledger_open_mode_for_post_run_audit": "read-only",
+    "lineage_database_open_mode": "read-only",
+    "missing_or_empty_check_list_rejected": true,
+    "malformed_or_candidate_mismatched_event_rejected": true,
+    "false_liveness_from_unvalidated_failure_rejected": true,
+    "provider_rng_limit_must_be_preserved": true,
+    "preflight_snapshot_contract": "durable-files-and-sqlite-logical-content-v1"
+  },
+  "review": {
+    "kind": "codex-ai-review",
+    "independent_human_review": false,
+    "record": "experiments/eve/stage5b_review/sol-rep001-audit.json"
+  },
+  "claim_boundary": "Public, answer-visible, review-only protocol engineering. At freeze there have been zero Sol REP-001 model calls, zero Sol sessions, zero formal Sol REP-001 run roots, zero formal Sol REP-001 ledger writes, and no Sol guidance production or selection. DEV-003 remains completed Luna historical evidence and is not reused. Sol REP-001 execution and model calls are not authorized and require separate explicit execution authorization. No Sol replication result, clean cross-model comparison, causal EvE effect, model capability, benchmark readiness, or evaluation-complete claim is permitted.",
+  "lean_environment_manifest": {
+    "path": "experiments/eve/stage5b_sol_rep001_lean_environment.json",
+    "sha256": "d22f9e0f2b7e1cfcee51b5877c86c76520f0522c5d4ed20eee83b742a9e80896"
+  },
+  "protected_historical_evidence": {
+    "experiments/eve/overlay/stage5a_entry_game_direct/immutable/STAGE5A_LEAN_CHECK.py": "2382021ea4839974c5f53ae577599e5eb9524d7a4f0cb956ac35b795f307009d",
+    "experiments/eve/overlay/stage5a_entry_game_transport/immutable/STAGE5A_LEAN_CHECK.py": "2382021ea4839974c5f53ae577599e5eb9524d7a4f0cb956ac35b795f307009d",
+    "experiments/eve/scripts/run_stage5a_eve.py": "c7ea5fd247befb3bebff878fbcfc3b23844721163b6a87c02805837f95aa7bf3",
+    "experiments/eve/scripts/verify_stage5a_protocol.py": "8690c9b309dd60801a309d1a8d8a23b2f1040c3d2f7fd305f4a52c4ec7385cca",
+    "experiments/eve/stage4_invalidated_attempts.json": "12593f39a625bfbeb362b264b746cbc95555b27537b7864e4831ddaf9dc3560d",
+    "experiments/eve/stage4_protocol.json": "946c556ee5f2a13eafe57a5a5b7db55c3118febb715eaf34aaddd91caf74c037",
+    "experiments/eve/stage4_review/audit.json": "beae7fb17f06566b890b4a08635eafefc307276073afba4fdf46fcff4a86b9ad",
+    "experiments/eve/stage5a_invalidated_protocols.json": "f8f8402c03e43472f440cf1648c8222819707e937123323b28b73164e905f38f",
+    "experiments/eve/stage5a_lean_environment.json": "2413aceb1f0295798866fcc219fe65cdf587a098f603d2921db8458eca26cdfd",
+    "experiments/eve/stage5a_protocol.json": "6dafcb0d2476cd2f21df0c976f4f380488f1dcec067d7a0e7ba0802631045a05",
+    "experiments/eve/stage5a_protocol.sha256": "7afe52d64da3d2893581a51fd8489b126c803132470f6230d4e7720fdded1c94",
+    "experiments/eve/stage5a_review/dev002-audit.json": "ce308878d2b8398a140e6c24cd51cf5b841835980505e5dc4166a847ee28cd40",
+    "experiments/eve/stage5a_review/dev002-execution-audit.json": "332d1e50258e90b85c588923865f0f6758478dba604ac697eceaaa1169507cb0",
+    "experiments/eve/stage5a_upstream_semantics.json": "f8a58fde5c71e6d977e39122e9af0e9c32f122d225f8b4cc7574d998597b8ebb",
+    "experiments/eve/stage5a_dev003_protocol.json": "4c407b3e654d4e38f6f35b48e924863b5a9ef72c1e6b9569996e86f00105ad49",
+    "experiments/eve/stage5a_dev003_protocol.sha256": "53ca2e888ac76171e6def3445eb1486bdb48aadf1f994a6055dc5a222825e1f0",
+    "experiments/eve/stage5a_review/dev003-audit.json": "fb87efc093965d712d53c428bd340c15307a561ba29a3d56991b15a148d6fd8d",
+    "experiments/eve/stage5a_review/dev003-execution-audit.json": "0d5d9cbe9a55e3b75ae8fdad7492d617268a2f95cc8bf42116951d980bcc79a4"
+  },
+  "frozen_artifacts": {
+    "experiments/eve/UPSTREAM.lock.json": "ef7b211cc5413fa8782af5c73ca1df229881676ba7d145433e7b2dd820e8f5a3",
+    "experiments/eve/configs/eve/application/entry_game_direct.yaml": "199eb00db3877b7a587877bd7d361009e6343c03465570dffb9c32a101aa870e",
+    "experiments/eve/configs/eve/application/entry_game_transport.yaml": "2ff56a348a4e8448d8390f0eee4cfa7a22b3da571b2cbf178477ca8f416a095a",
+    "experiments/eve/configs/eve/driver/codex_sol_stage5b.yaml": "0e2d71f143c355e44762f7d277aec3fb9b7e37900883c33f40b18312a9dd87a0",
+    "experiments/eve/configs/eve/entry_game_direct_stage5b_sol_rep001.yaml": "1e68123e5f646f2731e21d0307e5b919a6ec64560e807ac20054b1bdace834d3",
+    "experiments/eve/configs/eve/entry_game_transport_stage5b_sol_rep001.yaml": "10d068995a4c7ea87f867bf7995184e1f21696603414eb5c3ec26f12d906830b",
+    "experiments/eve/configs/eve/evaluation/entry_game_direct.yaml": "9dd2217a5c4c08e89e4df9d45625282c92bc1d7394e5e73bd443c4142e16660a",
+    "experiments/eve/configs/eve/evaluation/entry_game_transport.yaml": "f53ebfcb643a2e68cb0b541d513e49acd548f58c4fb7199fa29ce224035d46dc",
+    "experiments/eve/configs/eve/logger/local.yaml": "dda1d30c5942fcd4975abe19748ab6e964a1ebdc8812f68002bd0f59acfc2ef3",
+    "experiments/eve/configs/eve/loop/stage5a.yaml": "bdce0c15de2838b89c75189551e4fc2729e31fe96ef0651f9b797d7ecac4fae7",
+    "experiments/eve/configs/eve/optimizer/entry_game_direct_stage5b_sol_rep001.yaml": "d0e58432ee1d112233ec3888b6d57050469acc49192060920c1d010f52aeaf25",
+    "experiments/eve/configs/eve/optimizer/entry_game_transport_stage5b_sol_rep001.yaml": "d4d43124e5d84708fb47da2d1f3b5f80b8b36e80dea7a46af7a5a7532bc52bf5",
+    "experiments/eve/configs/eve/runtime/sidecar.yaml": "2f29cf57c9e0529a8a0c73eff5758cb2e941dd5850dc0a3fa6d7cc471f385d2f",
+    "experiments/eve/configs/eve/stage5a_condition/evolved.yaml": "cf80e58d7172e14012080815a10c6f1e09aa0dedc211bf019b5d03391b3ed3ca",
+    "experiments/eve/configs/eve/stage5a_condition/fixed.yaml": "a04398aa9b628121f6f9d7be818fbac49831b0d45c1bb61c4b595c4bb83217b7",
+    "experiments/eve/configs/eve/stage5a_condition/static.yaml": "cafe1edb0aee36dcbc2da2ced482e228111b8c3a0fafbd5af0c8c99d64d9b8b3",
+    "experiments/eve/overlay/stage5b_sol_rep001_entry_game_direct/immutable/AGENTS.md": "b0aeb7cfe3c4fa54dc96282e1e70f3e46fbad7a1da9136f0a4b7802bd2067b5a",
+    "experiments/eve/overlay/stage5b_sol_rep001_entry_game_direct/immutable/README.md": "b3f4d0fda65d0738103be3bab88aace9619522dfb2ca15d055e0c7433051d961",
+    "experiments/eve/overlay/stage5b_sol_rep001_entry_game_direct/immutable/STAGE5A_LEAN_CHECK.py": "65470a92468dd255879d4fe795a0ae03bb4203bd10a13191e2c1ac3bdcf89f34",
+    "experiments/eve/overlay/stage5b_sol_rep001_entry_game_direct/initial_guidance/docs/direct.md": "151ce99b66dc3c662d2f9a95babc0e166759dc3f1e01944f0524c77a1983f243",
+    "experiments/eve/overlay/stage5b_sol_rep001_entry_game_direct/prompt/BOUNDARY_REPAIR.md": "622aaf9af0a679ac9c16af9ea76de11aff01085d52aa59d2e79b4d4792e60452",
+    "experiments/eve/overlay/stage5b_sol_rep001_entry_game_direct/prompt/ENTRYPOINT.md": "b44b609aa48f9f963fb46522bb22cefdbcceec93a826ff3fe8e11fa3969da357",
+    "experiments/eve/overlay/stage5b_sol_rep001_entry_game_direct/prompt/budget/TURN.md": "11b91058534fbdfff7832530059ea5e213923bc45ca2bfb9609b0247129710a5",
+    "experiments/eve/overlay/stage5b_sol_rep001_entry_game_direct/prompt/budget/USER.md": "8741431bee9ed1fef362c226e10432f0bd859af7b9238af53b4727cf9f928ea4",
+    "experiments/eve/overlay/stage5b_sol_rep001_entry_game_transport/immutable/AGENTS.md": "ccba4a35808ae553ccb5c62c5f2b401c73f3f8af34e9e6ea268becd6a4b04732",
+    "experiments/eve/overlay/stage5b_sol_rep001_entry_game_transport/immutable/README.md": "f5556ad137980d71a3432f36cfb9da261d1229ffe8c7494209dddad235ca4a67",
+    "experiments/eve/overlay/stage5b_sol_rep001_entry_game_transport/immutable/STAGE5A_LEAN_CHECK.py": "65470a92468dd255879d4fe795a0ae03bb4203bd10a13191e2c1ac3bdcf89f34",
+    "experiments/eve/overlay/stage5b_sol_rep001_entry_game_transport/immutable/TRANSPORT_CHECKPOINTS.md": "e33203403ea0f74d974cdc28c0446b8cab9b1c5c73509ef2ff44ff66857e495b",
+    "experiments/eve/overlay/stage5b_sol_rep001_entry_game_transport/initial_guidance/docs/transport.md": "91d4b8a9c87ac820399ae63558673fee723b2e752d48c28e223d2ef83f50e105",
+    "experiments/eve/overlay/stage5b_sol_rep001_entry_game_transport/prompt/BOUNDARY_REPAIR.md": "622aaf9af0a679ac9c16af9ea76de11aff01085d52aa59d2e79b4d4792e60452",
+    "experiments/eve/overlay/stage5b_sol_rep001_entry_game_transport/prompt/ENTRYPOINT.md": "49b81a6657039a3b80292ecd073ff688038156e6a0254ff059dad5e1d591f1ec",
+    "experiments/eve/overlay/stage5b_sol_rep001_entry_game_transport/prompt/budget/TURN.md": "11b91058534fbdfff7832530059ea5e213923bc45ca2bfb9609b0247129710a5",
+    "experiments/eve/overlay/stage5b_sol_rep001_entry_game_transport/prompt/budget/USER.md": "4b379fcb9061b993e545bac8491519899f6bb0c9b5595bf0035bea3734fa0ec4",
+    "experiments/eve/scripts/audit_stage5a.py": "43d6da96e72fabf8613719902987517ffed42afe60ad8f1746d3ad5a34b5e17f",
+    "experiments/eve/scripts/audit_stage5b_sol_rep001.py": "8ea540445c1a8a245f8180eb176822db5befcdb372672f5d597da49477ee66e5",
+    "experiments/eve/scripts/evaluate_stage2_entry_game.py": "7dd10441541593ea63d9de70595b786e130a67327a33c8d6cf4c91d63d6c256f",
+    "experiments/eve/scripts/evaluation_stage2_entry_direct.sh": "bd1707b2a8b1b136dcd1a2c131cdd6b7991ab9ed7324c852c4dd01abc6d390a5",
+    "experiments/eve/scripts/evaluation_stage2_entry_transport.sh": "88cb70500029ca3863660416c380b10fe7eb82bcbf3edd8dba836812642bbb4a",
+    "experiments/eve/scripts/evaluator_common.py": "4d3d51d21b08e8a49554e476d5782b424575d80d4c57616eb319789a9514cfa4",
+    "experiments/eve/scripts/run.py": "fa2371205eadd1271a4b7b548aaef6ba33a025ab44be9860db6806b6b3d4c19a",
+    "experiments/eve/scripts/run_stage5a.py": "f66a7e85b38115d60e74e04621195bc6bf475d7dcc6261d709884bf4088d58e5",
+    "experiments/eve/scripts/run_stage5b_sol_rep001.py": "477fe3bb16fba99a35a36bfd76d52aac59a637975d1416fb8bab15f0e776e691",
+    "experiments/eve/scripts/run_stage5b_sol_rep001_eve.py": "7ff9cba02b2ca0490f7d27af3cad3100be4fcfefc1ec60460d7fe1cd5bda50c8",
+    "experiments/eve/scripts/verify_stage5b_sol_rep001_protocol.py": "7ac6d7d7a267b646a940f36022c5ac4fa3b8664bf6ccf7e09c29bbb875eda515",
+    "experiments/eve/stage2_entry_game/TASK_SPEC.md": "0a6b440b4af9eabc2433ca3f4ba5ad66b34dab137f2b2954e602c2ce18f81b21",
+    "experiments/eve/stage2_entry_game/direct/case.json": "7de31d85c925ed4e5d0128f8ad1cbc557b893c1b00a369ba3b6148937202597c",
+    "experiments/eve/stage2_entry_game/direct/expected/Accepted.lean": "0cd03b9ebe597abd70904e9bc7a2251acc7e7e7b87b9498d7c67d0e956db738c",
+    "experiments/eve/stage2_entry_game/direct/seed/Candidate.lean": "16c6d82ff1cea9f4903ff39a62b546aad4a7ef2f15c69008aacf5a7acea654ff",
+    "experiments/eve/stage2_entry_game/direct/seed/README.md": "d5cf9129a5083cea12179883ba09667119747e5c2f5eb826865d905c29c8964a",
+    "experiments/eve/stage2_entry_game/source-lock.json": "023e3f3838fd9c350e99a03189bd7cb11bbb0420626834c45213c1167468a596",
+    "experiments/eve/stage2_entry_game/transport/case.json": "31f28e01ece383775832f3b5aa0dd4a3a6488dc6338d6d7feaee07a4be875850",
+    "experiments/eve/stage2_entry_game/transport/expected/Accepted.lean": "3230b70f25df4f393498599dea048eb146fb72483f1bf1e2fed9e0717d647d52",
+    "experiments/eve/stage2_entry_game/transport/seed/Candidate.lean": "97dae10a00291b487e68e0194babced2abf0ceffd0e7e41b6015349784114b84",
+    "experiments/eve/stage2_entry_game/transport/seed/README.md": "e04add330caa8539401e9303feec418f9505ae9ce2d5b1323b139618476bc886",
+    "experiments/eve/stage5b_sol_rep001_lean_environment.json": "d22f9e0f2b7e1cfcee51b5877c86c76520f0522c5d4ed20eee83b742a9e80896",
+    "experiments/eve/stage5b_sol_rep001_upstream_semantics.json": "26466782baf411129136b7952900d032c0f08e871a484e47eada5baa590f4706",
+    "experiments/eve/tests/test_stage5b_sol_rep001_protocol.py": "df84a188d81061f41c67394431899da3a01a7cda4780424b7e6375f73ba443de"
+  },
+  "model_selection_basis": {
+    "official_codex_models": "https://developers.openai.com/codex/models",
+    "official_gpt_5_6_migration_guide": "https://developers.openai.com/api/docs/guides/latest-model?model=gpt-5.6#migrate-to-gpt-56",
+    "decision": "Use the explicit gpt-5.6-sol Codex model identity and preserve DEV-003 reasoning_effort=low on the initial cross-model replication."
+  },
+  "replicates_stage5a_dev003": {
+    "protocol_id": "EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-003",
+    "protocol_version": "3.0.0",
+    "protocol_sha256": "4c407b3e654d4e38f6f35b48e924863b5a9ef72c1e6b9569996e86f00105ad49",
+    "execution_audit": "experiments/eve/stage5a_review/dev003-execution-audit.json",
+    "equality_contract": "Tasks, cases, seeds, condition semantics, matrix order, iterations, workers, prompt bytes, initial-guidance bytes, checker bytes, evaluator, Lean source, turn budget, timeout, and reasoning effort are unchanged. Only the model identity, protocol-owned paths/RNG domain, and repaired snapshot/quiescence contract differ."
+  },
+  "historical_stage5a_protocols": {
+    "dev002_protocol_id": "EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-002",
+    "dev002_protocol_sha256": "6dafcb0d2476cd2f21df0c976f4f380488f1dcec067d7a0e7ba0802631045a05",
+    "disposition": "DEV-001 and DEV-002 remain immutable historical evidence; neither is superseded in place, retried, resumed, imported, or reclassified."
+  }
+}

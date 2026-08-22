@@ -1,0 +1,141 @@
+{
+  "schema_version": "1.0.0",
+  "reviewed_at": "2026-08-22T12:32:14Z",
+  "status": "FROZEN_REVIEW_READY_NOT_EXECUTED",
+  "review": {
+    "kind": "codex-ai-review-plus-deterministic-machine-validation",
+    "independent_human_review": false,
+    "blocking_findings": 0,
+    "conclusion": "Sol REP-001 is frozen as a zero-model exact-replication protocol with a repaired logical snapshot and quiescence contract. This is not execution authorization."
+  },
+  "protocol": {
+    "id": "EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-001",
+    "version": "1.0.0",
+    "status": "FROZEN_NOT_YET_EXECUTED",
+    "sha256": "f532789fc76d282a386c6719bd16fd9da75ea05904d16035df06bfbde52e4a2f",
+    "lean_environment_sha256": "d22f9e0f2b7e1cfcee51b5877c86c76520f0522c5d4ed20eee83b742a9e80896",
+    "upstream_semantics_sha256": "26466782baf411129136b7952900d032c0f08e871a484e47eada5baa590f4706"
+  },
+  "replication_contract": {
+    "source_protocol_id": "EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-003",
+    "source_protocol_sha256": "4c407b3e654d4e38f6f35b48e924863b5a9ef72c1e6b9569996e86f00105ad49",
+    "source_execution_status": "EXECUTED_EVIDENCE_VALIDATED_WITH_PREFLIGHT_GUARD_ACTIVATIONS",
+    "unchanged": [
+      "two entry-game tasks and case assets",
+      "static, fixed, and evolved condition semantics",
+      "seeds 1729 and 2718 and the 12-cell order",
+      "three iterations and one worker per iteration",
+      "solver prompt bytes and initial-guidance bytes",
+      "immutable checker bytes and exact Python 3.9.6 runtime",
+      "evaluator, pinned EvE v0.2.0, pinned Lean source, turn budget, timeout, and low reasoning effort"
+    ],
+    "changed": [
+      "model identity from gpt-5.6-luna to gpt-5.6-sol",
+      "protocol-owned config and overlay paths",
+      "RNG domain, fresh run-root parent, and fresh attempt ledger",
+      "preflight state contract from physical metadata hashing to durable-file and SQLite-logical projections with bounded quiescence"
+    ],
+    "historical_runtime_reused": false
+  },
+  "model_configuration": {
+    "model": "gpt-5.6-sol",
+    "reasoning_effort": "low",
+    "official_codex_models": "https://developers.openai.com/codex/models",
+    "official_migration_guide": "https://developers.openai.com/api/docs/guides/latest-model?model=gpt-5.6#migrate-to-gpt-56",
+    "decision": "Preserve the DEV-003 low reasoning setting for the initial cross-model replication while changing only the explicit model identity."
+  },
+  "snapshot_repair": {
+    "contract": "durable-files-and-sqlite-logical-content-v1",
+    "normalized_physical_noise": [
+      "directory mtimes",
+      "SQLite page layout",
+      "WAL, SHM, and journal sidecars",
+      "checkpoint transitions"
+    ],
+    "fail_closed_on": [
+      "durable ordinary-file content or path changes",
+      "committed SQLite schema or row changes",
+      "unreadable SQLite logical state",
+      "failure to observe three consecutive identical snapshots within five seconds",
+      "different projected state before and after preflight"
+    ],
+    "historical_generations_observed_without_reuse": [
+      "stage5a-dev002",
+      "stage5a-dev003"
+    ],
+    "regressions": [
+      "WAL checkpoint preserves the logical snapshot",
+      "committed SQLite mutation changes the logical snapshot",
+      "durable non-SQLite mutation changes the projected snapshot",
+      "settling quiescence passes and continuously changing state times out"
+    ]
+  },
+  "clean_source_verification": {
+    "repository": "https://github.com/lyw-ops/EconCSLib",
+    "commit": "b490317186ef435670c2eeb16050a214cdbf9fe5",
+    "checkout": "/private/tmp/econcslib-stage5a-dev003-execution.3LicfY/lean-source",
+    "committed_lean_closure_files": 109,
+    "protocol_environment_verifier": "passed",
+    "tracked_clean": true,
+    "mixed_user_worktree_files_included": false
+  },
+  "matrix_validation": {
+    "planned_cells": 12,
+    "check_passed": 12,
+    "dry_run_passed": 12,
+    "execute_invocations": 0,
+    "preflight_event_sha256_by_ordinal": [
+      "6a3b2e71452f71e83f56729e722789ffe9ce7351e2255127aeeac0a17819cf16",
+      "8d121a2e4fd3fd2446ab964c96b0f4222d82372d7710f9f787229fa44a3b83f0",
+      "0edb92c18710071186b0dd7ec60e2c412ba5cbaa8fb6c706a158e323d1920ace",
+      "21e039f8470e9eb89aafbe5dd3a172a8241ba009718db77dbfcf47f4c175a94a",
+      "d80659a98434bfebaded372178193fc28e878cb00a5bcc855668741a25eb0eba",
+      "73377ef7e9d0c9b4c07178c3251f6fe2dec4dd7d5974027af16537e97efb53ff",
+      "60aef7af199e3d7ca9ed755173359cb432ea8e17a29e25803cefc2201708544e",
+      "7ed2a4a22940b328542bc3a16e0c00d3d83d4fc87eb9253b5dfb61a6931cf32f",
+      "d7e59e752cc8461abdd82dd39604617a07022a5db37afd86f2acd0ed1b3b7258",
+      "e86fe4f1456001b43927e80770e42a555cdb8bbdd5e46391db078546df796e2d",
+      "57481f3f0e7ba58b281f0b69523f584a296a54ddb243cb2bf1b8b71a7f83182b",
+      "4fcc7d612c7839663af4ec3af316a15cddf532a3bab3c4fb69642a53f70bbb6f"
+    ],
+    "formal_absent_state_projection_sha256": "489780a9de90686f4f1095b2834691186d2e0bb52525fe129a33bb8d2ce5fd27",
+    "historical_state_projection_sha256": "ce3a693db84ea6dfc8f2ff6bc079633af7a3789352f6019308745d93f3c65a57",
+    "exact_python_invocation": "/usr/bin/python3",
+    "exact_python_version": "3.9.6",
+    "exact_python_reported_executable": "/Library/Developer/CommandLineTools/usr/bin/python3",
+    "checker_sha256": "65470a92468dd255879d4fe795a0ae03bb4203bd10a13191e2c1ac3bdcf89f34",
+    "each_preflight_observed_nonzero_real_lean_exit": true,
+    "each_preflight_captured_real_output": true,
+    "each_preflight_passed_quiescence_and_projection_equality": true
+  },
+  "zero_model_and_state_evidence": {
+    "sol_rep001_model_calls": 0,
+    "sol_rep001_sessions": 0,
+    "sol_rep001_quota_consumed": 0,
+    "formal_sol_rep001_run_root_exists": false,
+    "formal_sol_rep001_attempt_ledger_exists": false,
+    "historical_state_inherited_or_written": false,
+    "dev002_ledger_sha256_after_validation": "e593bf5726b20aa20f1cbb15882b7c2e9e169080233f346d67b48d6543a37922",
+    "dev003_ledger_sha256_after_validation": "3d0ab59f2022d6bdbb04774688e3ab2cd9981a2f31a6f34bd2b1772950f2d664"
+  },
+  "validation": {
+    "sol_targeted_tests": "16 passed",
+    "full_eve_tests": "103 passed, 2 skipped",
+    "skips": [
+      "test_accepted_efg_fixture_compiles_in_isolated_solver_home: no explicit locked EvE v0.2.0 checkout supplied to unittest discovery",
+      "test_actual_hydra_loader_parses_both_configs_when_checkout_is_supplied: no explicit locked EvE v0.2.0 checkout supplied to unittest discovery"
+    ],
+    "stage4_local_evidence_verifier": "passed",
+    "stage4_no_recheck_audit": "passed",
+    "dev002_historical_protocol_verifier": "passed",
+    "dev003_clean_checkout_protocol_verifier": "passed",
+    "sol_clean_checkout_protocol_verifier": "passed"
+  },
+  "authorization_boundary": {
+    "sol_rep001_execution_authorized": false,
+    "sol_rep001_model_or_quota_use_authorized": false,
+    "dev003_retry_resume_import_or_runtime_reuse_authorized": false,
+    "next_required_authorization": "A separate explicit user authorization is required before any Sol REP-001 --execute invocation or model/quota use."
+  },
+  "claim_boundary": "This record supports only reproducible zero-model Sol replication protocol engineering and preflight readiness. It does not report a Sol run, guidance production or selection, a clean cross-model comparison, causal EvE effect, model capability, benchmark readiness, evaluation completion, or independent human review."
+}

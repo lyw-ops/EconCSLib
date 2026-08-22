@@ -1,0 +1,115 @@
+{
+  "schema_version": "2.0.0",
+  "id": "EVE-STAGE5B-UPSTREAM-SEMANTICS-SOL-REP-001",
+  "upstream": {
+    "repository": "https://github.com/scaling-group/eve",
+    "tag": "v0.2.0",
+    "commit": "50b2399258ab08b6225a87cd05bded9701caa23d",
+    "tracked_modifications_allowed": false
+  },
+  "source_evidence": [
+    {
+      "path": "src/scaling_evolve/algorithms/eve/runner.py",
+      "sha256": "06bc35d16f0ab80c48b27491c83b3830c4e2449c5ccedb83fe2f025ca3f9911d",
+      "lines": "154-177,252-285",
+      "establishes": "Fresh factory/run-root construction and explicit resume/import lifecycle inputs."
+    },
+    {
+      "path": "src/scaling_evolve/algorithms/eve/factory.py",
+      "sha256": "c7874da9be0ffaa6b3c8f7b2fa9707fd408953712b23f8f4ab35ddee3c9b2a68",
+      "lines": "183-218,274-354",
+      "establishes": "Initial guidance and populations are assembled before iteration one."
+    },
+    {
+      "path": "src/scaling_evolve/algorithms/eve/workflow/loop.py",
+      "sha256": "8412b734b5a71503c9e1b55c34c94586996ac9c8d9dbacd78187c45a221b1a90",
+      "lines": "61-112",
+      "establishes": "Phase 2 and Phase 3 complete before the next iteration samples."
+    },
+    {
+      "path": "src/scaling_evolve/algorithms/eve/workflow/phase2.py",
+      "sha256": "3bdd7ece65b5fc787c7adccda6f310306deb55f932fc51de740c2d6f1aa13002",
+      "lines": "103-197,248-366,457-575",
+      "establishes": "Working guidance sampling, solver rollout, evaluation, changed-guidance production, and admission order."
+    },
+    {
+      "path": "src/scaling_evolve/algorithms/eve/workspace/solver_workspace.py",
+      "sha256": "391dc7176b5dc462a706c980849a2c2c63ad2139af076b2428c0b95bf1e83bc3",
+      "lines": "140-231,338-459",
+      "establishes": "Workspace materialization and final guidance extraction."
+    },
+    {
+      "path": "src/scaling_evolve/algorithms/eve/workflow/phase3.py",
+      "sha256": "f5308251b1a573eaa4a8bb601e16cff96645c5e3f251784709f79c3264b918f1",
+      "lines": "14-54",
+      "establishes": "Population score synchronization before later selection."
+    },
+    {
+      "path": "src/scaling_evolve/algorithms/eve/populations/base.py",
+      "sha256": "881044a5d74decc4c3ae586ba452ecc036152b0bd13c79274ab4d53c7a9dea4d",
+      "lines": "26-85,99-155",
+      "establishes": "Run-scoped lineage/artifact persistence and population RNG ownership."
+    },
+    {
+      "path": "src/scaling_evolve/algorithms/eve/populations/samplers/rank_softmax.py",
+      "sha256": "036ed8dd70ea74a01e7ccdedfefb11798668e90228a3fd2696c67aa146d2aa45",
+      "lines": "142-179",
+      "establishes": "Admission does not imply probabilistic later selection."
+    },
+    {
+      "path": "src/scaling_evolve/providers/agent/drivers/codex_exec.py",
+      "sha256": "7e9d4f614b9ce78156537c44fbc4c26391fc44632d611d19c08244e55eb39c3a",
+      "lines": "71-111,195-310",
+      "establishes": "The model adapter exposes no provider model seed and archives solver transcripts/changed paths."
+    }
+  ],
+  "checker_evidence_contract": {
+    "required_event_rule": "Every completed rollout must contain at least one valid immutable-checker event, and the final event candidate hash must equal the final solver/Candidate.lean hash.",
+    "fail_closed_cases": [
+      "missing event file",
+      "empty event list",
+      "JSON or field parse failure",
+      "noncontiguous or tampered hash chain",
+      "checker, Python, command, output, or candidate mismatch"
+    ],
+    "failure_derived_rule": "Liveness requires a validated nonzero check event whose guidance snapshot precedes and differs from the produced tree; flags or failed events without the validated join cannot establish liveness.",
+    "exact_solver_python": {
+      "invocation": "/usr/bin/python3",
+      "version": "3.9.6",
+      "reported_executable": "/Library/Developer/CommandLineTools/usr/bin/python3"
+    },
+    "utc_expression": "datetime.datetime.now(datetime.timezone.utc).isoformat()"
+  },
+  "safe_preflight": {
+    "workspace": "disposable temporary workspace outside experiments/eve/.runtime",
+    "runs_checker_entrypoints": [
+      "stage5b_sol_rep001_entry_game_direct/immutable/STAGE5A_LEAN_CHECK.py",
+      "stage5b_sol_rep001_entry_game_transport/immutable/STAGE5A_LEAN_CHECK.py"
+    ],
+    "same_as_execution": "Uses the frozen /usr/bin/python3 3.9.6 invocation, immutable checker bytes, injected Lean toolchain, and tracked-clean pinned EconCSLib checkout used by execution.",
+    "observes": "Real Lean stdout, stderr, nonzero exit status, and one recorded/tamper-checked event.",
+    "forbidden_writes": "No model call, quota use, formal run root, formal ledger write, historical state inheritance, or historical state mutation. A quiescence barrier must establish three identical samples before and after preflight. Durable non-SQLite contents and SQLite logical contents must remain unchanged; SQLite page layout, WAL, SHM, journal files, directory mtimes, and checkpoint transitions are normalized away."
+  },
+  "phase_and_iteration_order": [
+    "The working optimizer is sampled before each rollout.",
+    "A produced optimizer enters the population only after the source rollout and Phase 2 sampling.",
+    "Only a strictly greater iteration can select an admitted candidate later."
+  ],
+  "rng_semantics": {
+    "eve_sampler_domain": "EconCSlib-EvE-Stage5B-Sol-REP001-v1",
+    "provider_model_seed_available": false,
+    "claim_boundary": "EvE sampler seeding is not provider/model determinism and cannot establish a causal condition effect."
+  },
+  "review": {
+    "kind": "codex-ai-review",
+    "independent_human_review": false
+  },
+  "snapshot_semantics": {
+    "contract": "durable-files-and-sqlite-logical-content-v1",
+    "ordinary_files": "Hash relative path, permission bits, and file contents; ignore mtimes.",
+    "sqlite": "Hash committed schema and table rows through a read-only query-only connection; ignore WAL, SHM, journal files, page layout, and checkpoint transitions.",
+    "quiescence": "Require three consecutive identical logical snapshots before and after exact-runtime preflight, then require equality across the preflight boundary.",
+    "fail_closed": "Durable ordinary-file changes, committed SQLite logical changes, unreadable databases, or failure to settle before the bounded timeout reject preflight."
+  },
+  "status": "source-semantics-established-with-sol-rep001-fail-closed-check-evidence"
+}
