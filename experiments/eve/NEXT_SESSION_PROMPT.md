@@ -3,8 +3,8 @@
 Last updated: 2026-08-22
 
 Copy the text below into the next Codex task. This prompt transfers repository
-state and safety boundaries. It does not authorize a model call, a DEV-003
-retry, or Sol REP-001 execution.
+state and safety boundaries. It does not authorize any historical retry or a
+new model call/execution under a successor identity.
 
 ```text
 Open /Users/lyuyuwei/Documents/EconCSlib and continue on branch
@@ -22,6 +22,7 @@ read, in order:
 - experiments/eve/stage5a_review/dev003-execution-audit.json
 - experiments/eve/stage5b_sol_rep001_protocol.json
 - experiments/eve/stage5b_review/sol-rep001-audit.json
+- experiments/eve/stage5b_review/sol-rep001-execution-audit.json
 
 Inspect git status --short --branch, recent commits, every remote, the upstream
 tracking relationship, and the exact target files before changing anything.
@@ -73,30 +74,56 @@ Immutable historical facts:
    one execute invocation and three zero-model checks. Each stopped before
    attempt reservation and model access, so it consumed no cell or session and
    caused no retry. The observed trigger involved mutable SQLite sidecar state
-   settling or being opened. Sol REP-001 fixes this under a separate identity;
-   never backport the repair into DEV-003 or rewrite its historical evidence.
+   settling or being opened. Sol REP-001 introduced a logical-snapshot repair
+   under a separate identity; never backport it into DEV-003 or rewrite its
+   historical evidence.
 9. experiments/eve/.runtime is Git-ignored and local to this machine. Preserve
-   all Stage 4, DEV-001, DEV-002, and DEV-003 runtime evidence. A fresh GitHub
-   clone cannot reconstruct local transcripts merely from tracked summaries.
+   all Stage 4, DEV-001, DEV-002, DEV-003, and Sol REP-001 runtime evidence. A
+   fresh GitHub clone cannot reconstruct local transcripts merely from tracked
+   summaries.
 10. Stage 5B Sol REP-001 is
     EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-001 v1.0.0, SHA-256
     f532789fc76d282a386c6719bd16fd9da75ea05904d16035df06bfbde52e4a2f.
-    It is frozen at FROZEN_NOT_YET_EXECUTED after zero-model protocol
-    engineering. No Sol model call, session, quota use, formal run root, or
-    attempt-ledger write has occurred.
+    Its immutable protocol file correctly remains FROZEN_NOT_YET_EXECUTED as a
+    launch-input fact. The separate execution record shows that all 12 cells and
+    36 Sol solver sessions were then consumed once under explicit authorization.
 11. Sol REP-001 exactly preserves DEV-003's tasks, cases, conditions, seeds,
     matrix order, compute, prompt/guidance/checker bytes, evaluator, pinned EvE
     and Lean sources, turn budget, timeout, and low reasoning effort. Only the
     model identity changes to gpt-5.6-sol; protocol paths, RNG domain, root, and
-    ledger are fresh and no historical runtime state is reused.
+    ledger are fresh and no historical runtime state was reused. There was no
+    retry, resume, import, or duplicate cell.
 12. Its durable-files-and-sqlite-logical-content-v1 snapshot contract ignores
     directory mtimes, SQLite page layout, WAL/SHM/journal sidecars, and
     checkpoint transitions while detecting ordinary-file and committed SQLite
     changes. Three identical samples are required before and after preflight.
-13. Sol targeted tests passed 16/16; the full EVE suite passed 103 tests with
-    the same two checkout-dependent skips. All 12 Sol cells passed --check and
-    --dry-run, every path reported zero model calls, and the Sol root/ledger
-    remain absent.
+    Even after this repair, one execute invocation before ordinal 3 and one
+    zero-model check before ordinal 6 failed closed before reservation/model
+    access. They consumed no attempt or session and caused no retry.
+13. Raw Sol candidate passes are direct static/fixed/evolved 4/6, 6/6, 6/6 and
+    transport 4/6, 4/6, 2/6. The first 11 machine audits replay
+    byte-identically: eight controls have no retention, and evolved ordinals 3,
+    6, and 9 each establish one failure-derived produced/admitted/later-selected
+    guidance chain.
+14. Ordinal 12 completed all three sessions with raw scores 0, 1, 1. Its first
+    Phase 2 optimizer task was skipped because the final checker event did not
+    match the final candidate, so iteration-1 solver_rollout_completed telemetry
+    is absent. The mandatory post-run auditor reproducibly exits 2 with solver
+    rollout telemetry is incomplete. One iteration-2 guidance candidate is
+    locally produced/admitted but not selected later; the whole cell remains
+    unclassified by the mandatory audit.
+15. Token accounting uses exactly 36 top-level token_usage.json records: 206
+    agent turns, 6,924,408 input tokens, 5,800,192 cache-read tokens, and 125,536
+    output tokens. The ChatGPT subscription adapter reports USD 0; this neither
+    means zero quota consumption nor exposes remaining quota.
+16. The Sol ledger has 12 unique completed underlying-EvE exit-zero rows; all
+    attempt slots are consumed. Eleven audits pass byte-identically, ordinal 12
+    fails closed as above, and all 25 attempt/lineage databases pass integrity
+    checking. The execution is not a clean whole-matrix replication.
+17. Pre-execution validation remains historical: Sol targeted tests passed
+    16/16; the full EVE suite passed 103 tests with the same two
+    checkout-dependent skips; all 12 Sol cells passed zero-model --check and
+    --dry-run before execution.
 
 Claim boundary:
 
@@ -105,17 +132,20 @@ Claim boundary:
   mechanism observations.
 - It does not establish a causal EvE effect, model capability, benchmark
   readiness, evaluation completion, independent human review, or a Sol result.
-- Sol REP-001 preparation establishes only reproducible zero-model protocol and
-  preflight readiness. It is not a cross-model comparison or execution result.
+- Sol REP-001 establishes 12 consumed attempts, exact quota accounting, raw
+  public-development outcomes, 11 fully audited cells, and three local liveness
+  chains. The ordinal-12 evidence gap prevents a clean whole-matrix replication
+  or complete Sol-versus-Luna comparison.
 - Provider model sampling remains uncontrolled, and the answer-visible matrix
   has only n=2 seeds per condition.
 
-Start in read-only review mode. All DEV-003 attempts are consumed: do not retry,
-resume, import, or execute DEV-003. Sol REP-001 is prepared but not authorized
-for execution. Do not invoke its --execute path, make a Sol model call, or
-consume quota without a new separate and explicit user authorization naming
-this exact frozen protocol. A prepared protocol never implies execution
-authority.
+Start in read-only review mode. All DEV-003 and Sol REP-001 attempts are
+consumed: do not retry, resume, import, repair in place, or invoke either
+--execute path. The next bounded action is read-only diagnosis of the ordinal-12
+checker-event/final-candidate mismatch. Any repaired execution requires a new
+protocol identity, fresh roots and ledger, separate review, and separate
+explicit model/quota authorization. Historical authorization never transfers to
+a successor.
 
 For any task, run validation proportionate to the changed files. For EVE
 protocol work, at minimum run the full experiments/eve test suite, relevant

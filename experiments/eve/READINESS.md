@@ -1,6 +1,6 @@
 # EvE experiment readiness
 
-- **Current status:** `STAGE5B_SOL_REP001_FROZEN_ZERO_MODEL_NOT_EXECUTED`;
+- **Current status:** `STAGE5B_SOL_REP001_EXECUTED_POST_RUN_AUDIT_INCOMPLETE`;
   Stage 1 smoke 002 is closed at score one, Stage 2 direct/transport/pair and
   12 mutations are closed, Stage 3 Codex review verifies at score one, and
   all 12 Stage 4 Luna development cells completed and passed machine re-audit;
@@ -8,19 +8,23 @@
   and 36 Luna sessions executed once before post-run review found a blocking
   Python-3.9 checker defect; the separate DEV-003 identity closed those defects
   and has completed its 12-cell, 36-session Luna matrix with clean checker
-  evidence and three local guidance-liveness chains; Stage 5B Sol REP-001 is
-  frozen and passes its zero-model matrix checks but has not executed
+  evidence and three local guidance-liveness chains; Stage 5B Sol REP-001 then
+  consumed all 12 cells and 36 Sol sessions exactly once, but ordinal 12 lacks
+  complete rollout telemetry and its mandatory post-run audit fails closed
 - **Not valid statuses:** `benchmark-ready`, `evaluation-complete`,
   `internal-pilot-complete`, or any model-capability conclusion
 - **Formal pilot default:** disabled and not configured
 - **Paid/long EvE execution:** the 12-cell public Stage 4, defective DEV-002,
-  and clean-evidence DEV-003 Stage 5A matrices are complete; no benchmark,
-  private evaluation, formal pilot, or Sol replication execution has occurred
-- **EvE runner / `--execute`:** 38 completed executions: two Stage 1 smokes, 12
-  fresh Stage 4 cells, 12 fresh DEV-002 cells, and 12 fresh DEV-003 cells; Stage
-  0 has not run
+  clean-evidence DEV-003, and post-run-audit-incomplete Sol REP-001 matrices have
+  executed; no benchmark, private evaluation, or formal pilot has executed
+- **Underlying EvE executions:** 50 completed: two Stage 1 smokes, 12 fresh
+  Stage 4 cells, 12 fresh DEV-002 cells, 12 fresh DEV-003 cells, and 12 fresh
+  Sol REP-001 cells; the ordinal-12 Sol outer invocation returned 2 only after
+  the underlying EvE process completed and the mandatory audit failed closed
 - **Luna sessions:** one read-only access smoke, two Stage 1 solver sessions,
   24 Stage 4 solver sessions, and 72 Stage 5A solver sessions
+- **Sol sessions:** 36 Stage 5B solver sessions; 206 agent turns, 6,924,408
+  input tokens, 5,800,192 cache-read tokens, and 125,536 output tokens
 
 ## What is ready
 
@@ -231,7 +235,7 @@ checks. They caused no formal retry or duplicate ledger row. This is a
 nonblocking execution anomaly, but mutable SQLite sidecar snapshot/quiescence
 handling must be repaired under a new identity before any Sol replication.
 
-That repair is now frozen, but not executed, as Stage 5B Sol REP-001:
+That repair was frozen and then executed once as Stage 5B Sol REP-001:
 `EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-001` version `1.0.0`, hash
 `f532789fc76d282a386c6719bd16fd9da75ea05904d16035df06bfbde52e4a2f`.
 It preserves DEV-003's scientific inputs and `low` reasoning effort while
@@ -243,10 +247,22 @@ The new preflight hashes durable ordinary-file contents and committed SQLite
 schema/rows, normalizes directory mtimes and SQLite WAL/SHM/journal/checkpoint
 layout, and requires three identical samples before and after the real checker.
 It fails closed on durable mutation, committed database mutation, unreadable
-state, non-quiescence, or different before/after projections. The targeted 16
-tests, full 103-test EVE suite, clean 109-file Lean closure verifier, and all 12
-`--check`/`--dry-run` cells pass. The Sol run root and ledger remain absent;
-execution and model/quota use still require separate explicit authorization.
+state, non-quiescence, or different before/after projections. Two inter-cell
+guards still aborted before reservation/model access; after quiescence, all 12
+formal cells executed exactly once with no retry/resume/import. The Sol ledger
+contains 12 completed exit-zero rows and 36 top-level model-session records.
+
+The first 11 machine audits replay byte-identically. Their eight control cells
+retain no guidance, and evolved ordinals 3, 6, and 9 each contain one exact
+failure-derived candidate selected later. Raw candidate passes are direct
+`4/6, 6/6, 6/6` and transport `4/6, 4/6, 2/6` for static, fixed, and evolved.
+Ordinal 12 used all three sessions and has raw scores `0, 1, 1`; its iteration-1
+optimizer task was skipped after `final checker event does not match final
+candidate`, so the rollout event is absent. The required auditor exits 2 with
+`solver rollout telemetry is incomplete`. Preserve the raw evidence and do not
+retry: this is not a clean whole-matrix replication or complete cross-model
+comparison. The tracked record is
+`stage5b_review/sol-rep001-execution-audit.json`.
 
 ## Hard-disabled formal experiment boundary
 
@@ -275,11 +291,11 @@ Its check path builds the frozen entry and runs safe preflight before formal
 state; its dry-run path previews only. Neither dispatches execution. All 12
 DEV-003 attempt slots are consumed, and the ledger rejects a rerun.
 
-The frozen `run_stage5b_sol_rep001.py` accepts the same exact matrix only under
+The executed `run_stage5b_sol_rep001.py` accepts the same exact matrix only under
 the Sol REP-001 identity and requires the same clean Lean checkout. Its check
-and dry-run paths are zero-model and leave formal state absent. The execute path
-still requires `--acknowledge-model-quota`, but that mechanical gate is not
-authorization: no Sol execution or model/quota use is currently authorized.
+and dry-run paths remain zero-model. All 12 Sol attempt slots are consumed, and
+the ledger rejects a rerun. Repair requires a new protocol identity, fresh
+roots/ledger, new review, and separate execution authorization.
 
 ## Public Stage 4 Entry Game three-condition study
 
@@ -363,10 +379,13 @@ iteration. The tracked post-execution record is
 liveness-mechanism evidence, not a causal condition effect, model-capability
 claim, independent human review, or authorization/result for Sol replication.
 
-Sol REP-001 mirrors that exact matrix as a fresh unexecuted identity. Its
-tracked review is `stage5b_review/sol-rep001-audit.json`; 12 checks and 12
-dry-runs establish only zero-model protocol readiness and the repaired snapshot
-guard. They are not a Sol result or cross-model comparison.
+Sol REP-001 mirrored that exact matrix under a fresh identity and consumed all
+12 cells and 36 sessions. Eleven audits validate eight no-retention controls and
+three local liveness chains; ordinal 12 fails the mandatory audit on missing
+iteration-1 rollout telemetry. The tracked pre-execution review is
+`stage5b_review/sol-rep001-audit.json`, and the post-execution disposition is
+`stage5b_review/sol-rep001-execution-audit.json`. These records are not a clean
+whole-matrix Sol result or complete cross-model comparison.
 
 ## Gates before a real Mathlib-style experiment
 

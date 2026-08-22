@@ -1,6 +1,6 @@
 # EvE sidecar for EconCSLib
 
-> **Status: `stage5b-sol-rep001-frozen-zero-model-not-executed`.
+> **Status: `stage5b-sol-rep001-executed-post-run-audit-incomplete`.
 > Stage 1 smoke 002 is
 > closed at score `1.0`; the public Entry Game direct/transport pair and its 12
 > mutations pass Stage 2; the Stage 3 Codex review record verifies at `1.0`.
@@ -17,15 +17,17 @@
 > Three of four evolved cells produced, admitted, and later selected guidance;
 > the fourth produced and admitted guidance without a later selection. Four
 > pre-reservation preflights failed closed on formal-state drift without
-> starting a model or consuming a cell. Stage 5B Sol REP-001 now freezes the
-> exact cross-model replication and repairs that guard using logical SQLite
-> snapshots plus bounded quiescence. Its 12 checks and dry-runs pass, but no Sol
-> execution or model call is authorized or reported.
+> starting a model or consuming a cell. Stage 5B Sol REP-001 then consumed its
+> exact 12-cell, 36-session Sol matrix once. Eleven machine audits pass and
+> replay byte-identically; ordinal 12 fails closed because its iteration-1
+> solver rollout telemetry is absent after a final-checker-event/final-candidate
+> mismatch. The execution is preserved with exact quota accounting, but it is
+> not a clean whole-matrix replication or complete cross-model comparison.
 > Codex review is AI review, not independent human
 > review, and none of this is a hidden benchmark, causal condition result,
 > formal EvE-effect result, or general model-capability claim.**
 
-## 总体技术路线（v3.7，权威入口）
+## 总体技术路线（v3.8，权威入口）
 
 本节是 EconCSLib EVE 研究计划的**唯一技术路线入口**。后续关于研究目标、
 证明路线、实验设计、模型顺序、阶段门槛和任务扩展的决定，都应更新在本节，
@@ -37,7 +39,7 @@
 - [`READINESS.md`](READINESS.md)：当前可运行状态、实时阻塞项和安全边界；
 - [`HANDOFF.md`](HANDOFF.md)：最近完成事项、证据摘要与下一安全边界；
 - [`NEXT_SESSION_PROMPT.md`](NEXT_SESSION_PROMPT.md)：可直接复制到下一任务的
-  权威交接提示词，不授予模型调用或 Sol 执行权限；
+  权威交接提示词，不授予任何后继模型调用或新协议执行权限；
 - `*/case.json`：单个任务的冻结规范、受保护资产和确定性评分合同；
 - `*/run-manifest.json`：一次实验计划与执行事实，不承载长期路线；
 - Lean 源码：声明、证明和保持性质的最高权威；
@@ -661,7 +663,14 @@ sidecar 的 snapshot/quiescence 行为。当前结果是干净 checker 与本地
   preflight、required-evidence fail-closed、no-false-liveness、fresh ledger/order 与
   clean committed Lean boundary；12 cell、36 Luna session 已完成，9 个 candidate
   生产并入池，3 个在严格后续轮次被选择，全部 rollout 有必需 checker evidence；
-  4 次 pre-reservation guard activation 未预约 attempt 或启动模型，Sol 未授权；
+  4 次 pre-reservation guard activation 未预约 attempt 或启动模型；
+- Stage 5B Sol REP-001 经明确授权用 ChatGPT subscription 完成 12 个唯一 cell 与
+  36 个 `gpt-5.6-sol` session，零 retry/resume/import；raw pass 为 direct
+  `4/6, 6/6, 6/6`、transport `4/6, 4/6, 2/6`。前 11 份 machine audit 逐字节重放
+  一致，ordinal 3、6、9 各有一条 failure-derived guidance 后续选择链。ordinal 12
+  的第 1 轮因 final checker event 与 final candidate 不匹配而 fail closed，缺少该轮
+  rollout telemetry，终局 audit 以 exit 2 拒绝；全部三次 session 和 raw `0,1,1`
+  得分保留但不得重跑或称为 clean whole-matrix replication；
 - 当前 EFG driver/manifest 已记录显式 `gpt-5.6-luna`、low effort 和
   Codex-default/unpinned verbosity；清单保留 001 score-zero、002 score-one 和
   comparative conditions 的历史 not-run 事实。两次都没有 guidance 更新。冻结 case
@@ -687,6 +696,18 @@ sidecar 的 snapshot/quiescence 行为。当前结果是干净 checker 与本地
 
 #### 变更记录
 
+- **2026-08-22 · v3.8**：经明确授权执行 SHA-256
+  `f532789fc76d282a386c6719bd16fd9da75ea05904d16035df06bfbde52e4a2f`
+  的完整 Sol REP-001 12-cell matrix。12 个底层 EvE attempt 均按冻结顺序 exit 0，
+  共消耗 36 个顶层 Sol solver session、206 agent turns、6,924,408 input tokens、
+  5,800,192 cache-read tokens 与 125,536 output tokens；subscription adapter 报告
+  USD 0，但这不表示未消耗订阅额度。前 11 份 audit 逐字节重放一致：8 个 control
+  无 retention，evolved ordinal 3、6、9 各建立一条后续选择链。ordinal 12 的首轮
+  final checker event 与 final candidate 不匹配，Phase 2 跳过该 task 并缺少首轮
+  rollout event，终局 audit 稳定以 `solver rollout telemetry is incomplete` / exit 2
+  fail closed。原 12-cell/36-session attempt 已消费且禁止 retry/resume/import；完整
+  矩阵不是 clean replication 或完整 Sol/Luna comparison，任何修复执行必须新 identity、
+  新 root/ledger、独立审查与另行授权。
 - **2026-08-22 · v3.7**：按零模型授权冻结 Stage 5B Sol REP-001（protocol
   v1.0.0）。任务、case、condition、seed、12-cell 顺序、三轮/单 worker、prompt、
   guidance、checker、evaluator、EvE/Lean source、turn/timeout 与 `low` effort 均与
@@ -1285,12 +1306,13 @@ Sol protocol. The tracked result is
 liveness-mechanism observations, not a causal, capability, benchmark,
 evaluation-complete, or Sol-replication claim.
 
-Stage 5B freezes the separate Sol replication as
+Stage 5B froze and then executed the separate Sol replication as
 `stage5b_sol_rep001_protocol.json` plus its detached hash, under identity
 `EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-001` version `1.0.0`.
-The protocol remains `FROZEN_NOT_YET_EXECUTED`; its review record is
-`stage5b_review/sol-rep001-audit.json`. Preparation made zero model calls,
-created no Sol run root or ledger, and grants no execution authority.
+The immutable protocol file remains `FROZEN_NOT_YET_EXECUTED`; its pre-execution
+review is `stage5b_review/sol-rep001-audit.json`, while the separate executed
+fact and evidence disposition are recorded in
+`stage5b_review/sol-rep001-execution-audit.json`.
 
 The scientific inputs remain matched to DEV-003: tasks, cases, conditions,
 seeds, matrix order, three iterations, one worker, prompt/guidance/checker
@@ -1309,6 +1331,16 @@ physical checkpoint churn is stable while committed SQLite and ordinary-file
 mutations fail closed. All 12 planned `--check` and `--dry-run` cells pass with
 zero model calls and no attempt-ledger touch.
 
+After explicit authorization, all 12 unique Sol cells and 36 subscription
+sessions executed once in frozen order with no retry/resume/import. Raw passes
+are direct `4/6, 6/6, 6/6` and transport `4/6, 4/6, 2/6`. Eleven machine audits
+replay byte-identically and retain three local later-selection chains. Ordinal
+12 completed all sessions but its first optimizer task was skipped when the
+final checker event did not match the final candidate; the missing iteration-1
+rollout event makes its post-run audit fail closed. All attempts are consumed.
+This is preserved incomplete evidence, not a clean whole-matrix Sol replication
+or complete cross-model result.
+
 Any proposed `Arena`, controlled-carrier, StructuralCore-closure, or
 Canonical/Frontend API change discovered later must return to the documented
 EFG freeze/governance human decision process. A micro-pilot score never
@@ -1325,20 +1357,22 @@ tree. The external upstream checkout separately contains its ignored,
 `uv`-managed `.venv` and the upstream-generated Codex hook file after the
 documented manual hook command.
 
-The Stage 4 and Stage 5A run roots, ledgers, and full machine-audit reports are
-local evidence for `stage4_review/audit.json`,
+The Stage 4, Stage 5A, and Stage 5B run roots, ledgers, and machine-audit reports
+are local evidence for `stage4_review/audit.json`,
 `stage5a_review/dev002-execution-audit.json`, and
-`stage5a_review/dev003-execution-audit.json`. Do not clean them until they have
-been archived to an approved evidence store; the tracked hashes prove identity
-but cannot reconstruct deleted transcripts or candidates. Before any later
-cleanup, verify the target exactly:
+`stage5a_review/dev003-execution-audit.json`, and
+`stage5b_review/sol-rep001-execution-audit.json`. Do not clean them until they
+have been archived to an approved evidence store; the tracked hashes prove
+identity but cannot reconstruct deleted transcripts or candidates. Before any
+later cleanup, verify the target exactly:
 
 ```bash
 find experiments/eve/.runtime -maxdepth 2 -print
 ```
 
-Only after confirming it contains tool-generated data and the Stage 4 evidence
-has been archived, remove that exact directory with `rm -rf --
+Only after confirming it contains tool-generated data and every historical
+Stage 4/5A/5B evidence generation has been archived, remove that exact directory
+with `rm -rf --
 experiments/eve/.runtime`. It is not versioned. Do not broaden the target or
 substitute a home, repository, or workspace root.
 
@@ -1364,17 +1398,20 @@ the task's validation record.
 
 ## Known limitations
 
-- Exactly two bounded evolved-labelled Stage 1 engineering smokes and 12
-  Stage 4 public development cells have run. Stage 4 produced no optimizer
-  candidate, so guidance-evolution effectiveness remains untested.
+- Exactly two bounded evolved-labelled Stage 1 engineering smokes and four
+  12-cell public development matrices (Stage 4, DEV-002, DEV-003, and Sol
+  REP-001) have run. Stage 4 produced no optimizer candidate; later local
+  liveness chains do not establish guidance-evolution effectiveness.
 - Stage 5A DEV-001 was invalidated before execution. DEV-002 executed but has a
   blocking checker/auditor defect; its one local liveness chain is historical,
   not a clean comparison. DEV-003 completed with clean mandatory checker
   evidence and three local liveness chains, but the small answer-visible matrix,
   uncontrolled provider sampling, lack of independent human review, and four
   pre-reservation guard activations do not establish a causal comparison. Sol
-  REP-001 repairs the guard at protocol level and passes zero-model checks, but
-  remains unexecuted and unauthorized for model/quota use.
+  REP-001 consumed all 12 cells and 36 sessions, but ordinal 12 fails mandatory
+  post-run audit because iteration-1 rollout telemetry is incomplete. Its 11
+  audited cells and three local liveness chains do not make the whole matrix a
+  clean replication or complete cross-model comparison.
 - Neither public synthetic/local task can support a benchmark,
   model-capability, EvE-improvement, or minimal-core optimization conclusion.
 - EvE has no native dry-run at the pin; the sidecar prevents invocation.

@@ -1,0 +1,427 @@
+{
+  "schema_version": "1.0.0",
+  "reviewed_at": "2026-08-22T15:54:14Z",
+  "status": "EXECUTED_POST_RUN_AUDIT_INCOMPLETE",
+  "review": {
+    "kind": "codex-ai-post-execution-review-plus-deterministic-machine-validation",
+    "independent_human_review": false,
+    "conclusion": "All 12 unique attempts and 36 sessions were consumed once. Eleven cells pass deterministic audit; ordinal 12 correctly fails closed on incomplete rollout telemetry, so the whole matrix is not a clean evidence-validated replication."
+  },
+  "protocol": {
+    "id": "EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-001",
+    "version": "1.0.0",
+    "sha256": "f532789fc76d282a386c6719bd16fd9da75ea05904d16035df06bfbde52e4a2f",
+    "frozen_status_at_launch": "FROZEN_NOT_YET_EXECUTED",
+    "pre_execution_review": "experiments/eve/stage5b_review/sol-rep001-audit.json",
+    "pre_execution_review_sha256": "76cb88493200747a2052ad78de71651792a36d277cefddf8bd78ec1803f1305a"
+  },
+  "authorization": {
+    "authorized_by_user": true,
+    "authorized_on": "2026-08-22",
+    "scope": "Execute the complete frozen Sol REP-001 12-cell matrix at the exact authorized protocol SHA-256 and confirm model-quota consumption."
+  },
+  "authentication": {
+    "mode": "ChatGPT subscription",
+    "api_key_created_or_used": false,
+    "reported_model_cost_usd": 0.0,
+    "reported_cost_limitation": "The subscription adapter records zero dollar cost in token_usage.json. This does not mean that the 36 solver sessions consumed no ChatGPT subscription quota or capacity, and it does not expose remaining subscription quota."
+  },
+  "model_configuration": {
+    "model": "gpt-5.6-sol",
+    "reasoning_effort": "low",
+    "provider_model_seed_controlled": false
+  },
+  "source_boundary": {
+    "repository": "https://github.com/lyw-ops/EconCSLib",
+    "clean_lean_source_commit": "b490317186ef435670c2eeb16050a214cdbf9fe5",
+    "lean_environment_manifest": "experiments/eve/stage5b_sol_rep001_lean_environment.json",
+    "lean_environment_manifest_sha256": "d22f9e0f2b7e1cfcee51b5877c86c76520f0522c5d4ed20eee83b742a9e80896",
+    "tracked_clean_checkout_used": true,
+    "mixed_operator_worktree_used_as_lean_source": false,
+    "uncommitted_user_lean_files_included": false,
+    "upstream_eve_commit": "50b2399258ab08b6225a87cd05bded9701caa23d"
+  },
+  "execution": {
+    "expected_cells": 12,
+    "completed_unique_cells": 12,
+    "completed_underlying_eve_exit_zero_cells": 12,
+    "cells_with_final_machine_audit": 11,
+    "cells_with_post_run_audit_failure": 1,
+    "duplicate_cells": 0,
+    "solver_iterations_per_cell": 3,
+    "sol_solver_sessions": 36,
+    "retry_used": false,
+    "resume_used": false,
+    "import_used": false,
+    "attempt_ledger": "experiments/eve/.runtime/stage5b-sol-rep001-attempt-ledger.sqlite3",
+    "attempt_ledger_sha256": "3b393f9085ad832da85c02eda8055b6c7ccf89783343348c30497b30befa32f1",
+    "first_reservation_utc": "2026-08-22T14:02:58.518360+00:00",
+    "last_reservation_utc": "2026-08-22T15:31:15.455215+00:00",
+    "run_root_parent": "experiments/eve/.runtime/stage5b-sol-rep001-runs",
+    "fresh_run_roots": 12,
+    "historical_run_roots_reused": false,
+    "historical_state_inherited_or_written": false,
+    "dev002_attempt_ledger_sha256_after_execution": "e593bf5726b20aa20f1cbb15882b7c2e9e169080233f346d67b48d6543a37922",
+    "dev003_attempt_ledger_sha256_after_execution": "3d0ab59f2022d6bdbb04774688e3ab2cd9981a2f31a6f34bd2b1772950f2d664"
+  },
+  "token_accounting": {
+    "top_level_solver_sessions": 36,
+    "top_level_token_usage_files": 36,
+    "attempt_records": 36,
+    "agent_turns": 206,
+    "input_tokens": 6924408,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 5800192,
+    "output_tokens": 125536,
+    "reported_model_cost_usd": 0.0,
+    "summed_session_wallclock_seconds": 4719.085198,
+    "deduplication_rule": "Only solver_workspaces/<workspace>/logs/optimize/token_usage.json was counted. Copies under evaluation workspaces, guidance examples, optimizer transcripts, and archived transcripts were excluded."
+  },
+  "pre_reservation_guard_observation": {
+    "classification": "nonblocking fail-closed operational anomaly",
+    "observed_guard_aborts": 2,
+    "execute_invocations_aborted_before_reservation": 1,
+    "zero_model_check_invocations_aborted": 1,
+    "attempts_reserved_by_aborted_invocations": 0,
+    "model_sessions_started_by_aborted_invocations": 0,
+    "cell_retries_caused": 0,
+    "observations": [
+      {
+        "next_cell_ordinal": 3,
+        "invocation": "execute",
+        "message": "formal state before preflight did not become logically quiescent"
+      },
+      {
+        "next_cell_ordinal": 6,
+        "invocation": "check",
+        "message": "Sol REP-001 preflight changed projected formal execution state"
+      }
+    ],
+    "effect_on_results": "Both invocations stopped before formal reservation and model access. After a zero-model check passed, each next matrix cell executed exactly once. No duplicate ledger row, retry, resume, import, or extra solver session was created.",
+    "interpretation_limit": "The repaired logical snapshot reduced physical SQLite noise but did not eliminate every inter-cell settling event. No causal diagnosis is claimed from these two observations."
+  },
+  "deterministic_reaudit": {
+    "script": "experiments/eve/scripts/audit_stage5b_sol_rep001.py",
+    "script_sha256": "8ea540445c1a8a245f8180eb176822db5befcdb372672f5d597da49477ee66e5",
+    "run_roots_reaudited": 12,
+    "successful_machine_audits": 11,
+    "replayed_successful_outputs_byte_identical": true,
+    "post_run_audit_failures": 1,
+    "ordinal_12_replay_exit_code": 2,
+    "ordinal_12_replay_message": "solver rollout telemetry is incomplete",
+    "checker_evidence_fail_closed_for_successful_audits": true,
+    "durable_attempt_ledger_verified": true,
+    "lineage_databases_verified_for_successful_audits": true,
+    "fresh_run_roots_verified_for_successful_audits": true,
+    "sqlite_integrity_databases_checked": 25,
+    "sqlite_integrity_all_ok": true,
+    "sqlite_read_note": "The two ordinal-12 lineage databases carry a macOS hidden file flag and were integrity-checked through an immutable read-only SQLite URI; no checkpoint, repair, or write was performed."
+  },
+  "solver_candidate_outcomes": {
+    "raw_candidate_instances": 36,
+    "raw_passed_candidate_instances": 26,
+    "raw_failed_candidate_instances": 10,
+    "fully_audited_candidate_instances": 33,
+    "grouped": [
+      {
+        "task": "entry-game-direct",
+        "condition": "static",
+        "passed_candidates": 4,
+        "candidate_instances": 6,
+        "successful_cells": 2,
+        "cells": 2
+      },
+      {
+        "task": "entry-game-direct",
+        "condition": "fixed",
+        "passed_candidates": 6,
+        "candidate_instances": 6,
+        "successful_cells": 2,
+        "cells": 2
+      },
+      {
+        "task": "entry-game-direct",
+        "condition": "evolved",
+        "passed_candidates": 6,
+        "candidate_instances": 6,
+        "successful_cells": 2,
+        "cells": 2
+      },
+      {
+        "task": "entry-game-transport",
+        "condition": "static",
+        "passed_candidates": 4,
+        "candidate_instances": 6,
+        "successful_cells": 2,
+        "cells": 2
+      },
+      {
+        "task": "entry-game-transport",
+        "condition": "fixed",
+        "passed_candidates": 4,
+        "candidate_instances": 6,
+        "successful_cells": 2,
+        "cells": 2
+      },
+      {
+        "task": "entry-game-transport",
+        "condition": "evolved",
+        "passed_candidates": 2,
+        "candidate_instances": 6,
+        "successful_cells": 1,
+        "cells": 2,
+        "audit_limitation": "Ordinal 12 raw scores are preserved, but its iteration-1 solver rollout telemetry is incomplete and the cell has no final machine audit."
+      }
+    ]
+  },
+  "guidance_liveness": {
+    "fully_audited_evolved_cells": 3,
+    "fully_audited_failure_derived_candidates_produced": 5,
+    "fully_audited_candidates_admitted_to_population": 5,
+    "fully_audited_candidates_selected_in_a_strictly_later_iteration": 3,
+    "fully_audited_cells_with_guidance_produced_and_selected_later": 3,
+    "local_mechanism_observed": true,
+    "whole_matrix_clean_replication": false,
+    "audited_candidates": [
+      {
+        "cell_ordinal": 3,
+        "candidate_id": "optimizer_045b3fbbad50",
+        "candidate_guidance_sha256": "c35d5306cae2203eab3fa35d134eb7e36c6ce8ea7eb02003dc78f27f39ca0732",
+        "source_iteration": 1,
+        "recorded_local_lean_failures": 2,
+        "selected_later_iterations": [2]
+      },
+      {
+        "cell_ordinal": 6,
+        "candidate_id": "optimizer_b365747c67f0",
+        "candidate_guidance_sha256": "402de995cb075a9c94fea29884a208adf23c52aaf3d50702f8ea249fa4efda6b",
+        "source_iteration": 1,
+        "recorded_local_lean_failures": 2,
+        "selected_later_iterations": [2]
+      },
+      {
+        "cell_ordinal": 9,
+        "candidate_id": "optimizer_e88ae43c3448",
+        "candidate_guidance_sha256": "2d5048bab1544ba48a00b37f1b10fc58ef3855da97b3379cac3ad62f7c013e1f",
+        "source_iteration": 1,
+        "recorded_local_lean_failures": 5,
+        "selected_later_iterations": [2, 3]
+      },
+      {
+        "cell_ordinal": 9,
+        "candidate_id": "optimizer_a82f9ff3c119",
+        "candidate_guidance_sha256": "3644b3b090e5848ca0cd089f05f7ec5446eae7b4b4b73de684cf377545b2497f",
+        "source_iteration": 2,
+        "recorded_local_lean_failures": 4,
+        "selected_later_iterations": []
+      },
+      {
+        "cell_ordinal": 9,
+        "candidate_id": "optimizer_1c4ce15aa062",
+        "candidate_guidance_sha256": "b722c7f49fc61a5c04ebd0db227f7136d6b0f15c527845f2ac79113217421a87",
+        "source_iteration": 3,
+        "recorded_local_lean_failures": 3,
+        "selected_later_iterations": [],
+        "has_later_opportunity": false
+      }
+    ],
+    "ordinal_12_unclassified_raw_candidate": {
+      "candidate_id": "optimizer_554344693be7",
+      "candidate_guidance_sha256": "ece2b42215421898164a1301e66410686b5a327ea67370a9556fd369d2ed1686",
+      "source_iteration": 2,
+      "recorded_local_lean_failures": 3,
+      "admitted_to_population": true,
+      "selected_later_iterations": [],
+      "classification_limit": "The raw event chain validates this candidate locally, but ordinal 12 is excluded from whole-cell liveness classification because iteration-1 solver rollout telemetry is missing and the mandatory final audit fails closed."
+    }
+  },
+  "blocking_post_run_evidence_gap": {
+    "classification": "post-run incomplete evidence with correct fail-closed rejection",
+    "cell_ordinal": 12,
+    "cell": "entry-game-transport / seed 2718 / evolved",
+    "underlying_eve_exit_code": 0,
+    "outer_run_invocation_exit_code": 2,
+    "iteration_1_raw_score": 0.0,
+    "iteration_1_solver_id": "solver_614c7a8739f0",
+    "iteration_1_working_optimizer_id": "optimizer_7a0c21eebd7d",
+    "wrapper_guard_message": "Sol REP-001 final checker event does not match final candidate",
+    "phase2_disposition": "The optimizer task was skipped and no solver_rollout_completed event was recorded for iteration 1.",
+    "audit_message": "solver rollout telemetry is incomplete",
+    "effect_on_results": "The attempt and all three model sessions are consumed and preserved. Ordinal 12 cannot receive a machine-audit liveness classification, so the full 12-cell Sol matrix is not a clean evidence-validated replication. The 11 successful audits, 36 token records, raw external scores, and three audited local liveness chains remain valid within their stated boundaries."
+  },
+  "cells": [
+    {
+      "ordinal": 1,
+      "task": "entry-game-direct",
+      "seed": 1729,
+      "condition": "static",
+      "run_root": "experiments/eve/.runtime/stage5b-sol-rep001-runs/20260822T140258_517690Z",
+      "scores": [1.0, 1.0, 1.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "4cc43081c306285d8465a1d6a987a85f56af092217076f3c347f4239777e0021",
+      "lineage_sha256": "c804293de15256c66914037b1f75c3bda091a12091907044f2065a2043bd074a",
+      "machine_audit_sha256": "c160c4d62233085ca1bfbb9ae0f7c88b03a5d2e27ebbbb2f3c207f02642c66de"
+    },
+    {
+      "ordinal": 2,
+      "task": "entry-game-direct",
+      "seed": 1729,
+      "condition": "fixed",
+      "run_root": "experiments/eve/.runtime/stage5b-sol-rep001-runs/20260822T140752_345441Z",
+      "scores": [1.0, 1.0, 1.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "196fbe7ea829f1b258311f9972088cfc7d1cc784de3b6b576833552c8692826c",
+      "lineage_sha256": "d3f24180131c6ae19ef86d44ad0daf9a720ded09bb0cb2bb317264a48eed399c",
+      "machine_audit_sha256": "2f7af164ba4428fb5f8eb119c9045d521b9728525bdc0b706308cae9b695e33d"
+    },
+    {
+      "ordinal": 3,
+      "task": "entry-game-direct",
+      "seed": 1729,
+      "condition": "evolved",
+      "run_root": "experiments/eve/.runtime/stage5b-sol-rep001-runs/20260822T141500_433630Z",
+      "scores": [1.0, 1.0, 1.0],
+      "audit_status": "GUIDANCE_PRODUCED_AND_SELECTED_LATER",
+      "launch_sha256": "7c9c796e32b6770144caf9b8ad8f82b773b008101e2ee219edd93a1ee154b462",
+      "lineage_sha256": "09ae184310b84e61b52639697cd0a3ebe5d379c525285451fc86712398eda97b",
+      "machine_audit_sha256": "eb44055fe75348b5a283f29ca78b76ada56c5735f845a0ec1d5e79f774d9e34b"
+    },
+    {
+      "ordinal": 4,
+      "task": "entry-game-direct",
+      "seed": 2718,
+      "condition": "static",
+      "run_root": "experiments/eve/.runtime/stage5b-sol-rep001-runs/20260822T142026_615259Z",
+      "scores": [0.0, 0.0, 1.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "744c42ca28da6f34a326043b6a877086ef851109f73333f7f6cf42fe4f845037",
+      "lineage_sha256": "e393d484a2352a3dd1e074f701b043a04490804f561122fb9578763b156c7031",
+      "machine_audit_sha256": "a066a8549bcef88849b0a29163ee04a4884d73b42f07d2ae56b25516373bb450"
+    },
+    {
+      "ordinal": 5,
+      "task": "entry-game-direct",
+      "seed": 2718,
+      "condition": "fixed",
+      "run_root": "experiments/eve/.runtime/stage5b-sol-rep001-runs/20260822T143311_380834Z",
+      "scores": [1.0, 1.0, 1.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "8be4b8acd24f7d9b002f00ec748f7e3c58d09a817d1b7967b3ed742a396fbabb",
+      "lineage_sha256": "ccd5ca0447aeaa390f78cfc3a431da20c989f2f712dad4035d14052f0bebec26",
+      "machine_audit_sha256": "3548c67b003b3fce31d25b6721723b50ee07af60b4276fe135573886af699732"
+    },
+    {
+      "ordinal": 6,
+      "task": "entry-game-direct",
+      "seed": 2718,
+      "condition": "evolved",
+      "run_root": "experiments/eve/.runtime/stage5b-sol-rep001-runs/20260822T143810_493358Z",
+      "scores": [1.0, 1.0, 1.0],
+      "audit_status": "GUIDANCE_PRODUCED_AND_SELECTED_LATER",
+      "launch_sha256": "76f95c94b119c15007030983465fc3362113cbb2ea34b528a62d606845546e26",
+      "lineage_sha256": "decf5f645ca2808851666a4f508f81bc13476a2ba459961ce93b1b7518cc1c22",
+      "machine_audit_sha256": "252e68878af64510b7a6b370fe36e29fd58dadcd72df6ec2e131f75cd7c08d3c"
+    },
+    {
+      "ordinal": 7,
+      "task": "entry-game-transport",
+      "seed": 1729,
+      "condition": "static",
+      "run_root": "experiments/eve/.runtime/stage5b-sol-rep001-runs/20260822T144354_740420Z",
+      "scores": [1.0, 1.0, 1.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "9ea501024641203e13a91f8905e7e9cd80c171d5332b5083e8e7f972e20f981f",
+      "lineage_sha256": "173c2caf346455fb99dd3a4603d7b749b61d5f2b760052332f7a1b7aca72986a",
+      "machine_audit_sha256": "1afa9e69e3d9b216dcace62da58b020dd11ccd3c7e6701d99cd14a01b069a7aa"
+    },
+    {
+      "ordinal": 8,
+      "task": "entry-game-transport",
+      "seed": 1729,
+      "condition": "fixed",
+      "run_root": "experiments/eve/.runtime/stage5b-sol-rep001-runs/20260822T145156_394839Z",
+      "scores": [1.0, 1.0, 1.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "cea6069f8f0a3894fc642ecf8a8034439b9ff059978921a96f404ed4c11ede03",
+      "lineage_sha256": "22af76206ac7814fff76a3486ff6e37f1dccdf993c915a7b0af5253da6d9b228",
+      "machine_audit_sha256": "b9f77039c824616be3fe21a5feae3a6f73b291b91990c5e13140357a96c2b9db"
+    },
+    {
+      "ordinal": 9,
+      "task": "entry-game-transport",
+      "seed": 1729,
+      "condition": "evolved",
+      "run_root": "experiments/eve/.runtime/stage5b-sol-rep001-runs/20260822T145705_821292Z",
+      "scores": [0.0, 0.0, 0.0],
+      "audit_status": "GUIDANCE_PRODUCED_AND_SELECTED_LATER",
+      "launch_sha256": "65807d6f0d9ce5b61680591dc906fa377dff3ba7d594dfa7179c3c583ddfa113",
+      "lineage_sha256": "60dc47318409547fa37d367ac7296c94d691e887f4b3bdf5c7b6fc59598d6203",
+      "machine_audit_sha256": "067a665f393c8f17a2f74203026890806d91963340d588bbb703a2373299541d"
+    },
+    {
+      "ordinal": 10,
+      "task": "entry-game-transport",
+      "seed": 2718,
+      "condition": "static",
+      "run_root": "experiments/eve/.runtime/stage5b-sol-rep001-runs/20260822T150906_380234Z",
+      "scores": [0.0, 0.0, 1.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "98cd0267caa847ea0a2f10847430321d2c94089bd4fcc8d1394e79133a674773",
+      "lineage_sha256": "21b7d5ad590a64c8f7a8f3223f0411ab42080ec24e61c56efe70e44624a5e3aa",
+      "machine_audit_sha256": "4ec408a66a689e9badf385e72bbcf3aa3dadbf316f0ff14f57ab9cf506304c7d"
+    },
+    {
+      "ordinal": 11,
+      "task": "entry-game-transport",
+      "seed": 2718,
+      "condition": "fixed",
+      "run_root": "experiments/eve/.runtime/stage5b-sol-rep001-runs/20260822T151840_202534Z",
+      "scores": [0.0, 0.0, 1.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "06bf2dedbaa1b0bed5832762e2b7e0a09e6b46a1b554c5180ef64383250ddb36",
+      "lineage_sha256": "7ca3203f381ecca369269ff8de5c69e2a91d9167637845c2d558c9007242b17b",
+      "machine_audit_sha256": "61301fabb6b15e2b0cb3a4fbdd2f61eb41f8bd68186c585da74d4cfc8dc196c6"
+    },
+    {
+      "ordinal": 12,
+      "task": "entry-game-transport",
+      "seed": 2718,
+      "condition": "evolved",
+      "run_root": "experiments/eve/.runtime/stage5b-sol-rep001-runs/20260822T153115_454482Z",
+      "raw_scores": [0.0, 1.0, 1.0],
+      "phase2_solver_telemetry_scores": [1.0, 1.0],
+      "audit_status": "AUDIT_FAILED_INCOMPLETE_SOLVER_ROLLOUT_TELEMETRY",
+      "launch_sha256": "4cef06ec3cf02e70a1a5de047a91b1b99e1a4592f771277be173a39cb859475f",
+      "lineage_sha256": "4e54a467d173df984496fb1bb0048c544aa4b0ee5d1f4f7237d1c051349a1578",
+      "machine_audit_sha256": null,
+      "iteration_1_score_sha256": "75cca9ee8e4d9f1aaab1d84cfbdcc7450a2f70ee56255706ce0a5a9dab851ce9",
+      "iteration_1_evaluation_sha256": "f10f45ab3b3f0591053b3a185d42d85e17ccb741d002596288e3c4daecd8398f"
+    }
+  ],
+  "validation": {
+    "full_eve_tests": "103 passed, 2 skipped",
+    "sol_targeted_tests_within_full_suite": "16 passed",
+    "skips": [
+      "test_accepted_efg_fixture_compiles_in_isolated_solver_home: no explicit locked EvE v0.2.0 checkout supplied to unittest discovery",
+      "test_actual_hydra_loader_parses_both_configs_when_checkout_is_supplied: no explicit locked EvE v0.2.0 checkout supplied to unittest discovery"
+    ],
+    "stage4_no_recheck_audit": "passed",
+    "stage4_local_evidence_verifier": "passed",
+    "dev002_historical_protocol_verifier": "passed",
+    "dev003_clean_checkout_protocol_verifier": "passed",
+    "sol_clean_checkout_protocol_verifier": "passed",
+    "successful_sol_machine_audits_replayed_byte_identically": 11,
+    "ordinal_12_audit_reproduced_fail_closed": true,
+    "cell_hash_records_verified": 12,
+    "frozen_sol_assets_unchanged": true
+  },
+  "disposition": {
+    "sol_rep001_attempts_consumed": true,
+    "sol_rep001_must_not_be_retried_resumed_or_imported": true,
+    "runtime_evidence_must_be_preserved": true,
+    "full_clean_replication_complete": false,
+    "future_execution_requires_new_protocol_identity": true,
+    "recommended_followup": "Preserve this execution unchanged. Diagnose the ordinal-12 checker-event/final-candidate mismatch using read-only evidence. Any repaired execution must use a new protocol identity, fresh roots and ledger, separate review, and separate model-quota authorization."
+  },
+  "claim_boundary": "Sol REP-001 consumed its complete 12-cell, 36-session authorized matrix exactly once and preserved raw scores, token accounting, and three audited local failure-derived guidance production/admission/later-selection chains. Eleven cells pass deterministic re-audit byte-identically. Ordinal 12 fails closed because iteration-1 rollout telemetry is incomplete, so this is not a clean whole-matrix replication or a complete Sol-versus-Luna comparison. It establishes neither a causal EvE effect nor model capability, benchmark readiness, evaluation completion, or independent human review."
+}
