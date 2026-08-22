@@ -1,23 +1,25 @@
 # EvE experiment readiness
 
-- **Current status:** `STAGE5A_DEV003_FROZEN_REVIEW_READY_NOT_EXECUTED`;
+- **Current status:** `STAGE5A_DEV003_EXECUTED_EVIDENCE_VALIDATED_SOL_NOT_AUTHORIZED`;
   Stage 1 smoke 002 is closed at score one, Stage 2 direct/transport/pair and
   12 mutations are closed, Stage 3 Codex review verifies at score one, and
   all 12 Stage 4 Luna development cells completed and passed machine re-audit;
   Stage 5A DEV-001 is invalidated before execution, while all 12 DEV-002 cells
   and 36 Luna sessions executed once before post-run review found a blocking
-  Python-3.9 checker defect; the separate DEV-003 identity closes those
-  protocol-engineering defects and is frozen after zero-model validation
+  Python-3.9 checker defect; the separate DEV-003 identity closed those defects
+  and has completed its 12-cell, 36-session Luna matrix with clean checker
+  evidence and three local guidance-liveness chains
 - **Not valid statuses:** `benchmark-ready`, `evaluation-complete`,
   `internal-pilot-complete`, or any model-capability conclusion
 - **Formal pilot default:** disabled and not configured
-- **Paid/long EvE execution:** the 12-cell public Stage 4 and defective DEV-002
-  Stage 5A matrices are complete; DEV-003 has not executed; no benchmark,
-  private evaluation, formal run, or Sol replication has occurred
-- **EvE runner / `--execute`:** 26 executions: two Stage 1 smokes, 12 fresh
-  Stage 4 cells, and 12 fresh Stage 5A cells; Stage 0 has not run
+- **Paid/long EvE execution:** the 12-cell public Stage 4, defective DEV-002,
+  and clean-evidence DEV-003 Stage 5A matrices are complete; no benchmark,
+  private evaluation, formal pilot, or Sol replication has occurred
+- **EvE runner / `--execute`:** 38 completed executions: two Stage 1 smokes, 12
+  fresh Stage 4 cells, 12 fresh DEV-002 cells, and 12 fresh DEV-003 cells; Stage
+  0 has not run
 - **Luna sessions:** one read-only access smoke, two Stage 1 solver sessions,
-  24 Stage 4 solver sessions, and 36 Stage 5A solver sessions
+  24 Stage 4 solver sessions, and 72 Stage 5A solver sessions
 
 ## What is ready
 
@@ -32,11 +34,11 @@ The external checkout at `/Users/lyuyuwei/Documents/eve-v0.2.0` matches the
 official repository, annotated tag object, peeled commit, LICENSE, NOTICE,
 `pyproject.toml`, `uv.lock`, and `.python-version`. `uv sync --locked`, the real
 Hydra loader, the historical 45-test Stage 1 suite plus the current Stage 2--5A
-extensions (latest full result: 87 tests run, 2 skipped), `--check`, `--dry-run`, the
-launcher accepted fixture, and accepted-fixture compilation under an isolated
-solver HOME pass. Twenty-six EvE executions and their bounded Luna sessions are
-recorded below; the only other model call is the separately bounded access
-smoke.
+extensions (latest full result: 87 tests run, 2 skipped), `--check`, `--dry-run`,
+the launcher accepted fixture, and accepted-fixture compilation under an
+isolated solver HOME pass. Thirty-eight completed EvE executions and their
+bounded Luna sessions are recorded below; the only other model call is the
+separately bounded access smoke.
 
 Codex project trust and all four EvE hook events are verified for that exact
 checkout and hook payload. EvE's own trust helper reports no missing event;
@@ -140,11 +142,13 @@ sampling is paired and end-to-end determinism is not claimed.
 This is sufficient for Stage 0--4 public implementation and prompt-development
 gates. Stage 4 itself does not close the EvE guidance-evolution effect gate: all
 eight evolved rollouts left guidance unchanged and produced zero optimizer
-candidates. Stage 5A later observed one local liveness chain but is not a clean
-replication because of the checker defect recorded below. None of this
-establishes that an agent can repair Mathlib or EFG code reliably, that EvE
-improves an agent, that a model has a capability, that the minimal core should
-change, or that the formal pilot is ready to evaluate.
+candidates. Stage 5A DEV-002 later observed one local liveness chain but was not
+a clean execution because of the checker defect recorded below. DEV-003 then
+retained clean mandatory checker evidence and observed three local liveness
+chains. None of this establishes that an agent can repair Mathlib or EFG code
+reliably, that EvE causally improves an agent, that a model has a capability,
+that the minimal core should change, or that the formal pilot is ready to
+evaluate.
 
 Stage 5A DEV-001 is invalidated in full before execution: its artifact set did
 not freeze transitive Lean dependencies, its timestamped roots did not enforce
@@ -198,25 +202,33 @@ and the ordinal-6 chain remain historical observations; they do not establish a
 causal effect or model capability and do not authorize Sol. Review remains
 Codex AI, not independent human review.
 
-DEV-003 is now the review-ready, unexecuted successor protocol:
+DEV-003 is the separately frozen and now completed successor protocol:
 `EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-003` version `3.0.0`, hash
 `4c407b3e654d4e38f6f35b48e924863b5a9ef72c1e6b9569996e86f00105ad49`.
-It freezes new roots, ledger, order, RNG domain, config and overlay assets and
-imports no DEV-002 runtime state. Both checker entrypoints are byte-identical
-and Python-3.9-compatible. The wrapper and auditor require a nonempty valid
-event chain, final-candidate match, exact Python/checker/command/output/exit
-identity, and validated nonzero failures before failure-derived guidance can
-count toward liveness.
+Its frozen file retains the immutable launch-input status
+`FROZEN_NOT_YET_EXECUTED`; the post-execution fact is tracked separately in
+`stage5a_review/dev003-execution-audit.json`. It used new roots, ledger, order,
+RNG domain, config and overlay assets and imported no DEV-002 runtime state.
+Both checker entrypoints are byte-identical and Python-3.9-compatible. The
+wrapper and auditor require a nonempty valid event chain, final-candidate match,
+exact Python/checker/command/output/exit identity, and validated nonzero
+failures before failure-derived guidance can count toward liveness.
 
 The DEV-003 Lean environment is reproducible from the canonical committed tree
 at `b490317186ef435670c2eeb16050a214cdbf9fe5`, not from the mixed operator
-worktree. A separate fresh clone reproduced its 109-file closure, clean pinned
-dependencies and entry build. All 12 `--check` calls ran a real deliberately
-failing Lean candidate through exact `/usr/bin/python3` 3.9.6 in a disposable
-workspace; all 12 dry-runs also passed. They made zero model calls, consumed
-zero Luna quota, created no formal DEV-003 root or ledger, and did not inherit
-or mutate DEV-002 state. DEV-003 remains `FROZEN_NOT_YET_EXECUTED` and needs
-separate user authorization before `--execute`.
+worktree. Its 12 formal cells and 36 ChatGPT-subscription Luna sessions completed
+once, in order, with exit code zero and no retry/resume/import. All 36 rollouts
+retained mandatory checker evidence. Raw passes are direct static/fixed/evolved
+`0/6, 0/6, 0/6` and transport `0/6, 2/6, 0/6`. Nine failure-derived candidates
+were produced and admitted; one candidate was selected later in each of evolved
+ordinals 3, 6, and 9. Ordinal 12 produced three candidates but selected none
+later. All 12 machine audits replay byte-identically.
+
+Four inter-cell preflights failed closed on formal-state snapshot drift before
+reservation or model access: one execute invocation and three zero-model
+checks. They caused no formal retry or duplicate ledger row. This is a
+nonblocking execution anomaly, but mutable SQLite sidecar snapshot/quiescence
+handling must be repaired under a new identity before any Sol replication.
 
 ## Hard-disabled formal experiment boundary
 
@@ -238,12 +250,13 @@ never dispatch the execution function. All 12 DEV-002 attempt slots are now
 consumed; the ledger rejects a rerun. Repair requires a new protocol identity,
 fresh roots and ledger, new review, and separate execution authorization.
 
-The successor `run_stage5a_dev003.py` accepts only the same frozen task,
+The completed successor `run_stage5a_dev003.py` accepts only the same frozen task,
 condition, and seed matrix under the exact DEV-003 identity and additionally
 requires a separate tracked-clean Lean checkout at the frozen source commit.
 Its check path builds the frozen entry and runs safe preflight before formal
-state; its dry-run path previews only. Neither dispatches execution. DEV-003
-execution and Luna quota use are not currently authorized.
+state; its dry-run path previews only. Neither dispatches execution. All 12
+DEV-003 attempt slots are consumed, and the ledger rejects a rerun. Sol is not
+configured or authorized.
 
 ## Public Stage 4 Entry Game three-condition study
 
@@ -314,12 +327,18 @@ checker-runtime defect above prevents classifying DEV-002 as a clean matrix or
 authorizing Sol replication. The tracked execution record is
 `stage5a_review/dev002-execution-audit.json`.
 
-DEV-003 retains the same declared 12-cell scientific shape only for a possible
-future clean run. It has zero completed cells and zero model sessions. Its
-machine-review record `stage5a_review/dev003-audit.json` establishes protocol
-identity, clean-source reproducibility, exact-runtime preflight, fail-closed
-evidence, and zero formal state only; it contains no produced/admitted/selected
-guidance result.
+DEV-003 retained the same declared 12-cell scientific shape under a fresh
+identity and completed all 12 attempts and 36 Luna sessions. Its four evolved
+statuses, in ordinal order, are
+`GUIDANCE_PRODUCED_AND_SELECTED_LATER`,
+`GUIDANCE_PRODUCED_AND_SELECTED_LATER`,
+`GUIDANCE_PRODUCED_AND_SELECTED_LATER`, and
+`PRODUCED_NOT_SELECTED_LATER`. Nine failure-derived candidates were produced
+and admitted; three exact candidates were selected in a strictly later
+iteration. The tracked post-execution record is
+`stage5a_review/dev003-execution-audit.json`. This is clean local checker and
+liveness-mechanism evidence, not a causal condition effect, model-capability
+claim, independent human review, or authorization/result for Sol replication.
 
 ## Gates before a real Mathlib-style experiment
 

@@ -1,6 +1,6 @@
 # EVE concise handoff
 
-Last updated: 2026-08-21
+Last updated: 2026-08-22
 
 ## Repository checkpoint
 
@@ -8,7 +8,8 @@ Last updated: 2026-08-21
 - Canonical handoff fork: <https://github.com/lyw-ops/EconCSLib>
 - Experimental branch: `experiment/eve-stage5a`
 - DEV-002 execution archive: `9269f3ea991e8e7e099dd541b870f37331796dc6`
-- DEV-003 frozen-protocol handoff: this commit
+- DEV-003 frozen-protocol handoff: `3517eeba2f48ff2ad8fd7eab59d9f5025a408d16`
+- DEV-003 execution archive: this commit
 - Long-term route authority: `experiments/eve/README.md`
 - Current gate authority: `experiments/eve/READINESS.md`
 
@@ -24,8 +25,9 @@ and stage only task-owned EVE files.
   branch on the canonical handoff fork.
 - Verify the pushed branch and commit before handoff. Ignored `.runtime`
   evidence remains local and must not be deleted or inferred from GitHub.
-- Historical Stage 4, Stage 5A DEV-001, and DEV-002 inputs and runtime evidence
-  are immutable. Do not repair, retry, resume, import, rewrite, or clean them.
+- Historical Stage 4, Stage 5A DEV-001, DEV-002, and completed DEV-003 inputs and
+  runtime evidence are immutable. Do not repair, retry, resume, import, rewrite,
+  or clean them.
 
 ## Historical baseline
 
@@ -51,44 +53,44 @@ and stage only task-owned EVE files.
 
 ## Current Stage 5A DEV-003 state
 
-The new protocol is
-`EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-003`, version `3.0.0`, status
-`FROZEN_NOT_YET_EXECUTED`, SHA-256
-`4c407b3e654d4e38f6f35b48e924863b5a9ef72c1e6b9569996e86f00105ad49`.
-The Codex AI plus deterministic review is
-`stage5a_review/dev003-audit.json`; it is not independent human review.
+Protocol `EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-003`, version
+`3.0.0`, SHA-256
+`4c407b3e654d4e38f6f35b48e924863b5a9ef72c1e6b9569996e86f00105ad49`
+has completed all 12 cells and 36 Luna sessions under ChatGPT subscription
+authentication. The frozen protocol file still correctly retains its immutable
+launch-input status `FROZEN_NOT_YET_EXECUTED`; actual execution is recorded in
+`stage5a_review/dev003-execution-audit.json`.
 
-DEV-003 is a wholly separate identity with new config/overlay assets, RNG
-domain, fresh run-root parent, and fresh transactional attempt ledger. It does
-not inherit DEV-002 population, guidance, candidates, sessions, roots, ledger,
-or execution state.
+The matrix used the canonical fork's clean Lean commit
+`b490317186ef435670c2eeb16050a214cdbf9fe5`, fresh DEV-003 roots and ledger,
+exact `/usr/bin/python3` 3.9.6 checkers, and no DEV-002 state. All 12 ledger rows
+are completed with exit code zero. There was no retry, resume, or import.
 
-The repair closes the known DEV-002 engineering defects:
+Raw candidate passes are:
 
-- both immutable checker entrypoints are byte-identical and use
-  `datetime.timezone.utc`, which compiles and runs under exact `/usr/bin/python3`
-  3.9.6;
-- safe preflight runs before formal root creation or ledger reservation in a
-  disposable workspace with the exact execution Python, checker, Lean
-  toolchain, and clean committed source, and verifies a real nonzero Lean exit,
-  stdout/stderr evidence, and one hash-chained event;
-- wrapper and auditor reject missing, empty, malformed, runtime/output/hash
-  drift, final-candidate mismatch, and invalid evidence joins;
-- an unvalidated failure flag cannot establish failure-derived guidance or
-  liveness;
-- ledger identity and frozen order reject DEV-002 reuse, duplicates, and
-  out-of-order cells.
+| Route | static | fixed | evolved |
+|---|---:|---:|---:|
+| direct | 0/6 | 0/6 | 0/6 |
+| transport | 0/6 | 2/6 | 0/6 |
 
-The Lean source boundary is the canonical fork at clean commit
-`b490317186ef435670c2eeb16050a214cdbf9fe5`. The manifest recomputes a 109-file
-closure from Git objects and excludes the mixed operator worktree. A separate
-fresh clone at that commit, with exact clean pinned dependency checkouts,
-verified the environment, built the frozen entry target, and ran the real
-checker preflight.
+The four evolved cells produced and admitted nine failure-derived guidance
+candidates. Ordinals 3, 6, and 9 each selected one exact candidate in a strictly
+later iteration, so three cells are
+`GUIDANCE_PRODUCED_AND_SELECTED_LATER`. Ordinal 12 produced and admitted three
+candidates but selected none later, so it is `PRODUCED_NOT_SELECTED_LATER`.
+Every rollout retained mandatory checker evidence; the DEV-002 empty-evidence
+defect did not recur.
+
+Four inter-cell preflights failed closed after detecting formal-state snapshot
+drift: one `--execute` invocation and three zero-model `--check` invocations.
+All four stopped before attempt reservation and model access. After state
+quiescence and a passing zero-model check, the next frozen cell ran once. This
+did not create a retry or duplicate cell, but a successor or Sol protocol must
+repair the snapshot/quiescence handling for mutable SQLite sidecars.
 
 ## Last verified evidence
 
-- 12 DEV-003 targeted tests passed.
+- All 12 DEV-003 targeted tests passed.
 - Full EVE suite: 87 tests passed; exactly two checkout-dependent tests skipped
   because unittest discovery supplied no explicit EvE checkout:
   `test_accepted_efg_fixture_compiles_in_isolated_solver_home` and
@@ -96,56 +98,69 @@ checker preflight.
 - Stage 4 local evidence verification and no-recheck audit passed.
 - The immutable DEV-002 protocol verifier passed.
 - DEV-003 detached protocol, frozen assets, committed Lean closure, dependency
-  revisions, and clean-checkout environment verification passed.
-- All 12 planned DEV-003 `--check` calls and all 12 `--dry-run` calls passed.
-  Each check recorded an exact-runtime real Lean failure event.
-- DEV-003 model calls, Luna sessions, quota consumed, `--execute` invocations,
-  formal run roots, and formal ledger writes are all zero. DEV-002 state reuse
-  or mutation is zero; its post-validation ledger SHA-256 remains
+  revisions, clean-checkout environment verification, and ledger order passed.
+- All 12 completed launches satisfy the frozen identity, Luna/low model,
+  3-iteration/1-worker compute, zero retry/resume/import, clean preflight, and
+  no-DEV-002-state assertions.
+- Ledger and all 24 solver/optimizer lineage databases pass integrity checks.
+  Re-running the DEV-003 auditor for every root reproduced all 12 machine reports
+  byte-identically.
+- Token evidence contains 36 top-level subscription sessions, 150 agent turns,
+  11,573,732 input tokens, 10,075,648 cache-read tokens, and 200,096 output
+  tokens. The adapter reports USD 0, which does not mean the sessions consumed
+  no subscription quota.
+- DEV-002 state reuse or mutation is zero; its ledger SHA-256 remains
   `e593bf5726b20aa20f1cbb15882b7c2e9e169080233f346d67b48d6543a37922`.
 
-These facts establish review-ready protocol engineering only. DEV-003 has
-produced, admitted, or selected no guidance. They establish no clean condition
-comparison, causal EvE effect, model capability, benchmark readiness,
-evaluation completion, independent human review, or Sol readiness.
+These facts establish clean local checker evidence and three guidance-liveness
+mechanism observations. The answer-visible `n=2` matrix, uncontrolled provider
+sampling, non-independent review, and pre-reservation guard anomaly establish no
+causal EvE effect, model capability, benchmark readiness, evaluation completion,
+or Sol-replication result.
 
 ## Next bounded action and stop condition
 
-Stop at DEV-003 `FROZEN_NOT_YET_EXECUTED`. Do not invoke `--execute`, add
-`--acknowledge-model-quota`, consume Luna quota, retry DEV-002, or start Sol.
-The next action requires a separate explicit user authorization for the frozen
-DEV-003 12-cell Luna matrix. Preparation and review do not imply that authority.
+Stop after archiving DEV-003. All 12 DEV-003 attempt slots are consumed; do not
+retry, resume, import, or rewrite them. Do not start Sol: no separate Sol
+replication protocol has been frozen or explicitly authorized. The next bounded
+action is read-only review of the execution archive, followed by a new protocol
+identity that repairs inter-cell snapshot/quiescence handling if Sol replication
+is desired.
 
 ## Local versus GitHub evidence
 
 GitHub stores the tracked protocols, code, reviews, documentation, and commit
 history. Runtime evidence under `experiments/eve/.runtime/` is ignored and
 remains only on this machine. A fresh clone cannot reconstruct historical
-Stage 4/DEV-002 transcripts, but their tracked audit hashes remain authoritative
-summaries. DEV-003 reproducibility is different: its Lean environment is tied
-to a clean committed source tree rather than the user's uncommitted Lean work.
+Stage 4/DEV-002/DEV-003 transcripts, but their tracked audit hashes remain
+authoritative summaries. DEV-003's Lean environment is tied to a clean committed
+source tree rather than the user's uncommitted Lean work.
 
 ## Bootstrap prompt for the next conversation
 
 ```text
 Open /Users/lyuyuwei/Documents/EconCSlib on experiment/eve-stage5a. Read the
 root and experiments/eve AGENTS.md files, then read experiments/eve/HANDOFF.md,
-README.md, READINESS.md, stage5a_review/dev002-execution-audit.json, and
-stage5a_review/dev003-audit.json. Inspect the live branch, remotes, worktree,
-and pushed commit. Preserve all unrelated user changes and all Stage 4,
-DEV-001, and DEV-002 historical evidence.
+README.md, READINESS.md, stage5a_review/dev002-execution-audit.json,
+stage5a_review/dev003-audit.json, and
+stage5a_review/dev003-execution-audit.json. Inspect the live branch, remotes,
+worktree, and pushed commit. Preserve all unrelated user changes and all Stage
+4/DEV-001/DEV-002/DEV-003 historical evidence.
 
 DEV-001 is invalidated-before-execution. DEV-002 executed 12 cells/36 Luna
 sessions but is permanently executed-defective because its Python-3.9 checker
 failed and the auditor accepted empty evidence; do not retry or repair it.
 DEV-003 is EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-003 v3.0.0, hash
-4c407b3e654d4e38f6f35b48e924863b5a9ef72c1e6b9569996e86f00105ad49,
-and is frozen review-ready but not executed. It uses the clean committed Lean
-source b490317186ef435670c2eeb16050a214cdbf9fe5 and fresh state.
+4c407b3e654d4e38f6f35b48e924863b5a9ef72c1e6b9569996e86f00105ad49.
+It executed 12/12 cells and 36/36 Luna subscription sessions once, with no
+retry/resume/import and clean checker evidence. Three of four evolved cells
+produced/admitted/selected guidance later; the fourth produced but did not
+select later. Raw passes are direct 0/6 for all conditions and transport
+static 0/6, fixed 2/6, evolved 0/6. Four pre-reservation preflights failed
+closed on formal-state drift without reserving attempts or starting models.
 
-Do not execute DEV-003, consume Luna quota, or start Sol unless the user gives
-new explicit authorization. If authorized, follow only the frozen matrix/order
-and fail-closed launcher; otherwise remain in read-only review mode. Update
-HANDOFF, stage only task-owned files, commit, push to fork/experiment/eve-stage5a,
-and verify the remote after every completed task.
+Do not retry DEV-003 or start Sol. Sol needs a new reviewed protocol identity,
+an inter-cell snapshot/quiescence repair, and explicit user authorization.
+Update HANDOFF, stage only task-owned files, commit, push to
+fork/experiment/eve-stage5a, and verify the remote after every completed task.
 ```

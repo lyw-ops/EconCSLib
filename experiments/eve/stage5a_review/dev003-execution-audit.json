@@ -1,0 +1,395 @@
+{
+  "schema_version": "1.0.0",
+  "status": "EXECUTED_EVIDENCE_VALIDATED_WITH_PREFLIGHT_GUARD_ACTIVATIONS",
+  "protocol": {
+    "id": "EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-003",
+    "version": "3.0.0",
+    "sha256": "4c407b3e654d4e38f6f35b48e924863b5a9ef72c1e6b9569996e86f00105ad49",
+    "frozen_status_at_launch": "FROZEN_NOT_YET_EXECUTED",
+    "pre_execution_review": "experiments/eve/stage5a_review/dev003-audit.json",
+    "pre_execution_review_sha256": "fb87efc093965d712d53c428bd340c15307a561ba29a3d56991b15a148d6fd8d"
+  },
+  "authorization": {
+    "authorized_by_user": true,
+    "authorized_on": "2026-08-22",
+    "scope": "Execute the frozen DEV-003 12-cell Luna matrix.",
+    "sol_replication_authorized": false
+  },
+  "authentication": {
+    "mode": "ChatGPT subscription",
+    "api_key_created_or_used": false,
+    "reported_model_cost_usd": 0.0,
+    "reported_cost_limitation": "The local subscription adapter reports zero model cost in token_usage.json. This is not evidence that the 36 sessions consumed no subscription quota or capacity."
+  },
+  "source_boundary": {
+    "repository": "https://github.com/lyw-ops/EconCSLib",
+    "clean_lean_source_commit": "b490317186ef435670c2eeb16050a214cdbf9fe5",
+    "lean_environment_manifest": "experiments/eve/stage5a_dev003_lean_environment.json",
+    "lean_environment_manifest_sha256": "d22f9e0f2b7e1cfcee51b5877c86c76520f0522c5d4ed20eee83b742a9e80896",
+    "tracked_clean_checkout_used": true,
+    "mixed_operator_worktree_used_as_lean_source": false,
+    "uncommitted_user_lean_files_included": false,
+    "upstream_eve_commit": "50b2399258ab08b6225a87cd05bded9701caa23d"
+  },
+  "execution": {
+    "expected_cells": 12,
+    "completed_unique_cells": 12,
+    "completed_exit_zero_cells": 12,
+    "duplicate_cells": 0,
+    "solver_iterations_per_cell": 3,
+    "luna_sessions": 36,
+    "retry_used": false,
+    "resume_used": false,
+    "import_used": false,
+    "attempt_ledger": "experiments/eve/.runtime/stage5a-dev003-attempt-ledger.sqlite3",
+    "attempt_ledger_sha256": "3d0ab59f2022d6bdbb04774688e3ab2cd9981a2f31a6f34bd2b1772950f2d664",
+    "first_reservation_utc": "2026-08-22T08:35:08.775015+00:00",
+    "last_reservation_utc": "2026-08-22T10:55:57.270142+00:00",
+    "run_root_parent": "experiments/eve/.runtime/stage5a-dev003-runs",
+    "fresh_run_roots": 12,
+    "stage4_or_dev002_run_roots_reused": false,
+    "dev002_state_inherited_or_written": false,
+    "provider_model_seed_controlled": false,
+    "formal_cells_with_clean_checker_evidence": 12
+  },
+  "token_accounting": {
+    "top_level_solver_sessions": 36,
+    "agent_turns": 150,
+    "input_tokens": 11573732,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 10075648,
+    "output_tokens": 200096,
+    "reported_model_cost_usd": 0.0,
+    "summed_session_wallclock_seconds": 7950.184173
+  },
+  "pre_reservation_guard_observation": {
+    "classification": "nonblocking fail-closed operational anomaly",
+    "guard_message": "DEV-003 preflight touched formal execution state",
+    "observed_guard_aborts": 4,
+    "execute_invocations_aborted_before_reservation": 1,
+    "zero_model_check_invocations_aborted": 3,
+    "attempts_reserved_by_aborted_invocations": 0,
+    "model_sessions_started_by_aborted_invocations": 0,
+    "cell_retries_caused": 0,
+    "observation": "Between cells, the formal-state snapshot changed while prior SQLite-backed run evidence was settling or being opened. The preflight failed closed before ledger reservation or model access. After the state became quiescent, a zero-model check passed and the next frozen cell executed once.",
+    "effect_on_results": "The guard activations delayed later reservations but did not change the frozen order, cell inputs, formal attempt count, model-session count, or archived outputs. All 12 formal attempts completed once and their audits replay byte-identically.",
+    "required_followup": "Before freezing a successor or Sol replication protocol, avoid treating mutable SQLite sidecar metadata as immutable formal evidence or add an explicit quiescence barrier and regression coverage."
+  },
+  "deterministic_reaudit": {
+    "script": "experiments/eve/scripts/audit_stage5a_dev003.py",
+    "script_sha256": "62f771066c15c45ff34dbc8c392fa0de605856b47fdd7435310aef36f7231394",
+    "run_roots_reaudited": 12,
+    "replayed_outputs_byte_identical": true,
+    "checker_evidence_fail_closed": true,
+    "durable_attempt_ledger_verified": true,
+    "lineage_databases_verified": true,
+    "fresh_run_roots_verified": true,
+    "ledger_and_lineage_database_integrity_checked": true
+  },
+  "solver_candidate_outcomes": {
+    "candidate_instances": 36,
+    "passed_candidate_instances": 2,
+    "failed_candidate_instances": 34,
+    "grouped": [
+      {
+        "task": "entry-game-direct",
+        "condition": "static",
+        "passed_candidates": 0,
+        "candidate_instances": 6,
+        "successful_cells": 0,
+        "cells": 2
+      },
+      {
+        "task": "entry-game-direct",
+        "condition": "fixed",
+        "passed_candidates": 0,
+        "candidate_instances": 6,
+        "successful_cells": 0,
+        "cells": 2
+      },
+      {
+        "task": "entry-game-direct",
+        "condition": "evolved",
+        "passed_candidates": 0,
+        "candidate_instances": 6,
+        "successful_cells": 0,
+        "cells": 2
+      },
+      {
+        "task": "entry-game-transport",
+        "condition": "static",
+        "passed_candidates": 0,
+        "candidate_instances": 6,
+        "successful_cells": 0,
+        "cells": 2
+      },
+      {
+        "task": "entry-game-transport",
+        "condition": "fixed",
+        "passed_candidates": 2,
+        "candidate_instances": 6,
+        "successful_cells": 1,
+        "cells": 2
+      },
+      {
+        "task": "entry-game-transport",
+        "condition": "evolved",
+        "passed_candidates": 0,
+        "candidate_instances": 6,
+        "successful_cells": 0,
+        "cells": 2
+      }
+    ]
+  },
+  "guidance_liveness": {
+    "evolved_cells": 4,
+    "failure_derived_candidates_produced": 9,
+    "candidates_admitted_to_population": 9,
+    "candidates_selected_in_a_strictly_later_iteration": 3,
+    "cells_with_guidance_produced_and_selected_later": 3,
+    "cells_with_produced_but_not_selected_later": 1,
+    "local_mechanism_observed": true,
+    "candidates": [
+      {
+        "cell_ordinal": 3,
+        "candidate_id": "optimizer_3545aa5cd112",
+        "candidate_guidance_sha256": "0341afb881184559d2c01416dab07588cb05fc97706db11d6fa80efe88db8dee",
+        "source_iteration": 1,
+        "recorded_local_lean_failures": 7,
+        "selected_later_iterations": [3]
+      },
+      {
+        "cell_ordinal": 3,
+        "candidate_id": "optimizer_b26bd8f65c81",
+        "candidate_guidance_sha256": "20aaf505ff06830aa90ea4fcf6c6ebb429ab85eb68d2321bb7a60ab0622c6e31",
+        "source_iteration": 2,
+        "recorded_local_lean_failures": 3,
+        "selected_later_iterations": []
+      },
+      {
+        "cell_ordinal": 6,
+        "candidate_id": "optimizer_1847829438a9",
+        "candidate_guidance_sha256": "28abe3d508b639200c26c72e8b03d9b3e7b0c680bfd7a082d6e4fc0b0b1009fd",
+        "source_iteration": 1,
+        "recorded_local_lean_failures": 2,
+        "selected_later_iterations": [3]
+      },
+      {
+        "cell_ordinal": 9,
+        "candidate_id": "optimizer_7c9499ca29a8",
+        "candidate_guidance_sha256": "79c044d27b754cbd3cb41e484edf0c860fec39c84625008e09c68c33c787f61a",
+        "source_iteration": 1,
+        "recorded_local_lean_failures": 5,
+        "selected_later_iterations": [3]
+      },
+      {
+        "cell_ordinal": 9,
+        "candidate_id": "optimizer_55e12cb85177",
+        "candidate_guidance_sha256": "9e72a115f4db3f876eace50bab9b0dc11f135842417ddd47b67fc085e12e8402",
+        "source_iteration": 2,
+        "recorded_local_lean_failures": 6,
+        "selected_later_iterations": []
+      },
+      {
+        "cell_ordinal": 9,
+        "candidate_id": "optimizer_154b5217edb5",
+        "candidate_guidance_sha256": "69731046509199cbf99848266a94865e946188586df97f1b83f52eb04234a61f",
+        "source_iteration": 3,
+        "recorded_local_lean_failures": 9,
+        "selected_later_iterations": [],
+        "has_later_opportunity": false
+      },
+      {
+        "cell_ordinal": 12,
+        "candidate_id": "optimizer_c26fc1a6448c",
+        "candidate_guidance_sha256": "201c1cd8bb3eaaf215c901742dd5b25c01cb986f47da35eb4ac34fb6c6af9f30",
+        "source_iteration": 1,
+        "recorded_local_lean_failures": 7,
+        "selected_later_iterations": []
+      },
+      {
+        "cell_ordinal": 12,
+        "candidate_id": "optimizer_63f82753819b",
+        "candidate_guidance_sha256": "cdbb82d0533754f2cae3c62f9ae31a29f4fe503d89a29b9ca6052ffc0951e374",
+        "source_iteration": 2,
+        "recorded_local_lean_failures": 4,
+        "selected_later_iterations": []
+      },
+      {
+        "cell_ordinal": 12,
+        "candidate_id": "optimizer_ddb544e92e55",
+        "candidate_guidance_sha256": "53660b929d5f1d0d976602e9e9859758c41f46d7b7e41c5280a3aee1127f5569",
+        "source_iteration": 3,
+        "recorded_local_lean_failures": 10,
+        "selected_later_iterations": [],
+        "has_later_opportunity": false
+      }
+    ]
+  },
+  "cells": [
+    {
+      "ordinal": 1,
+      "task": "entry-game-direct",
+      "seed": 1729,
+      "condition": "static",
+      "run_root": "experiments/eve/.runtime/stage5a-dev003-runs/20260822T083508_771299Z",
+      "scores": [0.0, 0.0, 0.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "8c011955db2168fc6f6bcb79eb14fced6aaa5cd74e99db34459b2cadaa597d2f",
+      "lineage_sha256": "2addf82fa858a70194913e187dfc16b9214c7675d71ed7e25dbe97baaa174bdb",
+      "machine_audit_sha256": "1cca625043241e573275e5560f94bd26a2945b6578ffa94b8724638a3f7f032c"
+    },
+    {
+      "ordinal": 2,
+      "task": "entry-game-direct",
+      "seed": 1729,
+      "condition": "fixed",
+      "run_root": "experiments/eve/.runtime/stage5a-dev003-runs/20260822T084249_341857Z",
+      "scores": [0.0, 0.0, 0.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "5ad6220073f22ff62996b0890d63025cb37ce328bfa80148c849bfe3dcb3aa78",
+      "lineage_sha256": "6d2ccfd606b42a6d06ff00d767415d743d6115d81ba909ad5a08e5187a449f73",
+      "machine_audit_sha256": "1725b1146f65f698f9ccc6fc16c636db0ac79f76d90e811886d2ea2066c36610"
+    },
+    {
+      "ordinal": 3,
+      "task": "entry-game-direct",
+      "seed": 1729,
+      "condition": "evolved",
+      "run_root": "experiments/eve/.runtime/stage5a-dev003-runs/20260822T085340_869495Z",
+      "scores": [0.0, 0.0, 0.0],
+      "audit_status": "GUIDANCE_PRODUCED_AND_SELECTED_LATER",
+      "launch_sha256": "c9f0b0f8d8447643fb99db0a0e075c6bbda48fbe891a7f1460ff723db983df67",
+      "lineage_sha256": "a788685b73a14a5a2638629f56ea33b467c47c304baef1090ac39040797945c5",
+      "machine_audit_sha256": "351c80d29c5f4664806d5443d0c4a32abbf1be63eac0dcc0c50b63f0fa1ad858"
+    },
+    {
+      "ordinal": 4,
+      "task": "entry-game-direct",
+      "seed": 2718,
+      "condition": "static",
+      "run_root": "experiments/eve/.runtime/stage5a-dev003-runs/20260822T090045_715772Z",
+      "scores": [0.0, 0.0, 0.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "f9e007ae67e4cb12a8e7d98c297ae99899cc59a397d929858dc9551d8efd1e2e",
+      "lineage_sha256": "c4884a47493c284485604a82f5e6786501d4bceefd9a36b5ab9ed399fac297a3",
+      "machine_audit_sha256": "6008714928d6ddc97206c915b8ccfa7191f7882f17944841eb50164be5261a6b"
+    },
+    {
+      "ordinal": 5,
+      "task": "entry-game-direct",
+      "seed": 2718,
+      "condition": "fixed",
+      "run_root": "experiments/eve/.runtime/stage5a-dev003-runs/20260822T091254_521262Z",
+      "scores": [0.0, 0.0, 0.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "5ea86247b5af85f600b32d0d9da8e82bec9d01e02d4723b282c8ea579517f0e8",
+      "lineage_sha256": "53921a82fc036ea1e6ad6d207254a45da335a75876a68269de0a5d1ed88d3b9d",
+      "machine_audit_sha256": "3e1cf7e77d0967cd73c0abaafce6d22028c20d990dbff89bc3a233c64b0b8997"
+    },
+    {
+      "ordinal": 6,
+      "task": "entry-game-direct",
+      "seed": 2718,
+      "condition": "evolved",
+      "run_root": "experiments/eve/.runtime/stage5a-dev003-runs/20260822T092616_559595Z",
+      "scores": [0.0, 0.0, 0.0],
+      "audit_status": "GUIDANCE_PRODUCED_AND_SELECTED_LATER",
+      "launch_sha256": "2b425aad87a8a6231921a85319da802ea048d2c53e8b8e88b28168c543204975",
+      "lineage_sha256": "7eadc9dd97c2b4b750473f7289f562d58d35798ba0ce560a2423bd79be23498d",
+      "machine_audit_sha256": "f7cc787c515b8bec16df2f872e534a9bbd23b377e7b5477b02ea0e40ff92342d"
+    },
+    {
+      "ordinal": 7,
+      "task": "entry-game-transport",
+      "seed": 1729,
+      "condition": "static",
+      "run_root": "experiments/eve/.runtime/stage5a-dev003-runs/20260822T093312_421777Z",
+      "scores": [0.0, 0.0, 0.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "722f51d06ad1a3a3dffae78b3cdeeace095d7d4ed510b1074fa95a801243199d",
+      "lineage_sha256": "99a60350303a33bed2a2c5553a86ab2f6d9503886bb50994946a754a9630b53d",
+      "machine_audit_sha256": "fca9b760420f2465362df2dd6120c838568e662fd9a8925dc442eee9ad3f1fb1"
+    },
+    {
+      "ordinal": 8,
+      "task": "entry-game-transport",
+      "seed": 1729,
+      "condition": "fixed",
+      "run_root": "experiments/eve/.runtime/stage5a-dev003-runs/20260822T101319_253308Z",
+      "scores": [1.0, 1.0, 0.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "66bb7ccb5e8629b3a74499ec69b1f81ec88d006e34801ad273c4c3a6817ca2c9",
+      "lineage_sha256": "cc98e483f8dbe92f96222f43c426ce6dfb1f4b8ae3a4ef5c8c73b8662803d031",
+      "machine_audit_sha256": "f9eb785127a7155ad3ac5a186dfc92adf74e590649702437ae0a7ce9b9b36bfc"
+    },
+    {
+      "ordinal": 9,
+      "task": "entry-game-transport",
+      "seed": 1729,
+      "condition": "evolved",
+      "run_root": "experiments/eve/.runtime/stage5a-dev003-runs/20260822T102238_446524Z",
+      "scores": [0.0, 0.0, 0.0],
+      "audit_status": "GUIDANCE_PRODUCED_AND_SELECTED_LATER",
+      "launch_sha256": "4f22c15cec1a645cd8d78039163a6589a18cba3aedf487d9a58fac1dc39514f2",
+      "lineage_sha256": "19b52691bfa96c77f48290d9e86ec7ac3c65e4412c865e7f5aa10be27f21869f",
+      "machine_audit_sha256": "c9bba75f5f13fe7b76a6e15b1769e821f65d235286e88d2967995a4cb6ffdff6"
+    },
+    {
+      "ordinal": 10,
+      "task": "entry-game-transport",
+      "seed": 2718,
+      "condition": "static",
+      "run_root": "experiments/eve/.runtime/stage5a-dev003-runs/20260822T103311_953493Z",
+      "scores": [0.0, 0.0, 0.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "66f7027fb05c65fba1a66adab7314b8207bb9534493d46dcbfadc6e254d21362",
+      "lineage_sha256": "c59400e60de96a87a78579a8f47f450a5da587071c4954fbd02d260624bac013",
+      "machine_audit_sha256": "9c73508e8592f6447d8a1f8711d6e4e0c884c6718e35010b46ce73be67241ffd"
+    },
+    {
+      "ordinal": 11,
+      "task": "entry-game-transport",
+      "seed": 2718,
+      "condition": "fixed",
+      "run_root": "experiments/eve/.runtime/stage5a-dev003-runs/20260822T104524_098812Z",
+      "scores": [0.0, 0.0, 0.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "c0ce70d8e3b9a4e397410f4fc5c51ad7ad8c72d40975df5c8fb09bfe63cb84b5",
+      "lineage_sha256": "0287d3f862292b1506de1b33a4fbfbcb1fbd27886c8f8935f0e13a3cc311e842",
+      "machine_audit_sha256": "7692236b7295e94f03b208b6d255c21ad8e0302d12d5139f493e98d0223d4b25"
+    },
+    {
+      "ordinal": 12,
+      "task": "entry-game-transport",
+      "seed": 2718,
+      "condition": "evolved",
+      "run_root": "experiments/eve/.runtime/stage5a-dev003-runs/20260822T105557_269451Z",
+      "scores": [0.0, 0.0, 0.0],
+      "audit_status": "PRODUCED_NOT_SELECTED_LATER",
+      "launch_sha256": "3d12a3717ac13a1bdda3e809f437a6d0e3a1565913bdb93b30196426553d21c2",
+      "lineage_sha256": "6aafe0c9ce238bbeb54f13ed46582d2a3cd5ccd242242382ef36402672a4695d",
+      "machine_audit_sha256": "cc86cd2a24f024e0f02e0d5923f70b6176e35d2718431d272c5df4fed293c16d"
+    }
+  ],
+  "historical_invariants": {
+    "stage4_evidence_preserved": true,
+    "dev001_evidence_preserved": true,
+    "dev002_evidence_preserved": true,
+    "dev002_attempt_ledger_sha256_before_and_after": "e593bf5726b20aa20f1cbb15882b7c2e9e169080233f346d67b48d6543a37922",
+    "frozen_dev003_protocol_rewritten_after_execution": false
+  },
+  "review": {
+    "kind": "deterministic-machine-audit-plus-codex-ai-source-review",
+    "independent_human_review": false
+  },
+  "disposition": {
+    "dev003_attempts_consumed": true,
+    "dev003_must_not_be_retried": true,
+    "historical_runtime_evidence_must_be_preserved": true,
+    "sol_replication_executed": false,
+    "sol_replication_authorized": false,
+    "recommended_next_action": "Review this execution archive and repair the inter-cell formal-state quiescence/snapshot behavior under a new protocol identity before any separately authorized Sol replication."
+  },
+  "claim_boundary": "DEV-003 is a completed public development execution with clean mandatory checker evidence in all 36 rollouts and three local guidance production/admission/later-selection chains across four evolved cells. The raw deterministic candidate outcomes and local liveness mechanisms are valid observations. The small answer-visible matrix, uncontrolled provider sampling, absence of independent human review, and four pre-reservation operational guard activations do not establish a causal EvE effect, model capability, benchmark readiness, evaluation completion, or Sol-replication result."
+}
