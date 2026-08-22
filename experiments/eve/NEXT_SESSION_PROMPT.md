@@ -1,6 +1,6 @@
 # EVE next-session handoff prompt
 
-Last updated: 2026-08-22
+Last updated: 2026-08-23
 
 Copy the text below into the next Codex task. This prompt transfers repository
 state and safety boundaries. It does not authorize any historical retry or a
@@ -31,9 +31,10 @@ the branch must track fork/experiment/eve-stage5a. The expected DEV-003
 execution-archive commit is
 2fa7ef17e3b9efaf891a77c63797e18ad09e1fa3. The expected Sol REP-001
 zero-model protocol-freeze commit is
-5c8dc1fab267baaf61b0175cb8103cb3ac7bea7f. The live local HEAD, upstream, and
-remote branch must contain that commit and agree; verify rather than trusting
-these expected values.
+5c8dc1fab267baaf61b0175cb8103cb3ac7bea7f. The expected Sol REP-001 execution
+archive commit is c1c933d654b66176751725a83aac7368d14f5ebe. The live local
+HEAD, upstream, and remote branch must contain that execution archive and agree;
+verify rather than trusting these expected values.
 
 The worktree contains extensive user-owned changes outside experiments/eve/.
 Preserve all of them. Never restore, format, stage, commit, or otherwise absorb
@@ -146,6 +147,28 @@ checker-event/final-candidate mismatch. Any repaired execution requires a new
 protocol identity, fresh roots and ledger, separate review, and separate
 explicit model/quota authorization. Historical authorization never transfers to
 a successor.
+
+For that diagnosis, inspect the preserved local root
+experiments/eve/.runtime/stage5b-sol-rep001-runs/20260822T153115_454482Z.
+Prioritize:
+
+- runner.log and the exact RuntimeError raised by
+  scripts/run_stage5b_sol_rep001_eve.py;
+- stage5a-guidance-lineage.jsonl, especially the absent iteration-1
+  solver_rollout_completed event;
+- iteration-1 workspace 20260822_153115_step_1_af3c91f0562f, its immutable
+  checker-event chain, final Candidate.lean bytes, evaluation score, and hashes;
+- the ordering of final candidate hashing, checker-event validation, workspace
+  evaluation, lineage emission, and Phase 2 task admission/skip behavior.
+
+Answer these questions from read-only evidence: which bytes changed between the
+last recorded checker event and the final candidate; which component changed
+them; whether the mismatch is deterministic in the preserved artifacts; and
+the minimum code/protocol boundary for a future REP-002 repair. Do not mutate or
+checkpoint a database, change hidden flags, edit the run root, patch the frozen
+wrapper/auditor/checker, or create a successor protocol in the diagnosis task.
+Stop after an evidence-backed cause and repair proposal. The diagnosis itself
+must make zero model calls and consume zero quota.
 
 For any task, run validation proportionate to the changed files. For EVE
 protocol work, at minimum run the full experiments/eve test suite, relevant

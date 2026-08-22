@@ -1,6 +1,6 @@
 # EVE concise handoff
 
-Last updated: 2026-08-22
+Last updated: 2026-08-23
 
 ## Repository checkpoint
 
@@ -12,7 +12,8 @@ Last updated: 2026-08-22
 - DEV-003 execution archive: `2fa7ef17e3b9efaf891a77c63797e18ad09e1fa3`
 - Sol REP-001 zero-model protocol freeze: `5c8dc1fab267baaf61b0175cb8103cb3ac7bea7f`
 - Sol REP-001 pre-execution handoff refresh: `3d930d2f448e8ed1c53c928a9fd61417f130d6f3`
-- Sol REP-001 execution archive: this commit
+- Sol REP-001 execution archive: `c1c933d654b66176751725a83aac7368d14f5ebe`
+- Ordinal-12 diagnosis handoff refresh: this commit
 - Long-term route authority: `experiments/eve/README.md`
 - Current gate authority: `experiments/eve/READINESS.md`
 - Copy-paste next-session prompt: `experiments/eve/NEXT_SESSION_PROMPT.md`
@@ -190,6 +191,27 @@ next bounded action is read-only diagnosis of the ordinal-12 final-checker-event
 versus final-candidate mismatch. Any repaired execution requires a new protocol
 identity, fresh roots and ledger, separate review, and separate explicit
 model/quota authorization.
+
+The diagnosis target is the immutable local run root
+`experiments/eve/.runtime/stage5b-sol-rep001-runs/20260822T153115_454482Z`.
+Begin with `runner.log`, `stage5a-guidance-lineage.jsonl`, the iteration-1
+workspace `20260822_153115_step_1_af3c91f0562f`, and the wrapper validation
+order in `scripts/run_stage5b_sol_rep001_eve.py`. Determine whether the mismatch
+comes from a post-check candidate mutation, event/file snapshot timing, or a
+different evidence-order defect. Do not modify the run root, databases, frozen
+protocol, wrapper, auditor, or checker during diagnosis. Stop after reporting
+the evidence-backed cause and the minimum prospective REP-002 repair boundary.
+
+## Session cleanup and repository state
+
+- On 2026-08-23, the disposable directory
+  `/private/tmp/sol-rep001-reaudit.CI8N6u` was removed. It contained only 11
+  reproducible audit-output copies; no formal run evidence was removed.
+- `experiments/eve/.runtime`, the clean Lean checkout, and every historical
+  Stage 4/5A/5B root and ledger remain preserved.
+- At handoff generation, local HEAD, upstream, and the canonical fork branch all
+  resolve to `c1c933d654b66176751725a83aac7368d14f5ebe` before this handoff-only
+  update. The mixed non-EVE worktree remains user-owned and untouched.
 
 ## Local versus GitHub evidence
 
