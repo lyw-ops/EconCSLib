@@ -9,9 +9,11 @@ Last updated: 2026-08-22
 - Experimental branch: `experiment/eve-stage5a`
 - DEV-002 execution archive: `9269f3ea991e8e7e099dd541b870f37331796dc6`
 - DEV-003 frozen-protocol handoff: `3517eeba2f48ff2ad8fd7eab59d9f5025a408d16`
-- DEV-003 execution archive: this commit
+- DEV-003 execution archive: `2fa7ef17e3b9efaf891a77c63797e18ad09e1fa3`
+- Post-execution handoff and next-session prompt: this commit
 - Long-term route authority: `experiments/eve/README.md`
 - Current gate authority: `experiments/eve/READINESS.md`
+- Copy-paste next-session prompt: `experiments/eve/NEXT_SESSION_PROMPT.md`
 
 Always verify the live branch, HEAD, upstream, remote, and worktree. The mixed
 worktree contains extensive user-owned changes outside this task; preserve them
@@ -138,29 +140,8 @@ source tree rather than the user's uncommitted Lean work.
 
 ## Bootstrap prompt for the next conversation
 
-```text
-Open /Users/lyuyuwei/Documents/EconCSlib on experiment/eve-stage5a. Read the
-root and experiments/eve AGENTS.md files, then read experiments/eve/HANDOFF.md,
-README.md, READINESS.md, stage5a_review/dev002-execution-audit.json,
-stage5a_review/dev003-audit.json, and
-stage5a_review/dev003-execution-audit.json. Inspect the live branch, remotes,
-worktree, and pushed commit. Preserve all unrelated user changes and all Stage
-4/DEV-001/DEV-002/DEV-003 historical evidence.
-
-DEV-001 is invalidated-before-execution. DEV-002 executed 12 cells/36 Luna
-sessions but is permanently executed-defective because its Python-3.9 checker
-failed and the auditor accepted empty evidence; do not retry or repair it.
-DEV-003 is EVE-STAGE5-LUNA-ENTRY-GAME-GUIDANCE-LIVENESS-DEV-003 v3.0.0, hash
-4c407b3e654d4e38f6f35b48e924863b5a9ef72c1e6b9569996e86f00105ad49.
-It executed 12/12 cells and 36/36 Luna subscription sessions once, with no
-retry/resume/import and clean checker evidence. Three of four evolved cells
-produced/admitted/selected guidance later; the fourth produced but did not
-select later. Raw passes are direct 0/6 for all conditions and transport
-static 0/6, fixed 2/6, evolved 0/6. Four pre-reservation preflights failed
-closed on formal-state drift without reserving attempts or starting models.
-
-Do not retry DEV-003 or start Sol. Sol needs a new reviewed protocol identity,
-an inter-cell snapshot/quiescence repair, and explicit user authorization.
-Update HANDOFF, stage only task-owned files, commit, push to
-fork/experiment/eve-stage5a, and verify the remote after every completed task.
-```
+Use the authoritative copy-paste prompt in
+[`NEXT_SESSION_PROMPT.md`](NEXT_SESSION_PROMPT.md). It includes the repository
+checkpoint, immutable history, DEV-003 results, claim boundary, SQLite-sidecar
+follow-up, validation expectations, and the explicit stop before any Sol model
+call. Keep that standalone prompt synchronized whenever this handoff changes.

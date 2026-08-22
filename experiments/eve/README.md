@@ -33,6 +33,9 @@
 
 - 本 README：长期技术路线、实验原则和阶段顺序；
 - [`READINESS.md`](READINESS.md)：当前可运行状态、实时阻塞项和安全边界；
+- [`HANDOFF.md`](HANDOFF.md)：最近完成事项、证据摘要与下一安全边界；
+- [`NEXT_SESSION_PROMPT.md`](NEXT_SESSION_PROMPT.md)：可直接复制到下一任务的
+  权威交接提示词，不授予模型调用或 Sol 执行权限；
 - `*/case.json`：单个任务的冻结规范、受保护资产和确定性评分合同；
 - `*/run-manifest.json`：一次实验计划与执行事实，不承载长期路线；
 - Lean 源码：声明、证明和保持性质的最高权威；
