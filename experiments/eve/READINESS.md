@@ -1,6 +1,6 @@
 # EvE experiment readiness
 
-- **Current status:** `STAGE5B_SOL_REP002_READ_ONLY_REVIEW_CONFIRMED_INCOMPLETE`;
+- **Current status:** `STAGE5B_SOL_REP003_FROZEN_NOT_YET_EXECUTED_ZERO_MODEL_VALIDATED`;
   Stage 1 smoke 002 is closed at score one, Stage 2 direct/transport/pair and
   12 mutations are closed, Stage 3 Codex review verifies at score one, and
   all 12 Stage 4 Luna development cells completed and passed machine re-audit;
@@ -17,14 +17,17 @@
   33 sessions with all terminal evidence and 11 audits valid; the missing
   ordinal-1 observation prevents a clean whole-matrix result; a second Codex
   AI read-only post-archive review independently confirmed the archive's
-  internal consistency without modifying evidence
+  internal consistency without modifying evidence; the fresh REP-003
+  successor is now frozen and zero-model validated with a real pinned-EvE
+  external hook-write/trust guard before formal roots or reservation, but it
+  has not executed and has no model/quota authorization
 - **Not valid statuses:** `benchmark-ready`, `evaluation-complete`,
   `internal-pilot-complete`, or any model-capability conclusion
 - **Formal pilot default:** disabled and not configured
 - **Paid/long EvE execution:** the 12-cell public Stage 4, defective DEV-002,
   clean-evidence DEV-003, post-run-audit-incomplete Sol REP-001, and
   post-run-audit-incomplete Sol REP-002 matrices have executed; no benchmark,
-  private evaluation, or formal pilot has executed
+  private evaluation, formal pilot, or REP-003 matrix has executed
 - **Underlying EvE executions:** 61 completed plus one post-reservation,
   pre-model REP-002 launch failure: two Stage 1 smokes, 12 fresh
   Stage 4 cells, 12 fresh DEV-002 cells, 12 fresh DEV-003 cells, and 12 fresh
@@ -326,15 +329,26 @@ session. This is corroborating AI review, not independent human review, and it
 does not recover the missing scientific observation or change the incomplete
 status.
 
-No REP-003 protocol or runtime state exists yet. The canonical remote-friendly
-next-task prompt is `NEXT_SESSION_PROMPT.txt`, SHA-256
-`e5f9fa8bafe50a22fdd1441de2acdaec83d82b19aaf49966b3ac6dae839b5a40`.
-It authorizes only zero-model REP-003 design, implementation, freezing,
-validation, and tracked handoff work. It does not authorize `--execute`, any
-model call or quota use, or any formal REP-003 root/ledger write. The proposed
-successor must run the real pinned-EvE external hook write/trust guard before
-attempt reservation and retain REP-002's validated terminal contract and
-scientific inputs. Model execution remains a later, separate explicit gate.
+The fresh successor is
+`EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-003` version `1.0.0`, hash
+`0acee4868aa626c21dfd27807423871734bd7437adcc292d5a964affd9db7505`.
+Its pinned real-EvE guard calls `write_repo_codex_hooks` twice against the exact
+external checkout and verifies byte idempotence, project trust, and every
+required hook event before any formal root, `reserve_attempt`, or model access.
+REP-002's terminal-event and rejection contract and all scientific inputs are
+unchanged; protocol-owned identity, paths, RNG domain, roots, and ledger are
+fresh.
+
+REP-003 passes 23 targeted tests, the 145-test full EVE suite with two recorded
+checkout-dependent skips, all historical and new protocol verifiers, and all
+12 `--check` plus 12 `--dry-run` cells. The real hook-write guard passed 12/12
+checks with one stable payload hash; all model calls, Sol quota consumption,
+formal root/ledger writes, and historical-state projection changes are zero.
+No REP-003 run root or attempt ledger exists. The tracked pre-execution review
+is `stage5b_review/sol-rep003-audit.json` and explicitly records
+`independent_human_review=false`. Protocol status is
+`FROZEN_NOT_YET_EXECUTED`; execution remains hard-disabled until separate
+explicit model/quota authorization.
 
 ## Hard-disabled formal experiment boundary
 
@@ -376,6 +390,16 @@ consumed; the ledger rejects any duplicate or out-of-order rerun. Any new
 complete-matrix execution requires a new protocol identity, fresh roots and
 ledger, a pre-reservation external-checkout permission preflight, new review,
 and separate execution authorization.
+
+The frozen, unexecuted `run_stage5b_sol_rep003.py` accepts only the REP-003
+identity and exact 12-cell matrix. Its `--check` path exercises the real pinned
+hook write/trust operation and then the remaining zero-model gates; its
+`--dry-run` path dispatches neither the guard nor execution. In `--execute`
+source order, the hook guard precedes clean-source/dependency/auth/preflight
+gates, which all precede formal-root creation and `reserve_attempt`; reservation
+still precedes upstream/model launch. `--execute` and model/quota consumption
+are not authorized. The fresh root and ledger must remain absent until a later
+explicit authorization.
 
 ## Public Stage 4 Entry Game three-condition study
 
@@ -475,6 +499,12 @@ evolved ordinals 3, 6, and 9 were selected later; ordinal 12 produced no
 guidance. This validates the evidence-order repair locally but is not a clean
 whole-matrix result because direct/static/1729 is absent. REP-002 is immutable
 and must not be retried, resumed, imported, or repaired in place.
+
+Sol REP-003 is frozen but unexecuted. It preserves REP-002's scientific and
+terminal contracts and moves the real external hook-write/trust operation ahead
+of reservation. Its 12 checks and 12 dry-runs are launch-engineering evidence
+only; they add no session, attempt, candidate, score, guidance event, or
+scientific observation.
 
 ## Gates before a real Mathlib-style experiment
 

@@ -17,12 +17,12 @@ Last updated: 2026-08-23
 - Sol REP-002 zero-model protocol freeze: `d7940571d2febc5284b9283525330a3ccbb5017f`
 - Sol REP-002 execution archive: `876aa794539670af8ca3685348db974629bc7a87`
 - Sol REP-002 post-archive read-only review: `9e37fd26808c52ea8d5f532af8938a515afc13e6`
-- Remote-friendly REP-003 zero-model design prompt: this commit
+- Sol REP-003 zero-model protocol freeze and handoff: this commit
 - Long-term route authority: `experiments/eve/README.md`
 - Current gate authority: `experiments/eve/READINESS.md`
 - Canonical copy-paste next-session prompt:
   `experiments/eve/NEXT_SESSION_PROMPT.txt`, SHA-256
-  `e5f9fa8bafe50a22fdd1441de2acdaec83d82b19aaf49966b3ac6dae839b5a40`
+  `23e89459f5f4519fa2ac242bc5bdd17721d24bfa29647984aba7f599e2163576`
 
 Always verify the live branch, HEAD, upstream, remote, and worktree. The mixed
 worktree contains extensive user-owned changes outside this task; preserve them
@@ -37,8 +37,9 @@ and stage only task-owned EVE files.
 - Verify the pushed branch and commit before handoff. Ignored `.runtime`
   evidence remains local and must not be deleted or inferred from GitHub.
 - Historical Stage 4, Stage 5A DEV-001, DEV-002, completed DEV-003, and executed
-  Sol REP-001/REP-002 inputs and runtime evidence are immutable. Do not repair,
-  retry, resume, import, rewrite, or clean them.
+  Sol REP-001/REP-002 inputs and runtime evidence are immutable. Frozen REP-003
+  inputs are also immutable. Do not repair, retry, resume, import, rewrite, or
+  clean historical evidence.
 
 ## Historical baseline
 
@@ -185,8 +186,58 @@ Codex driver construction or any model session. The record is
 `5b826fdfc17244076fe2aa9fcb49f5d1f2a778c6e03cf3b248da7258dbdbd918`.
 This is a second AI review, not independent human review.
 
+## Current Stage 5B Sol REP-003 state
+
+The fresh successor protocol is
+`EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-003`, version `1.0.0`, SHA-256
+`0acee4868aa626c21dfd27807423871734bd7437adcc292d5a964affd9db7505`, status
+`FROZEN_NOT_YET_EXECUTED`. The pre-execution review is
+`stage5b_review/sol-rep003-audit.json`, SHA-256
+`7640a2f7a4fcbf3e3709231799d321a03afa731ad8a25a0c8ef988e770d21fd0`;
+it is Codex AI plus deterministic machine validation and explicitly not
+independent human review.
+
+REP-003 retains REP-002's model, effort, tasks, cases, 12-cell order, seeds,
+conditions, iterations, worker count, turn/time budget, prompts, initial
+guidance, immutable checker, evaluator, pinned sources, no-retry policy, and
+wrapper-owned post-agent/pre-evaluation terminal/rejection contract. It uses a
+new protocol identity, configs, overlay keys, RNG domain, root parent, ledger,
+wrapper, auditor, and detached hashes; no REP-001/REP-002 state is inherited.
+
+The sole launch repair runs before any formal root, `reserve_attempt`, or model
+access. It pins the real EvE runner and hook-writer sources, calls
+`write_repo_codex_hooks` twice against
+`/Users/lyuyuwei/Documents/eve-v0.2.0/.codex/hooks.json`, verifies byte-identical
+output, project trust, and all required hook events, and fails closed on any
+mismatch. Only after that guard do the frozen source/dependency/auth/build and
+exact-runtime preflight gates run; formal-root creation and reservation remain
+later. Tests cover hook-write failure, strict ordering, the successful
+reservation seam, non-dispatching check/dry-run paths, and REP-002 terminal
+mutation/rejection regressions.
+
+All 12 `--check` cells and all 12 `--dry-run` cells pass. The real hook payload
+hash is consistently
+`8c46e49b4512543d7809b7f8f16572c672ca8715c4e81f804aa7bb3ad7d385f6`.
+Model calls and Sol quota are zero; formal root and ledger writes are zero;
+fresh-state projection `489780a9de90686f4f1095b2834691186d2e0bb52525fe129a33bb8d2ce5fd27`
+and historical projection
+`c85a39fbd2969fab0143a55e6086ad02f8c731be1cefdec76f31a5b016e4eb4e`
+are unchanged. The REP-003 root parent and ledger do not exist. No `--execute`
+was run, and execution/model/quota remain unauthorized.
+
 ## Last verified evidence
 
+- REP-003 has 23 passing targeted tests. The complete EVE suite has 145 passing
+  tests and the same two explicit checkout-dependent skips. Stage 4 local
+  evidence/audit and DEV-002, DEV-003, REP-001, REP-002, and REP-003 protocol
+  verifiers pass.
+- REP-003 12/12 checks exercise the pinned real hook writer and exact-runtime
+  failure preflight with zero model/quota/formal writes and unchanged historical
+  logical state. REP-003 12/12 dry-runs call neither hook guard nor execution.
+- External EvE remains clean at `50b2399258ab08b6225a87cd05bded9701caa23d`;
+  the clean Lean source remains at
+  `b490317186ef435670c2eeb16050a214cdbf9fe5`. The mixed operator Lean worktree
+  was not used as experimental source.
 - The second REP-002 read-only review confirms the execution audit without
   modifying `.runtime`: all independently recomputed counts, hashes, scores,
   token totals, and integrity results agree, and there are no new findings.
@@ -256,34 +307,27 @@ This is a second AI review, not independent human review.
   `e593bf5726b20aa20f1cbb15882b7c2e9e169080233f346d67b48d6543a37922`.
 
 REP-001 and REP-002 each retain three audited local guidance-liveness mechanism
-observations. REP-001's ordinal-12 evidence gap, REP-002's missing ordinal-1
-scientific observation, the answer-visible `n=2` matrix, uncontrolled provider
-sampling, non-independent review, and pre-reservation/launch anomalies establish
-no clean cross-model replication, causal EvE effect, model capability,
-benchmark readiness, or evaluation completion.
+observations. REP-003 adds no observation because it has not executed.
+REP-001's ordinal-12 evidence gap, REP-002's missing ordinal-1 scientific
+observation, the answer-visible `n=2` matrix, uncontrolled provider sampling,
+non-independent review, and pre-reservation/launch anomalies establish no clean
+cross-model replication, causal EvE effect, model capability, benchmark
+readiness, or evaluation completion.
 
 ## Next bounded action and stop condition
 
-Stop at the executed, post-run-audit-incomplete REP-002 record. All REP-001 and
-REP-002 attempt slots are consumed and immutable. Do not retry, resume, import,
-delete, repair in place, or reuse either runtime state. In particular, do not
-rerun REP-002 ordinal 1 even though it made no model call: its attempt was
-reserved and the no-retry rule is part of the frozen protocol.
+Stop at `FROZEN_NOT_YET_EXECUTED / ZERO_MODEL_VALIDATED` for REP-003. All
+REP-001 and REP-002 attempts are consumed and immutable; do not retry, resume,
+import, delete, repair in place, or reuse their runtime state. REP-003 has no
+attempts or formal state and must remain that way until a later user message
+separately and explicitly authorizes its model/quota consumption and execution.
 
-The bounded read-only REP-002 review is complete. The user requested a portable
-plain-text prompt for the next bounded task. The canonical
-`NEXT_SESSION_PROMPT.txt` directs the next session to design, implement, and
-freeze a fresh REP-003 successor under a strict zero-model boundary. Its sole
-new launch repair is a real, idempotent external-checkout hook-write/trust guard
-before `reserve_attempt`, so missing workspace permission cannot consume
-another empty cell. REP-002's terminal checker contract and all scientific
-inputs remain fixed.
-
-This handoff task did not create or execute REP-003. When the user submits the
-TXT in a new task, it authorizes tracked design/code/test/documentation work and
-zero-model checks only. It does not authorize any model call, quota consumption,
-formal run root/ledger write, or `--execute`. After REP-003 is frozen and
-reviewed, its matrix still requires separate explicit model/quota authorization.
+The canonical `NEXT_SESSION_PROMPT.txt` now asks a future session to re-verify
+the frozen identity, source/checkouts, remote branch, zero-model evidence, and
+authorization boundary, then stop. It does not authorize `--execute`, model
+access, quota consumption, attempt reservation, or formal runtime creation. A
+request to execute the REP-003 matrix must be a distinct explicit instruction;
+historical authorization never transfers.
 
 ## Session cleanup and repository state
 
@@ -292,10 +336,10 @@ reviewed, its matrix still requires separate explicit model/quota authorization.
   reproducible audit-output copies; no formal run evidence was removed.
 - `experiments/eve/.runtime`, the clean Lean checkout, and every historical
   Stage 4/5A/5B root and ledger remain preserved.
-- At handoff generation, the remote branch contains REP-002 read-only review
-  `9e37fd26808c52ea8d5f532af8938a515afc13e6`; the remote-friendly TXT prompt
-  and handoff refresh are the current task-owned commit. The mixed non-EVE
-  worktree remains user-owned and untouched.
+- The REP-003 frozen protocol, pre-execution review, future zero-model TXT
+  prompt, and handoff refresh are the current task-owned commit. The handoff
+  procedure requires the pushed remote branch to resolve exactly to that commit.
+  The mixed non-EVE worktree remains user-owned and untouched.
 
 ## Local versus GitHub evidence
 
@@ -304,16 +348,16 @@ history. Runtime evidence under `experiments/eve/.runtime/` is ignored and
 remains only on this machine. A fresh clone cannot reconstruct historical
 Stage 4/DEV-002/DEV-003/Sol transcripts, but their tracked audit hashes remain
 authoritative summaries. Sol REP-001 and REP-002 runtime evidence now exists
-only on this machine and must be preserved. Both protocols' Lean environments
-are tied to a clean committed source tree rather than the user's uncommitted
-Lean work.
+only on this machine and must be preserved. All three Sol protocols' Lean
+environments are tied to a clean committed source tree rather than the user's
+uncommitted Lean work.
 
 ## Bootstrap prompt for the next conversation
 
 Use the authoritative plain-text copy-paste prompt in
 [`NEXT_SESSION_PROMPT.txt`](NEXT_SESSION_PROMPT.txt). It includes the repository
-checkpoint, immutable history, REP-003 zero-model implementation target,
-external-hook pre-reservation repair, validation expectations, claim boundary,
-and the mandatory stop before any successor model call. The older Markdown
-prompt is a compatibility/history copy and is not the active next-task request.
-Keep the TXT synchronized whenever this handoff changes.
+checkpoint, immutable history, frozen REP-003 identity and evidence, claim
+boundary, and the mandatory stop pending a distinct explicit model/quota
+authorization. The older Markdown prompt is a compatibility/history copy and
+is not the active next-task request. Keep the TXT synchronized whenever this
+handoff changes.

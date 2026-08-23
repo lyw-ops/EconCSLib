@@ -1,6 +1,6 @@
 # EvE sidecar for EconCSLib
 
-> **Status: `stage5b-sol-rep002-read-only-review-confirmed-incomplete`.
+> **Status: `stage5b-sol-rep003-frozen-not-yet-executed-zero-model-validated`.
 > Stage 1 smoke 002 is
 > closed at score `1.0`; the public Entry Game direct/transport pair and its 12
 > mutations pass Stage 2; the Stage 3 Codex review record verifies at `1.0`.
@@ -38,11 +38,18 @@
 > read-only post-archive review independently recomputed the ledger, launch
 > ordering, events, scores, tokens, audit replay, and SQLite integrity and
 > confirmed that incomplete disposition without modifying runtime evidence.
+> REP-003 is now frozen as a fresh zero-model successor. Before any formal root,
+> attempt reservation, or model access, it invokes pinned EvE's real external
+> hook writer twice, verifies byte idempotence plus project/event trust, and
+> fails closed on any mismatch. All 12 checks and 12 dry-runs pass with zero
+> model calls, zero quota, no REP-003 root or ledger, and unchanged historical
+> logical state. REP-003 has not executed and requires separate explicit
+> model/quota authorization.
 > Codex review is AI review, not independent human
 > review, and none of this is a hidden benchmark, causal condition result,
 > formal EvE-effect result, or general model-capability claim.**
 
-## 总体技术路线（v3.12，权威入口）
+## 总体技术路线（v3.13，权威入口）
 
 本节是 EconCSLib EVE 研究计划的**唯一技术路线入口**。后续关于研究目标、
 证明路线、实验设计、模型顺序、阶段门槛和任务扩展的决定，都应更新在本节，
@@ -722,6 +729,16 @@ sidecar 的 snapshot/quiescence 行为。当前结果是干净 checker 与本地
 
 #### 变更记录
 
+- **2026-08-23 · v3.13**：冻结全新 Stage 5B Sol REP-003（protocol v1.0.0，
+  SHA-256 `0acee4868aa626c21dfd27807423871734bd7437adcc292d5a964affd9db7505`）。
+  新 launcher 在任何正式 root、`reserve_attempt` 或模型访问之前调用 pinned EvE
+  的真实 `write_repo_codex_hooks`，以同一路径双写并验证字节幂等、project trust 和
+  四类 hook-event trust；任何偏差均在预约前失败关闭。REP-002 的
+  post-agent/pre-evaluation terminal checker、rejection contract 和全部科学输入保持
+  不变。23 项定向测试、145 项完整 EVE 测试（2 项明确跳过）、全部历史/新协议
+  verifier、12 个 `--check` 和 12 个 `--dry-run` 通过；模型调用、Sol quota、正式
+  REP-003 root/ledger 写入及历史状态变更均为零。预执行 AI 审阅明确
+  `independent_human_review=false`。REP-003 尚未执行，等待单独明确的模型/quota 授权。
 - **2026-08-23 · v3.12**：为远程控制场景新增可整段复制的权威纯文本提示词
   `NEXT_SESSION_PROMPT.txt`（SHA-256
   `e5f9fa8bafe50a22fdd1441de2acdaec83d82b19aaf49966b3ac6dae839b5a40`）。下一会话
@@ -1433,6 +1450,29 @@ tracked disposition is `stage5b_review/sol-rep002-execution-audit.json`. The
 repair is validated for every model-backed rollout, but REP-002 is not a clean
 whole-matrix replication because ordinal 1 has no model or scientific result.
 
+The fresh zero-model successor is `stage5b_sol_rep003_protocol.json`, identity
+`EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-003` version `1.0.0`, SHA-256
+`0acee4868aa626c21dfd27807423871734bd7437adcc292d5a964affd9db7505`.
+Its only launch repair is a pinned, real-EvE external hook-write/trust guard at
+the `pre-reservation-pre-formal-root-pre-model` phase. The guard validates the
+exact upstream runner and hook-writer source hashes, calls
+`write_repo_codex_hooks` twice against the exact external checkout, proves the
+two payloads byte-identical, and checks project trust plus all required hook
+events before any reservation. The wrapper-owned terminal checker and all
+scientific inputs are byte-preserved from REP-002. New config, overlay, RNG,
+run-root, ledger, wrapper, auditor, and detached identities prevent state reuse.
+
+The tracked pre-execution review is `stage5b_review/sol-rep003-audit.json` and
+sets `independent_human_review=false`. Twenty-three targeted tests and the
+145-test full EVE suite pass with the same two checkout-dependent skips. Stage
+4, DEV-002, DEV-003, REP-001, REP-002, and REP-003 verifiers pass. All 12
+REP-003 `--check` cells exercise the real hook guard and exact-runtime failure
+preflight; all 12 `--dry-run` cells remain pure previews. Across them, model
+calls, quota consumption, formal roots, ledger writes, and historical-state
+changes are zero. The REP-003 root and ledger do not exist. Protocol status
+remains `FROZEN_NOT_YET_EXECUTED`; no outcome or cross-model conclusion exists,
+and execution requires separate explicit model/quota authorization.
+
 Any proposed `Arena`, controlled-carrier, StructuralCore-closure, or
 Canonical/Frontend API change discovered later must return to the documented
 EFG freeze/governance human decision process. A micro-pilot score never
@@ -1481,6 +1521,7 @@ python3 experiments/eve/scripts/verify_stage5a_protocol.py
 python3 experiments/eve/scripts/verify_stage5a_dev003_protocol.py
 python3 experiments/eve/scripts/verify_stage5b_sol_rep001_protocol.py
 python3 experiments/eve/scripts/verify_stage5b_sol_rep002_protocol.py
+python3 experiments/eve/scripts/verify_stage5b_sol_rep003_protocol.py
 python3 -m json.tool experiments/eve/UPSTREAM.lock.json >/dev/null
 python3 -m json.tool experiments/eve/smoke/case.json >/dev/null
 python3 -m json.tool experiments/eve/efg_reachability_micro/case.json >/dev/null
@@ -1512,6 +1553,9 @@ the task's validation record.
   all 12 slots are consumed and no retry is permitted. The 11 audited cells and
   three local liveness chains do not make the incomplete matrix a clean
   replication or complete cross-model comparison.
+- Sol REP-003 closes the pre-reservation external-hook permission gap under a
+  fresh frozen identity, but it has not executed. Zero-model validation proves
+  only launch/protocol engineering; it supplies no REP-003 scientific outcome.
 - Neither public synthetic/local task can support a benchmark,
   model-capability, EvE-improvement, or minimal-core optimization conclusion.
 - EvE has no native dry-run at the pin; the sidecar prevents invocation.
