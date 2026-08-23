@@ -87,7 +87,7 @@ REP-003 保留 REP-002 的所有科学输入和 terminal/rejection contract。�
 冻结时验证事实：
 
 - 23 项 REP-003 targeted tests 通过；
-- 完整 EVE suite 145 项通过，2 项 checkout-dependent 测试明确跳过；
+- 完整 EVE suite 共运行 145 项：143 项通过，2 项 checkout-dependent 测试明确跳过；
 - Stage 4、DEV-002、DEV-003、REP-001、REP-002、REP-003 verifier 全部通过；
 - 12/12 REP-003 --check 通过真实 hook guard 与 exact-runtime preflight；
 - 12/12 REP-003 --dry-run 通过，且不 dispatch guard 或 execute；

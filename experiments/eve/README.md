@@ -735,7 +735,7 @@ sidecar 的 snapshot/quiescence 行为。当前结果是干净 checker 与本地
   的真实 `write_repo_codex_hooks`，以同一路径双写并验证字节幂等、project trust 和
   四类 hook-event trust；任何偏差均在预约前失败关闭。REP-002 的
   post-agent/pre-evaluation terminal checker、rejection contract 和全部科学输入保持
-  不变。23 项定向测试、145 项完整 EVE 测试（2 项明确跳过）、全部历史/新协议
+  不变。23 项定向测试、完整 EVE suite 共 145 项（143 通过、2 项明确跳过）、全部历史/新协议
   verifier、12 个 `--check` 和 12 个 `--dry-run` 通过；模型调用、Sol quota、正式
   REP-003 root/ledger 写入及历史状态变更均为零。预执行 AI 审阅明确
   `independent_human_review=false`。REP-003 尚未执行，等待单独明确的模型/quota 授权。
@@ -1464,7 +1464,8 @@ run-root, ledger, wrapper, auditor, and detached identities prevent state reuse.
 
 The tracked pre-execution review is `stage5b_review/sol-rep003-audit.json` and
 sets `independent_human_review=false`. Twenty-three targeted tests and the
-145-test full EVE suite pass with the same two checkout-dependent skips. Stage
+full EVE suite runs 145 tests (143 pass and the same two checkout-dependent
+tests skip). Stage
 4, DEV-002, DEV-003, REP-001, REP-002, and REP-003 verifiers pass. All 12
 REP-003 `--check` cells exercise the real hook guard and exact-runtime failure
 preflight; all 12 `--dry-run` cells remain pure previews. Across them, model

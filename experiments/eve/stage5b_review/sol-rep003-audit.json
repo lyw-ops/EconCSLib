@@ -76,7 +76,7 @@
     "successful_guard_reaches_reservation_seam_only_after_all_gates_regression": "passed",
     "check_and_dry_run_never_dispatch_execute_regression": "passed",
     "rep002_terminal_mutation_and_rejection_regressions": "passed",
-    "full_eve_test_suite": "145 passed, 2 skipped",
+    "full_eve_test_suite": "145 run: 143 passed, 2 skipped",
     "full_suite_skips": [
       "test_accepted_efg_fixture_compiles_in_isolated_solver_home: no explicit locked EvE v0.2.0 checkout supplied to unittest discovery",
       "test_actual_hydra_loader_parses_both_configs_when_checkout_is_supplied: no explicit locked EvE v0.2.0 checkout supplied to unittest discovery"

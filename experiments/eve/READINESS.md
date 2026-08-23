@@ -339,8 +339,9 @@ REP-002's terminal-event and rejection contract and all scientific inputs are
 unchanged; protocol-owned identity, paths, RNG domain, roots, and ledger are
 fresh.
 
-REP-003 passes 23 targeted tests, the 145-test full EVE suite with two recorded
-checkout-dependent skips, all historical and new protocol verifiers, and all
+REP-003 passes 23 targeted tests; the full EVE suite runs 145 tests, with 143
+passing and two recorded checkout-dependent skips. All historical and new
+protocol verifiers and all
 12 `--check` plus 12 `--dry-run` cells. The real hook-write guard passed 12/12
 checks with one stable payload hash; all model calls, Sol quota consumption,
 formal root/ledger writes, and historical-state projection changes are zero.

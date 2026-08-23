@@ -22,7 +22,7 @@ Last updated: 2026-08-23
 - Current gate authority: `experiments/eve/READINESS.md`
 - Canonical copy-paste next-session prompt:
   `experiments/eve/NEXT_SESSION_PROMPT.txt`, SHA-256
-  `23e89459f5f4519fa2ac242bc5bdd17721d24bfa29647984aba7f599e2163576`
+  `cae4a0675b36ad06f5518177b5b205fbd6cbaa8ca1e22249d03d9cc5a670cd8a`
 
 Always verify the live branch, HEAD, upstream, remote, and worktree. The mixed
 worktree contains extensive user-owned changes outside this task; preserve them
@@ -193,7 +193,7 @@ The fresh successor protocol is
 `0acee4868aa626c21dfd27807423871734bd7437adcc292d5a964affd9db7505`, status
 `FROZEN_NOT_YET_EXECUTED`. The pre-execution review is
 `stage5b_review/sol-rep003-audit.json`, SHA-256
-`7640a2f7a4fcbf3e3709231799d321a03afa731ad8a25a0c8ef988e770d21fd0`;
+`098082ec97dec365749d99bc7ce66d1fc605e8168a7f2cfd4e4c43b180da74a1`;
 it is Codex AI plus deterministic machine validation and explicitly not
 independent human review.
 
@@ -227,8 +227,8 @@ was run, and execution/model/quota remain unauthorized.
 
 ## Last verified evidence
 
-- REP-003 has 23 passing targeted tests. The complete EVE suite has 145 passing
-  tests and the same two explicit checkout-dependent skips. Stage 4 local
+- REP-003 has 23 passing targeted tests. The complete EVE suite runs 145 tests:
+  143 pass and the same two explicit checkout-dependent tests skip. Stage 4 local
   evidence/audit and DEV-002, DEV-003, REP-001, REP-002, and REP-003 protocol
   verifiers pass.
 - REP-003 12/12 checks exercise the pinned real hook writer and exact-runtime
