@@ -15,7 +15,8 @@ Last updated: 2026-08-23
 - Sol REP-001 execution archive: `c1c933d654b66176751725a83aac7368d14f5ebe`
 - Ordinal-12 diagnosis handoff refresh: `7172a54`
 - Sol REP-002 zero-model protocol freeze: `d7940571d2febc5284b9283525330a3ccbb5017f`
-- Sol REP-002 execution archive: this commit
+- Sol REP-002 execution archive: `876aa794539670af8ca3685348db974629bc7a87`
+- Sol REP-002 post-archive read-only review: this commit
 - Long-term route authority: `experiments/eve/README.md`
 - Current gate authority: `experiments/eve/READINESS.md`
 - Copy-paste next-session prompt: `experiments/eve/NEXT_SESSION_PROMPT.md`
@@ -33,8 +34,8 @@ and stage only task-owned EVE files.
 - Verify the pushed branch and commit before handoff. Ignored `.runtime`
   evidence remains local and must not be deleted or inferred from GitHub.
 - Historical Stage 4, Stage 5A DEV-001, DEV-002, completed DEV-003, and executed
-  Sol REP-001 inputs and runtime evidence are immutable. Do not repair, retry,
-  resume, import, rewrite, or clean them.
+  Sol REP-001/REP-002 inputs and runtime evidence are immutable. Do not repair,
+  retry, resume, import, rewrite, or clean them.
 
 ## Historical baseline
 
@@ -170,8 +171,22 @@ ordinal-1 observation means REP-002 is not a clean whole-matrix replication or
 complete Sol-versus-Luna comparison. The tracked disposition is
 `stage5b_review/sol-rep002-execution-audit.json`.
 
+A second Codex AI read-only post-archive review independently recomputed the
+ledger/matrix order, all launch preflights, terminal chains, runtime scores,
+token arithmetic, guidance events, artifact hashes, SQLite integrity, and
+deterministic auditor replay. It found no new discrepancy and confirms the
+same incomplete disposition. Its source-order review also confirms that
+ordinal 1 reached EvE initialization and hook writing, but stopped before
+Codex driver construction or any model session. The record is
+`stage5b_review/sol-rep002-post-archive-readonly-review.json`, SHA-256
+`5b826fdfc17244076fe2aa9fcb49f5d1f2a778c6e03cf3b248da7258dbdbd918`.
+This is a second AI review, not independent human review.
+
 ## Last verified evidence
 
+- The second REP-002 read-only review confirms the execution audit without
+  modifying `.runtime`: all independently recomputed counts, hashes, scores,
+  token totals, and integrity results agree, and there are no new findings.
 - The REP-002 ledger has 12 unique rows in frozen order: 11 `completed`/exit 0
   and ordinal 1 `failed`/exit 1. Its SHA-256 is
   `62cf062264698be0006f8ffa20430f2581d226bb7e743ceae94d6dd375ed6bd1`.
@@ -252,12 +267,14 @@ delete, repair in place, or reuse either runtime state. In particular, do not
 rerun REP-002 ordinal 1 even though it made no model call: its attempt was
 reserved and the no-retry rule is part of the frozen protocol.
 
-The next bounded action is independent read-only review of the REP-002
-execution and tracked audit. Any complete-matrix replication requires a new
-protocol identity, fresh root/ledger/RNG domain, a pre-reservation check that
-the external EvE hook write is permitted, new zero-model review, and separate
-explicit model/quota authorization. Do not create or execute that successor
-without a new user request.
+The bounded read-only REP-002 review is complete. Stop here. A possible next
+task exists only if the user explicitly requests a new complete-matrix
+successor. Such a successor requires a new protocol identity, fresh
+root/ledger/RNG domain, a pre-reservation check that the external EvE hook
+write is permitted, new zero-model validation and review, and separate explicit
+model/quota authorization. Do not design, freeze, or execute that successor
+without a new user request; protocol-design authorization would not authorize
+model execution.
 
 ## Session cleanup and repository state
 
@@ -266,10 +283,10 @@ without a new user request.
   reproducible audit-output copies; no formal run evidence was removed.
 - `experiments/eve/.runtime`, the clean Lean checkout, and every historical
   Stage 4/5A/5B root and ledger remain preserved.
-- At handoff generation, the remote branch contains REP-002 freeze
-  `d7940571d2febc5284b9283525330a3ccbb5017f`; the execution archive is the
-  current task-owned update pending its final commit/push. The mixed non-EVE
-  worktree remains user-owned and untouched.
+- At handoff generation, the remote branch contains REP-002 execution archive
+  `876aa794539670af8ca3685348db974629bc7a87`; this read-only review is the
+  current task-owned commit. The mixed non-EVE worktree remains user-owned and
+  untouched.
 
 ## Local versus GitHub evidence
 

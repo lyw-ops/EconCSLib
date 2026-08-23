@@ -1,0 +1,172 @@
+{
+  "schema_version": "1.0.0",
+  "reviewed_at": "2026-08-23T08:05:07Z",
+  "status": "READ_ONLY_REVIEW_CONFIRMS_INCOMPLETE_EXECUTION_RECORD",
+  "scope": "Second Codex AI read-only review of the archived Sol REP-002 execution. The review did not invoke a model, modify runtime evidence, retry an attempt, resume or import a run, checkpoint or repair SQLite, or alter the frozen protocol.",
+  "review": {
+    "kind": "codex-ai-post-archive-read-only-review",
+    "independent_human_review": false,
+    "independence_boundary": "This is a second AI-agent review of an archive originally prepared by Codex AI. It is operationally separate and read-only, but it is not qualified independent human review.",
+    "new_findings": [],
+    "conclusion": "The archived execution record is internally consistent with the preserved local evidence. All 12 one-shot attempts were consumed in frozen order; ordinal 1 is a post-reservation, pre-model infrastructure failure; ordinals 2-12 contain 33 contract-valid terminal rollout chains and 11 byte-identically reproducible machine audits. The evidence-order repair is confirmed for every model-backed rollout, while the missing ordinal-1 scientific observation keeps REP-002 incomplete."
+  },
+  "review_anchors": {
+    "reviewed_repository_head": "876aa794539670af8ca3685348db974629bc7a87",
+    "reviewed_repository_upstream_head": "876aa794539670af8ca3685348db974629bc7a87",
+    "protocol": "experiments/eve/stage5b_sol_rep002_protocol.json",
+    "protocol_sha256": "318557e77f6b2126b813e522eea15bce03cb792639b2f537e4d53893749f7a8f",
+    "execution_audit": "experiments/eve/stage5b_review/sol-rep002-execution-audit.json",
+    "execution_audit_sha256": "f20db7bad909890a55ab40930f6464c59d149ae04abc6224ace5364893013709",
+    "attempt_ledger": "experiments/eve/.runtime/stage5b-sol-rep002-attempt-ledger.sqlite3",
+    "attempt_ledger_sha256": "62cf062264698be0006f8ffa20430f2581d226bb7e743ceae94d6dd375ed6bd1",
+    "upstream_eve_commit": "50b2399258ab08b6225a87cd05bded9701caa23d",
+    "clean_lean_source_commit": "b490317186ef435670c2eeb16050a214cdbf9fe5",
+    "external_eve_checkout_clean": true,
+    "clean_lean_checkout_clean": true
+  },
+  "ordinal_1_source_order_review": {
+    "outer_wrapper": {
+      "path": "experiments/eve/scripts/run_stage5b_sol_rep002.py",
+      "sha256": "0d22f477d33a61ea4af3625ca2b4a9f7ef045aee600a5682b95e2c6aa8fbebc2",
+      "reviewed_lines": "921-1044",
+      "observed_order": "Verify frozen inputs and clean source, run the zero-model preflight, reserve the next ordinal, materialize the fresh root and launch record, then invoke pinned EvE."
+    },
+    "pinned_eve_runner": {
+      "source_path_at_commit": "src/scaling_evolve/algorithms/eve/runner.py",
+      "sha256": "06bc35d16f0ab80c48b27491c83b3830c4e2449c5ccedb83fe2f025ca3f9911d",
+      "reviewed_lines": "154-198",
+      "observed_order": "The pinned runner resolves configuration and creates its repository task snapshot, then calls write_repo_codex_hooks at line 175 before build_role_drivers at lines 193-198 and before any EveFactory run or solver session."
+    },
+    "pinned_hook_writer": {
+      "source_path_at_commit": "src/scaling_evolve/providers/agent/codex_hooks.py",
+      "sha256": "f50efdfbf5f2f18d9c805bd393eda8086e696bc351bf1fbf80060c2477d80fab",
+      "reviewed_lines": "31-54",
+      "observed_operation": "Resolve <external-checkout>/.codex/hooks.json, create its parent if needed, and write the JSON payload with Path.write_text."
+    },
+    "runtime_corroboration": {
+      "ordinal": 1,
+      "cell": "entry-game-direct / seed 1729 / static",
+      "ledger_status": "failed",
+      "outer_exit_code": 1,
+      "launch_status": "failed",
+      "launch_attempt_reserved_before_model_access": true,
+      "safe_preflight_model_calls": 0,
+      "safe_preflight_sol_quota_consumed": 0,
+      "top_level_token_usage_files": 0,
+      "guidance_lineage_exists": false,
+      "machine_audit_exists": false,
+      "lineage_databases": 0,
+      "runner_log_bytes": 0,
+      "initialization_artifacts_present": "Hydra configuration, repository snapshot/cache, overlay, empty static guidance, launch record, and uv cache exist. Their presence shows initialization reached the pinned runner but does not show a model session.",
+      "classification": "post-reservation pre-model infrastructure failure",
+      "retry_permitted": false
+    }
+  },
+  "independent_recomputation": {
+    "ledger": {
+      "rows": 12,
+      "unique_cells": 12,
+      "ordinals_contiguous": true,
+      "frozen_matrix_order_exact": true,
+      "completed_exit_zero": 11,
+      "failed_exit_one": 1,
+      "duplicates": 0,
+      "integrity_check": "ok"
+    },
+    "launch_preflights": {
+      "checked": 12,
+      "all_model_calls_zero": true,
+      "all_sol_quota_consumed_zero": true,
+      "all_formal_projections_unchanged": true,
+      "all_historical_projections_unchanged": true,
+      "historical_execution_state_inherited_or_written": false
+    },
+    "event_counts": {
+      "factory_seeded": 11,
+      "working_optimizer_sampled": 33,
+      "solver_guidance_loaded": 33,
+      "solver_rollout_completed": 33,
+      "solver_rollout_terminal": 33,
+      "optimizer_candidate_produced": 6,
+      "optimizer_population_admission": 6
+    },
+    "terminal_contract": {
+      "unique_terminal_events": 33,
+      "completed_to_terminal_pairs_exact": true,
+      "status_check_evidence_validated": 33,
+      "candidate_hash_mismatches": 0,
+      "wrong_checker_phase": 0,
+      "missing_or_duplicate_terminal_events": 0,
+      "terminal_checker_exit_zero": 30,
+      "terminal_checker_exit_one": 3
+    },
+    "token_accounting": {
+      "top_level_solver_token_files": 33,
+      "attempt_records": 33,
+      "agent_turns": 185,
+      "input_tokens": 7018209,
+      "cache_creation_tokens": 0,
+      "cache_read_tokens": 5945600,
+      "output_tokens": 105002,
+      "reported_model_cost_usd": 0.0,
+      "summed_session_wallclock_seconds": 3972.280166
+    },
+    "candidate_outcomes": {
+      "observed": 33,
+      "passed": 28,
+      "failed": 5,
+      "grouped_passes": {
+        "entry-game-direct/static": 2,
+        "entry-game-direct/fixed": 4,
+        "entry-game-direct/evolved": 5,
+        "entry-game-transport/static": 6,
+        "entry-game-transport/fixed": 6,
+        "entry-game-transport/evolved": 5
+      }
+    },
+    "guidance_liveness": {
+      "failure_derived_candidates_produced": 6,
+      "candidates_admitted": 6,
+      "candidates_selected_later": 3,
+      "cells_with_later_selection": [3, 6, 9]
+    },
+    "artifact_match": {
+      "launch_hashes_match_execution_audit": true,
+      "lineage_hashes_match_execution_audit": true,
+      "machine_audit_hashes_and_statuses_match_execution_audit": true,
+      "runtime_evaluation_scores_match_execution_audit": true
+    },
+    "deterministic_reaudit": {
+      "successful_cells_replayed": 11,
+      "successful_outputs_byte_identical": true,
+      "ordinal_1_exit_code": 2,
+      "ordinal_1_message": "Stage 5B Sol REP-002 audit error: Sol REP-002 telemetry evidence is missing"
+    },
+    "sqlite_integrity": {
+      "attempt_ledgers_checked": 1,
+      "lineage_databases_checked": 22,
+      "all_results": "ok",
+      "open_mode": "read-only"
+    },
+    "historical_ledger_hashes": {
+      "sol_rep001": "3b393f9085ad832da85c02eda8055b6c7ccf89783343348c30497b30befa32f1",
+      "stage5a_dev002": "e593bf5726b20aa20f1cbb15882b7c2e9e169080233f346d67b48d6543a37922",
+      "stage5a_dev003": "3d0ab59f2022d6bdbb04774688e3ab2cd9981a2f31a6f34bd2b1772950f2d664"
+    }
+  },
+  "archive_consistency": {
+    "execution_audit_confirmed": true,
+    "known_failure_reclassified": false,
+    "runtime_evidence_modified": false,
+    "frozen_protocol_modified": false,
+    "full_matrix_complete": false,
+    "model_backed_repair_validation_complete": true
+  },
+  "disposition": {
+    "rep002_closed_and_immutable": true,
+    "ordinal_1_retry_forbidden": true,
+    "successor_created_or_authorized": false,
+    "next_gate": "Stop. A complete-matrix successor requires a new user request, a new protocol identity and fresh state, a pre-reservation external-checkout permission preflight, zero-model validation and review, and separate explicit model/quota authorization."
+  },
+  "claim_boundary": "This second Codex AI read-only review confirms internal consistency and the incomplete archival disposition. It does not supply independent human review, recover the missing ordinal-1 observation, establish a clean whole-matrix replication or complete Sol-versus-Luna comparison, or support causal EvE, model-capability, benchmark-readiness, or evaluation-complete claims."
+}

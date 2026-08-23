@@ -27,6 +27,7 @@ read, in order:
 - experiments/eve/stage5b_sol_rep002_protocol.json
 - experiments/eve/stage5b_review/sol-rep002-audit.json
 - experiments/eve/stage5b_review/sol-rep002-execution-audit.json
+- experiments/eve/stage5b_review/sol-rep002-post-archive-readonly-review.json
 
 Inspect git status --short --branch, recent commits, every remote, the upstream
 tracking relationship, and the exact target files before changing anything.
@@ -38,9 +39,10 @@ zero-model protocol-freeze commit is
 5c8dc1fab267baaf61b0175cb8103cb3ac7bea7f. The expected Sol REP-001 execution
 archive commit is c1c933d654b66176751725a83aac7368d14f5ebe. The live local
 branch must also contain ordinal-12 diagnosis handoff 7172a54, REP-002
-zero-model freeze d7940571d2febc5284b9283525330a3ccbb5017f, and the later
-REP-002 execution archive commit recorded in HANDOFF.md. Verify the live HEAD,
-upstream, and remote rather than trusting these expected values.
+zero-model freeze d7940571d2febc5284b9283525330a3ccbb5017f, REP-002 execution
+archive 876aa794539670af8ca3685348db974629bc7a87, and the later read-only
+review commit recorded in HANDOFF.md. Verify the live HEAD, upstream, and remote
+rather than trusting these expected values.
 
 The worktree contains extensive user-owned changes outside experiments/eve/.
 Preserve all of them. Never restore, format, stage, commit, or otherwise absorb
@@ -186,6 +188,15 @@ Immutable historical facts:
     stage5b_review/sol-rep002-execution-audit.json. Post-execution regression is
     122 passed, 2 unchanged checkout-dependent skips, including all 19 REP-002
     targeted tests and all historical/new protocol verifiers.
+28. A second Codex AI read-only post-archive review is tracked at
+    stage5b_review/sol-rep002-post-archive-readonly-review.json, SHA-256
+    5b826fdfc17244076fe2aa9fcb49f5d1f2a778c6e03cf3b248da7258dbdbd918.
+    It independently recomputed the frozen ledger order, all 12 zero-model
+    preflights, 33 terminal chains, tokens, runtime scores, guidance events,
+    artifact hashes, 23 SQLite integrity checks, and 11 byte-identical audit
+    replays. Source order and the sparse ordinal-1 root confirm the failure was
+    before Codex driver construction/model access. It found no new discrepancy,
+    modified no runtime evidence, and is not independent human review.
 
 Claim boundary:
 
@@ -205,18 +216,19 @@ Claim boundary:
   ordinal-1 scientific observation prevents a clean whole-matrix replication
   or complete Sol-versus-Luna comparison.
 
-Start in read-only review mode. All DEV-003, Sol REP-001, and Sol REP-002
+Start in read-only mode. All DEV-003, Sol REP-001, and Sol REP-002
 attempts are consumed: do not retry, resume, import, repair in place, delete, or
 invoke any old --execute path. In particular, never rerun REP-002 ordinal 1;
 reservation consumed its one allowed attempt before the zero-model launch
 failure.
 
-The next bounded action is independent read-only REP-002 execution review. Any
-complete-matrix replication requires a new protocol identity, fresh
-roots/ledger/RNG domain, a pre-reservation external-checkout permission
-preflight, new zero-model review, and separate explicit model/quota
-authorization. Do not design or execute that successor without a new user
-request. Never modify or reuse REP-001 or REP-002 runtime evidence.
+The bounded REP-002 read-only review is complete. Stop unless the user explicitly
+requests a new task. Any complete-matrix replication requires a new protocol
+identity, fresh roots/ledger/RNG domain, a pre-reservation external-checkout
+permission preflight, new zero-model validation/review, and separate explicit
+model/quota authorization. Do not design, freeze, or execute that successor
+without a new user request. A request to design it would not authorize model
+execution. Never modify or reuse REP-001 or REP-002 runtime evidence.
 
 For any task, run validation proportionate to the changed files. For EVE
 protocol work, at minimum run the full experiments/eve test suite, relevant

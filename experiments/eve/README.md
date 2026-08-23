@@ -1,6 +1,6 @@
 # EvE sidecar for EconCSLib
 
-> **Status: `stage5b-sol-rep002-executed-post-run-audit-incomplete`.
+> **Status: `stage5b-sol-rep002-read-only-review-confirmed-incomplete`.
 > Stage 1 smoke 002 is
 > closed at score `1.0`; the public Entry Game direct/transport pair and its 12
 > mutations pass Stage 2; the Stage 3 Codex review record verifies at `1.0`.
@@ -34,12 +34,15 @@
 > all 33 terminal events validate the repaired contract and all 11 machine
 > audits replay byte-identically. Three evolved cells establish local
 > produced/admitted/selected-later chains, but the missing ordinal-1
-> observation prevents a clean whole-matrix replication.
+> observation prevents a clean whole-matrix replication. A second Codex AI
+> read-only post-archive review independently recomputed the ledger, launch
+> ordering, events, scores, tokens, audit replay, and SQLite integrity and
+> confirmed that incomplete disposition without modifying runtime evidence.
 > Codex review is AI review, not independent human
 > review, and none of this is a hidden benchmark, causal condition result,
 > formal EvE-effect result, or general model-capability claim.**
 
-## 总体技术路线（v3.10，权威入口）
+## 总体技术路线（v3.11，权威入口）
 
 本节是 EconCSLib EVE 研究计划的**唯一技术路线入口**。后续关于研究目标、
 证明路线、实验设计、模型顺序、阶段门槛和任务扩展的决定，都应更新在本节，
@@ -718,6 +721,15 @@ sidecar 的 snapshot/quiescence 行为。当前结果是干净 checker 与本地
 
 #### 变更记录
 
+- **2026-08-23 · v3.11**：完成 REP-002 第二遍 Codex AI 只读归档复核，记录为
+  `stage5b_review/sol-rep002-post-archive-readonly-review.json`（SHA-256
+  `5b826fdfc17244076fe2aa9fcb49f5d1f2a778c6e03cf3b248da7258dbdbd918`）。复核从
+  冻结矩阵和本地 `.runtime` 证据独立重算 12 条一次性 ledger、12 次零模型 preflight、
+  33 条 terminal contract、33 份顶层 token 记录、28/33 raw pass、6 个 produced/
+  admitted 与 3 个 later-selected candidate，并以只读方式确认 23 个 SQLite `ok` 和
+  11 份 machine audit 逐字节重放一致。源码顺序与 ordinal-1 稀疏目录共同确认其在
+  预约后、Codex driver/模型 session 前失败。没有新增 finding、模型调用或证据写入；
+  该复核不是独立人工审查，也不补足缺失的 direct/static/1729 科学观测。
 - **2026-08-23 · v3.10**：经明确授权执行 REP-002。12 个一次性 attempt slot
   均按冻结顺序入账；ordinal 1 在预约后、模型前因工作区 sandbox 拒绝 EvE 写入外部
   checkout 的 `.codex/hooks.json` 而 exit 1，零模型、零 telemetry，依协议不得重跑。

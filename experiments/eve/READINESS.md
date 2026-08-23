@@ -1,6 +1,6 @@
 # EvE experiment readiness
 
-- **Current status:** `STAGE5B_SOL_REP002_EXECUTED_POST_RUN_AUDIT_INCOMPLETE`;
+- **Current status:** `STAGE5B_SOL_REP002_READ_ONLY_REVIEW_CONFIRMED_INCOMPLETE`;
   Stage 1 smoke 002 is closed at score one, Stage 2 direct/transport/pair and
   12 mutations are closed, Stage 3 Codex review verifies at score one, and
   all 12 Stage 4 Luna development cells completed and passed machine re-audit;
@@ -15,7 +15,9 @@
   12 attempt slots once; ordinal 1 failed after reservation and before model
   access on a sandbox-denied external hook write, while ordinals 2--12 completed
   33 sessions with all terminal evidence and 11 audits valid; the missing
-  ordinal-1 observation prevents a clean whole-matrix result
+  ordinal-1 observation prevents a clean whole-matrix result; a second Codex
+  AI read-only post-archive review independently confirmed the archive's
+  internal consistency without modifying evidence
 - **Not valid statuses:** `benchmark-ready`, `evaluation-complete`,
   `internal-pilot-complete`, or any model-capability conclusion
 - **Formal pilot default:** disabled and not configured
@@ -311,6 +313,18 @@ produced/admitted/selected-later chains. The pre-execution record is
 `stage5b_review/sol-rep002-execution-audit.json`. The repair is validated for
 all model-backed rollouts, but the matrix is incomplete because ordinal 1 has
 no scientific observation.
+
+The second Codex AI read-only review is
+`stage5b_review/sol-rep002-post-archive-readonly-review.json`, SHA-256
+`5b826fdfc17244076fe2aa9fcb49f5d1f2a778c6e03cf3b248da7258dbdbd918`.
+It independently recomputed the frozen ledger order, all 12 launch preflights,
+33 terminal chains, token and score arithmetic, guidance liveness, artifact
+hashes, 23 read-only SQLite integrity checks, and 11 byte-identical successful
+audit replays. Source-order inspection plus the ordinal-1 sparse runtime root
+confirms that failure occurred before Codex driver construction or any model
+session. This is corroborating AI review, not independent human review, and it
+does not recover the missing scientific observation or change the incomplete
+status.
 
 ## Hard-disabled formal experiment boundary
 
