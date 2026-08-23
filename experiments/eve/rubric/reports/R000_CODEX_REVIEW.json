@@ -1,0 +1,26 @@
+{
+  "checks": {
+    "absolute_paths_or_timestamps_in_outputs": "PASS",
+    "criterion_cycles": "PASS",
+    "fail_fast_false_is_not_automatic_fail": "PASS",
+    "historical_assets_unchanged": "PASS",
+    "model_or_eve_execution": "PASS_ZERO",
+    "public_corpus_not_described_as_benchmark": "PASS",
+    "rep003_identity_and_boundary_unchanged": "PASS",
+    "shadow_cannot_accept_hard_rejection": "PASS",
+    "shadow_cannot_reach_one_without_hard_acceptance": "PASS",
+    "syntactic_evidence_not_overinterpreted": "PASS"
+  },
+  "findings": [],
+  "independent_human_review": false,
+  "known_baseline_test_state": {
+    "base_commit": "f266f1edec013583495ef5f1b12f59eb631c1ef9",
+    "new_failures_introduced": 0,
+    "note": "The clean base reproduces the 13 existing failures and one existing error observed in the full EVE suite; task-owned focused tests pass."
+  },
+  "review_id": "EVE-RUBRIC-R000-CODEX-SELF-REVIEW",
+  "reviewer_kind": "codex-ai-review",
+  "schema_version": "1.0.0",
+  "status": "reviewed-no-blocking-findings",
+  "subject": "EVE-RUBRIC-R000 shadow instrumentation"
+}

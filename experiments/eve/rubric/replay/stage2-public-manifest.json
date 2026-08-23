@@ -1,0 +1,40 @@
+{
+  "accepted_candidates": [
+    {
+      "base_path": "experiments/eve/stage2_entry_game/direct/expected/Accepted.lean",
+      "candidate_id": "DIRECT-ACCEPTED",
+      "route": "direct"
+    },
+    {
+      "base_path": "experiments/eve/stage2_entry_game/transport/expected/Accepted.lean",
+      "candidate_id": "TRANSPORT-ACCEPTED",
+      "route": "transport"
+    }
+  ],
+  "corpus_semantics": [
+    "public-development-corpus",
+    "not-hidden-evaluation",
+    "not-benchmark-generalization-evidence",
+    "not-model-capability-evidence",
+    "not-causal-eve-evidence",
+    "codex-ai-review-not-independent-human-review"
+  ],
+  "expected_mutation_ids": [
+    "DIRECT-UNFIXED",
+    "DIRECT-PLACEHOLDER",
+    "DIRECT-ABSTRACT-LEAK",
+    "DIRECT-PREFIX-TAMPER",
+    "DIRECT-WRONG-NAME",
+    "DIRECT-EXTRA-IMPORT",
+    "TRANSPORT-UNFIXED",
+    "TRANSPORT-PLACEHOLDER",
+    "TRANSPORT-MISSING-CERTIFICATE",
+    "TRANSPORT-PREFIX-TAMPER",
+    "TRANSPORT-EXTRA-IMPORT",
+    "TRANSPORT-WRONG-TARGET"
+  ],
+  "manifest_id": "EVE-RUBRIC-R000-STAGE2-PUBLIC-REPLAY",
+  "mutations_source": "experiments/eve/stage2_entry_game/mutations.json",
+  "rubric_id": "EVE-RUBRIC-R000",
+  "schema_version": "1.0.0"
+}

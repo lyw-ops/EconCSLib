@@ -1,0 +1,67 @@
+{
+  "base_commit": "f266f1edec013583495ef5f1b12f59eb631c1ef9",
+  "commands": [
+    {
+      "command": "python3 experiments/eve/rubric/scripts/validate_rubric.py",
+      "exit_code": 0,
+      "result": "35 criteria and 4 obligation graphs passed"
+    },
+    {
+      "command": "python3 experiments/eve/rubric/scripts/verify_rubric_artifacts.py",
+      "exit_code": 0,
+      "result": "7 historical source hashes and canonical R000 hash passed"
+    },
+    {
+      "command": "python3 experiments/eve/rubric/scripts/replay_stage2_public.py --rubric experiments/eve/rubric/versions/R000.json --verify",
+      "exit_code": 0,
+      "result": "2/2 accepted, 12/12 mutations rejected, 12/12 expected failure codes"
+    },
+    {
+      "command": "python3 -m unittest experiments.eve.tests.test_rubric_registry experiments.eve.tests.test_rubric_shadow_score experiments.eve.tests.test_rubric_stage2_replay -v",
+      "exit_code": 0,
+      "failed": 0,
+      "passed": 29,
+      "skipped": 0,
+      "tests": 29
+    },
+    {
+      "command": "python3 -m unittest discover -s experiments/eve/tests -v",
+      "error": 1,
+      "exit_code": 1,
+      "failed": 13,
+      "passed": 155,
+      "skipped": 3,
+      "tests": 172
+    },
+    {
+      "command": "clean-base targeted reproduction at f266f1e: test_efg_micro_evaluator + operator manifest hash + DEV-002 protocol identity",
+      "error": 1,
+      "exit_code": 1,
+      "failed": 13,
+      "passed": 1,
+      "result": "All failures/errors observed in the task-branch full suite reproduce without task changes",
+      "skipped": 0,
+      "tests": 15
+    },
+    {
+      "command": "git diff --check -- experiments/eve",
+      "exit_code": 0,
+      "result": "no whitespace errors"
+    }
+  ],
+  "environment": {
+    "kernel": "Darwin 25.6.0 arm64",
+    "lean": "4.30.0",
+    "mathlib_commit": "c5ea00351c28e24afc9f0f84379aa41082b1188f",
+    "python": "3.14.5"
+  },
+  "full_suite_baseline_note": "The complete suite has zero task-introduced failures. Its 13 failures and one error are pre-existing at the exact clean base commit: stale EFG protected hashes, a missing historical operator artifact in the tracked checkout, and the historical DEV-002 Lean closure mismatch. The user's dirty primary worktree contains unrelated fixes that make the targeted baseline tests pass; they were not copied into this branch.",
+  "model_and_execution": {
+    "eve_execute_invocations": 0,
+    "model_calls": 0,
+    "model_sessions": 0,
+    "quota_consumed_by_this_task": 0
+  },
+  "schema_version": "1.0.0",
+  "status": "TASK_VALIDATION_PASSED_WITH_REPRODUCED_BASELINE_FAILURES"
+}

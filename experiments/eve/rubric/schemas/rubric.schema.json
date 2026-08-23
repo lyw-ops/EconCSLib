@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "artifact_sources": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "sha256": {
+            "minLength": 64,
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "sha256"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "criteria": {
+      "items": {
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "parent_rubric_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "rubric_id": {
+      "const": "EVE-RUBRIC-R000",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1.0.0",
+      "type": "string"
+    },
+    "scope": {
+      "type": "string"
+    },
+    "shadow_search_score": {
+      "additionalProperties": false,
+      "properties": {
+        "authoritative": {
+          "const": false,
+          "type": "boolean"
+        },
+        "controls_selection": {
+          "const": false,
+          "type": "boolean"
+        },
+        "formula_id": {
+          "type": "string"
+        },
+        "maximum_rejected_score": {
+          "const": 0.95,
+          "type": "number"
+        }
+      },
+      "required": [
+        "authoritative",
+        "controls_selection",
+        "formula_id",
+        "maximum_rejected_score"
+      ],
+      "type": "object"
+    },
+    "status": {
+      "const": "SEED_SHADOW_ONLY",
+      "type": "string"
+    },
+    "trusted_acceptance_oracle": {
+      "additionalProperties": false,
+      "properties": {
+        "authoritative": {
+          "const": true,
+          "type": "boolean"
+        },
+        "kind": {
+          "const": "existing-deterministic-evaluator",
+          "type": "string"
+        },
+        "pass_score": {
+          "const": 1.0,
+          "type": "number"
+        },
+        "rejection_score": {
+          "const": 0.0,
+          "type": "number"
+        }
+      },
+      "required": [
+        "kind",
+        "authoritative",
+        "pass_score",
+        "rejection_score"
+      ],
+      "type": "object"
+    },
+    "version": {
+      "const": "0.1.0",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "rubric_id",
+    "version",
+    "parent_rubric_id",
+    "status",
+    "scope",
+    "trusted_acceptance_oracle",
+    "shadow_search_score",
+    "artifact_sources",
+    "criteria",
+    "limitations"
+  ],
+  "title": "EVE rubric registry",
+  "type": "object"
+}
