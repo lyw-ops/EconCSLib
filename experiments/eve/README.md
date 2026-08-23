@@ -1,6 +1,6 @@
 # EvE sidecar for EconCSLib
 
-> **Status: `stage5b-sol-rep002-frozen-not-yet-executed-zero-model-validated`.
+> **Status: `stage5b-sol-rep002-executed-post-run-audit-incomplete`.
 > Stage 1 smoke 002 is
 > closed at score `1.0`; the public Entry Game direct/transport pair and its 12
 > mutations pass Stage 2; the Stage 3 Codex review record verifies at `1.0`.
@@ -27,13 +27,19 @@
 > after its last checker call. The separate REP-002 successor now forces a
 > wrapper-owned checker call after the agent and before evaluation, emits one
 > terminal event per rollout, and classifies evidence rejection without
-> optimizer production. REP-002 passes all zero-model gates but has made no
-> model call and is not authorized for execution.
+> optimizer production. REP-002 then consumed all 12 attempt slots once. Its
+> ordinal 1 launch failed after reservation but before model access when the
+> workspace sandbox denied EvE's external-checkout hook write; it has no
+> telemetry and cannot be retried. Ordinals 2--12 completed 33 Sol sessions;
+> all 33 terminal events validate the repaired contract and all 11 machine
+> audits replay byte-identically. Three evolved cells establish local
+> produced/admitted/selected-later chains, but the missing ordinal-1
+> observation prevents a clean whole-matrix replication.
 > Codex review is AI review, not independent human
 > review, and none of this is a hidden benchmark, causal condition result,
 > formal EvE-effect result, or general model-capability claim.**
 
-## 总体技术路线（v3.9，权威入口）
+## 总体技术路线（v3.10，权威入口）
 
 本节是 EconCSLib EVE 研究计划的**唯一技术路线入口**。后续关于研究目标、
 证明路线、实验设计、模型顺序、阶段门槛和任务扩展的决定，都应更新在本节，
@@ -682,8 +688,11 @@ sidecar 的 snapshot/quiescence 行为。当前结果是干净 checker 与本地
   这不是 snapshot race。独立 REP-002 identity 在 agent 返回、evaluation 开始前由
   wrapper 强制追加一次 checker event，并在 evaluation 后重验 snapshot；每个 rollout
   必须有唯一 terminal event，证据拒绝明确分类且不能生产 optimizer。19 项定向测试、
-  122 项全量测试（2 skip）、12/12 check 与 12/12 dry-run 已通过；0 模型、0 quota、
-  0 REP-002 root/ledger，执行仍需另行明确授权；
+  122 项全量测试（2 skip）、12/12 check 与 12/12 dry-run 已通过。经明确授权后，
+  12 个 attempt slot 按冻结顺序各消费一次；ordinal 1 在预约后、模型前因 sandbox
+  拒绝写外部 EvE checkout hook 而失败，不得重跑。其余 11 个 cell 完成 33 次 Sol
+  session，33/33 terminal event 通过新契约，11 份 audit 逐字节重放一致；ordinal
+  3、6、9 各建立一条后续选择链。整轮因缺失 ordinal-1 观测而不是 clean matrix；
 - 当前 EFG driver/manifest 已记录显式 `gpt-5.6-luna`、low effort 和
   Codex-default/unpinned verbosity；清单保留 001 score-zero、002 score-one 和
   comparative conditions 的历史 not-run 事实。两次都没有 guidance 更新。冻结 case
@@ -709,6 +718,15 @@ sidecar 的 snapshot/quiescence 行为。当前结果是干净 checker 与本地
 
 #### 变更记录
 
+- **2026-08-23 · v3.10**：经明确授权执行 REP-002。12 个一次性 attempt slot
+  均按冻结顺序入账；ordinal 1 在预约后、模型前因工作区 sandbox 拒绝 EvE 写入外部
+  checkout 的 `.codex/hooks.json` 而 exit 1，零模型、零 telemetry，依协议不得重跑。
+  Ordinal 2--12 完成 33 个 `gpt-5.6-sol` subscription session；33 条
+  `solver_rollout_completed` 与 33 条唯一 `solver_rollout_terminal` 一一对应，候选
+  哈希无错配，11 份 machine audit 逐字节重放一致。观察到 28/33 candidate pass、
+  6 个 failure-derived guidance candidate 生产并入池、其中 3 个在后续轮次被选择。
+  终端证据修复在全部模型 rollout 上成立，但缺失 ordinal-1 direct/static/1729
+  观测，故 REP-002 仍是 post-run-audit-incomplete 而非 clean whole-matrix replication。
 - **2026-08-23 · v3.9**：完成 REP-001 ordinal-12 只读诊断并冻结独立 Sol
   REP-002（protocol v1.0.0，SHA-256
   `318557e77f6b2126b813e522eea15bce03cb792639b2f537e4d53893749f7a8f`）。诊断
@@ -1380,8 +1398,20 @@ snapshot afterward, and writes exactly one terminal event per rollout. Explicit
 checker-evidence rejection cannot produce an optimizer and is classified by the
 auditor rather than reported as generic missing telemetry. The 19 targeted and
 122 full-suite tests (two recorded skips), historical verifiers, 12 checks, and
-12 dry-runs pass with zero model calls, zero quota, and no formal REP-002 state.
-Execution is not authorized.
+12 dry-runs passed before execution with zero model calls, zero quota, and no
+formal REP-002 state. After explicit authorization, all 12 attempt slots were
+consumed once in frozen order. Ordinal 1 failed after reservation and before
+model access because the workspace sandbox denied the required external EvE
+checkout hook write; it has no telemetry and cannot be retried. Ordinals 2--12
+completed 33 Sol sessions. All 33 terminal events validate the repaired
+post-agent/pre-evaluation checker contract, and all 11 machine audits replay
+byte-identically. Raw observed passes are direct static `2/3` (one planned cell
+missing), fixed `4/6`, evolved `5/6`; transport static `6/6`, fixed `6/6`,
+evolved `5/6`. Evolved ordinals 3, 6, and 9 each retain a local
+produced/admitted/selected-later chain; ordinal 12 produces no guidance. The
+tracked disposition is `stage5b_review/sol-rep002-execution-audit.json`. The
+repair is validated for every model-backed rollout, but REP-002 is not a clean
+whole-matrix replication because ordinal 1 has no model or scientific result.
 
 Any proposed `Arena`, controlled-carrier, StructuralCore-closure, or
 Canonical/Frontend API change discovered later must return to the documented
@@ -1403,7 +1433,8 @@ The Stage 4, Stage 5A, and Stage 5B run roots, ledgers, and machine-audit report
 are local evidence for `stage4_review/audit.json`,
 `stage5a_review/dev002-execution-audit.json`, and
 `stage5a_review/dev003-execution-audit.json`, and
-`stage5b_review/sol-rep001-execution-audit.json`. Do not clean them until they
+`stage5b_review/sol-rep001-execution-audit.json`, and
+`stage5b_review/sol-rep002-execution-audit.json`. Do not clean them until they
 have been archived to an approved evidence store; the tracked hashes prove
 identity but cannot reconstruct deleted transcripts or candidates. Before any
 later cleanup, verify the target exactly:
@@ -1441,9 +1472,9 @@ the task's validation record.
 
 ## Known limitations
 
-- Exactly two bounded evolved-labelled Stage 1 engineering smokes and four
-  12-cell public development matrices (Stage 4, DEV-002, DEV-003, and Sol
-  REP-001) have run. Stage 4 produced no optimizer candidate; later local
+- Exactly two bounded evolved-labelled Stage 1 engineering smokes and five
+  12-cell public development matrices (Stage 4, DEV-002, DEV-003, Sol REP-001,
+  and Sol REP-002) have run. Stage 4 produced no optimizer candidate; later local
   liveness chains do not establish guidance-evolution effectiveness.
 - Stage 5A DEV-001 was invalidated before execution. DEV-002 executed but has a
   blocking checker/auditor defect; its one local liveness chain is historical,
@@ -1455,9 +1486,12 @@ the task's validation record.
   post-run audit because iteration-1 rollout telemetry is incomplete. Its 11
   audited cells and three local liveness chains do not make the whole matrix a
   clean replication or complete cross-model comparison.
-- Sol REP-002 repairs only that evidence-order boundary under a fresh identity.
-  It is zero-model validated and unexecuted, so it contributes no experimental
-  outcome and historical REP-001 authorization does not transfer.
+- Sol REP-002 repairs that evidence-order boundary under a fresh identity and
+  validates the repair on all 33 model-backed rollouts. Its ordinal 1 attempt
+  failed before model access because the external hook write was sandboxed;
+  all 12 slots are consumed and no retry is permitted. The 11 audited cells and
+  three local liveness chains do not make the incomplete matrix a clean
+  replication or complete cross-model comparison.
 - Neither public synthetic/local task can support a benchmark,
   model-capability, EvE-improvement, or minimal-core optimization conclusion.
 - EvE has no native dry-run at the pin; the sidecar prevents invocation.

@@ -1,6 +1,6 @@
 # EvE experiment readiness
 
-- **Current status:** `STAGE5B_SOL_REP002_FROZEN_NOT_YET_EXECUTED_ZERO_MODEL_VALIDATED`;
+- **Current status:** `STAGE5B_SOL_REP002_EXECUTED_POST_RUN_AUDIT_INCOMPLETE`;
   Stage 1 smoke 002 is closed at score one, Stage 2 direct/transport/pair and
   12 mutations are closed, Stage 3 Codex review verifies at score one, and
   all 12 Stage 4 Luna development cells completed and passed machine re-audit;
@@ -11,23 +11,31 @@
   evidence and three local guidance-liveness chains; Stage 5B Sol REP-001 then
   consumed all 12 cells and 36 Sol sessions exactly once, but ordinal 12 lacks
   complete rollout telemetry and its mandatory post-run audit fails closed;
-  the separately frozen REP-002 successor closes the diagnosed evidence-order
-  gap in zero-model tests but has no execution authorization or result
+  the separately frozen REP-002 successor was then authorized and consumed all
+  12 attempt slots once; ordinal 1 failed after reservation and before model
+  access on a sandbox-denied external hook write, while ordinals 2--12 completed
+  33 sessions with all terminal evidence and 11 audits valid; the missing
+  ordinal-1 observation prevents a clean whole-matrix result
 - **Not valid statuses:** `benchmark-ready`, `evaluation-complete`,
   `internal-pilot-complete`, or any model-capability conclusion
 - **Formal pilot default:** disabled and not configured
 - **Paid/long EvE execution:** the 12-cell public Stage 4, defective DEV-002,
-  clean-evidence DEV-003, and post-run-audit-incomplete Sol REP-001 matrices have
-  executed; no benchmark, private evaluation, or formal pilot has executed
-- **Underlying EvE executions:** 50 completed: two Stage 1 smokes, 12 fresh
+  clean-evidence DEV-003, post-run-audit-incomplete Sol REP-001, and
+  post-run-audit-incomplete Sol REP-002 matrices have executed; no benchmark,
+  private evaluation, or formal pilot has executed
+- **Underlying EvE executions:** 61 completed plus one post-reservation,
+  pre-model REP-002 launch failure: two Stage 1 smokes, 12 fresh
   Stage 4 cells, 12 fresh DEV-002 cells, 12 fresh DEV-003 cells, and 12 fresh
-  Sol REP-001 cells; the ordinal-12 Sol outer invocation returned 2 only after
-  the underlying EvE process completed and the mandatory audit failed closed
+  Sol REP-001 cells, plus 11 completed REP-002 cells; the REP-001 ordinal-12
+  outer invocation returned 2 only after the underlying EvE process completed
+  and the mandatory audit failed closed
 - **Luna sessions:** one read-only access smoke, two Stage 1 solver sessions,
   24 Stage 4 solver sessions, and 72 Stage 5A solver sessions
-- **Sol sessions:** 36 Stage 5B solver sessions; 206 agent turns, 6,924,408
-  input tokens, 5,800,192 cache-read tokens, and 125,536 output tokens; REP-002
-  has 0 sessions and 0 quota consumption
+- **Sol sessions:** 69 Stage 5B solver sessions. REP-001 accounts for 36
+  sessions, 206 agent turns, 6,924,408 input tokens, 5,800,192 cache-read
+  tokens, and 125,536 output tokens. REP-002 accounts for 33 sessions, 185
+  agent turns, 7,018,209 input tokens, 5,945,600 cache-read tokens, and 105,002
+  output tokens; ordinal 1 consumed no model quota
 
 ## What is ready
 
@@ -44,8 +52,9 @@ official repository, annotated tag object, peeled commit, LICENSE, NOTICE,
 Hydra loader, the historical 45-test Stage 1 suite plus the current Stage 2--5B
 extensions (latest full result: 122 tests passed, 2 skipped), `--check`, `--dry-run`,
 the launcher accepted fixture, and accepted-fixture compilation under an
-isolated solver HOME pass. Fifty completed EvE executions and their
-bounded Luna sessions are recorded below; the only other model call is the
+isolated solver HOME pass. Sixty-one completed EvE executions, one preserved
+pre-model launch failure, and their bounded Luna/Sol sessions are recorded
+below; the only other model call is the
 separately bounded access smoke.
 
 Codex project trust and all four EvE hook events are verified for that exact
@@ -288,10 +297,20 @@ unchanged; identity, paths, RNG domain, roots, and ledger are fresh.
 
 REP-002 passes 19 targeted tests, the 122-test full EVE suite with two recorded
 checkout-dependent skips, all historical protocol verifiers, and all 12
-`--check` plus 12 `--dry-run` cells. These gates made zero model calls, consumed
-zero Sol quota, and created no formal REP-002 root or ledger. Its pre-execution
-record is `stage5b_review/sol-rep002-audit.json`. Execution remains blocked on
-separate explicit model/quota authorization.
+`--check` plus 12 `--dry-run` cells. These pre-execution gates made zero model
+calls, consumed zero Sol quota, and created no formal REP-002 root or ledger.
+After separate explicit authorization, all 12 attempt slots were consumed once
+in order. Ordinal 1 failed after reservation and before model access because
+the workspace sandbox denied EvE's required write to the external checkout's
+`.codex/hooks.json`; it has no telemetry and cannot be retried. Ordinals 2--12
+completed 33 sessions. All 33 `solver_rollout_completed` events have exactly
+one valid `solver_rollout_terminal`, with no terminal/final candidate mismatch;
+11 machine audits replay byte-identically. Three evolved cells establish local
+produced/admitted/selected-later chains. The pre-execution record is
+`stage5b_review/sol-rep002-audit.json`; the post-execution disposition is
+`stage5b_review/sol-rep002-execution-audit.json`. The repair is validated for
+all model-backed rollouts, but the matrix is incomplete because ordinal 1 has
+no scientific observation.
 
 ## Hard-disabled formal experiment boundary
 
@@ -326,10 +345,13 @@ and dry-run paths remain zero-model. All 12 Sol attempt slots are consumed, and
 the ledger rejects a rerun. Repair requires a new protocol identity, fresh
 roots/ledger, new review, and separate execution authorization.
 
-The unexecuted `run_stage5b_sol_rep002.py` accepts only the frozen REP-002
+The executed `run_stage5b_sol_rep002.py` accepts only the frozen REP-002
 identity and the same exact matrix, with a separate root parent and ledger. Its
-check/dry-run paths are zero-model and validated. `--execute` is not authorized;
-REP-001 authorization does not transfer.
+check/dry-run paths remain zero-model. All 12 REP-002 attempt slots are now
+consumed; the ledger rejects any duplicate or out-of-order rerun. Any new
+complete-matrix execution requires a new protocol identity, fresh roots and
+ledger, a pre-reservation external-checkout permission preflight, new review,
+and separate execution authorization.
 
 ## Public Stage 4 Entry Game three-condition study
 
@@ -421,10 +443,14 @@ iteration-1 rollout telemetry. The tracked pre-execution review is
 `stage5b_review/sol-rep001-execution-audit.json`. These records are not a clean
 whole-matrix Sol result or complete cross-model comparison.
 
-Sol REP-002 is frozen and zero-model validated as an evidence-order repair. It
-has no formal attempts or model sessions, so it adds no scientific result. The
-immediate protocol gate is separate explicit authorization before any REP-002
-model/quota use.
+Sol REP-002 then consumed all 12 one-shot attempt slots. Ordinal 1 failed after
+reservation but before model access on the sandboxed external hook write;
+ordinals 2--12 completed 33 sessions with complete terminal evidence. Six
+failure-derived candidates were produced and admitted, and exact candidates in
+evolved ordinals 3, 6, and 9 were selected later; ordinal 12 produced no
+guidance. This validates the evidence-order repair locally but is not a clean
+whole-matrix result because direct/static/1729 is absent. REP-002 is immutable
+and must not be retried, resumed, imported, or repaired in place.
 
 ## Gates before a real Mathlib-style experiment
 

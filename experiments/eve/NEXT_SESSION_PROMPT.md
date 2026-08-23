@@ -26,6 +26,7 @@ read, in order:
 - experiments/eve/stage5b_review/sol-rep001-ordinal12-diagnosis.json
 - experiments/eve/stage5b_sol_rep002_protocol.json
 - experiments/eve/stage5b_review/sol-rep002-audit.json
+- experiments/eve/stage5b_review/sol-rep002-execution-audit.json
 
 Inspect git status --short --branch, recent commits, every remote, the upstream
 tracking relationship, and the exact target files before changing anything.
@@ -36,8 +37,9 @@ execution-archive commit is
 zero-model protocol-freeze commit is
 5c8dc1fab267baaf61b0175cb8103cb3ac7bea7f. The expected Sol REP-001 execution
 archive commit is c1c933d654b66176751725a83aac7368d14f5ebe. The live local
-branch must also contain ordinal-12 diagnosis handoff 7172a54 and the later
-REP-002 zero-model freeze commit recorded in HANDOFF.md. Verify the live HEAD,
+branch must also contain ordinal-12 diagnosis handoff 7172a54, REP-002
+zero-model freeze d7940571d2febc5284b9283525330a3ccbb5017f, and the later
+REP-002 execution archive commit recorded in HANDOFF.md. Verify the live HEAD,
 upstream, and remote rather than trusting these expected values.
 
 The worktree contains extensive user-owned changes outside experiments/eve/.
@@ -140,7 +142,8 @@ Immutable historical facts:
     EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-002 v1.0.0, SHA-256
     318557e77f6b2126b813e522eea15bce03cb792639b2f537e4d53893749f7a8f.
     It uses fresh configs, overlays, RNG domain, run-root parent, and attempt
-    ledger. Neither formal REP-002 root nor ledger exists.
+    ledger. Its protocol file remains an immutable launch input and correctly
+    retains FROZEN_NOT_YET_EXECUTED; actual execution is recorded separately.
 20. REP-002 preserves REP-001's model, effort, scientific inputs, matrix,
     prompts, initial guidance, checker, evaluator, pinned sources, compute,
     turn/timeout, and no-retry policy. Its wrapper alone adds an immutable
@@ -152,6 +155,37 @@ Immutable historical facts:
     tests with the same two checkout-dependent skips, all historical and new
     protocol verifiers, all 12 zero-model checks, and all 12 dry-runs. It made
     zero model calls, consumed zero quota, and wrote zero formal state.
+22. The user then explicitly authorized REP-002 model/quota execution. All 12
+    attempt slots were reserved exactly once and in frozen order. There was no
+    retry, resume, import, or duplicate cell.
+23. Ordinal 1, entry-game-direct / seed 1729 / static, failed after reservation
+    and before model access because the workspace sandbox denied EvE's required
+    write to /Users/lyuyuwei/Documents/eve-v0.2.0/.codex/hooks.json. It has no
+    telemetry, lineage database, token record, or scientific result. The
+    attempt is consumed and must never be retried even though it used zero model
+    quota.
+24. Ordinals 2--12 completed 33 gpt-5.6-sol subscription sessions. Exactly 33
+    solver_rollout_completed and 33 solver_rollout_terminal events exist; every
+    terminal event uses the post-agent/pre-evaluation checker phase and matches
+    the final candidate hash. Eleven machine audits replay byte-identically.
+    This validates the REP-001 evidence-order repair for all model-backed
+    REP-002 rollouts.
+25. Observed raw REP-002 candidate passes are direct static 2/3 with one planned
+    cell absent, fixed 4/6, evolved 5/6; transport static 6/6, fixed 6/6,
+    evolved 5/6. Six failure-derived guidance candidates were produced and
+    admitted. Evolved ordinals 3, 6, and 9 each selected one exact candidate in
+    a later iteration; ordinal 12 produced no guidance.
+26. REP-002 token accounting uses exactly 33 top-level token_usage.json records:
+    185 agent turns, 7,018,209 input tokens, 5,945,600 cache-read tokens, and
+    105,002 output tokens. The ChatGPT subscription adapter reports USD 0; this
+    neither means zero quota consumption nor exposes remaining quota. No API
+    key was created or used.
+27. The REP-002 ledger plus 22 lineage databases pass read-only SQLite integrity
+    checks. REP-001, DEV-002, and DEV-003 ledger hashes remain unchanged. The
+    tracked post-execution record is
+    stage5b_review/sol-rep002-execution-audit.json. Post-execution regression is
+    122 passed, 2 unchanged checkout-dependent skips, including all 19 REP-002
+    targeted tests and all historical/new protocol verifiers.
 
 Claim boundary:
 
@@ -166,22 +200,23 @@ Claim boundary:
   or complete Sol-versus-Luna comparison.
 - Provider model sampling remains uncontrolled, and the answer-visible matrix
   has only n=2 seeds per condition.
-- REP-002 establishes only a reviewed protocol repair and zero-model gate
-  success. It has no result and no inherited execution authorization.
+- REP-002 establishes that the repaired terminal checker contract held for all
+  33 model-backed rollouts and retains three local liveness chains. Its missing
+  ordinal-1 scientific observation prevents a clean whole-matrix replication
+  or complete Sol-versus-Luna comparison.
 
-Start in read-only review mode. All DEV-003 and Sol REP-001 attempts are
-consumed: do not retry, resume, import, repair in place, or invoke either old
---execute path. REP-002 is frozen and zero-model validated but unexecuted. Do
-not invoke its --execute path, start a model, consume quota, or create its
-formal root/ledger unless the user gives new explicit authorization naming
-REP-002 and acknowledging model/quota use. Historical authorization never
-transfers to a successor.
+Start in read-only review mode. All DEV-003, Sol REP-001, and Sol REP-002
+attempts are consumed: do not retry, resume, import, repair in place, delete, or
+invoke any old --execute path. In particular, never rerun REP-002 ordinal 1;
+reservation consumed its one allowed attempt before the zero-model launch
+failure.
 
-The next bounded action is independent read-only REP-002 review or a user
-decision at that authorization gate. Before any separately authorized
-execution, verify the exact protocol SHA, clean EvE and Lean checkouts, absent
-REP-002 formal state, frozen ordinal-1 matrix selection, authentication, and
-quota acknowledgement. Never modify or reuse REP-001 runtime evidence.
+The next bounded action is independent read-only REP-002 execution review. Any
+complete-matrix replication requires a new protocol identity, fresh
+roots/ledger/RNG domain, a pre-reservation external-checkout permission
+preflight, new zero-model review, and separate explicit model/quota
+authorization. Do not design or execute that successor without a new user
+request. Never modify or reuse REP-001 or REP-002 runtime evidence.
 
 For any task, run validation proportionate to the changed files. For EVE
 protocol work, at minimum run the full experiments/eve test suite, relevant

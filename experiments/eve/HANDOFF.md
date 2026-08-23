@@ -14,7 +14,8 @@ Last updated: 2026-08-23
 - Sol REP-001 pre-execution handoff refresh: `3d930d2f448e8ed1c53c928a9fd61417f130d6f3`
 - Sol REP-001 execution archive: `c1c933d654b66176751725a83aac7368d14f5ebe`
 - Ordinal-12 diagnosis handoff refresh: `7172a54`
-- Sol REP-002 zero-model protocol freeze: this commit
+- Sol REP-002 zero-model protocol freeze: `d7940571d2febc5284b9283525330a3ccbb5017f`
+- Sol REP-002 execution archive: this commit
 - Long-term route authority: `experiments/eve/README.md`
 - Current gate authority: `experiments/eve/READINESS.md`
 - Copy-paste next-session prompt: `experiments/eve/NEXT_SESSION_PROMPT.md`
@@ -142,39 +143,58 @@ eliminate every settling event.
 
 ## Current Stage 5B Sol REP-002 state
 
-Read-only diagnosis is frozen in
-`stage5b_review/sol-rep001-ordinal12-diagnosis.json`. The last ordinal-12
-iteration-1 checker event covered candidate SHA-256 `37db0198...`; at 15:33:26Z
-the model used `apply_patch` to replace the two proof bodies, producing final
-candidate `b19c421a...`, and made no subsequent checker call. The preserved
-evaluator used those final bytes and Lean rejected the replacement proofs.
-This deterministically explains the mismatch without a snapshot race.
-
 The independent successor protocol is
 `EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-002`, version `1.0.0`, SHA-256
 `318557e77f6b2126b813e522eea15bce03cb792639b2f537e4d53893749f7a8f`.
-It has fresh configs, overlays, RNG domain, root parent
-`.runtime/stage5b-sol-rep002-runs`, and attempt ledger
-`.runtime/stage5b-sol-rep002-attempt-ledger.sqlite3`; neither formal path exists.
+After explicit user authorization, all 12 one-shot attempt slots were consumed
+exactly once in frozen order. Ordinal 1 (`entry-game-direct / 1729 / static`)
+failed after reservation and before model access because the workspace sandbox
+denied EvE's required write to the separate checkout's `.codex/hooks.json`.
+It has zero model sessions, no telemetry or lineage database, and is immutable;
+the no-retry policy forbids rerunning it. Subsequent cells used the required
+scoped external-checkout permission.
 
-The REP-002 wrapper invokes the exact immutable checker after `_run_agent`
-returns and before `evaluate_workspace`, then revalidates candidate, checker,
-and event chain after evaluation. Every rollout emits exactly one
-`solver_rollout_terminal` event. Invalid evidence is explicitly
-`RUN_FAILED_CHECK_EVIDENCE_CONTRACT`; the rejected task cannot reach evaluation,
-finalization, or optimizer production. The auditor recognizes terminal
-rejection directly rather than reporting generic incomplete telemetry.
+Ordinals 2--12 completed 33 `gpt-5.6-sol` subscription sessions with no retry,
+resume, or import. All 33 `solver_rollout_completed` events have one matching
+`solver_rollout_terminal` event at the post-agent/pre-evaluation boundary.
+Candidate hashes match at the terminal event, and the checker evidence is
+fail-closed. Eleven machine audits replay byte-identically. This validates the
+REP-001 evidence-order repair for every model-backed REP-002 rollout.
 
-Scientific inputs are unchanged from REP-001: model `gpt-5.6-sol`, low effort,
-tasks, cases, seeds, conditions, matrix order, three iterations, one worker,
-prompt/guidance/checker bytes, evaluator, pinned EvE/Lean source, eight turns,
-900 seconds, and zero retry/resume/import. Preparation and validation made zero
-model calls and consumed zero Sol quota. Execution is not authorized, and the
-old REP-001 authorization does not transfer.
+Observed raw candidate passes are direct static `2/3` (the other planned cell
+is missing), fixed `4/6`, evolved `5/6`; transport static `6/6`, fixed `6/6`,
+evolved `5/6`. Six failure-derived guidance candidates were produced and
+admitted. Evolved ordinals 3, 6, and 9 each selected one exact candidate in a
+strictly later iteration; ordinal 12 produced no guidance. The missing
+ordinal-1 observation means REP-002 is not a clean whole-matrix replication or
+complete Sol-versus-Luna comparison. The tracked disposition is
+`stage5b_review/sol-rep002-execution-audit.json`.
 
 ## Last verified evidence
 
-- The Sol attempt ledger has 12 unique completed exit-zero rows, SHA-256
+- The REP-002 ledger has 12 unique rows in frozen order: 11 `completed`/exit 0
+  and ordinal 1 `failed`/exit 1. Its SHA-256 is
+  `62cf062264698be0006f8ffa20430f2581d226bb7e743ceae94d6dd375ed6bd1`.
+- REP-002 has 12 fresh run roots. Eleven have final machine audits; ordinal 1
+  has only its launch record because it stopped before telemetry/model access.
+  Replaying the 11 audits is byte-identical; replaying ordinal 1 fails closed
+  with exit 2 and `Sol REP-002 telemetry evidence is missing`.
+- Exactly 33 completed and 33 terminal rollout events exist. All terminal
+  candidate hashes match, all events use the wrapper-owned
+  post-agent/pre-evaluation phase, and no terminal evidence is missing or
+  duplicated. Thirty terminal checkers exit 0 and three exit 1; all 33 chains
+  are valid evidence.
+- The REP-002 attempt ledger and all 22 solver/optimizer lineage databases pass
+  read-only SQLite integrity checks. No checkpoint, repair, or evidence write
+  was performed during review.
+- REP-002 token evidence contains exactly 33 top-level subscription sessions:
+  185 agent turns, 7,018,209 input tokens, 5,945,600 cache-read tokens, and
+  105,002 output tokens. The adapter reports USD 0; that is not evidence of
+  zero subscription quota use or remaining capacity. No API key was used.
+- Post-execution validation passes 122 EVE tests with the same two
+  checkout-dependent skips, including all 19 REP-002 targeted tests. Stage 4,
+  DEV-002, DEV-003, REP-001, and REP-002 verifiers pass.
+- The REP-001 Sol attempt ledger has 12 unique completed exit-zero rows, SHA-256
   `3b393f9085ad832da85c02eda8055b6c7ccf89783343348c30497b30befa32f1`.
 - Eleven machine audits replay byte-identically. Ordinal 12 reproducibly fails
   closed with exit 2 and `solver rollout telemetry is incomplete`.
@@ -217,25 +237,27 @@ old REP-001 authorization does not transfer.
 - DEV-002 state reuse or mutation is zero; its ledger SHA-256 remains
   `e593bf5726b20aa20f1cbb15882b7c2e9e169080233f346d67b48d6543a37922`.
 
-These facts establish three audited local guidance-liveness mechanism
-observations in the Sol execution. The ordinal-12 evidence gap, answer-visible
-`n=2` matrix, uncontrolled provider sampling, non-independent review, and
-pre-reservation guard anomalies establish no clean cross-model replication,
-causal EvE effect, model capability, benchmark readiness, or evaluation
-completion.
+REP-001 and REP-002 each retain three audited local guidance-liveness mechanism
+observations. REP-001's ordinal-12 evidence gap, REP-002's missing ordinal-1
+scientific observation, the answer-visible `n=2` matrix, uncontrolled provider
+sampling, non-independent review, and pre-reservation/launch anomalies establish
+no clean cross-model replication, causal EvE effect, model capability,
+benchmark readiness, or evaluation completion.
 
 ## Next bounded action and stop condition
 
-Stop at the frozen, zero-model-validated REP-002 protocol. All REP-001 attempt
-slots remain consumed and immutable; do not retry, resume, import, repair in
-place, or reuse their runtime state. Do not call REP-002 `--execute`, start a
-model, consume quota, or create its formal root/ledger without a new explicit
-user authorization naming REP-002 and acknowledging model/quota use.
+Stop at the executed, post-run-audit-incomplete REP-002 record. All REP-001 and
+REP-002 attempt slots are consumed and immutable. Do not retry, resume, import,
+delete, repair in place, or reuse either runtime state. In particular, do not
+rerun REP-002 ordinal 1 even though it made no model call: its attempt was
+reserved and the no-retry rule is part of the frozen protocol.
 
-The next bounded action is independent read-only review of REP-002 or a user
-decision at that authorization gate. If execution is authorized, reverify the
-exact protocol SHA, clean checkouts, absent REP-002 formal state, frozen matrix
-order, authentication, and quota acknowledgement before reserving ordinal 1.
+The next bounded action is independent read-only review of the REP-002
+execution and tracked audit. Any complete-matrix replication requires a new
+protocol identity, fresh root/ledger/RNG domain, a pre-reservation check that
+the external EvE hook write is permitted, new zero-model review, and separate
+explicit model/quota authorization. Do not create or execute that successor
+without a new user request.
 
 ## Session cleanup and repository state
 
@@ -244,9 +266,10 @@ order, authentication, and quota acknowledgement before reserving ordinal 1.
   reproducible audit-output copies; no formal run evidence was removed.
 - `experiments/eve/.runtime`, the clean Lean checkout, and every historical
   Stage 4/5A/5B root and ledger remain preserved.
-- At handoff generation, the remote branch contains diagnosis handoff
-  `7172a54`; the REP-002 freeze is the current task-owned update pending its
-  final commit/push. The mixed non-EVE worktree remains user-owned and untouched.
+- At handoff generation, the remote branch contains REP-002 freeze
+  `d7940571d2febc5284b9283525330a3ccbb5017f`; the execution archive is the
+  current task-owned update pending its final commit/push. The mixed non-EVE
+  worktree remains user-owned and untouched.
 
 ## Local versus GitHub evidence
 
@@ -254,10 +277,10 @@ GitHub stores the tracked protocols, code, reviews, documentation, and commit
 history. Runtime evidence under `experiments/eve/.runtime/` is ignored and
 remains only on this machine. A fresh clone cannot reconstruct historical
 Stage 4/DEV-002/DEV-003/Sol transcripts, but their tracked audit hashes remain
-authoritative summaries. Sol REP-001 runtime evidence now exists only on this
-machine and must be preserved. REP-002 has no runtime evidence because it has
-not executed. Both protocols' Lean environments are tied to a clean committed
-source tree rather than the user's uncommitted Lean work.
+authoritative summaries. Sol REP-001 and REP-002 runtime evidence now exists
+only on this machine and must be preserved. Both protocols' Lean environments
+are tied to a clean committed source tree rather than the user's uncommitted
+Lean work.
 
 ## Bootstrap prompt for the next conversation
 

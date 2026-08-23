@@ -1,0 +1,438 @@
+{
+  "schema_version": "1.0.0",
+  "reviewed_at": "2026-08-23T05:45:36Z",
+  "status": "EXECUTED_POST_RUN_AUDIT_INCOMPLETE",
+  "review": {
+    "kind": "codex-ai-post-execution-review-plus-deterministic-machine-validation",
+    "independent_human_review": false,
+    "conclusion": "All 12 frozen attempts were consumed exactly once and in order. Ordinal 1 failed after reservation but before model access because the workspace sandbox denied EvE's required external-checkout hook write. It has zero model sessions and no telemetry and cannot be retried. Ordinals 2-12 completed 33 Sol sessions; all 33 terminal events satisfy the repaired checker contract and all 11 machine audits replay byte-identically. The evidence-order repair is validated for every model-backed rollout, but the missing ordinal-1 cell means REP-002 is not a clean whole-matrix replication."
+  },
+  "protocol": {
+    "id": "EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-002",
+    "version": "1.0.0",
+    "sha256": "318557e77f6b2126b813e522eea15bce03cb792639b2f537e4d53893749f7a8f",
+    "frozen_status_at_launch": "FROZEN_NOT_YET_EXECUTED",
+    "pre_execution_review": "experiments/eve/stage5b_review/sol-rep002-audit.json",
+    "pre_execution_review_sha256": "0b91fbdb3596303ccaeeec5933672b27fae9a5b3c74499a58bd06a5071344610"
+  },
+  "authorization": {
+    "authorized_by_user": true,
+    "authorized_on": "2026-08-23",
+    "user_authorization": "明确授权执行REP-002",
+    "scope": "Execute the complete frozen Sol REP-002 matrix and consume the required ChatGPT subscription model quota."
+  },
+  "authentication": {
+    "mode": "ChatGPT subscription",
+    "api_key_created_or_used": false,
+    "reported_model_cost_usd": 0.0,
+    "reported_cost_limitation": "The subscription adapter records zero dollar cost in token_usage.json. This does not mean the 33 solver sessions consumed no ChatGPT subscription quota or capacity, and it does not expose remaining subscription quota."
+  },
+  "model_configuration": {
+    "model": "gpt-5.6-sol",
+    "reasoning_effort": "low",
+    "provider_model_seed_controlled": false,
+    "iterations_per_planned_cell": 3,
+    "workers_per_iteration": 1,
+    "turn_budget": 8,
+    "timeout_seconds": 900
+  },
+  "source_boundary": {
+    "repository": "https://github.com/lyw-ops/EconCSLib",
+    "clean_lean_source_commit": "b490317186ef435670c2eeb16050a214cdbf9fe5",
+    "lean_environment_manifest": "experiments/eve/stage5b_sol_rep002_lean_environment.json",
+    "lean_environment_manifest_sha256": "d22f9e0f2b7e1cfcee51b5877c86c76520f0522c5d4ed20eee83b742a9e80896",
+    "tracked_clean_checkout_used": true,
+    "mixed_operator_worktree_used_as_lean_source": false,
+    "uncommitted_user_lean_files_included": false,
+    "upstream_eve_commit": "50b2399258ab08b6225a87cd05bded9701caa23d",
+    "eve_checkout_clean_after_execution": true,
+    "lean_checkout_clean_after_execution": true
+  },
+  "execution": {
+    "expected_cells": 12,
+    "attempted_unique_cells": 12,
+    "completed_unique_cells": 11,
+    "failed_unique_cells": 1,
+    "duplicate_cells": 0,
+    "expected_solver_sessions": 36,
+    "actual_solver_sessions": 33,
+    "cells_with_final_machine_audit": 11,
+    "cells_without_telemetry": 1,
+    "retry_used": false,
+    "resume_used": false,
+    "import_used": false,
+    "attempt_ledger": "experiments/eve/.runtime/stage5b-sol-rep002-attempt-ledger.sqlite3",
+    "attempt_ledger_sha256": "62cf062264698be0006f8ffa20430f2581d226bb7e743ceae94d6dd375ed6bd1",
+    "first_reservation_utc": "2026-08-23T04:21:52.469325+00:00",
+    "last_reservation_utc": "2026-08-23T05:37:20.613861+00:00",
+    "run_root_parent": "experiments/eve/.runtime/stage5b-sol-rep002-runs",
+    "fresh_run_roots": 12,
+    "historical_run_roots_reused": false,
+    "all_launch_preflights_zero_model": true,
+    "all_launch_preflights_preserved_formal_projection": true,
+    "all_launch_preflights_preserved_historical_projection": true,
+    "historical_state_inherited_or_written": false,
+    "rep001_attempt_ledger_sha256_after_execution": "3b393f9085ad832da85c02eda8055b6c7ccf89783343348c30497b30befa32f1",
+    "dev002_attempt_ledger_sha256_after_execution": "e593bf5726b20aa20f1cbb15882b7c2e9e169080233f346d67b48d6543a37922",
+    "dev003_attempt_ledger_sha256_after_execution": "3d0ab59f2022d6bdbb04774688e3ab2cd9981a2f31a6f34bd2b1772950f2d664"
+  },
+  "ordinal_1_launch_failure": {
+    "classification": "post-reservation pre-model infrastructure failure",
+    "cell": "entry-game-direct / seed 1729 / static",
+    "ledger_status": "failed",
+    "outer_exit_code": 1,
+    "failed_operation": "write_repo_codex_hooks",
+    "error": "PermissionError: operation not permitted while writing /Users/lyuyuwei/Documents/eve-v0.2.0/.codex/hooks.json",
+    "cause": "The first formal invocation ran inside the repository workspace sandbox, which did not permit the required write to the separate pinned EvE checkout.",
+    "model_sessions_started": 0,
+    "token_usage_files": 0,
+    "telemetry_created": false,
+    "lineage_databases_created": false,
+    "retry_permitted": false,
+    "disposition": "Preserve the failed attempt and sparse run root. Do not retry, resume, import, delete, or rewrite it. Subsequent ordinals ran with the required scoped external-checkout permission.",
+    "effect_on_claims": "The planned direct/static/seed-1729 observation is absent. The full 12-cell matrix and the planned 36-session replication are incomplete even though all remaining cells are evidence-valid."
+  },
+  "terminal_checker_contract": {
+    "model_backed_rollouts": 33,
+    "solver_rollout_completed_events": 33,
+    "solver_rollout_terminal_events": 33,
+    "terminal_status_check_evidence_validated": 33,
+    "terminal_checker_exit_zero": 30,
+    "terminal_checker_exit_one": 3,
+    "candidate_terminal_hash_mismatches": 0,
+    "wrong_terminal_checker_phase": 0,
+    "missing_or_duplicate_terminal_events": 0,
+    "post_agent_pre_evaluation_phase_verified": true,
+    "checker_evidence_fail_closed": true,
+    "repair_conclusion": "The REP-001 post-check mutation gap did not recur in any of the 33 model-backed REP-002 rollouts."
+  },
+  "token_accounting": {
+    "top_level_solver_sessions": 33,
+    "top_level_token_usage_files": 33,
+    "attempt_records": 33,
+    "agent_turns": 185,
+    "input_tokens": 7018209,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 5945600,
+    "output_tokens": 105002,
+    "reported_model_cost_usd": 0.0,
+    "summed_session_wallclock_seconds": 3972.280166,
+    "deduplication_rule": "Only run-root/solver_workspaces/<workspace>/logs/optimize/token_usage.json was counted. Copies under evaluation workspaces, guidance examples, optimizer transcripts, and archived transcripts were excluded."
+  },
+  "deterministic_reaudit": {
+    "script": "experiments/eve/scripts/audit_stage5b_sol_rep002.py",
+    "script_sha256": "1aea5eaf4f45aad704af999e5468082e87e67d82c7d9e85aa5582e234fdb3df3",
+    "run_roots_reaudited": 12,
+    "successful_machine_audits": 11,
+    "replayed_successful_outputs_byte_identical": true,
+    "post_run_audit_failures": 1,
+    "ordinal_1_replay_exit_code": 2,
+    "ordinal_1_replay_message": "Sol REP-002 telemetry evidence is missing",
+    "checker_evidence_fail_closed_for_successful_audits": true,
+    "durable_attempt_ledger_verified": true,
+    "lineage_databases_verified_for_successful_audits": true,
+    "fresh_run_roots_verified_for_successful_audits": true,
+    "rep002_sqlite_integrity_databases_checked": 23,
+    "rep002_sqlite_integrity_all_ok": true,
+    "sqlite_read_note": "The attempt ledger and 22 solver/optimizer lineage databases were opened read-only. No checkpoint, repair, or evidence write was performed."
+  },
+  "solver_candidate_outcomes": {
+    "planned_candidate_instances": 36,
+    "observed_candidate_instances": 33,
+    "observed_passed_candidate_instances": 28,
+    "observed_failed_candidate_instances": 5,
+    "fully_audited_candidate_instances": 33,
+    "grouped": [
+      {
+        "task": "entry-game-direct",
+        "condition": "static",
+        "passed_candidates": 2,
+        "observed_candidate_instances": 3,
+        "planned_candidate_instances": 6,
+        "completed_cells": 1,
+        "planned_cells": 2,
+        "missing_cell_ordinal": 1
+      },
+      {
+        "task": "entry-game-direct",
+        "condition": "fixed",
+        "passed_candidates": 4,
+        "observed_candidate_instances": 6,
+        "planned_candidate_instances": 6,
+        "completed_cells": 2,
+        "planned_cells": 2
+      },
+      {
+        "task": "entry-game-direct",
+        "condition": "evolved",
+        "passed_candidates": 5,
+        "observed_candidate_instances": 6,
+        "planned_candidate_instances": 6,
+        "completed_cells": 2,
+        "planned_cells": 2
+      },
+      {
+        "task": "entry-game-transport",
+        "condition": "static",
+        "passed_candidates": 6,
+        "observed_candidate_instances": 6,
+        "planned_candidate_instances": 6,
+        "completed_cells": 2,
+        "planned_cells": 2
+      },
+      {
+        "task": "entry-game-transport",
+        "condition": "fixed",
+        "passed_candidates": 6,
+        "observed_candidate_instances": 6,
+        "planned_candidate_instances": 6,
+        "completed_cells": 2,
+        "planned_cells": 2
+      },
+      {
+        "task": "entry-game-transport",
+        "condition": "evolved",
+        "passed_candidates": 5,
+        "observed_candidate_instances": 6,
+        "planned_candidate_instances": 6,
+        "completed_cells": 2,
+        "planned_cells": 2
+      }
+    ]
+  },
+  "guidance_liveness": {
+    "fully_audited_evolved_cells": 4,
+    "fully_audited_failure_derived_candidates_produced": 6,
+    "fully_audited_candidates_admitted_to_population": 6,
+    "fully_audited_candidates_selected_in_a_strictly_later_iteration": 3,
+    "fully_audited_cells_with_guidance_produced_and_selected_later": 3,
+    "fully_audited_evolved_cells_with_no_guidance_produced": 1,
+    "local_mechanism_observed": true,
+    "whole_matrix_clean_replication": false,
+    "audited_candidates": [
+      {
+        "cell_ordinal": 3,
+        "candidate_id": "optimizer_cae8494f0594",
+        "candidate_guidance_sha256": "26f8c985c7f8c58ac4461b203b08722e543ffd0b9d69b60e294564552f4ba174",
+        "source_iteration": 1,
+        "recorded_local_lean_failures": 5,
+        "selected_later_iterations": [3]
+      },
+      {
+        "cell_ordinal": 3,
+        "candidate_id": "optimizer_a12d3d805773",
+        "candidate_guidance_sha256": "6c11a60c66bb48e0305d39364fafc2549af7e93b721cffedfa8224e2204212d3",
+        "source_iteration": 2,
+        "recorded_local_lean_failures": 1,
+        "selected_later_iterations": []
+      },
+      {
+        "cell_ordinal": 6,
+        "candidate_id": "optimizer_3d517da837ed",
+        "candidate_guidance_sha256": "26f22b8f67f764bfa7941f3b37c5d90fcaa412682b63db8262be743c4b96c3fd",
+        "source_iteration": 1,
+        "recorded_local_lean_failures": 8,
+        "selected_later_iterations": [2]
+      },
+      {
+        "cell_ordinal": 6,
+        "candidate_id": "optimizer_0aa39500cb6e",
+        "candidate_guidance_sha256": "2688cde9940b6fafe06524991df699514cf1547d9a2fb517854afe12ed35e230",
+        "source_iteration": 2,
+        "recorded_local_lean_failures": 3,
+        "selected_later_iterations": []
+      },
+      {
+        "cell_ordinal": 9,
+        "candidate_id": "optimizer_fa38ac4a70eb",
+        "candidate_guidance_sha256": "56f4d6bd133e3de64192aa5dd47f4ca19c7194b6a0ae70f64e706abadfabbc51",
+        "source_iteration": 1,
+        "recorded_local_lean_failures": 5,
+        "selected_later_iterations": [3]
+      },
+      {
+        "cell_ordinal": 9,
+        "candidate_id": "optimizer_c3f0f346d876",
+        "candidate_guidance_sha256": "6c21a4510a8c8e2a1aeb12b80ecdc48bd4a3db1496695e69f070491a84b9a981",
+        "source_iteration": 2,
+        "recorded_local_lean_failures": 14,
+        "selected_later_iterations": []
+      }
+    ]
+  },
+  "cells": [
+    {
+      "ordinal": 1,
+      "task": "entry-game-direct",
+      "seed": 1729,
+      "condition": "static",
+      "run_root": "experiments/eve/.runtime/stage5b-sol-rep002-runs/20260823T042152_468313Z",
+      "scores": [],
+      "audit_status": "AUDIT_FAILED_MISSING_TELEMETRY",
+      "ledger_status": "failed",
+      "exit_code": 1,
+      "launch_sha256": "58238c449bd93c48e61a3d5f42bc1858e3c2877fac703d1d2d577127ff5c6408",
+      "lineage_sha256": null,
+      "machine_audit_sha256": null
+    },
+    {
+      "ordinal": 2,
+      "task": "entry-game-direct",
+      "seed": 1729,
+      "condition": "fixed",
+      "run_root": "experiments/eve/.runtime/stage5b-sol-rep002-runs/20260823T042252_510953Z",
+      "scores": [1.0, 0.0, 1.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "c929125123096b534202c6bb59ca890e82a172687de0d1ea7f348913306092e7",
+      "lineage_sha256": "461e3e0e45752f2e222567bcfe671e2546d47881d55a6fe5d58766f3e4bba7bf",
+      "machine_audit_sha256": "251dca12017c55128f1a66206baa8f189faefe5065273371a2a151006dedd749"
+    },
+    {
+      "ordinal": 3,
+      "task": "entry-game-direct",
+      "seed": 1729,
+      "condition": "evolved",
+      "run_root": "experiments/eve/.runtime/stage5b-sol-rep002-runs/20260823T042948_971309Z",
+      "scores": [1.0, 1.0, 1.0],
+      "audit_status": "GUIDANCE_PRODUCED_AND_SELECTED_LATER",
+      "launch_sha256": "1b86510c57b26555b7e9e947a5741b632d245a9415b4713230cb19c5d5d1ae1d",
+      "lineage_sha256": "107355c6a6846421dad7226e729a239e048a8069ce8173bf82f7a2f66d47c1e3",
+      "machine_audit_sha256": "a7bc66b9e894a0685f6a5bd3b8d443322aafbb27045d52b665e7f7893a181172"
+    },
+    {
+      "ordinal": 4,
+      "task": "entry-game-direct",
+      "seed": 2718,
+      "condition": "static",
+      "run_root": "experiments/eve/.runtime/stage5b-sol-rep002-runs/20260823T043625_425003Z",
+      "scores": [0.0, 1.0, 1.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "7155eea028a59dc345a3067c8dca59cf9ee3271635554f7e043070eeda1a2d0d",
+      "lineage_sha256": "a69ea7cff6db4fe0853558ce333fcbe5b0cec171148d39cddd6382746dd26a5a",
+      "machine_audit_sha256": "d3832207c8bcb82ae77efc0bb123da72472b35e65f02fd3b7a8e8603edcab5e7"
+    },
+    {
+      "ordinal": 5,
+      "task": "entry-game-direct",
+      "seed": 2718,
+      "condition": "fixed",
+      "run_root": "experiments/eve/.runtime/stage5b-sol-rep002-runs/20260823T044209_757606Z",
+      "scores": [0.0, 1.0, 1.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "195be2972ac331338b079eac653f2e40f9cccda2a8ebad1dfc647227a8134e12",
+      "lineage_sha256": "6df1d9b5093726a593c4d8a3191bfd94c3480054a58fa8f0c83d3ba9ea44a15f",
+      "machine_audit_sha256": "9b73f38ed8d91a54598ceb70ff54a301655e097988ceded29243b3f76db7711e"
+    },
+    {
+      "ordinal": 6,
+      "task": "entry-game-direct",
+      "seed": 2718,
+      "condition": "evolved",
+      "run_root": "experiments/eve/.runtime/stage5b-sol-rep002-runs/20260823T045105_253014Z",
+      "scores": [0.0, 1.0, 1.0],
+      "audit_status": "GUIDANCE_PRODUCED_AND_SELECTED_LATER",
+      "launch_sha256": "f9811c90412b63f6ddc03081cb2ad16ef9d91a3434ebc068ac82da361e74d5c8",
+      "lineage_sha256": "12a74ef0fcf522722fd982046bb5e0c680b43aa5fbad113b14c12d1776d687e9",
+      "machine_audit_sha256": "0518f8bc568fe6c85744d6b7d7b07dcbcf24e5aab4f0f516f3872cdc03f77894"
+    },
+    {
+      "ordinal": 7,
+      "task": "entry-game-transport",
+      "seed": 1729,
+      "condition": "static",
+      "run_root": "experiments/eve/.runtime/stage5b-sol-rep002-runs/20260823T045946_097852Z",
+      "scores": [1.0, 1.0, 1.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "c3d7ca48c7ddeed275faced2353cdb3013fb30ed3ac433ab091b625cc7fcbce3",
+      "lineage_sha256": "9b19e9612423ed25bc7d574f2c60faa7597d68bc32077b6d044c951aa9f987e5",
+      "machine_audit_sha256": "c1b1e48296483b0c15a8e4b4f1d539730bbe80a1792b5b183faff76c17c09c16"
+    },
+    {
+      "ordinal": 8,
+      "task": "entry-game-transport",
+      "seed": 1729,
+      "condition": "fixed",
+      "run_root": "experiments/eve/.runtime/stage5b-sol-rep002-runs/20260823T050628_068119Z",
+      "scores": [1.0, 1.0, 1.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "5dd7a3295cba4502e517ba52b77cf5dbcc5f56554f2090d734b5d89ed8f2c027",
+      "lineage_sha256": "9732765874c6d1c4092b2e259bb7b45be4263219da6f7e487e46fb36c40af810",
+      "machine_audit_sha256": "75d9de1ceb3c19b93d7bc04dbb08db0ca90823cb1531873e9c22558e31a49707"
+    },
+    {
+      "ordinal": 9,
+      "task": "entry-game-transport",
+      "seed": 1729,
+      "condition": "evolved",
+      "run_root": "experiments/eve/.runtime/stage5b-sol-rep002-runs/20260823T051333_118496Z",
+      "scores": [0.0, 1.0, 1.0],
+      "audit_status": "GUIDANCE_PRODUCED_AND_SELECTED_LATER",
+      "launch_sha256": "d8051898e0946e5d1a983a7d309ad67923fc18f0cb6b6213249cb6686432afd6",
+      "lineage_sha256": "a48af6ffe31abbbbfaba23c3cbd935486bfba0d565cafd71827c72731252268e",
+      "machine_audit_sha256": "bf3a725dc79c30e7f4d066e6734a01d5e9a9a0ed46c25eb67b17ebdb30bc8662"
+    },
+    {
+      "ordinal": 10,
+      "task": "entry-game-transport",
+      "seed": 2718,
+      "condition": "static",
+      "run_root": "experiments/eve/.runtime/stage5b-sol-rep002-runs/20260823T052608_024287Z",
+      "scores": [1.0, 1.0, 1.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "2c2e5f833735b1f04bc490173cfbe7382c994eaf314aed67f51ce0cb0e2a6060",
+      "lineage_sha256": "85901f1e93000026aa0340b02971aadc7ad6b7f1f4dbce24d2d6e9d6268ece49",
+      "machine_audit_sha256": "a21a400eeb70814ffce401b30b144a8d70bd7783086db639116e1070e14dd276"
+    },
+    {
+      "ordinal": 11,
+      "task": "entry-game-transport",
+      "seed": 2718,
+      "condition": "fixed",
+      "run_root": "experiments/eve/.runtime/stage5b-sol-rep002-runs/20260823T053111_103217Z",
+      "scores": [1.0, 1.0, 1.0],
+      "audit_status": "CONTROL_PASSED_NO_RETENTION",
+      "launch_sha256": "45aa275bb73e759686554a07bc35f596489d40a17283f2b23dd73af53a2ad3b8",
+      "lineage_sha256": "71fe6551cb46ad3e52e6860481eaae081a56cf69867fc2cdd4352792965c6f15",
+      "machine_audit_sha256": "e378bf3af9b349aeb435aeda51ef1cc39fa3e2e99fdb21275346ce3a1a218886"
+    },
+    {
+      "ordinal": 12,
+      "task": "entry-game-transport",
+      "seed": 2718,
+      "condition": "evolved",
+      "run_root": "experiments/eve/.runtime/stage5b-sol-rep002-runs/20260823T053720_613357Z",
+      "scores": [1.0, 1.0, 1.0],
+      "audit_status": "NO_GUIDANCE_PRODUCED",
+      "launch_sha256": "6f8b264894a460f96ea50d382205507772c96cf89b3bcd8bf859a1e05519aa11",
+      "lineage_sha256": "c6eb46aa989832f69487686bb6a9482be8406d9b8322a114cba010afdfe4dc4a",
+      "machine_audit_sha256": "1642e04dd7bcaa963aa1d8f7b0b73b97d308b8747100611eeb68f871a7911227"
+    }
+  ],
+  "validation": {
+    "post_execution_full_eve_tests": "122 passed, 2 skipped",
+    "post_execution_rep002_targeted_tests_within_full_suite": "19 passed",
+    "skips": [
+      "test_accepted_efg_fixture_compiles_in_isolated_solver_home: no explicit locked EvE v0.2.0 checkout supplied to unittest discovery",
+      "test_actual_hydra_loader_parses_both_configs_when_checkout_is_supplied: no explicit locked EvE v0.2.0 checkout supplied to unittest discovery"
+    ],
+    "stage4_local_evidence_review": "passed",
+    "dev002_historical_protocol_verifier": "passed",
+    "dev003_clean_checkout_protocol_verifier": "passed",
+    "sol_rep001_clean_checkout_protocol_verifier": "passed",
+    "sol_rep002_clean_checkout_protocol_verifier": "passed",
+    "successful_rep002_machine_audits_replayed_byte_identically": 11,
+    "ordinal_1_audit_reproduced_fail_closed": true,
+    "cell_hash_records_verified": 12,
+    "frozen_rep002_assets_unchanged": true
+  },
+  "disposition": {
+    "sol_rep002_attempts_consumed": true,
+    "sol_rep002_must_not_be_retried_resumed_or_imported": true,
+    "runtime_evidence_must_be_preserved": true,
+    "terminal_checker_repair_validated_for_all_model_backed_rollouts": true,
+    "full_clean_replication_complete": false,
+    "future_execution_requires_new_protocol_identity": true,
+    "recommended_followup": "Preserve REP-002 unchanged. Do not repair or rerun ordinal 1. Any complete-matrix replication must use a new protocol identity, fresh roots and ledger, a pre-reservation external-checkout permission preflight, separate review, and separate model-quota authorization."
+  },
+  "claim_boundary": "REP-002 consumed all 12 one-shot attempt slots in frozen order. Eleven cells completed 33 Sol sessions with complete terminal-checker evidence, 11 byte-identical deterministic re-audits, 28/33 observed candidate passes, and three local failure-derived guidance production/admission/later-selection chains. Ordinal 1 failed after reservation and before model access because the required external EvE checkout hook write was sandbox-denied; it has no model or scientific observation and cannot be retried. Therefore REP-002 validates its terminal evidence-order repair on every model-backed rollout but is not a clean whole-matrix replication or complete Sol-versus-Luna comparison. It establishes neither a causal EvE effect nor model capability, benchmark readiness, evaluation completion, or independent human review."
+}
