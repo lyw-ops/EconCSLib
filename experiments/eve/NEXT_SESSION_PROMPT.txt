@@ -1,0 +1,178 @@
+/goal 在严格零模型边界内设计、实施并冻结 Stage 5B Sol REP-003 successor；完成验证、审查记录、交接、提交与推送，但绝不执行模型矩阵。
+
+打开 /Users/lyuyuwei/Documents/EconCSlib，继续使用分支 experiment/eve-stage5a。
+
+这是下一会话的完整任务提示词。先核对事实，再工作；不要假定交接仍然最新。
+
+一、先读并遵守
+
+完整阅读根目录 AGENTS.md 和 experiments/eve/AGENTS.md，然后按顺序阅读：
+
+- experiments/eve/HANDOFF.md
+- experiments/eve/README.md
+- experiments/eve/READINESS.md
+- experiments/eve/stage5b_sol_rep001_protocol.json
+- experiments/eve/stage5b_review/sol-rep001-execution-audit.json
+- experiments/eve/stage5b_review/sol-rep001-ordinal12-diagnosis.json
+- experiments/eve/stage5b_sol_rep002_protocol.json
+- experiments/eve/stage5b_review/sol-rep002-audit.json
+- experiments/eve/stage5b_review/sol-rep002-execution-audit.json
+- experiments/eve/stage5b_review/sol-rep002-post-archive-readonly-review.json
+
+检查：
+
+- git status --short --branch
+- git log 的最近提交
+- 所有 remote 和 upstream tracking
+- 本地 HEAD、upstream HEAD、规范远端分支 HEAD
+- 外部 EvE checkout 和 clean Lean checkout 的精确 commit/clean 状态
+
+规范仓库是 https://github.com/lyw-ops/EconCSLib，分支必须跟踪 fork/experiment/eve-stage5a。
+本提示词生成时，已推送并核对的 REP-002 只读复核提交是：
+
+9e37fd26808c52ea8d5f532af8938a515afc13e6
+
+不要仅凭这个预期值继续；必须核对 live HEAD、upstream 和远端。如果状态已经前进，先阅读新增提交并重新确认任务边界。
+
+工作树中 experiments/eve/ 之外存在大量用户自有修改。不得恢复、格式化、暂存、提交或吸收它们。只处理本任务拥有的 experiments/eve/ 文件，提交前逐项审阅 staged diff。
+
+二、不可变历史
+
+1. DEV-002、DEV-003、Sol REP-001 和 Sol REP-002 都已经消耗各自冻结的 attempt。不得 retry、resume、import、repair in place、删除、改写或复用它们的 runtime state。
+
+2. Sol REP-001 的 12 个 attempt 和 36 个 Sol session 已消耗。Ordinal 12 因模型在最后一次 checker 后修改 Candidate.lean 而缺失完整 rollout telemetry。REP-001 不是 clean whole-matrix replication。
+
+3. Sol REP-002 的协议是 EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-002 v1.0.0，SHA-256：
+
+318557e77f6b2126b813e522eea15bce03cb792639b2f537e4d53893749f7a8f
+
+它修复了 REP-001 的 terminal checker 顺序：wrapper 在 agent 返回后、evaluation 前运行 immutable checker，并为每个 rollout 写唯一 terminal event。
+
+4. REP-002 的 12 个一次性 attempt 已全部消耗。Ordinal 1（entry-game-direct / 1729 / static）在 reservation 后、模型访问前失败，因为 workspace sandbox 拒绝 pinned EvE 写外部 checkout 的 .codex/hooks.json。它没有 token、telemetry、lineage database 或科学观测，且绝不能重跑。
+
+5. REP-002 ordinals 2--12 完成 33 个 gpt-5.6-sol subscription session。33 条 solver_rollout_completed 与 33 条 solver_rollout_terminal 一一对应，terminal candidate hash 和 post-agent/pre-evaluation phase 全部有效；11 份 machine audit 可逐字节重放。
+
+6. REP-002 raw candidate pass 为 28/33。六个 failure-derived guidance candidate 被生产并入池，ordinals 3、6、9 各有一个在严格后续 iteration 被选择。缺失 ordinal-1 观测使 REP-002 仍不是 clean whole-matrix replication 或完整 Sol-versus-Luna comparison。
+
+7. REP-002 执行审计：
+
+experiments/eve/stage5b_review/sol-rep002-execution-audit.json
+SHA-256 f20db7bad909890a55ab40930f6464c59d149ae04abc6224ace5364893013709
+
+第二遍 Codex AI 只读复核：
+
+experiments/eve/stage5b_review/sol-rep002-post-archive-readonly-review.json
+SHA-256 5b826fdfc17244076fe2aa9fcb49f5d1f2a778c6e03cf3b248da7258dbdbd918
+
+它独立重算 ledger、preflight、terminal、token、score、guidance、artifact hash、23 个 SQLite integrity check 和 11 份 audit replay，未发现新偏差，也未修改 runtime。它不是独立人工审查。
+
+8. 外部 EvE 必须保持 pinned commit：
+
+50b2399258ab08b6225a87cd05bded9701caa23d
+
+clean Lean source 必须保持 commit：
+
+b490317186ef435670c2eeb16050a214cdbf9fe5
+
+混合 operator worktree 绝不能作为 Lean source。
+
+9. experiments/eve/.runtime/ 被 Git 忽略，只存在本机。不得清理、checkpoint、repair 或改写任何历史 root、ledger、transcript、token、lineage 或 audit evidence。
+
+三、本次授权范围
+
+本提示词授权下一会话完成一个全新的、零模型的 successor 设计与冻结任务。建议新身份为：
+
+EVE-STAGE5B-SOL-ENTRY-GAME-GUIDANCE-LIVENESS-REP-003
+
+在冻结前必须确认该身份和所有新路径没有冲突。
+
+允许：
+
+- 只读研究 REP-002 与 pinned EvE 源码；
+- 新建 REP-003 protocol、detached hash、configs、overlay、wrapper、auditor、tests 和 pre-execution review；
+- 运行测试、verifier、--check、--dry-run 和不会调用模型的 dependency/preflight 验证；
+- 对 pinned 外部 checkout 所需 hook 写操作设计并测试 fail-closed 的 pre-reservation guard；
+- 更新 README、READINESS、HANDOFF 和本 TXT；
+- 只提交、推送本任务拥有的 tracked EVE 文件。
+
+不允许：
+
+- 任何 Codex/ChatGPT/Luna/Sol 模型调用；
+- 任何 subscription quota 或 API quota 消耗；
+- 运行任何旧或新的 --execute 路径；
+- 创建正式 REP-003 run root、正式 attempt ledger row、solver workspace、token record 或 lineage database；
+- 把当前设计授权解释成 REP-003 执行授权；
+- 修改、复用或删除 REP-001/REP-002 runtime evidence；
+- 创建或使用 OpenAI API key。
+
+如果任何命令可能调用模型，必须停止。REP-003 完整矩阵执行必须在冻结、零模型验证和 pre-execution review 全部完成后，由用户再次明确授权。
+
+四、REP-003 必须解决的唯一启动缺口
+
+REP-002 的 terminal checker repair 必须原样保留。REP-003 的新增启动修复是：在 reserve_attempt、正式 run root 和任何模型访问之前，用与 pinned EvE 实际启动相同的外部 checkout 路径和 hook 写逻辑验证 .codex/hooks.json 可写且 trust 条件满足。
+
+必须满足：
+
+1. pre-reservation guard 的失败发生在 ledger reservation、formal root 和模型访问之前；失败时零 attempt、零 model、零 quota、零正式 runtime state。
+
+2. guard 不能只是 os.access 或静态路径检查；它必须覆盖导致 REP-002 ordinal 1 失败的真实 write_repo_codex_hooks/Path.write_text 操作语义，且保持幂等、可审计。
+
+3. 同一次正式 execute 调用中的 hook guard 必须先于 reserve_attempt。未来即便运行命令缺少外部 checkout 写权限，也只能在预约前 fail closed，不能再次消耗空白 cell。
+
+4. 成功 guard 后仍须通过现有 clean Lean checkout、frozen assets、dependency/Hydra、Codex auth、Lean entry build、safe preflight 和 historical-state-isolation gates，之后才允许 reservation。当前会话只验证顺序和零模型行为，不执行 reservation 后路径。
+
+5. 新 tests 至少覆盖：hook 写失败不触碰 ledger/root/model；hook guard 严格早于 reservation；成功 guard 后才可到 reservation seam；check/dry-run 永不 dispatch execute；REP-002 terminal mutation/rejection regressions保持通过。
+
+五、科学输入和新状态
+
+除启动 permission guard 和新的协议身份/路径外，REP-003 必须保持 REP-002 的科学输入不变：
+
+- model gpt-5.6-sol
+- reasoning effort low
+- direct/transport 两个公开任务
+- seeds 1729 和 2718
+- static/fixed/evolved 三条件和 12-cell 冻结顺序
+- 每 cell 3 iterations、1 worker
+- 8-turn budget、900-second timeout
+- prompt、initial guidance、immutable checker、evaluator 字节
+- pinned EvE 与 clean Lean source
+- no retry/resume/import policy
+- wrapper-owned post-agent/pre-evaluation terminal checker 与 rejection contract
+
+必须使用全新的 REP-003 protocol ID/version、config names、overlay keys、RNG domain、run-root parent、attempt ledger、observer/auditor identity 和 detached hashes。不得继承 REP-001/REP-002 execution state。
+
+冻结 protocol 的状态保持 FROZEN_NOT_YET_EXECUTED；实际执行永远记录在独立 execution audit 中，不回写冻结输入。
+
+六、实施与验证要求
+
+先写计划，再实施。优先复用已验证的 REP-002 terminal contract，只做为关闭 pre-reservation external-hook permission gap 所必需的最小变化。不要顺便改科学问题、模型、预算或 evaluator。
+
+完成后至少运行：
+
+- 新 REP-003 targeted tests；
+- python3 -m unittest discover -s experiments/eve/tests -v；
+- Stage 4 local-evidence verifier 与 audit_stage4.py --no-recheck；
+- DEV-002、DEV-003、Sol REP-001、Sol REP-002 和新 REP-003 protocol verifier；
+- 针对 clean pinned Lean checkout 的全部 12 个 REP-003 --check；
+- 全部 12 个 REP-003 --dry-run；
+- JSON 解析、detached hash、frozen asset、source/environment 检查；
+- git diff --check。
+
+逐项记录所有 skip。所有 check/dry-run/preflight 必须证明 model_calls=0、quota=0、formal root/ledger writes=0，并保持历史状态 projection 不变。
+
+生成 Codex AI pre-execution review，明确 independent_human_review=false。声明边界必须排除：REP-003 outcome、完整 replication、因果 EvE effect、model capability、benchmark readiness、evaluation completion 和独立人工审查。
+
+七、交接与停止条件
+
+完成零模型设计、冻结和验证后：
+
+- 同步 README.md、READINESS.md、HANDOFF.md 和 NEXT_SESSION_PROMPT.txt；
+- 只暂存本任务拥有的 EVE 文件并审阅 staged diff；
+- 提交并推送 fork/experiment/eve-stage5a；
+- 用远端精确 hash 核对 push；
+- 保留所有非 EVE 用户修改和本地历史 runtime evidence；
+- 停止在 REP-003 FROZEN_NOT_YET_EXECUTED / ZERO_MODEL_VALIDATED 状态。
+
+最终回复必须明确列出：新 protocol ID/version/hash、pre-reservation hook guard 的顺序证据、零模型验证结果、测试结果与 skips、提交 hash、远端核对结果，以及“REP-003 未执行、模型/quota 未授权和未消耗”。
+
+绝不在本任务中运行 REP-003 模型矩阵。等待用户另行明确授权。

@@ -16,10 +16,13 @@ Last updated: 2026-08-23
 - Ordinal-12 diagnosis handoff refresh: `7172a54`
 - Sol REP-002 zero-model protocol freeze: `d7940571d2febc5284b9283525330a3ccbb5017f`
 - Sol REP-002 execution archive: `876aa794539670af8ca3685348db974629bc7a87`
-- Sol REP-002 post-archive read-only review: this commit
+- Sol REP-002 post-archive read-only review: `9e37fd26808c52ea8d5f532af8938a515afc13e6`
+- Remote-friendly REP-003 zero-model design prompt: this commit
 - Long-term route authority: `experiments/eve/README.md`
 - Current gate authority: `experiments/eve/READINESS.md`
-- Copy-paste next-session prompt: `experiments/eve/NEXT_SESSION_PROMPT.md`
+- Canonical copy-paste next-session prompt:
+  `experiments/eve/NEXT_SESSION_PROMPT.txt`, SHA-256
+  `e5f9fa8bafe50a22fdd1441de2acdaec83d82b19aaf49966b3ac6dae839b5a40`
 
 Always verify the live branch, HEAD, upstream, remote, and worktree. The mixed
 worktree contains extensive user-owned changes outside this task; preserve them
@@ -267,14 +270,20 @@ delete, repair in place, or reuse either runtime state. In particular, do not
 rerun REP-002 ordinal 1 even though it made no model call: its attempt was
 reserved and the no-retry rule is part of the frozen protocol.
 
-The bounded read-only REP-002 review is complete. Stop here. A possible next
-task exists only if the user explicitly requests a new complete-matrix
-successor. Such a successor requires a new protocol identity, fresh
-root/ledger/RNG domain, a pre-reservation check that the external EvE hook
-write is permitted, new zero-model validation and review, and separate explicit
-model/quota authorization. Do not design, freeze, or execute that successor
-without a new user request; protocol-design authorization would not authorize
-model execution.
+The bounded read-only REP-002 review is complete. The user requested a portable
+plain-text prompt for the next bounded task. The canonical
+`NEXT_SESSION_PROMPT.txt` directs the next session to design, implement, and
+freeze a fresh REP-003 successor under a strict zero-model boundary. Its sole
+new launch repair is a real, idempotent external-checkout hook-write/trust guard
+before `reserve_attempt`, so missing workspace permission cannot consume
+another empty cell. REP-002's terminal checker contract and all scientific
+inputs remain fixed.
+
+This handoff task did not create or execute REP-003. When the user submits the
+TXT in a new task, it authorizes tracked design/code/test/documentation work and
+zero-model checks only. It does not authorize any model call, quota consumption,
+formal run root/ledger write, or `--execute`. After REP-003 is frozen and
+reviewed, its matrix still requires separate explicit model/quota authorization.
 
 ## Session cleanup and repository state
 
@@ -283,10 +292,10 @@ model execution.
   reproducible audit-output copies; no formal run evidence was removed.
 - `experiments/eve/.runtime`, the clean Lean checkout, and every historical
   Stage 4/5A/5B root and ledger remain preserved.
-- At handoff generation, the remote branch contains REP-002 execution archive
-  `876aa794539670af8ca3685348db974629bc7a87`; this read-only review is the
-  current task-owned commit. The mixed non-EVE worktree remains user-owned and
-  untouched.
+- At handoff generation, the remote branch contains REP-002 read-only review
+  `9e37fd26808c52ea8d5f532af8938a515afc13e6`; the remote-friendly TXT prompt
+  and handoff refresh are the current task-owned commit. The mixed non-EVE
+  worktree remains user-owned and untouched.
 
 ## Local versus GitHub evidence
 
@@ -301,9 +310,10 @@ Lean work.
 
 ## Bootstrap prompt for the next conversation
 
-Use the authoritative copy-paste prompt in
-[`NEXT_SESSION_PROMPT.md`](NEXT_SESSION_PROMPT.md). It includes the repository
-checkpoint, immutable history, DEV-003 and Sol results, ordinal-12 evidence gap,
-quota accounting, claim boundary, validation expectations, and the stop before
-any successor model call. Keep that standalone prompt synchronized whenever
-this handoff changes.
+Use the authoritative plain-text copy-paste prompt in
+[`NEXT_SESSION_PROMPT.txt`](NEXT_SESSION_PROMPT.txt). It includes the repository
+checkpoint, immutable history, REP-003 zero-model implementation target,
+external-hook pre-reservation repair, validation expectations, claim boundary,
+and the mandatory stop before any successor model call. The older Markdown
+prompt is a compatibility/history copy and is not the active next-task request.
+Keep the TXT synchronized whenever this handoff changes.

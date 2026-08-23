@@ -326,6 +326,16 @@ session. This is corroborating AI review, not independent human review, and it
 does not recover the missing scientific observation or change the incomplete
 status.
 
+No REP-003 protocol or runtime state exists yet. The canonical remote-friendly
+next-task prompt is `NEXT_SESSION_PROMPT.txt`, SHA-256
+`e5f9fa8bafe50a22fdd1441de2acdaec83d82b19aaf49966b3ac6dae839b5a40`.
+It authorizes only zero-model REP-003 design, implementation, freezing,
+validation, and tracked handoff work. It does not authorize `--execute`, any
+model call or quota use, or any formal REP-003 root/ledger write. The proposed
+successor must run the real pinned-EvE external hook write/trust guard before
+attempt reservation and retain REP-002's validated terminal contract and
+scientific inputs. Model execution remains a later, separate explicit gate.
+
 ## Hard-disabled formal experiment boundary
 
 The launcher allow-list contains exactly `mathlib-style-smoke`,

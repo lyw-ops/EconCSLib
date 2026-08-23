@@ -42,7 +42,7 @@
 > review, and none of this is a hidden benchmark, causal condition result,
 > formal EvE-effect result, or general model-capability claim.**
 
-## 总体技术路线（v3.11，权威入口）
+## 总体技术路线（v3.12，权威入口）
 
 本节是 EconCSLib EVE 研究计划的**唯一技术路线入口**。后续关于研究目标、
 证明路线、实验设计、模型顺序、阶段门槛和任务扩展的决定，都应更新在本节，
@@ -53,8 +53,9 @@
 - 本 README：长期技术路线、实验原则和阶段顺序；
 - [`READINESS.md`](READINESS.md)：当前可运行状态、实时阻塞项和安全边界；
 - [`HANDOFF.md`](HANDOFF.md)：最近完成事项、证据摘要与下一安全边界；
-- [`NEXT_SESSION_PROMPT.md`](NEXT_SESSION_PROMPT.md)：可直接复制到下一任务的
-  权威交接提示词，不授予任何后继模型调用或新协议执行权限；
+- [`NEXT_SESSION_PROMPT.txt`](NEXT_SESSION_PROMPT.txt)：便于远程控制时整段复制的
+  权威下一任务提示词；当前仅授权 REP-003 零模型设计/冻结，不授权任何模型调用、
+  quota 消耗或新协议执行；旧 `.md` 仅作兼容与历史保留；
 - `*/case.json`：单个任务的冻结规范、受保护资产和确定性评分合同；
 - `*/run-manifest.json`：一次实验计划与执行事实，不承载长期路线；
 - Lean 源码：声明、证明和保持性质的最高权威；
@@ -721,6 +722,13 @@ sidecar 的 snapshot/quiescence 行为。当前结果是干净 checker 与本地
 
 #### 变更记录
 
+- **2026-08-23 · v3.12**：为远程控制场景新增可整段复制的权威纯文本提示词
+  `NEXT_SESSION_PROMPT.txt`（SHA-256
+  `e5f9fa8bafe50a22fdd1441de2acdaec83d82b19aaf49966b3ac6dae839b5a40`）。下一会话
+  仅获授权设计、实施、冻结和零模型验证全新 REP-003；必须在 `reserve_attempt` 前用
+  pinned EvE 的真实 hook 写语义验证外部 checkout 权限，同时完整保留 REP-002 已验证的
+  terminal contract 与科学输入。本次只生成提示词与交接，不创建 REP-003，不授权或
+  消耗模型/quota，也不运行任何 `--execute`。旧 Markdown 提示词降为兼容历史副本。
 - **2026-08-23 · v3.11**：完成 REP-002 第二遍 Codex AI 只读归档复核，记录为
   `stage5b_review/sol-rep002-post-archive-readonly-review.json`（SHA-256
   `5b826fdfc17244076fe2aa9fcb49f5d1f2a778c6e03cf3b248da7258dbdbd918`）。复核从

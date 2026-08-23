@@ -1,6 +1,11 @@
-# EVE next-session handoff prompt
+# EVE next-session handoff prompt (compatibility copy)
 
 Last updated: 2026-08-23
+
+> The canonical remote-friendly prompt has moved to
+> [`NEXT_SESSION_PROMPT.txt`](NEXT_SESSION_PROMPT.txt). Copy that entire TXT
+> into the next task. The Markdown content below preserves the previous
+> read-only-review handoff and is not the active REP-003 design request.
 
 Copy the text below into the next Codex task. This prompt transfers repository
 state and safety boundaries. It does not authorize any historical retry or a
