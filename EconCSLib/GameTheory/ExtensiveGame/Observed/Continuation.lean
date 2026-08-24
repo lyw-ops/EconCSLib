@@ -137,7 +137,7 @@ variable {G H : ObservedGame N U}
 /-- A strict observed-EFG isomorphism induces an isomorphism of the complete
 bounded pure continuation families, not merely separate isomorphisms at
 individual roots. -/
-def pureContinuationFamilyIso
+noncomputable def pureContinuationFamilyIso
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
     [(state : H.base.State) →
@@ -250,7 +250,7 @@ variable {G H : ObservedGame N U}
 
 /-- An observed information refinement induces one semantic morphism between
 the complete bounded pure continuation families. -/
-def pureContinuationFamilyHom
+noncomputable def pureContinuationFamilyHom
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
     [(state : H.base.State) →
@@ -368,7 +368,7 @@ theorem pureContinuationFamilyHom_declaredRootReflecting
 relational-root continuation simulation.
 
 This form composes directly with weak/stuttering compiler simulations. -/
-def pureContinuationFamilySimulation
+noncomputable def pureContinuationFamilySimulation
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
     [(state : H.base.State) →

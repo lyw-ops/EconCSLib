@@ -403,10 +403,8 @@ noncomputable def behavioralToMixedCompleteHistoryRealization
     BoundedCompleteHistorySemantics.CompleteHistoryLawRealization
       G.behavioralCompleteHistorySemantics
       G.mixedCompleteHistorySemantics := by
-  letI (i : N) : Finite (G.observed.InfoState i) :=
-    h.finiteInfoState i
-  letI (i : N) : Fintype (G.observed.InfoState i) :=
-    Fintype.ofFinite (G.observed.InfoState i)
+  letI (i : N) : Finite (G.observed.RepresentedInfo i) :=
+    h.finiteRepresentedInfo i
   refine
     { mapStrategy :=
         fun i strategy =>

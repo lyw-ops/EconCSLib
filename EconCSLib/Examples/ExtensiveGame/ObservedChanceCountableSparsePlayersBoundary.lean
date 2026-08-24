@@ -87,7 +87,7 @@ def sparseInformationAt
     (history : base.toArena.HistoryFrom base.init)
     (i : Player)
     (hmover : base.mover history.1 = some i)
-    (_hnonterminal : ¬ base.isTerminal history.1) :
+    (_hdecision : base.toArena.IsDecision history.1) :
     sparseInfoState i := by
   change nodeMover history.1 = some i at hmover
   cases hstate : history.1 with
@@ -106,9 +106,9 @@ def sparseActionEquiv
     (history : base.toArena.HistoryFrom base.init)
     (i : Player)
     (hmover : base.mover history.1 = some i)
-    (hnonterminal : ¬ base.isTerminal history.1) :
+    (hdecision : base.toArena.IsDecision history.1) :
     sparseInfoAction i
-        (sparseInformationAt history i hmover hnonterminal) ≃
+        (sparseInformationAt history i hmover hdecision) ≃
       base.Action history.1 := by
   change nodeMover history.1 = some i at hmover
   cases hstate : history.1 with
@@ -339,6 +339,7 @@ theorem player_information_action_not_countable :
 noncomputable def profile :
     game.observed.BehavioralProfile := by
   intro i information
+  rcases information with ⟨information, _hwitness⟩
   change sparseInfoState i at information
   change PMF (sparseInfoAction i information)
   cases i with

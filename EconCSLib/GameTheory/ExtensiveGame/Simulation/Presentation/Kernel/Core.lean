@@ -88,7 +88,9 @@ structure MeasurableKernelPresentation
             G.infoAt
               (MeasurableKernelArena.latestEventState
                 time events)
-              i hmover hnonterminal⟩
+              i hmover
+              (G.base.toArena.isDecision_of_not_isTerminal _
+                hnonterminal)⟩
   /-- Fixed realized chance-action law.  Values away from chance prefixes are
   semantically irrelevant. -/
   chanceKernel :
@@ -290,10 +292,14 @@ theorem abstractKernel_eq_of_player_infoAt_eq
     (hsame :
       G.infoAt
           (MeasurableKernelArena.latestEventState time events₁)
-          i hmover₁ hnonterminal₁ =
+          i hmover₁
+          (G.base.toArena.isDecision_of_not_isTerminal _
+            hnonterminal₁) =
         G.infoAt
           (MeasurableKernelArena.latestEventState time events₂)
-          i hmover₂ hnonterminal₂) :
+          i hmover₂
+          (G.base.toArena.isDecision_of_not_isTerminal _
+            hnonterminal₂)) :
     profile.policy.abstractKernel time
         (presentation.information.informationAt time events₁) =
       profile.policy.abstractKernel time

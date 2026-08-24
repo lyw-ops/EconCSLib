@@ -508,8 +508,22 @@ def rootPresentation
 
 /-! ### Information-indexed behavioral-profile compilation -/
 
+/-- Restrict one FOSG behavioral strategy to information states represented by
+genuine serialized player decisions. -/
+def serializedObservedBehavioralStrategy
+    [(world : G.WorldState) → Decidable (G.isTerminal world)]
+    (D : G.DecisionModel)
+    (rootPayoff : Fin (n + 1) → U)
+    (sourceDeclaredRoot : G.HistoryState → Prop)
+    (i : Fin (n + 1))
+    (strategy : D.BehavioralStrategy i) :
+    (observedChanceGame G D rootPayoff
+      sourceDeclaredRoot).observed.BehavioralStrategy i :=
+  fun information => strategy information.1
+
 /-- Reinterpret a FOSG `DecisionModel` behavioral profile as a behavioral
-profile of the serialized observed EFG.
+profile of the serialized observed EFG by restricting it to represented
+decision information.
 
 The compiler deliberately reuses the same information-state and abstract
 action types.  No hidden serializer state appears in the resulting strategy.
@@ -522,29 +536,47 @@ def serializedObservedBehavioralProfile
     (profile : D.BehavioralProfile) :
     (observedChanceGame G D rootPayoff
       sourceDeclaredRoot).observed.BehavioralProfile :=
-  fun i information => profile i information
+  fun i => serializedObservedBehavioralStrategy G D rootPayoff
+    sourceDeclaredRoot i (profile i)
 
-/-- Behavioral profiles are not merely embedded by the serializer: because
-the compiled observed EFG reuses the decision model's information and abstract
-action types, profile compilation is an actual equivalence. -/
-def serializedObservedBehavioralProfileEquiv
+/-- Optional certificate that restriction to represented serialized
+information is an equivalence of strategy spaces.
+
+This is deliberately not part of the compiler: arbitrary `InfoState` values
+may be ghost coordinates with no decision witness, and their action fibers
+need not admit a canonical extension. -/
+structure BehavioralStrategyEquivalence
     [(world : G.WorldState) → Decidable (G.isTerminal world)]
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
-    (sourceDeclaredRoot : G.HistoryState → Prop) :
+    (sourceDeclaredRoot : G.HistoryState → Prop) where
+  /-- Playerwise strategy equivalence. -/
+  strategyEquiv :
+    (i : Fin (n + 1)) →
+      D.BehavioralStrategy i ≃
+        (observedChanceGame G D rootPayoff
+          sourceDeclaredRoot).observed.BehavioralStrategy i
+  /-- The forward equivalence is the compiler's restriction map. -/
+  strategyEquiv_apply :
+    ∀ (i : Fin (n + 1)) (strategy : D.BehavioralStrategy i)
+      (information :
+        (observedChanceGame G D rootPayoff
+          sourceDeclaredRoot).observed.RepresentedInfo i),
+      strategyEquiv i strategy information = strategy information.1
+
+/-- A supplied playerwise certificate induces an equivalence of complete
+behavioral profiles. -/
+noncomputable def serializedObservedBehavioralProfileEquiv
+    [(world : G.WorldState) → Decidable (G.isTerminal world)]
+    (D : G.DecisionModel)
+    (rootPayoff : Fin (n + 1) → U)
+    (sourceDeclaredRoot : G.HistoryState → Prop)
+    (certificate :
+      BehavioralStrategyEquivalence G D rootPayoff sourceDeclaredRoot) :
     D.BehavioralProfile ≃
       (observedChanceGame G D rootPayoff
-        sourceDeclaredRoot).observed.BehavioralProfile where
-  toFun :=
-    serializedObservedBehavioralProfile G D rootPayoff
-      sourceDeclaredRoot
-  invFun := fun profile i information => profile i information
-  left_inv := by
-    intro profile
-    rfl
-  right_inv := by
-    intro profile
-    rfl
+        sourceDeclaredRoot).observed.BehavioralProfile :=
+  Equiv.piCongrRight certificate.strategyEquiv
 
 /-- The micro-step stochastic history policy induced by a serialized
 behavioral profile and the compiler's declared chance kernels. -/
@@ -598,7 +630,9 @@ theorem serializedObservedBehavioralProfile_deviate
           sourceDeclaredRoot).observed
         (serializedObservedBehavioralProfile G D rootPayoff
           sourceDeclaredRoot profile)
-        who deviation := by
+        who
+        (serializedObservedBehavioralStrategy G D rootPayoff
+          sourceDeclaredRoot who deviation) := by
   funext i information
   by_cases hi : i = who
   · subst i

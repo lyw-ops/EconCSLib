@@ -148,7 +148,9 @@ example (i : Bool) (history : History)
     (hnonterminal : ¬ base.isTerminal history.1) :
     observed.observe i history = history ∧
       observed.publicObserve history = () ∧
-      observed.infoAt history i hmover hnonterminal = history := by
+      observed.infoAt history i hmover
+          (base.toArena.isDecision_of_not_isTerminal
+            _ hnonterminal) = history := by
   simp [observed]
 
 /-- The established discrete measurable history model is exact here because

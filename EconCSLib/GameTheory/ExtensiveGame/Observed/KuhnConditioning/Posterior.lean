@@ -166,8 +166,8 @@ total, choice-free fallback. -/
 noncomputable def conditionalActionLaw {i : N}
     (strategy : G.MixedStrategy i)
     (decisions : List (G.PersonalDecision i))
-    (information : G.InfoState i) :
-    PMF (G.InfoAction i information) := by
+    (information : G.RepresentedInfo i) :
+    PMF (G.InfoAction i information.1) := by
   classical
   exact
     if hpossible :
@@ -187,7 +187,7 @@ theorem conditionalActionLaw_of_possible
     {i : N}
     (strategy : G.MixedStrategy i)
     (decisions : List (G.PersonalDecision i))
-    (information : G.InfoState i)
+    (information : G.RepresentedInfo i)
     (hpossible :
       strategy.DecisionsPossible G decisions) :
     strategy.conditionalActionLaw
@@ -205,7 +205,7 @@ theorem conditionalActionLaw_of_impossible
     {i : N}
     (strategy : G.MixedStrategy i)
     (decisions : List (G.PersonalDecision i))
-    (information : G.InfoState i)
+    (information : G.RepresentedInfo i)
     (himpossible :
       ¬ strategy.DecisionsPossible G decisions) :
     strategy.conditionalActionLaw
@@ -221,7 +221,7 @@ behavioralization is exactly the ordinary mixed action marginal. -/
 theorem conditionalActionLaw_nil
     {i : N}
     (strategy : G.MixedStrategy i)
-    (information : G.InfoState i) :
+    (information : G.RepresentedInfo i) :
     strategy.conditionalActionLaw
         G [] information =
       strategy.map
@@ -281,8 +281,8 @@ noncomputable def sequentialConditionalActionLaw
     {i : N}
     (strategy : G.MixedStrategy i)
     (decisions : List (G.PersonalDecision i))
-    (information : G.InfoState i) :
-    PMF (G.InfoAction i information) :=
+    (information : G.RepresentedInfo i) :
+    PMF (G.InfoAction i information.1) :=
   (strategy.posteriorAfterDecisions
     G decisions).map
       (fun pureStrategy =>
@@ -292,7 +292,7 @@ noncomputable def sequentialConditionalActionLaw
 theorem sequentialConditionalActionLaw_nil
     {i : N}
     (strategy : G.MixedStrategy i)
-    (information : G.InfoState i) :
+    (information : G.RepresentedInfo i) :
     strategy.sequentialConditionalActionLaw
         G [] information =
       strategy.map
@@ -325,7 +325,7 @@ again an independent table with the exposed coordinate laws updated one at a
 time. -/
 theorem toMixed_posteriorAfterDecisions
     {i : N}
-    [Fintype (G.InfoState i)]
+    [Fintype (G.RepresentedInfo i)]
     (strategy : G.BehavioralStrategy i)
     (decisions : List (G.PersonalDecision i)) :
     (strategy.toMixed G).posteriorAfterDecisions
@@ -380,7 +380,7 @@ theorem actionLawsAfterDecisions_apply_of_ne
     {i : N}
     (strategy : G.BehavioralStrategy i)
     (decisions : List (G.PersonalDecision i))
-    (information : G.InfoState i)
+    (information : G.RepresentedInfo i)
     (hdistinct :
       ∀ decision ∈ decisions,
         decision.1 ≠ information) :
@@ -419,10 +419,10 @@ marginal at every information state not listed among the exposed prior
 decisions. -/
 theorem toMixed_posteriorAfterDecisions_actionMarginal
     {i : N}
-    [Fintype (G.InfoState i)]
+    [Fintype (G.RepresentedInfo i)]
     (strategy : G.BehavioralStrategy i)
     (decisions : List (G.PersonalDecision i))
-    (information : G.InfoState i)
+    (information : G.RepresentedInfo i)
     (hdistinct :
       ∀ decision ∈ decisions,
         decision.1 ≠ information) :
@@ -562,10 +562,15 @@ theorem HasNoAbsentMindedness.info_ne_of_mem_relativeOwnDecisionHistories
         G.relativeOwnDecisionHistories
           root current i) :
     decision.1 ≠
-      G.infoAt current i hmover hnonterminal := by
+      G.representedInfoAt current i hmover
+        (G.base.toArena.isDecision_of_not_isTerminal _
+          hnonterminal) := by
   apply
     hnoAbsent.info_ne_of_mem_ownDecisionHistory
-      current hmover hnonterminal decision
+      current hmover
+        (G.base.toArena.isDecision_of_not_isTerminal _
+          hnonterminal)
+      decision
   exact
     (List.drop_sublist
       (G.ownDecisionHistory i root).length

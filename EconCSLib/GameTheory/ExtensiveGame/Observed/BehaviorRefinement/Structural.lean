@@ -215,8 +215,9 @@ noncomputable def mapBehavioralStrategy
     (strategy : G.BehavioralStrategy i) :
     H.BehavioralStrategy i :=
   fun information =>
-    (strategy (r.forgetInfo i information)).map
-      (r.infoActionEquiv i information)
+    (strategy
+      (r.toControlled.forgetRepresentedInfo i information)).map
+      (r.infoActionEquiv i information.1)
 
 /-- Lift a complete coarse behavioral profile player by player. -/
 noncomputable def mapBehavioralProfile
@@ -233,9 +234,13 @@ theorem refl_mapBehavioralStrategy
         i strategy =
       strategy := by
   funext information
-  change
-    (strategy information).map (Equiv.refl _) =
-      strategy information
+  have hforget :
+      ((ObservedGame.InformationRefinement.refl G).toControlled
+        |>.forgetRepresentedInfo i information) = information :=
+    Subtype.ext rfl
+  cases hforget
+  change (strategy information).map (Equiv.refl _) =
+    strategy information
   simpa using PMF.map_id (strategy information)
 
 /-- Identity refinements leave behavioral profiles unchanged. -/
@@ -262,27 +267,33 @@ theorem trans_mapBehavioralStrategy
         (r.mapBehavioralStrategy i strategy) := by
   funext information
   unfold mapBehavioralStrategy
+  have hforget :
+      (r.trans s).toControlled.forgetRepresentedInfo i information =
+        r.toControlled.forgetRepresentedInfo i
+          (s.toControlled.forgetRepresentedInfo i information) :=
+    Subtype.ext rfl
+  cases hforget
   change
     (strategy
-        (r.forgetInfo i
-          (s.forgetInfo i information))).map
-        ((s.infoActionEquiv i information) ∘
+        (r.toControlled.forgetRepresentedInfo i
+          (s.toControlled.forgetRepresentedInfo i information))).map
+        ((s.infoActionEquiv i information.1) ∘
           (r.infoActionEquiv i
-            (s.forgetInfo i information))) =
+            (s.toControlled.forgetRepresentedInfo i information).1)) =
       ((strategy
-          (r.forgetInfo i
-            (s.forgetInfo i information))).map
+          (r.toControlled.forgetRepresentedInfo i
+            (s.toControlled.forgetRepresentedInfo i information))).map
           (r.infoActionEquiv i
-            (s.forgetInfo i information))).map
-        (s.infoActionEquiv i information)
+            (s.toControlled.forgetRepresentedInfo i information).1)).map
+        (s.infoActionEquiv i information.1)
   exact
     (PMF.map_comp
       (p := strategy
-        (r.forgetInfo i
-          (s.forgetInfo i information)))
+        (r.toControlled.forgetRepresentedInfo i
+          (s.toControlled.forgetRepresentedInfo i information)))
       (f := r.infoActionEquiv i
-        (s.forgetInfo i information))
-      (g := s.infoActionEquiv i information)).symm
+        (s.toControlled.forgetRepresentedInfo i information).1)
+      (g := s.infoActionEquiv i information.1)).symm
 
 /-- Behavioral profile lifting along a composite refinement is successive
 lifting. -/
@@ -343,41 +354,43 @@ theorem mapBehavioralProfile_infoAt
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource : G.base.mover history.1 = some i)
-    (hsource_nonterminal : ¬ G.base.isTerminal history.1)
+    (hsource_nonterminal : G.base.toArena.IsDecision history.1)
     (htarget :
       H.base.mover
           (r.historyIso.stateEquiv history).1 =
         some i)
     (htarget_nonterminal :
-      ¬ H.base.isTerminal
+      H.base.toArena.IsDecision
         (r.historyIso.stateEquiv history).1) :
     r.mapBehavioralProfile profile i
-        (H.infoAt
-          (r.historyIso.stateEquiv history)
-          i htarget htarget_nonterminal) =
+        (H.representedInfoAt
+          (r.historyIso.stateEquiv history) i htarget
+          htarget_nonterminal) =
       (profile i
-        (G.infoAt history i hsource
+        (G.representedInfoAt history i hsource
           hsource_nonterminal)).map
           (r.infoActionEquivAt
             history i hsource hsource_nonterminal
             htarget htarget_nonterminal) := by
   let sourceInformation :=
-    G.infoAt history i hsource hsource_nonterminal
+    G.representedInfoAt history i hsource hsource_nonterminal
   let targetInformation :=
-    H.infoAt
+    H.representedInfoAt
       (r.historyIso.stateEquiv history) i htarget
       htarget_nonterminal
   have hinfo :
       sourceInformation =
-        r.forgetInfo i targetInformation :=
-    r.map_infoAt history i hsource hsource_nonterminal
-      htarget htarget_nonterminal
+        r.toControlled.forgetRepresentedInfo i targetInformation :=
+    Subtype.ext
+      (r.map_infoAt history i hsource hsource_nonterminal
+        htarget htarget_nonterminal)
   have hprobability :
-      profile i (r.forgetInfo i targetInformation) =
+      profile i
+          (r.toControlled.forgetRepresentedInfo i targetInformation) =
         cast
           (congrArg
-            (fun information =>
-              PMF (G.InfoAction i information))
+            (fun information : G.RepresentedInfo i =>
+              PMF (G.InfoAction i information.1))
             hinfo)
           (profile i sourceInformation) := by
     exact
@@ -386,42 +399,67 @@ theorem mapBehavioralProfile_infoAt
   have hcast :
       cast
           (congrArg
-            (fun information =>
-              PMF (G.InfoAction i information))
-            hinfo)
+            (fun information : G.RepresentedInfo i =>
+              PMF (G.InfoAction i information.1)) hinfo)
           (profile i sourceInformation) =
         (profile i sourceInformation).map
           (cast
-            (congrArg (G.InfoAction i) hinfo)) := by
+            (congrArg
+              (fun information : G.RepresentedInfo i =>
+                G.InfoAction i information.1) hinfo)) := by
     calc
       cast
           (congrArg
-            (fun information =>
-              PMF (G.InfoAction i information))
-            hinfo)
+            (fun information : G.RepresentedInfo i =>
+              PMF (G.InfoAction i information.1)) hinfo)
           (profile i sourceInformation) =
         cast
           (congrArg PMF
-            (congrArg (G.InfoAction i) hinfo))
+            (congrArg
+              (fun information : G.RepresentedInfo i =>
+                G.InfoAction i information.1) hinfo))
           (profile i sourceInformation) := by
         congr
       _ = (profile i sourceInformation).map
           (cast
-            (congrArg (G.InfoAction i) hinfo)) :=
+            (congrArg
+              (fun information : G.RepresentedInfo i =>
+                G.InfoAction i information.1) hinfo)) :=
         PMF.cast_eq_map_cast
           (profile i sourceInformation)
-          (congrArg (G.InfoAction i) hinfo)
+          (congrArg
+            (fun information : G.RepresentedInfo i =>
+              G.InfoAction i information.1) hinfo)
   change
     (profile i
-        (r.forgetInfo i targetInformation)).map
-        (r.infoActionEquiv i targetInformation) =
+        (r.toControlled.forgetRepresentedInfo i targetInformation)).map
+        (r.infoActionEquiv i targetInformation.1) =
       (profile i sourceInformation).map
         (r.infoActionEquivAt
           history i hsource hsource_nonterminal
           htarget htarget_nonterminal)
   rw [hprobability, hcast]
-  rw [PMF.map_comp]
-  rfl
+  calc
+    ((profile i sourceInformation).map
+      (cast
+        (congrArg
+          (fun information : G.RepresentedInfo i =>
+            G.InfoAction i information.1) hinfo))).map
+      (r.infoActionEquiv i targetInformation.1) =
+      (profile i sourceInformation).map
+        ((r.infoActionEquiv i targetInformation.1) ∘
+          cast
+            (congrArg
+              (fun information : G.RepresentedInfo i =>
+                G.InfoAction i information.1) hinfo)) :=
+      PMF.map_comp _ _ _
+    _ = (profile i sourceInformation).map
+        (r.infoActionEquivAt history i hsource
+          hsource_nonterminal htarget htarget_nonterminal) := by
+      apply congrArg (fun actionMap =>
+        (profile i sourceInformation).map actionMap)
+      funext action
+      rfl
 
 /-- At corresponding player histories, the concrete behavioral action law is
 the exact pushforward of the coarse law through the strict history-action
@@ -449,54 +487,74 @@ theorem map_behavioralActionLaw
   unfold
     ObservedGame.BehavioralProfile.actionLawAt
     ObservedGame.BehavioralStrategy.actionLawAt
+    ControlledObservedGame.BehavioralStrategy.actionLawAt
+  let hsourceDecision :=
+    G.base.toArena.isDecision_of_not_isTerminal
+      history.1 hsource_nonterminal
+  let htargetDecision :=
+    H.base.toArena.isDecision_of_not_isTerminal
+      (r.historyIso.stateEquiv history).1 htarget_nonterminal
+  change
+    ((profile i
+        (G.representedInfoAt history i hsource hsourceDecision)).map
+      (G.actionEquiv history i hsource hsourceDecision)).map
+        (r.historyIso.actionEquiv history) =
+      ((r.mapBehavioralProfile profile i
+          (H.representedInfoAt
+            (r.historyIso.stateEquiv history) i htarget
+            htargetDecision)).map
+        (H.actionEquiv
+          (r.historyIso.stateEquiv history) i htarget
+          htargetDecision))
   rw [r.mapBehavioralProfile_infoAt
-    profile history i hsource hsource_nonterminal
-    htarget htarget_nonterminal]
+    profile history i hsource hsourceDecision
+    htarget htargetDecision]
   let probability :=
-    profile i (G.infoAt history i hsource hsource_nonterminal)
+    profile i
+      (G.representedInfoAt history i hsource hsourceDecision)
   calc
     (probability.map
         (G.actionEquiv history i hsource
-          hsource_nonterminal)).map
+          hsourceDecision)).map
           (r.historyIso.actionEquiv history) =
       probability.map
         ((r.historyIso.actionEquiv history) ∘
           (G.actionEquiv history i hsource
-            hsource_nonterminal)) :=
+            hsourceDecision)) :=
             PMF.map_comp
               (G.actionEquiv history i hsource
-                hsource_nonterminal)
+                hsourceDecision)
               probability
               (r.historyIso.actionEquiv history)
     _ = probability.map
         ((H.actionEquiv
             (r.historyIso.stateEquiv history)
-            i htarget htarget_nonterminal) ∘
+            i htarget htargetDecision) ∘
           (r.infoActionEquivAt
-            history i hsource hsource_nonterminal
-            htarget htarget_nonterminal)) := by
+            history i hsource hsourceDecision
+            htarget htargetDecision)) := by
           apply congrArg
             (fun actionMap =>
               probability.map actionMap)
           funext action
           exact
             (r.map_infoActionEquivAt
-              history i hsource hsource_nonterminal
-              htarget htarget_nonterminal action).symm
+              history i hsource hsourceDecision
+              htarget htargetDecision action).symm
     _ = (probability.map
           (r.infoActionEquivAt
-            history i hsource hsource_nonterminal
-            htarget htarget_nonterminal)).map
+            history i hsource hsourceDecision
+            htarget htargetDecision)).map
         (H.actionEquiv
           (r.historyIso.stateEquiv history)
-          i htarget htarget_nonterminal) :=
+          i htarget htargetDecision) :=
       (PMF.map_comp
         (r.infoActionEquivAt
-          history i hsource hsource_nonterminal
-          htarget htarget_nonterminal)
+          history i hsource hsourceDecision
+          htarget htargetDecision)
         probability
         (H.actionEquiv
           (r.historyIso.stateEquiv history)
-          i htarget htarget_nonterminal)).symm
+          i htarget htargetDecision)).symm
 
 end ExtensiveGame.ObservedGame.InformationRefinement

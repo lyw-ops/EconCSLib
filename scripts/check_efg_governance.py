@@ -34,6 +34,11 @@ MARKDOWN_LINK_RE = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 FULL_MODULE_REFERENCE_RE = re.compile(
     r"`(EconCSLib(?:\.[A-Za-z0-9_]+)+)`"
 )
+LARGE_MODULE_ROW_RE = re.compile(
+    r"^\| `(EconCSLib\.GameTheory\.ExtensiveGame\.[^`]+)` "
+    r"\| `(800-999|1000-1199|1200\+)` \|",
+    re.MULTILINE,
+)
 DECLARATION_RE = re.compile(
     r"^(?:private\s+|protected\s+|noncomputable\s+|unsafe\s+)*"
     r"(?:abbrev|axiom|class|def|example|inductive|instance|lemma|opaque|"
@@ -49,6 +54,7 @@ DEPRECATED_RE = re.compile(
 )
 
 EFG_PREFIX = "EconCSLib.GameTheory.ExtensiveGame."
+LARGE_EFG_LINE_THRESHOLD = 800
 
 # Every import-only source module is an explicit navigation surface. Adding a
 # new one therefore requires a deliberate entry here, not merely a file with a
@@ -149,10 +155,20 @@ EXPECTED_STRUCTURAL_CORE_EFG_CLOSURE = {
 FROZEN_MINIMAL_CORE_STRUCTURES = {}
 
 CONTROLLED_OBSERVED_MODULE = f"{EFG_PREFIX}Observed.Controlled"
-CONTROLLED_OBSERVED_START = (
-    r"^structure ControlledObservedGame \(N : Type uN\) where\s*$"
+CONTROLLED_DECISION_START = (
+    r"^structure ControlledDecisionGame \(N : Type uN\) where\s*$"
 )
-CONTROLLED_OBSERVED_END = r"^namespace ControlledObservedGame\s*$"
+CONTROLLED_DECISION_END = (
+    r"^structure ControlledObservedGame \(N : Type uN\)\s*$"
+)
+CONTROLLED_OBSERVED_START = (
+    r"^structure ControlledObservedGame \(N : Type uN\)\s*$"
+)
+CONTROLLED_OBSERVED_EXTENDS = (
+    r"^\s*extends\s+"
+    r"ControlledDecisionGame\.\{\s*uN\s*,\s*uA\s*,\s*uS\s*,\s*uI\s*\}"
+    r"\s+N\s+where\s*$"
+)
 
 CONTROLLED_INFRASTRUCTURE_RECALL = (
     f"{EFG_PREFIX}Observed.Controlled.Infrastructure.Recall"
@@ -502,6 +518,69 @@ MAXIMUM_PATH_LAW_FORBIDDEN_NAMES = {
     "ObservedGame",
 }
 
+DISCRETE_PATH_LAW_ADAPTER = (
+    f"{EFG_PREFIX}Observed.Controlled.Law.DiscretePath"
+)
+ANALYTIC_PATH_LAW_ADAPTER = (
+    f"{EFG_PREFIX}Observed.Controlled.Law.Analytic"
+)
+MEASURABLE_KERNEL_ARENA = f"{EFG_PREFIX}Simulation.Kernel.Arena"
+
+# The execution regimes share a maximum lawful path-law carrier, not one
+# universal local executor. These route checks make that ownership boundary
+# enforceable without pretending that imports prove semantic preservation.
+SEMANTIC_REGIME_ROUTE_CONTRACTS = {
+    f"{EFG_PREFIX}Interface.Execution.Finite": (
+        set(),
+        {
+            MAXIMUM_PATH_LAW_MODULE,
+            DISCRETE_PATH_LAW_ADAPTER,
+            ANALYTIC_PATH_LAW_ADAPTER,
+            MEASURABLE_KERNEL_ARENA,
+        },
+    ),
+    f"{EFG_PREFIX}Interface.Execution.Infinite": (
+        {MAXIMUM_PATH_LAW_MODULE, DISCRETE_PATH_LAW_ADAPTER},
+        {ANALYTIC_PATH_LAW_ADAPTER, MEASURABLE_KERNEL_ARENA},
+    ),
+    f"{EFG_PREFIX}Interface.Execution.Analytic": (
+        {
+            MAXIMUM_PATH_LAW_MODULE,
+            DISCRETE_PATH_LAW_ADAPTER,
+            ANALYTIC_PATH_LAW_ADAPTER,
+            MEASURABLE_KERNEL_ARENA,
+        },
+        set(),
+    ),
+    f"{EFG_PREFIX}Interface.Compilation.Discrete": (
+        set(),
+        {
+            MAXIMUM_PATH_LAW_MODULE,
+            DISCRETE_PATH_LAW_ADAPTER,
+            ANALYTIC_PATH_LAW_ADAPTER,
+            MEASURABLE_KERNEL_ARENA,
+        },
+    ),
+    f"{EFG_PREFIX}FOSG.Sequentialization.Core": (
+        set(),
+        {
+            MAXIMUM_PATH_LAW_MODULE,
+            DISCRETE_PATH_LAW_ADAPTER,
+            ANALYTIC_PATH_LAW_ADAPTER,
+            MEASURABLE_KERNEL_ARENA,
+        },
+    ),
+    f"{EFG_PREFIX}FOSG.Sequentialization.Equilibrium": (
+        set(),
+        {
+            MAXIMUM_PATH_LAW_MODULE,
+            DISCRETE_PATH_LAW_ADAPTER,
+            ANALYTIC_PATH_LAW_ADAPTER,
+            MEASURABLE_KERNEL_ARENA,
+        },
+    ),
+}
+
 FORBIDDEN_LEGACY_ROOT_NAMES = {
     "IsDesignatedContinuationRoot",
     "legacyContinuationRootPresentation",
@@ -716,25 +795,26 @@ def frozen_structure_digest(
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
-def controlled_observed_universe_mapping_is_valid(source: str) -> bool:
-    """Check the action/state universe mapping without freezing the record.
+def controlled_carrier_universe_mapping_is_valid(source: str) -> bool:
+    """Check both carrier universe mappings without freezing either record.
 
     `ControlledGame` exposes universes in player/action/state order.  The
     information-action family must therefore share `uA` with the base action
-    fiber, while the base state remains independently universe-polymorphic in
-    `uS`.
+    fiber in `ControlledDecisionGame`, while the base state remains
+    independently universe-polymorphic in `uS`. `ControlledObservedGame`
+    must extend that decision carrier without permuting its universes.
     """
 
     stripped = strip_lean_comments_and_strings(source)
     starts = list(
-        re.finditer(CONTROLLED_OBSERVED_START, stripped, re.MULTILINE)
+        re.finditer(CONTROLLED_DECISION_START, stripped, re.MULTILINE)
     )
     if len(starts) != 1:
         return False
     start = starts[0]
     ends = list(
         re.finditer(
-            CONTROLLED_OBSERVED_END,
+            CONTROLLED_DECISION_END,
             stripped[start.end():],
             re.MULTILINE,
         )
@@ -753,7 +833,19 @@ def controlled_observed_universe_mapping_is_valid(source: str) -> bool:
         r"\(i\s*:\s*N\)\s*→\s*InfoState\s+i\s*→\s*Type\s+uA\b",
         declaration,
     )
-    return len(base_mapping) == 1 and len(info_action_mapping) == 1
+    observed_starts = list(
+        re.finditer(CONTROLLED_OBSERVED_START, stripped, re.MULTILINE)
+    )
+    observed_extends = list(
+        re.finditer(CONTROLLED_OBSERVED_EXTENDS, stripped, re.MULTILINE)
+    )
+    return (
+        len(base_mapping) == 1
+        and len(info_action_mapping) == 1
+        and len(observed_starts) == 1
+        and len(observed_extends) == 1
+        and observed_extends[0].start() >= observed_starts[0].end()
+    )
 
 
 def local_import_graph(root: Path) -> tuple[dict[str, set[str]], list[str]]:
@@ -879,6 +971,47 @@ def documentation_link_errors(paths: list[Path]) -> list[str]:
     return errors
 
 
+def large_efg_line_band(line_count: int) -> str:
+    """Return the stable maintenance band for an audited large EFG module."""
+
+    if line_count >= 1200:
+        return "1200+"
+    if line_count >= 1000:
+        return "1000-1199"
+    if line_count >= LARGE_EFG_LINE_THRESHOLD:
+        return "800-999"
+    raise ValueError(f"line count {line_count} is below the audit threshold")
+
+
+def current_large_efg_modules(root: Path) -> dict[str, str]:
+    """Return every EFG source at or above the governed line threshold."""
+
+    result: dict[str, str] = {}
+    efg_root = root / "EconCSLib/GameTheory/ExtensiveGame"
+    for path in efg_root.rglob("*.lean"):
+        line_count = len(path.read_text(encoding="utf-8").splitlines())
+        if line_count < LARGE_EFG_LINE_THRESHOLD:
+            continue
+        module = module_name(path, root)
+        if module is not None:
+            result[module] = large_efg_line_band(line_count)
+    return result
+
+
+def documented_large_efg_modules(
+    source: str,
+) -> tuple[dict[str, str], set[str]]:
+    """Read machine-audited module/band rows and report duplicate modules."""
+
+    result: dict[str, str] = {}
+    duplicates: set[str] = set()
+    for module, band in LARGE_MODULE_ROW_RE.findall(source):
+        if module in result:
+            duplicates.add(module)
+        result[module] = band
+    return result, duplicates
+
+
 def run(root: Path) -> list[str]:
     errors: list[str] = []
     status_path = root / "docs/design/efg-module-status.md"
@@ -949,6 +1082,27 @@ def run(root: Path) -> list[str]:
                     f"{path}: recorded full module name does not resolve: "
                     f"{referenced}"
                 )
+
+    actual_large_modules = current_large_efg_modules(root)
+    audited_large_modules, duplicate_large_modules = (
+        documented_large_efg_modules(governance_source)
+    )
+    if duplicate_large_modules or audited_large_modules != actual_large_modules:
+        missing = sorted(actual_large_modules.keys() - audited_large_modules.keys())
+        stale = sorted(audited_large_modules.keys() - actual_large_modules.keys())
+        wrong_band = {
+            module: (audited_large_modules[module], actual_large_modules[module])
+            for module in sorted(
+                actual_large_modules.keys() & audited_large_modules.keys()
+            )
+            if audited_large_modules[module] != actual_large_modules[module]
+        }
+        errors.append(
+            f"{governance_path}: large-file audit differs from the current "
+            f">={LARGE_EFG_LINE_THRESHOLD}-line inventory; missing={missing}, "
+            f"stale={stale}, duplicates={sorted(duplicate_large_modules)}, "
+            f"wrong_band={wrong_band}"
+        )
     cycle = import_cycle(graph, scoped)
     if cycle is not None:
         errors.append("local import graph contains a cycle: " + " -> ".join(cycle))
@@ -986,15 +1140,17 @@ def run(root: Path) -> list[str]:
     )
     if (
         not controlled_observed_path.is_file()
-        or not controlled_observed_universe_mapping_is_valid(
+        or not controlled_carrier_universe_mapping_is_valid(
             controlled_observed_path.read_text(encoding="utf-8")
         )
     ):
         errors.append(
-            f"{controlled_observed_path}: ControlledObservedGame must map "
+            f"{controlled_observed_path}: ControlledDecisionGame must map "
             "ControlledGame universes as player/action/state "
-            "`.{uN, uA, uS}` and keep `InfoAction` in `Type uA`; this "
-            "narrow regression guard does not freeze the carrier"
+            "`.{uN, uA, uS}`, keep `InfoAction` in `Type uA`, and "
+            "ControlledObservedGame must extend it as "
+            "`.{uN, uA, uS, uI}`; this narrow regression guard does not "
+            "freeze either carrier"
         )
 
     lifecycle = lean_lifecycle(root)
@@ -1126,6 +1282,31 @@ def run(root: Path) -> list[str]:
             errors.append(
                 f"{maximum_law_path}: lawful probability carrier is missing "
                 f"required field {required}"
+            )
+
+    maximum_law_closure = closure(graph, MAXIMUM_PATH_LAW_MODULE)
+    leaked_path_law_producers = maximum_law_closure & {
+        DISCRETE_PATH_LAW_ADAPTER,
+        ANALYTIC_PATH_LAW_ADAPTER,
+    }
+    if leaked_path_law_producers:
+        errors.append(
+            f"{maximum_law_path}: common path-law carrier depends on concrete "
+            "producer adapter(s): "
+            + ", ".join(sorted(leaked_path_law_producers))
+        )
+
+    for entry, (required, forbidden) in SEMANTIC_REGIME_ROUTE_CONTRACTS.items():
+        if entry not in graph:
+            errors.append(f"missing semantic-regime route module: {entry}")
+            continue
+        imported = closure(graph, entry)
+        missing = sorted(required - imported)
+        leaked = sorted(forbidden & imported)
+        if missing or leaked:
+            errors.append(
+                f"{module_path(entry, root)}: semantic-regime route differs; "
+                f"missing={missing}, forbidden={leaked}"
             )
 
     for module in sorted(scoped):
@@ -1511,6 +1692,7 @@ def main() -> int:
             "payoff-aware-adapter",
         }
     }
+    large_module_count = len(current_large_efg_modules(root))
     print(
         f"EFG governance checks passed: {len(rows)} registered modules, "
         f"{compatibility_count} temporary compatibility paths, "
@@ -1524,7 +1706,9 @@ def main() -> int:
         f"{controlled_role_counts['aggregate-facade']} facades/"
         f"{controlled_role_counts['payoff-aware-adapter']} adapters, "
         "minimal-core compatibility freeze deferred, "
-        "1 carrier-universe regression guard."
+        "1 carrier-universe regression guard, "
+        f"{len(SEMANTIC_REGIME_ROUTE_CONTRACTS)} semantic-regime route guards, "
+        f"{large_module_count} large-module audit rows."
     )
     lifecycle = lean_lifecycle(root)
     canonical_import_only = (

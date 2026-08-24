@@ -1,0 +1,3852 @@
+{
+  "accepted_results": [
+    {
+      "candidate_id": "DIRECT-ACCEPTED",
+      "controls_selection": false,
+      "failure_frontier": [],
+      "hard_oracle": {
+        "adapter_path": "experiments/eve/scripts/evaluate_stage2_entry_game.py",
+        "failure_codes": [],
+        "hard_accepted": true,
+        "report_sha256": "e164cc2c9b4822696f66b203ea142c298c6c3472c388dd1a507c5d91d46748fb",
+        "score": 1.0,
+        "status": "passed"
+      },
+      "limitations": [
+        "The existing deterministic binary evaluator remains the only acceptance oracle.",
+        "R000 is a public Stage 2 development-corpus baseline, not benchmark or generalization evidence.",
+        "Syntactic evidence is never promoted to proof of a semantic obligation."
+      ],
+      "mathematical_acceptance": false,
+      "obligations": [
+        {
+          "criterion_id": "CORE.SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.EDIT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.boundary"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_INITIAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_initial"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.IMPORT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.import_allowlist"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.TASK_IDENTITY",
+          "evidence": [
+            "hard-oracle:gates.task_prefix"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.NO_PLACEHOLDER",
+          "evidence": [
+            "hard-oracle:gates.static_guard"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.NO_TRUSTED_BYPASS",
+          "evidence": [
+            "hard-oracle:gates.trusted_bypass_guard"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.ROUTE_IDENTITY",
+          "evidence": [
+            "hard-oracle:gates.route_discipline"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.ENVIRONMENT",
+          "evidence": [
+            "hard-oracle:gates.environment"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.COMPILATION",
+          "evidence": [
+            "hard-oracle:gates.compile"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.WARNING_POLICY",
+          "evidence": [
+            "hard-oracle:gates.warning_policy"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.TARGET_DECLARATIONS",
+          "evidence": [
+            "hard-oracle:gates.target_declarations"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.AXIOM_ALLOWLIST",
+          "evidence": [
+            "hard-oracle:gates.axiom_allowlist"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_FINAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_final"
+          ],
+          "rationale": "The evaluator's always-run final protected-assets check passed.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "DIRECT.CONCRETE_ROUTE",
+          "evidence": [
+            "hard-oracle:gates.route_discipline"
+          ],
+          "rationale": "The compiled deterministic contract directly checks this obligation.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "DIRECT.NASH_CHARACTERIZATION",
+          "evidence": [
+            "hard-oracle:gates.target_declarations:lean-kernel-contract"
+          ],
+          "rationale": "The compiled deterministic contract directly checks this obligation.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "DIRECT.SPE_CHARACTERIZATION",
+          "evidence": [
+            "hard-oracle:gates.target_declarations:lean-kernel-contract"
+          ],
+          "rationale": "The compiled deterministic contract directly checks this obligation.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "DIRECT.OFF_PATH_SEPARATION",
+          "evidence": [
+            "hard-oracle:gates.target_declarations:lean-kernel-contract"
+          ],
+          "rationale": "The compiled deterministic contract directly checks this obligation.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "DIRECT.NO_TRANSPORT_ABSTRACTION_LEAK",
+          "evidence": [
+            "hard-oracle:gates.route_discipline"
+          ],
+          "rationale": "The compiled deterministic contract directly checks this obligation.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "TRANSPORT.ACTION_ENCODERS",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.PROFILE_ENCODER",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.PAYOFF_PRESERVATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.HYPOTHESIS_BRIDGE",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.NASH_PRESERVATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.SPE_PRESERVATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_COMPLETE",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_CONSUMED",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_NASH_THEOREM_APPLICATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_SPE_THEOREM_APPLICATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.EQUALITY_REFLECTION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.CONCLUSION_TRANSPORT",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_MATHEMATICAL_TARGET",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.INDEPENDENT_WORKSPACES",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.ROUTE_AGREEMENT",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        }
+      ],
+      "route": "direct",
+      "rubric_id": "EVE-RUBRIC-R000",
+      "schema_version": "1.0.0",
+      "score_semantics": "non-authoritative-shadow-only",
+      "shadow_search_score": 1.0
+    },
+    {
+      "candidate_id": "TRANSPORT-ACCEPTED",
+      "controls_selection": false,
+      "failure_frontier": [],
+      "hard_oracle": {
+        "adapter_path": "experiments/eve/scripts/evaluate_stage2_entry_game.py",
+        "failure_codes": [],
+        "hard_accepted": true,
+        "report_sha256": "31454949c27d6a9269ec14873dccf2fc1a7268718e0d4107e984e2faf08271b3",
+        "score": 1.0,
+        "status": "passed"
+      },
+      "limitations": [
+        "The existing deterministic binary evaluator remains the only acceptance oracle.",
+        "R000 is a public Stage 2 development-corpus baseline, not benchmark or generalization evidence.",
+        "Syntactic evidence is never promoted to proof of a semantic obligation."
+      ],
+      "mathematical_acceptance": false,
+      "obligations": [
+        {
+          "criterion_id": "CORE.SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.EDIT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.boundary"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_INITIAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_initial"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.IMPORT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.import_allowlist"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.TASK_IDENTITY",
+          "evidence": [
+            "hard-oracle:gates.task_prefix"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.NO_PLACEHOLDER",
+          "evidence": [
+            "hard-oracle:gates.static_guard"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.NO_TRUSTED_BYPASS",
+          "evidence": [
+            "hard-oracle:gates.trusted_bypass_guard"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.ROUTE_IDENTITY",
+          "evidence": [
+            "hard-oracle:gates.route_discipline"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.ENVIRONMENT",
+          "evidence": [
+            "hard-oracle:gates.environment"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.COMPILATION",
+          "evidence": [
+            "hard-oracle:gates.compile"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.WARNING_POLICY",
+          "evidence": [
+            "hard-oracle:gates.warning_policy"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.TARGET_DECLARATIONS",
+          "evidence": [
+            "hard-oracle:gates.target_declarations"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.AXIOM_ALLOWLIST",
+          "evidence": [
+            "hard-oracle:gates.axiom_allowlist"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_FINAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_final"
+          ],
+          "rationale": "The evaluator's always-run final protected-assets check passed.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "DIRECT.CONCRETE_ROUTE",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.NASH_CHARACTERIZATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.SPE_CHARACTERIZATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.OFF_PATH_SEPARATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.NO_TRANSPORT_ABSTRACTION_LEAK",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.ACTION_ENCODERS",
+          "evidence": [
+            "hard-oracle:gates.route_discipline:syntactic-only"
+          ],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.PROFILE_ENCODER",
+          "evidence": [
+            "hard-oracle:gates.route_discipline:syntactic-only"
+          ],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.PAYOFF_PRESERVATION",
+          "evidence": [
+            "hard-oracle:gates.target_declarations:lean-kernel-contract",
+            "prerequisite:TRANSPORT.PROFILE_ENCODER:status=UNKNOWN"
+          ],
+          "rationale": "Strict R000 prerequisite propagation blocks direct PASS because these prerequisites are not PASS: TRANSPORT.PROFILE_ENCODER=UNKNOWN.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.HYPOTHESIS_BRIDGE",
+          "evidence": [
+            "hard-oracle:gates.target_declarations:lean-kernel-contract",
+            "prerequisite:TRANSPORT.PAYOFF_PRESERVATION:status=UNKNOWN"
+          ],
+          "rationale": "Strict R000 prerequisite propagation blocks direct PASS because these prerequisites are not PASS: TRANSPORT.PAYOFF_PRESERVATION=UNKNOWN.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.NASH_PRESERVATION",
+          "evidence": [
+            "hard-oracle:gates.target_declarations:lean-kernel-contract",
+            "prerequisite:TRANSPORT.HYPOTHESIS_BRIDGE:status=UNKNOWN"
+          ],
+          "rationale": "Strict R000 prerequisite propagation blocks direct PASS because these prerequisites are not PASS: TRANSPORT.HYPOTHESIS_BRIDGE=UNKNOWN.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.SPE_PRESERVATION",
+          "evidence": [
+            "hard-oracle:gates.target_declarations:lean-kernel-contract",
+            "prerequisite:TRANSPORT.HYPOTHESIS_BRIDGE:status=UNKNOWN"
+          ],
+          "rationale": "Strict R000 prerequisite propagation blocks direct PASS because these prerequisites are not PASS: TRANSPORT.HYPOTHESIS_BRIDGE=UNKNOWN.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_COMPLETE",
+          "evidence": [
+            "hard-oracle:gates.target_declarations:lean-kernel-contract",
+            "prerequisite:TRANSPORT.NASH_PRESERVATION:status=UNKNOWN",
+            "prerequisite:TRANSPORT.SPE_PRESERVATION:status=UNKNOWN"
+          ],
+          "rationale": "Strict R000 prerequisite propagation blocks direct PASS because these prerequisites are not PASS: TRANSPORT.NASH_PRESERVATION=UNKNOWN, TRANSPORT.SPE_PRESERVATION=UNKNOWN.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_CONSUMED",
+          "evidence": [
+            "hard-oracle:gates.route_discipline:syntactic-only"
+          ],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_NASH_THEOREM_APPLICATION",
+          "evidence": [
+            "hard-oracle:gates.route_discipline:syntactic-only"
+          ],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_SPE_THEOREM_APPLICATION",
+          "evidence": [
+            "hard-oracle:gates.route_discipline:syntactic-only"
+          ],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.EQUALITY_REFLECTION",
+          "evidence": [
+            "hard-oracle:gates.route_discipline:syntactic-only"
+          ],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.CONCLUSION_TRANSPORT",
+          "evidence": [
+            "hard-oracle:gates.target_declarations:lean-kernel-contract",
+            "prerequisite:TRANSPORT.GENERAL_NASH_THEOREM_APPLICATION:status=UNKNOWN",
+            "prerequisite:TRANSPORT.GENERAL_SPE_THEOREM_APPLICATION:status=UNKNOWN",
+            "prerequisite:TRANSPORT.EQUALITY_REFLECTION:status=UNKNOWN"
+          ],
+          "rationale": "Strict R000 prerequisite propagation blocks direct PASS because these prerequisites are not PASS: TRANSPORT.GENERAL_NASH_THEOREM_APPLICATION=UNKNOWN, TRANSPORT.GENERAL_SPE_THEOREM_APPLICATION=UNKNOWN, TRANSPORT.EQUALITY_REFLECTION=UNKNOWN.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_MATHEMATICAL_TARGET",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.INDEPENDENT_WORKSPACES",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.ROUTE_AGREEMENT",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        }
+      ],
+      "route": "transport",
+      "rubric_id": "EVE-RUBRIC-R000",
+      "schema_version": "1.0.0",
+      "score_semantics": "non-authoritative-shadow-only",
+      "shadow_search_score": 1.0
+    }
+  ],
+  "corpus_semantics": [
+    "public-development-corpus",
+    "not-hidden-evaluation",
+    "not-benchmark-generalization-evidence",
+    "not-model-capability-evidence",
+    "not-causal-eve-evidence",
+    "codex-ai-review-not-independent-human-review"
+  ],
+  "historical_asset_sha256_after": {
+    "experiments/eve/scripts/evaluate_stage2_entry_game.py": "7dd10441541593ea63d9de70595b786e130a67327a33c8d6cf4c91d63d6c256f",
+    "experiments/eve/scripts/evaluator_common.py": "4d3d51d21b08e8a49554e476d5782b424575d80d4c57616eb319789a9514cfa4",
+    "experiments/eve/stage2_entry_game/direct/case.json": "7de31d85c925ed4e5d0128f8ad1cbc557b893c1b00a369ba3b6148937202597c",
+    "experiments/eve/stage2_entry_game/mutations.json": "bf5cce8e4058e8bc305a401121523a4f9267f018e4749dfbb18ca070e0ea8e43",
+    "experiments/eve/stage2_entry_game/transport/case.json": "31f28e01ece383775832f3b5aa0dd4a3a6488dc6338d6d7feaee07a4be875850",
+    "experiments/eve/stage3_review/review-record.json": "6137c65f4681a2efc50bc9b6665c89b193e6751795c25a557af2c7f50b1d19ea",
+    "experiments/eve/stage3_review/rubric.json": "850500f10be16916974590907313be3f3f1dad3c68296da800393b5697b6e177"
+  },
+  "historical_asset_sha256_before": {
+    "experiments/eve/scripts/evaluate_stage2_entry_game.py": "7dd10441541593ea63d9de70595b786e130a67327a33c8d6cf4c91d63d6c256f",
+    "experiments/eve/scripts/evaluator_common.py": "4d3d51d21b08e8a49554e476d5782b424575d80d4c57616eb319789a9514cfa4",
+    "experiments/eve/stage2_entry_game/direct/case.json": "7de31d85c925ed4e5d0128f8ad1cbc557b893c1b00a369ba3b6148937202597c",
+    "experiments/eve/stage2_entry_game/mutations.json": "bf5cce8e4058e8bc305a401121523a4f9267f018e4749dfbb18ca070e0ea8e43",
+    "experiments/eve/stage2_entry_game/transport/case.json": "31f28e01ece383775832f3b5aa0dd4a3a6488dc6338d6d7feaee07a4be875850",
+    "experiments/eve/stage3_review/review-record.json": "6137c65f4681a2efc50bc9b6665c89b193e6751795c25a557af2c7f50b1d19ea",
+    "experiments/eve/stage3_review/rubric.json": "850500f10be16916974590907313be3f3f1dad3c68296da800393b5697b6e177"
+  },
+  "invariants": {
+    "eve_execute_invocations": 0,
+    "historical_assets_unchanged": true,
+    "historical_runtime_unchanged": true,
+    "model_calls": 0,
+    "model_sessions": 0,
+    "quota_consumed_by_this_task": 0
+  },
+  "limitations": [
+    "This is public development-corpus replay, not hidden evaluation or benchmark generalization evidence.",
+    "It is not model-capability or causal EvE evidence.",
+    "The review identity is codex-ai-review, not independent human review.",
+    "DEV-003 runtime candidates are unavailable in the tracked public checkout; no trajectory replay is fabricated."
+  ],
+  "metrics": {
+    "accepted_candidates_evaluated": 2,
+    "accepted_candidates_hard_accepted": 2,
+    "blocking_false_accepts": 0,
+    "expected_failure_codes_preserved": 12,
+    "expected_failure_codes_total": 12,
+    "mutations_evaluated": 12,
+    "mutations_hard_rejected": 12
+  },
+  "mutation_expectations": [
+    {
+      "candidate_id": "DIRECT-UNFIXED",
+      "expected_failure_code": "route-discipline-violation",
+      "expected_failure_preserved": true
+    },
+    {
+      "candidate_id": "DIRECT-PLACEHOLDER",
+      "expected_failure_code": "forbidden-construct",
+      "expected_failure_preserved": true
+    },
+    {
+      "candidate_id": "DIRECT-ABSTRACT-LEAK",
+      "expected_failure_code": "route-discipline-violation",
+      "expected_failure_preserved": true
+    },
+    {
+      "candidate_id": "DIRECT-PREFIX-TAMPER",
+      "expected_failure_code": "protected-task-prefix-changed",
+      "expected_failure_preserved": true
+    },
+    {
+      "candidate_id": "DIRECT-WRONG-NAME",
+      "expected_failure_code": "target-declaration-missing-or-wrong-type",
+      "expected_failure_preserved": true
+    },
+    {
+      "candidate_id": "DIRECT-EXTRA-IMPORT",
+      "expected_failure_code": "forbidden-import",
+      "expected_failure_preserved": true
+    },
+    {
+      "candidate_id": "TRANSPORT-UNFIXED",
+      "expected_failure_code": "route-discipline-violation",
+      "expected_failure_preserved": true
+    },
+    {
+      "candidate_id": "TRANSPORT-PLACEHOLDER",
+      "expected_failure_code": "forbidden-construct",
+      "expected_failure_preserved": true
+    },
+    {
+      "candidate_id": "TRANSPORT-MISSING-CERTIFICATE",
+      "expected_failure_code": "route-discipline-violation",
+      "expected_failure_preserved": true
+    },
+    {
+      "candidate_id": "TRANSPORT-PREFIX-TAMPER",
+      "expected_failure_code": "protected-task-prefix-changed",
+      "expected_failure_preserved": true
+    },
+    {
+      "candidate_id": "TRANSPORT-EXTRA-IMPORT",
+      "expected_failure_code": "forbidden-import",
+      "expected_failure_preserved": true
+    },
+    {
+      "candidate_id": "TRANSPORT-WRONG-TARGET",
+      "expected_failure_code": "target-declaration-missing-or-wrong-type",
+      "expected_failure_preserved": true
+    }
+  ],
+  "mutation_results": [
+    {
+      "candidate_id": "DIRECT-UNFIXED",
+      "controls_selection": false,
+      "failure_frontier": [
+        "CORE.ROUTE_IDENTITY"
+      ],
+      "hard_oracle": {
+        "adapter_path": "experiments/eve/scripts/evaluate_stage2_entry_game.py",
+        "failure_codes": [
+          "route-discipline-violation"
+        ],
+        "hard_accepted": false,
+        "report_sha256": "4ca0f795fe9c7347670ec5683ad8e894a338d9bff0370192317a7b67ff9e156b",
+        "score": 0.0,
+        "status": "failed"
+      },
+      "limitations": [
+        "The existing deterministic binary evaluator remains the only acceptance oracle.",
+        "R000 is a public Stage 2 development-corpus baseline, not benchmark or generalization evidence.",
+        "Syntactic evidence is never promoted to proof of a semantic obligation."
+      ],
+      "mathematical_acceptance": false,
+      "obligations": [
+        {
+          "criterion_id": "CORE.SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.EDIT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.boundary"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_INITIAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_initial"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.IMPORT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.import_allowlist"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.TASK_IDENTITY",
+          "evidence": [
+            "hard-oracle:gates.task_prefix"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.NO_PLACEHOLDER",
+          "evidence": [
+            "hard-oracle:gates.static_guard"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.NO_TRUSTED_BYPASS",
+          "evidence": [
+            "hard-oracle:gates.trusted_bypass_guard"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.ROUTE_IDENTITY",
+          "evidence": [
+            "hard-oracle:gates.route_discipline",
+            "hard-oracle:failure-code:route-discipline-violation"
+          ],
+          "rationale": "A legacy failure code identifies this as the executed blocking frontier.",
+          "status": "FAIL"
+        },
+        {
+          "criterion_id": "CORE.ENVIRONMENT",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.COMPILATION",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.WARNING_POLICY",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.TARGET_DECLARATIONS",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.AXIOM_ALLOWLIST",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_FINAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_final"
+          ],
+          "rationale": "The evaluator's always-run final protected-assets check passed.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "DIRECT.CONCRETE_ROUTE",
+          "evidence": [
+            "hard-oracle:gates.route_discipline",
+            "hard-oracle:failure-code:route-discipline-violation"
+          ],
+          "rationale": "The executed deterministic prerequisite for this obligation failed.",
+          "status": "FAIL"
+        },
+        {
+          "criterion_id": "DIRECT.NASH_CHARACTERIZATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "DIRECT.SPE_CHARACTERIZATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "DIRECT.OFF_PATH_SEPARATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "DIRECT.NO_TRANSPORT_ABSTRACTION_LEAK",
+          "evidence": [
+            "hard-oracle:gates.route_discipline",
+            "hard-oracle:failure-code:route-discipline-violation"
+          ],
+          "rationale": "The executed deterministic prerequisite for this obligation failed.",
+          "status": "FAIL"
+        },
+        {
+          "criterion_id": "TRANSPORT.ACTION_ENCODERS",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.PROFILE_ENCODER",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.PAYOFF_PRESERVATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.HYPOTHESIS_BRIDGE",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.NASH_PRESERVATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.SPE_PRESERVATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_COMPLETE",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_CONSUMED",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_NASH_THEOREM_APPLICATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_SPE_THEOREM_APPLICATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.EQUALITY_REFLECTION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.CONCLUSION_TRANSPORT",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_MATHEMATICAL_TARGET",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.INDEPENDENT_WORKSPACES",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.ROUTE_AGREEMENT",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        }
+      ],
+      "route": "direct",
+      "rubric_id": "EVE-RUBRIC-R000",
+      "schema_version": "1.0.0",
+      "score_semantics": "non-authoritative-shadow-only",
+      "shadow_search_score": 0.0
+    },
+    {
+      "candidate_id": "DIRECT-PLACEHOLDER",
+      "controls_selection": false,
+      "failure_frontier": [
+        "CORE.NO_PLACEHOLDER"
+      ],
+      "hard_oracle": {
+        "adapter_path": "experiments/eve/scripts/evaluate_stage2_entry_game.py",
+        "failure_codes": [
+          "forbidden-construct"
+        ],
+        "hard_accepted": false,
+        "report_sha256": "e89094f96d4291d241e536475c355e7f4245b1242385d44ffa61e4a44ef2bfaa",
+        "score": 0.0,
+        "status": "failed"
+      },
+      "limitations": [
+        "The existing deterministic binary evaluator remains the only acceptance oracle.",
+        "R000 is a public Stage 2 development-corpus baseline, not benchmark or generalization evidence.",
+        "Syntactic evidence is never promoted to proof of a semantic obligation."
+      ],
+      "mathematical_acceptance": false,
+      "obligations": [
+        {
+          "criterion_id": "CORE.SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.EDIT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.boundary"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_INITIAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_initial"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.IMPORT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.import_allowlist"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.TASK_IDENTITY",
+          "evidence": [
+            "hard-oracle:gates.task_prefix"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.NO_PLACEHOLDER",
+          "evidence": [
+            "hard-oracle:gates.static_guard",
+            "hard-oracle:failure-code:forbidden-construct"
+          ],
+          "rationale": "A legacy failure code identifies this as the executed blocking frontier.",
+          "status": "FAIL"
+        },
+        {
+          "criterion_id": "CORE.NO_TRUSTED_BYPASS",
+          "evidence": [
+            "hard-oracle:gates.trusted_bypass_guard"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.ROUTE_IDENTITY",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.ENVIRONMENT",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.COMPILATION",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.WARNING_POLICY",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.TARGET_DECLARATIONS",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.AXIOM_ALLOWLIST",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_FINAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_final"
+          ],
+          "rationale": "The evaluator's always-run final protected-assets check passed.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "DIRECT.CONCRETE_ROUTE",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "DIRECT.NASH_CHARACTERIZATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "DIRECT.SPE_CHARACTERIZATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "DIRECT.OFF_PATH_SEPARATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "DIRECT.NO_TRANSPORT_ABSTRACTION_LEAK",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.ACTION_ENCODERS",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.PROFILE_ENCODER",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.PAYOFF_PRESERVATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.HYPOTHESIS_BRIDGE",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.NASH_PRESERVATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.SPE_PRESERVATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_COMPLETE",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_CONSUMED",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_NASH_THEOREM_APPLICATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_SPE_THEOREM_APPLICATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.EQUALITY_REFLECTION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.CONCLUSION_TRANSPORT",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_MATHEMATICAL_TARGET",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.INDEPENDENT_WORKSPACES",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.ROUTE_AGREEMENT",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        }
+      ],
+      "route": "direct",
+      "rubric_id": "EVE-RUBRIC-R000",
+      "schema_version": "1.0.0",
+      "score_semantics": "non-authoritative-shadow-only",
+      "shadow_search_score": 0.0
+    },
+    {
+      "candidate_id": "DIRECT-ABSTRACT-LEAK",
+      "controls_selection": false,
+      "failure_frontier": [
+        "CORE.ROUTE_IDENTITY"
+      ],
+      "hard_oracle": {
+        "adapter_path": "experiments/eve/scripts/evaluate_stage2_entry_game.py",
+        "failure_codes": [
+          "route-discipline-violation"
+        ],
+        "hard_accepted": false,
+        "report_sha256": "4ca0f795fe9c7347670ec5683ad8e894a338d9bff0370192317a7b67ff9e156b",
+        "score": 0.0,
+        "status": "failed"
+      },
+      "limitations": [
+        "The existing deterministic binary evaluator remains the only acceptance oracle.",
+        "R000 is a public Stage 2 development-corpus baseline, not benchmark or generalization evidence.",
+        "Syntactic evidence is never promoted to proof of a semantic obligation."
+      ],
+      "mathematical_acceptance": false,
+      "obligations": [
+        {
+          "criterion_id": "CORE.SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.EDIT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.boundary"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_INITIAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_initial"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.IMPORT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.import_allowlist"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.TASK_IDENTITY",
+          "evidence": [
+            "hard-oracle:gates.task_prefix"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.NO_PLACEHOLDER",
+          "evidence": [
+            "hard-oracle:gates.static_guard"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.NO_TRUSTED_BYPASS",
+          "evidence": [
+            "hard-oracle:gates.trusted_bypass_guard"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.ROUTE_IDENTITY",
+          "evidence": [
+            "hard-oracle:gates.route_discipline",
+            "hard-oracle:failure-code:route-discipline-violation"
+          ],
+          "rationale": "A legacy failure code identifies this as the executed blocking frontier.",
+          "status": "FAIL"
+        },
+        {
+          "criterion_id": "CORE.ENVIRONMENT",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.COMPILATION",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.WARNING_POLICY",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.TARGET_DECLARATIONS",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.AXIOM_ALLOWLIST",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_FINAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_final"
+          ],
+          "rationale": "The evaluator's always-run final protected-assets check passed.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "DIRECT.CONCRETE_ROUTE",
+          "evidence": [
+            "hard-oracle:gates.route_discipline",
+            "hard-oracle:failure-code:route-discipline-violation"
+          ],
+          "rationale": "The executed deterministic prerequisite for this obligation failed.",
+          "status": "FAIL"
+        },
+        {
+          "criterion_id": "DIRECT.NASH_CHARACTERIZATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "DIRECT.SPE_CHARACTERIZATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "DIRECT.OFF_PATH_SEPARATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "DIRECT.NO_TRANSPORT_ABSTRACTION_LEAK",
+          "evidence": [
+            "hard-oracle:gates.route_discipline",
+            "hard-oracle:failure-code:route-discipline-violation"
+          ],
+          "rationale": "The executed deterministic prerequisite for this obligation failed.",
+          "status": "FAIL"
+        },
+        {
+          "criterion_id": "TRANSPORT.ACTION_ENCODERS",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.PROFILE_ENCODER",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.PAYOFF_PRESERVATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.HYPOTHESIS_BRIDGE",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.NASH_PRESERVATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.SPE_PRESERVATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_COMPLETE",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_CONSUMED",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_NASH_THEOREM_APPLICATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_SPE_THEOREM_APPLICATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.EQUALITY_REFLECTION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.CONCLUSION_TRANSPORT",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_MATHEMATICAL_TARGET",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.INDEPENDENT_WORKSPACES",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.ROUTE_AGREEMENT",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        }
+      ],
+      "route": "direct",
+      "rubric_id": "EVE-RUBRIC-R000",
+      "schema_version": "1.0.0",
+      "score_semantics": "non-authoritative-shadow-only",
+      "shadow_search_score": 0.0
+    },
+    {
+      "candidate_id": "DIRECT-PREFIX-TAMPER",
+      "controls_selection": false,
+      "failure_frontier": [
+        "CORE.TASK_IDENTITY"
+      ],
+      "hard_oracle": {
+        "adapter_path": "experiments/eve/scripts/evaluate_stage2_entry_game.py",
+        "failure_codes": [
+          "protected-task-prefix-changed"
+        ],
+        "hard_accepted": false,
+        "report_sha256": "3747af6796dece70800f313809aaf0b81f34e45d8d3cdc117474c1258bba4992",
+        "score": 0.0,
+        "status": "failed"
+      },
+      "limitations": [
+        "The existing deterministic binary evaluator remains the only acceptance oracle.",
+        "R000 is a public Stage 2 development-corpus baseline, not benchmark or generalization evidence.",
+        "Syntactic evidence is never promoted to proof of a semantic obligation."
+      ],
+      "mathematical_acceptance": false,
+      "obligations": [
+        {
+          "criterion_id": "CORE.SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.EDIT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.boundary"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_INITIAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_initial"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.IMPORT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.import_allowlist"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.TASK_IDENTITY",
+          "evidence": [
+            "hard-oracle:gates.task_prefix",
+            "hard-oracle:failure-code:protected-task-prefix-changed"
+          ],
+          "rationale": "A legacy failure code identifies this as the executed blocking frontier.",
+          "status": "FAIL"
+        },
+        {
+          "criterion_id": "CORE.NO_PLACEHOLDER",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.NO_TRUSTED_BYPASS",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.ROUTE_IDENTITY",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.ENVIRONMENT",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.COMPILATION",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.WARNING_POLICY",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.TARGET_DECLARATIONS",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.AXIOM_ALLOWLIST",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_FINAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_final"
+          ],
+          "rationale": "The evaluator's always-run final protected-assets check passed.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "DIRECT.CONCRETE_ROUTE",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "DIRECT.NASH_CHARACTERIZATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "DIRECT.SPE_CHARACTERIZATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "DIRECT.OFF_PATH_SEPARATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "DIRECT.NO_TRANSPORT_ABSTRACTION_LEAK",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.ACTION_ENCODERS",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.PROFILE_ENCODER",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.PAYOFF_PRESERVATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.HYPOTHESIS_BRIDGE",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.NASH_PRESERVATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.SPE_PRESERVATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_COMPLETE",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_CONSUMED",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_NASH_THEOREM_APPLICATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_SPE_THEOREM_APPLICATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.EQUALITY_REFLECTION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.CONCLUSION_TRANSPORT",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_MATHEMATICAL_TARGET",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.INDEPENDENT_WORKSPACES",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.ROUTE_AGREEMENT",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        }
+      ],
+      "route": "direct",
+      "rubric_id": "EVE-RUBRIC-R000",
+      "schema_version": "1.0.0",
+      "score_semantics": "non-authoritative-shadow-only",
+      "shadow_search_score": 0.0
+    },
+    {
+      "candidate_id": "DIRECT-WRONG-NAME",
+      "controls_selection": false,
+      "failure_frontier": [
+        "CORE.TARGET_DECLARATIONS"
+      ],
+      "hard_oracle": {
+        "adapter_path": "experiments/eve/scripts/evaluate_stage2_entry_game.py",
+        "failure_codes": [
+          "target-declaration-missing-or-wrong-type"
+        ],
+        "hard_accepted": false,
+        "report_sha256": "9fb38da2fc48f8a51e631bea12cc9cc87de9df5fe1671615ef650f928fb57e31",
+        "score": 0.0,
+        "status": "failed"
+      },
+      "limitations": [
+        "The existing deterministic binary evaluator remains the only acceptance oracle.",
+        "R000 is a public Stage 2 development-corpus baseline, not benchmark or generalization evidence.",
+        "Syntactic evidence is never promoted to proof of a semantic obligation."
+      ],
+      "mathematical_acceptance": false,
+      "obligations": [
+        {
+          "criterion_id": "CORE.SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.EDIT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.boundary"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_INITIAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_initial"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.IMPORT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.import_allowlist"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.TASK_IDENTITY",
+          "evidence": [
+            "hard-oracle:gates.task_prefix"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.NO_PLACEHOLDER",
+          "evidence": [
+            "hard-oracle:gates.static_guard"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.NO_TRUSTED_BYPASS",
+          "evidence": [
+            "hard-oracle:gates.trusted_bypass_guard"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.ROUTE_IDENTITY",
+          "evidence": [
+            "hard-oracle:gates.route_discipline"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.ENVIRONMENT",
+          "evidence": [
+            "hard-oracle:gates.environment"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.COMPILATION",
+          "evidence": [
+            "hard-oracle:gates.compile"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.WARNING_POLICY",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.TARGET_DECLARATIONS",
+          "evidence": [
+            "hard-oracle:gates.target_declarations",
+            "hard-oracle:failure-code:target-declaration-missing-or-wrong-type"
+          ],
+          "rationale": "A legacy failure code identifies this as the executed blocking frontier.",
+          "status": "FAIL"
+        },
+        {
+          "criterion_id": "CORE.AXIOM_ALLOWLIST",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_FINAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_final"
+          ],
+          "rationale": "The evaluator's always-run final protected-assets check passed.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "DIRECT.CONCRETE_ROUTE",
+          "evidence": [
+            "hard-oracle:gates.route_discipline"
+          ],
+          "rationale": "The compiled deterministic contract directly checks this obligation.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "DIRECT.NASH_CHARACTERIZATION",
+          "evidence": [
+            "hard-oracle:gates.target_declarations",
+            "hard-oracle:failure-code:target-declaration-missing-or-wrong-type"
+          ],
+          "rationale": "The aggregate contract failed but does not identify which semantic sub-obligation failed.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "DIRECT.SPE_CHARACTERIZATION",
+          "evidence": [
+            "hard-oracle:gates.target_declarations",
+            "hard-oracle:failure-code:target-declaration-missing-or-wrong-type"
+          ],
+          "rationale": "The aggregate contract failed but does not identify which semantic sub-obligation failed.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "DIRECT.OFF_PATH_SEPARATION",
+          "evidence": [
+            "hard-oracle:gates.target_declarations",
+            "hard-oracle:failure-code:target-declaration-missing-or-wrong-type"
+          ],
+          "rationale": "The aggregate contract failed but does not identify which semantic sub-obligation failed.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "DIRECT.NO_TRANSPORT_ABSTRACTION_LEAK",
+          "evidence": [
+            "hard-oracle:gates.route_discipline"
+          ],
+          "rationale": "The compiled deterministic contract directly checks this obligation.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "TRANSPORT.ACTION_ENCODERS",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.PROFILE_ENCODER",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.PAYOFF_PRESERVATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.HYPOTHESIS_BRIDGE",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.NASH_PRESERVATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.SPE_PRESERVATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_COMPLETE",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_CONSUMED",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_NASH_THEOREM_APPLICATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_SPE_THEOREM_APPLICATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.EQUALITY_REFLECTION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.CONCLUSION_TRANSPORT",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_MATHEMATICAL_TARGET",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.INDEPENDENT_WORKSPACES",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.ROUTE_AGREEMENT",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        }
+      ],
+      "route": "direct",
+      "rubric_id": "EVE-RUBRIC-R000",
+      "schema_version": "1.0.0",
+      "score_semantics": "non-authoritative-shadow-only",
+      "shadow_search_score": 0.699999
+    },
+    {
+      "candidate_id": "DIRECT-EXTRA-IMPORT",
+      "controls_selection": false,
+      "failure_frontier": [
+        "CORE.IMPORT_BOUNDARY"
+      ],
+      "hard_oracle": {
+        "adapter_path": "experiments/eve/scripts/evaluate_stage2_entry_game.py",
+        "failure_codes": [
+          "forbidden-import"
+        ],
+        "hard_accepted": false,
+        "report_sha256": "991e00cac5498783432a1f6986ffe03cfbd7e77347e3c50ada429553e6dc0ced",
+        "score": 0.0,
+        "status": "failed"
+      },
+      "limitations": [
+        "The existing deterministic binary evaluator remains the only acceptance oracle.",
+        "R000 is a public Stage 2 development-corpus baseline, not benchmark or generalization evidence.",
+        "Syntactic evidence is never promoted to proof of a semantic obligation."
+      ],
+      "mathematical_acceptance": false,
+      "obligations": [
+        {
+          "criterion_id": "CORE.SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.EDIT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.boundary"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_INITIAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_initial"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.IMPORT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.import_allowlist",
+            "hard-oracle:failure-code:forbidden-import"
+          ],
+          "rationale": "A legacy failure code identifies this as the executed blocking frontier.",
+          "status": "FAIL"
+        },
+        {
+          "criterion_id": "CORE.TASK_IDENTITY",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.NO_PLACEHOLDER",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.NO_TRUSTED_BYPASS",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.ROUTE_IDENTITY",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.ENVIRONMENT",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.COMPILATION",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.WARNING_POLICY",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.TARGET_DECLARATIONS",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.AXIOM_ALLOWLIST",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_FINAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_final"
+          ],
+          "rationale": "The evaluator's always-run final protected-assets check passed.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "DIRECT.CONCRETE_ROUTE",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "DIRECT.NASH_CHARACTERIZATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "DIRECT.SPE_CHARACTERIZATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "DIRECT.OFF_PATH_SEPARATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "DIRECT.NO_TRANSPORT_ABSTRACTION_LEAK",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.ACTION_ENCODERS",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.PROFILE_ENCODER",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.PAYOFF_PRESERVATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.HYPOTHESIS_BRIDGE",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.NASH_PRESERVATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.SPE_PRESERVATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_COMPLETE",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_CONSUMED",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_NASH_THEOREM_APPLICATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_SPE_THEOREM_APPLICATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.EQUALITY_REFLECTION",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.CONCLUSION_TRANSPORT",
+          "evidence": [],
+          "rationale": "This criterion applies only to transport evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_MATHEMATICAL_TARGET",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.INDEPENDENT_WORKSPACES",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.ROUTE_AGREEMENT",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        }
+      ],
+      "route": "direct",
+      "rubric_id": "EVE-RUBRIC-R000",
+      "schema_version": "1.0.0",
+      "score_semantics": "non-authoritative-shadow-only",
+      "shadow_search_score": 0.249999
+    },
+    {
+      "candidate_id": "TRANSPORT-UNFIXED",
+      "controls_selection": false,
+      "failure_frontier": [
+        "CORE.ROUTE_IDENTITY"
+      ],
+      "hard_oracle": {
+        "adapter_path": "experiments/eve/scripts/evaluate_stage2_entry_game.py",
+        "failure_codes": [
+          "route-discipline-violation"
+        ],
+        "hard_accepted": false,
+        "report_sha256": "a7eb89d23dadca66b5c375f2a3d9cef322e779328f3ea3c499602f42130d227d",
+        "score": 0.0,
+        "status": "failed"
+      },
+      "limitations": [
+        "The existing deterministic binary evaluator remains the only acceptance oracle.",
+        "R000 is a public Stage 2 development-corpus baseline, not benchmark or generalization evidence.",
+        "Syntactic evidence is never promoted to proof of a semantic obligation."
+      ],
+      "mathematical_acceptance": false,
+      "obligations": [
+        {
+          "criterion_id": "CORE.SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.EDIT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.boundary"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_INITIAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_initial"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.IMPORT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.import_allowlist"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.TASK_IDENTITY",
+          "evidence": [
+            "hard-oracle:gates.task_prefix"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.NO_PLACEHOLDER",
+          "evidence": [
+            "hard-oracle:gates.static_guard"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.NO_TRUSTED_BYPASS",
+          "evidence": [
+            "hard-oracle:gates.trusted_bypass_guard"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.ROUTE_IDENTITY",
+          "evidence": [
+            "hard-oracle:gates.route_discipline",
+            "hard-oracle:failure-code:route-discipline-violation"
+          ],
+          "rationale": "A legacy failure code identifies this as the executed blocking frontier.",
+          "status": "FAIL"
+        },
+        {
+          "criterion_id": "CORE.ENVIRONMENT",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.COMPILATION",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.WARNING_POLICY",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.TARGET_DECLARATIONS",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.AXIOM_ALLOWLIST",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_FINAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_final"
+          ],
+          "rationale": "The evaluator's always-run final protected-assets check passed.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "DIRECT.CONCRETE_ROUTE",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.NASH_CHARACTERIZATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.SPE_CHARACTERIZATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.OFF_PATH_SEPARATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.NO_TRANSPORT_ABSTRACTION_LEAK",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.ACTION_ENCODERS",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.PROFILE_ENCODER",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.PAYOFF_PRESERVATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.HYPOTHESIS_BRIDGE",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.NASH_PRESERVATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.SPE_PRESERVATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_COMPLETE",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_CONSUMED",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_NASH_THEOREM_APPLICATION",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_SPE_THEOREM_APPLICATION",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.EQUALITY_REFLECTION",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.CONCLUSION_TRANSPORT",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_MATHEMATICAL_TARGET",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.INDEPENDENT_WORKSPACES",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.ROUTE_AGREEMENT",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        }
+      ],
+      "route": "transport",
+      "rubric_id": "EVE-RUBRIC-R000",
+      "schema_version": "1.0.0",
+      "score_semantics": "non-authoritative-shadow-only",
+      "shadow_search_score": 0.0
+    },
+    {
+      "candidate_id": "TRANSPORT-PLACEHOLDER",
+      "controls_selection": false,
+      "failure_frontier": [
+        "CORE.NO_PLACEHOLDER"
+      ],
+      "hard_oracle": {
+        "adapter_path": "experiments/eve/scripts/evaluate_stage2_entry_game.py",
+        "failure_codes": [
+          "forbidden-construct"
+        ],
+        "hard_accepted": false,
+        "report_sha256": "10c10f81131efdb7b167f9f27f4bf0b49c62a9bbf95d7b8b49a0ed05fc38f159",
+        "score": 0.0,
+        "status": "failed"
+      },
+      "limitations": [
+        "The existing deterministic binary evaluator remains the only acceptance oracle.",
+        "R000 is a public Stage 2 development-corpus baseline, not benchmark or generalization evidence.",
+        "Syntactic evidence is never promoted to proof of a semantic obligation."
+      ],
+      "mathematical_acceptance": false,
+      "obligations": [
+        {
+          "criterion_id": "CORE.SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.EDIT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.boundary"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_INITIAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_initial"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.IMPORT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.import_allowlist"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.TASK_IDENTITY",
+          "evidence": [
+            "hard-oracle:gates.task_prefix"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.NO_PLACEHOLDER",
+          "evidence": [
+            "hard-oracle:gates.static_guard",
+            "hard-oracle:failure-code:forbidden-construct"
+          ],
+          "rationale": "A legacy failure code identifies this as the executed blocking frontier.",
+          "status": "FAIL"
+        },
+        {
+          "criterion_id": "CORE.NO_TRUSTED_BYPASS",
+          "evidence": [
+            "hard-oracle:gates.trusted_bypass_guard"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.ROUTE_IDENTITY",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.ENVIRONMENT",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.COMPILATION",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.WARNING_POLICY",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.TARGET_DECLARATIONS",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.AXIOM_ALLOWLIST",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_FINAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_final"
+          ],
+          "rationale": "The evaluator's always-run final protected-assets check passed.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "DIRECT.CONCRETE_ROUTE",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.NASH_CHARACTERIZATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.SPE_CHARACTERIZATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.OFF_PATH_SEPARATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.NO_TRANSPORT_ABSTRACTION_LEAK",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.ACTION_ENCODERS",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.PROFILE_ENCODER",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.PAYOFF_PRESERVATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.HYPOTHESIS_BRIDGE",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.NASH_PRESERVATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.SPE_PRESERVATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_COMPLETE",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_CONSUMED",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_NASH_THEOREM_APPLICATION",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_SPE_THEOREM_APPLICATION",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.EQUALITY_REFLECTION",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.CONCLUSION_TRANSPORT",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_MATHEMATICAL_TARGET",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.INDEPENDENT_WORKSPACES",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.ROUTE_AGREEMENT",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        }
+      ],
+      "route": "transport",
+      "rubric_id": "EVE-RUBRIC-R000",
+      "schema_version": "1.0.0",
+      "score_semantics": "non-authoritative-shadow-only",
+      "shadow_search_score": 0.0
+    },
+    {
+      "candidate_id": "TRANSPORT-MISSING-CERTIFICATE",
+      "controls_selection": false,
+      "failure_frontier": [
+        "CORE.ROUTE_IDENTITY"
+      ],
+      "hard_oracle": {
+        "adapter_path": "experiments/eve/scripts/evaluate_stage2_entry_game.py",
+        "failure_codes": [
+          "route-discipline-violation"
+        ],
+        "hard_accepted": false,
+        "report_sha256": "a7eb89d23dadca66b5c375f2a3d9cef322e779328f3ea3c499602f42130d227d",
+        "score": 0.0,
+        "status": "failed"
+      },
+      "limitations": [
+        "The existing deterministic binary evaluator remains the only acceptance oracle.",
+        "R000 is a public Stage 2 development-corpus baseline, not benchmark or generalization evidence.",
+        "Syntactic evidence is never promoted to proof of a semantic obligation."
+      ],
+      "mathematical_acceptance": false,
+      "obligations": [
+        {
+          "criterion_id": "CORE.SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.EDIT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.boundary"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_INITIAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_initial"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.IMPORT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.import_allowlist"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.TASK_IDENTITY",
+          "evidence": [
+            "hard-oracle:gates.task_prefix"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.NO_PLACEHOLDER",
+          "evidence": [
+            "hard-oracle:gates.static_guard"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.NO_TRUSTED_BYPASS",
+          "evidence": [
+            "hard-oracle:gates.trusted_bypass_guard"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.ROUTE_IDENTITY",
+          "evidence": [
+            "hard-oracle:gates.route_discipline",
+            "hard-oracle:failure-code:route-discipline-violation"
+          ],
+          "rationale": "A legacy failure code identifies this as the executed blocking frontier.",
+          "status": "FAIL"
+        },
+        {
+          "criterion_id": "CORE.ENVIRONMENT",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.COMPILATION",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.WARNING_POLICY",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.TARGET_DECLARATIONS",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.AXIOM_ALLOWLIST",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_FINAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_final"
+          ],
+          "rationale": "The evaluator's always-run final protected-assets check passed.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "DIRECT.CONCRETE_ROUTE",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.NASH_CHARACTERIZATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.SPE_CHARACTERIZATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.OFF_PATH_SEPARATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.NO_TRANSPORT_ABSTRACTION_LEAK",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.ACTION_ENCODERS",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.PROFILE_ENCODER",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.PAYOFF_PRESERVATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.HYPOTHESIS_BRIDGE",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.NASH_PRESERVATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.SPE_PRESERVATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_COMPLETE",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_CONSUMED",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_NASH_THEOREM_APPLICATION",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_SPE_THEOREM_APPLICATION",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.EQUALITY_REFLECTION",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.CONCLUSION_TRANSPORT",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_MATHEMATICAL_TARGET",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.INDEPENDENT_WORKSPACES",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.ROUTE_AGREEMENT",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        }
+      ],
+      "route": "transport",
+      "rubric_id": "EVE-RUBRIC-R000",
+      "schema_version": "1.0.0",
+      "score_semantics": "non-authoritative-shadow-only",
+      "shadow_search_score": 0.0
+    },
+    {
+      "candidate_id": "TRANSPORT-PREFIX-TAMPER",
+      "controls_selection": false,
+      "failure_frontier": [
+        "CORE.TASK_IDENTITY"
+      ],
+      "hard_oracle": {
+        "adapter_path": "experiments/eve/scripts/evaluate_stage2_entry_game.py",
+        "failure_codes": [
+          "protected-task-prefix-changed"
+        ],
+        "hard_accepted": false,
+        "report_sha256": "cc68346948c4e7bb1f38737412e8df70749d00e84381b6380f2c1e55a486ed5c",
+        "score": 0.0,
+        "status": "failed"
+      },
+      "limitations": [
+        "The existing deterministic binary evaluator remains the only acceptance oracle.",
+        "R000 is a public Stage 2 development-corpus baseline, not benchmark or generalization evidence.",
+        "Syntactic evidence is never promoted to proof of a semantic obligation."
+      ],
+      "mathematical_acceptance": false,
+      "obligations": [
+        {
+          "criterion_id": "CORE.SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.EDIT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.boundary"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_INITIAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_initial"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.IMPORT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.import_allowlist"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.TASK_IDENTITY",
+          "evidence": [
+            "hard-oracle:gates.task_prefix",
+            "hard-oracle:failure-code:protected-task-prefix-changed"
+          ],
+          "rationale": "A legacy failure code identifies this as the executed blocking frontier.",
+          "status": "FAIL"
+        },
+        {
+          "criterion_id": "CORE.NO_PLACEHOLDER",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.NO_TRUSTED_BYPASS",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.ROUTE_IDENTITY",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.ENVIRONMENT",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.COMPILATION",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.WARNING_POLICY",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.TARGET_DECLARATIONS",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.AXIOM_ALLOWLIST",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_FINAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_final"
+          ],
+          "rationale": "The evaluator's always-run final protected-assets check passed.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "DIRECT.CONCRETE_ROUTE",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.NASH_CHARACTERIZATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.SPE_CHARACTERIZATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.OFF_PATH_SEPARATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.NO_TRANSPORT_ABSTRACTION_LEAK",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.ACTION_ENCODERS",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.PROFILE_ENCODER",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.PAYOFF_PRESERVATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.HYPOTHESIS_BRIDGE",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.NASH_PRESERVATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.SPE_PRESERVATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_COMPLETE",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_CONSUMED",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_NASH_THEOREM_APPLICATION",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_SPE_THEOREM_APPLICATION",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.EQUALITY_REFLECTION",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.CONCLUSION_TRANSPORT",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_MATHEMATICAL_TARGET",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.INDEPENDENT_WORKSPACES",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.ROUTE_AGREEMENT",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        }
+      ],
+      "route": "transport",
+      "rubric_id": "EVE-RUBRIC-R000",
+      "schema_version": "1.0.0",
+      "score_semantics": "non-authoritative-shadow-only",
+      "shadow_search_score": 0.0
+    },
+    {
+      "candidate_id": "TRANSPORT-EXTRA-IMPORT",
+      "controls_selection": false,
+      "failure_frontier": [
+        "CORE.IMPORT_BOUNDARY"
+      ],
+      "hard_oracle": {
+        "adapter_path": "experiments/eve/scripts/evaluate_stage2_entry_game.py",
+        "failure_codes": [
+          "forbidden-import"
+        ],
+        "hard_accepted": false,
+        "report_sha256": "a43f2099ee16f666b7c295bdb459240ac3e0febb534f249184b18a342b374839",
+        "score": 0.0,
+        "status": "failed"
+      },
+      "limitations": [
+        "The existing deterministic binary evaluator remains the only acceptance oracle.",
+        "R000 is a public Stage 2 development-corpus baseline, not benchmark or generalization evidence.",
+        "Syntactic evidence is never promoted to proof of a semantic obligation."
+      ],
+      "mathematical_acceptance": false,
+      "obligations": [
+        {
+          "criterion_id": "CORE.SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.EDIT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.boundary"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_INITIAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_initial"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.IMPORT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.import_allowlist",
+            "hard-oracle:failure-code:forbidden-import"
+          ],
+          "rationale": "A legacy failure code identifies this as the executed blocking frontier.",
+          "status": "FAIL"
+        },
+        {
+          "criterion_id": "CORE.TASK_IDENTITY",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.NO_PLACEHOLDER",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.NO_TRUSTED_BYPASS",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.ROUTE_IDENTITY",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.ENVIRONMENT",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.COMPILATION",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.WARNING_POLICY",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.TARGET_DECLARATIONS",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.AXIOM_ALLOWLIST",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_FINAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_final"
+          ],
+          "rationale": "The evaluator's always-run final protected-assets check passed.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "DIRECT.CONCRETE_ROUTE",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.NASH_CHARACTERIZATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.SPE_CHARACTERIZATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.OFF_PATH_SEPARATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.NO_TRANSPORT_ABSTRACTION_LEAK",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.ACTION_ENCODERS",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.PROFILE_ENCODER",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.PAYOFF_PRESERVATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.HYPOTHESIS_BRIDGE",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.NASH_PRESERVATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.SPE_PRESERVATION",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_COMPLETE",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_CONSUMED",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_NASH_THEOREM_APPLICATION",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_SPE_THEOREM_APPLICATION",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.EQUALITY_REFLECTION",
+          "evidence": [],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "TRANSPORT.CONCLUSION_TRANSPORT",
+          "evidence": [],
+          "rationale": "The required deterministic prerequisite was not established.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_MATHEMATICAL_TARGET",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.INDEPENDENT_WORKSPACES",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.ROUTE_AGREEMENT",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        }
+      ],
+      "route": "transport",
+      "rubric_id": "EVE-RUBRIC-R000",
+      "schema_version": "1.0.0",
+      "score_semantics": "non-authoritative-shadow-only",
+      "shadow_search_score": 0.249999
+    },
+    {
+      "candidate_id": "TRANSPORT-WRONG-TARGET",
+      "controls_selection": false,
+      "failure_frontier": [
+        "CORE.TARGET_DECLARATIONS"
+      ],
+      "hard_oracle": {
+        "adapter_path": "experiments/eve/scripts/evaluate_stage2_entry_game.py",
+        "failure_codes": [
+          "target-declaration-missing-or-wrong-type"
+        ],
+        "hard_accepted": false,
+        "report_sha256": "b4ef809254552e3547b6f3edb6a85c9281423b9ddfc6fbab56254dd07e9178de",
+        "score": 0.0,
+        "status": "failed"
+      },
+      "limitations": [
+        "The existing deterministic binary evaluator remains the only acceptance oracle.",
+        "R000 is a public Stage 2 development-corpus baseline, not benchmark or generalization evidence.",
+        "Syntactic evidence is never promoted to proof of a semantic obligation."
+      ],
+      "mathematical_acceptance": false,
+      "obligations": [
+        {
+          "criterion_id": "CORE.SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.EDIT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.boundary"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_INITIAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_initial"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.IMPORT_BOUNDARY",
+          "evidence": [
+            "hard-oracle:gates.import_allowlist"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.TASK_IDENTITY",
+          "evidence": [
+            "hard-oracle:gates.task_prefix"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.NO_PLACEHOLDER",
+          "evidence": [
+            "hard-oracle:gates.static_guard"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.NO_TRUSTED_BYPASS",
+          "evidence": [
+            "hard-oracle:gates.trusted_bypass_guard"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.ROUTE_IDENTITY",
+          "evidence": [
+            "hard-oracle:gates.route_discipline"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.ENVIRONMENT",
+          "evidence": [
+            "hard-oracle:gates.environment"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.COMPILATION",
+          "evidence": [
+            "hard-oracle:gates.compile"
+          ],
+          "rationale": "The legacy evaluator executed this obligation without a mapped failure.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "CORE.WARNING_POLICY",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.TARGET_DECLARATIONS",
+          "evidence": [
+            "hard-oracle:gates.target_declarations",
+            "hard-oracle:failure-code:target-declaration-missing-or-wrong-type"
+          ],
+          "rationale": "A legacy failure code identifies this as the executed blocking frontier.",
+          "status": "FAIL"
+        },
+        {
+          "criterion_id": "CORE.AXIOM_ALLOWLIST",
+          "evidence": [],
+          "rationale": "The fail-fast evaluator returned at an earlier obligation frontier.",
+          "status": "NOT_EVALUATED"
+        },
+        {
+          "criterion_id": "CORE.PROTECTED_ASSETS_FINAL",
+          "evidence": [
+            "hard-oracle:gates.protected_assets_final"
+          ],
+          "rationale": "The evaluator's always-run final protected-assets check passed.",
+          "status": "PASS"
+        },
+        {
+          "criterion_id": "DIRECT.CONCRETE_ROUTE",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.NASH_CHARACTERIZATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.SPE_CHARACTERIZATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.OFF_PATH_SEPARATION",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "DIRECT.NO_TRANSPORT_ABSTRACTION_LEAK",
+          "evidence": [],
+          "rationale": "This criterion applies only to direct evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "TRANSPORT.ACTION_ENCODERS",
+          "evidence": [
+            "hard-oracle:gates.route_discipline:syntactic-only"
+          ],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.PROFILE_ENCODER",
+          "evidence": [
+            "hard-oracle:gates.route_discipline:syntactic-only"
+          ],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.PAYOFF_PRESERVATION",
+          "evidence": [
+            "hard-oracle:gates.target_declarations",
+            "hard-oracle:failure-code:target-declaration-missing-or-wrong-type"
+          ],
+          "rationale": "The aggregate contract failed but does not identify which semantic sub-obligation failed.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.HYPOTHESIS_BRIDGE",
+          "evidence": [
+            "hard-oracle:gates.target_declarations",
+            "hard-oracle:failure-code:target-declaration-missing-or-wrong-type"
+          ],
+          "rationale": "The aggregate contract failed but does not identify which semantic sub-obligation failed.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.NASH_PRESERVATION",
+          "evidence": [
+            "hard-oracle:gates.target_declarations",
+            "hard-oracle:failure-code:target-declaration-missing-or-wrong-type"
+          ],
+          "rationale": "The aggregate contract failed but does not identify which semantic sub-obligation failed.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.SPE_PRESERVATION",
+          "evidence": [
+            "hard-oracle:gates.target_declarations",
+            "hard-oracle:failure-code:target-declaration-missing-or-wrong-type"
+          ],
+          "rationale": "The aggregate contract failed but does not identify which semantic sub-obligation failed.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_COMPLETE",
+          "evidence": [
+            "hard-oracle:gates.target_declarations",
+            "hard-oracle:failure-code:target-declaration-missing-or-wrong-type"
+          ],
+          "rationale": "The aggregate contract failed but does not identify which semantic sub-obligation failed.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.CERTIFICATE_CONSUMED",
+          "evidence": [
+            "hard-oracle:gates.route_discipline:syntactic-only"
+          ],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_NASH_THEOREM_APPLICATION",
+          "evidence": [
+            "hard-oracle:gates.route_discipline:syntactic-only"
+          ],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.GENERAL_SPE_THEOREM_APPLICATION",
+          "evidence": [
+            "hard-oracle:gates.route_discipline:syntactic-only"
+          ],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.EQUALITY_REFLECTION",
+          "evidence": [
+            "hard-oracle:gates.route_discipline:syntactic-only"
+          ],
+          "rationale": "Token/structure checks cannot by themselves prove this semantic transport obligation.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "TRANSPORT.CONCLUSION_TRANSPORT",
+          "evidence": [
+            "hard-oracle:gates.target_declarations",
+            "hard-oracle:failure-code:target-declaration-missing-or-wrong-type"
+          ],
+          "rationale": "The aggregate contract failed but does not identify which semantic sub-obligation failed.",
+          "status": "UNKNOWN"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_SOURCE_LOCK",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.SAME_MATHEMATICAL_TARGET",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.INDEPENDENT_WORKSPACES",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        },
+        {
+          "criterion_id": "PAIRED.ROUTE_AGREEMENT",
+          "evidence": [],
+          "rationale": "This criterion applies only to paired evaluation.",
+          "status": "NOT_APPLICABLE"
+        }
+      ],
+      "route": "transport",
+      "rubric_id": "EVE-RUBRIC-R000",
+      "schema_version": "1.0.0",
+      "score_semantics": "non-authoritative-shadow-only",
+      "shadow_search_score": 0.699999
+    }
+  ],
+  "paired_obligations": [
+    {
+      "criterion_id": "PAIRED.SAME_SOURCE_LOCK",
+      "evidence": [
+        "direct-case:source_lock.id=EVE-ENTRY-GAME-SOURCE-LOCK-001",
+        "direct-case:source_lock.path=experiments/eve/stage2_entry_game/source-lock.json",
+        "direct-case:source_lock.sha256=023e3f3838fd9c350e99a03189bd7cb11bbb0420626834c45213c1167468a596",
+        "transport-case:source_lock.id=EVE-ENTRY-GAME-SOURCE-LOCK-001",
+        "transport-case:source_lock.path=experiments/eve/stage2_entry_game/source-lock.json",
+        "transport-case:source_lock.sha256=023e3f3838fd9c350e99a03189bd7cb11bbb0420626834c45213c1167468a596",
+        "source-lock:tracked-path=experiments/eve/stage2_entry_game/source-lock.json",
+        "source-lock:file-sha256=023e3f3838fd9c350e99a03189bd7cb11bbb0420626834c45213c1167468a596"
+      ],
+      "rationale": "Both case manifests record the same source-lock identity, and its tracked file SHA-256 matches.",
+      "status": "PASS"
+    },
+    {
+      "criterion_id": "PAIRED.SAME_MATHEMATICAL_TARGET",
+      "evidence": [],
+      "rationale": "R000 does not convert the natural-language Stage 3 review into machine PASS evidence.",
+      "status": "UNKNOWN"
+    },
+    {
+      "criterion_id": "PAIRED.INDEPENDENT_WORKSPACES",
+      "evidence": [
+        "replay-runtime:distinct-temporary-directories"
+      ],
+      "rationale": "The replay materialized and evaluated the two routes in distinct temporary directories.",
+      "status": "PASS"
+    },
+    {
+      "criterion_id": "PAIRED.ROUTE_AGREEMENT",
+      "evidence": [
+        "hard-oracle:two-complete-score-one-route-reports",
+        "prerequisite:PAIRED.SAME_MATHEMATICAL_TARGET:status=UNKNOWN",
+        "prerequisite:TRANSPORT.CONCLUSION_TRANSPORT:status=UNKNOWN"
+      ],
+      "rationale": "Strict R000 prerequisite propagation blocks direct PASS because these prerequisites are not PASS: PAIRED.SAME_MATHEMATICAL_TARGET=UNKNOWN, TRANSPORT.CONCLUSION_TRANSPORT=UNKNOWN.",
+      "status": "UNKNOWN"
+    }
+  ],
+  "report_id": "EVE-RUBRIC-R000-STAGE2-PUBLIC-REPLAY",
+  "review": {
+    "independent_human_review": false,
+    "reviewer_kind": "codex-ai-review"
+  },
+  "rubric_id": "EVE-RUBRIC-R000",
+  "schema_version": "1.0.0",
+  "status": "passed"
+}

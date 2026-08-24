@@ -158,6 +158,10 @@ history-path laws only when each law is a probability measure and is almost
 surely a canonical terminal-absorbing legal play. The discrete behavioral and
 analytic-kernel adapters share this carrier, while local execution coherence
 remains a separate certificate.
+The exact ownership, facade, adapter direction, and unsupported claims for
+the structural, finite PMF, infinite discrete, analytic-kernel, and FOSG
+regimes are governed by
+[`docs/design/efg-semantic-universes.md`](design/efg-semantic-universes.md).
 A second policy interface permits time- and finite-state-prefix-dependent
 action kernels and contains the stationary state-Markov executor exactly.
 Analytic observed strategies live in a separate higher layer with

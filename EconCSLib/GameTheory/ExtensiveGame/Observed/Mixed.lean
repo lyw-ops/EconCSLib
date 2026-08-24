@@ -131,6 +131,40 @@ universe uV
 
 variable {N U : Type*} (G : ObservedChanceGame N U)
 
+/-- At a player history, the stochastic policy induced by a pure profile's
+Dirac behavioral embedding is the point mass at that profile's prescribed
+concrete action. -/
+theorem pureProfile_toBehavioral_toHistoryPolicy_of_mover
+    (profile : G.observed.PureProfile)
+    (history :
+      G.observed.base.toArena.HistoryFrom
+        G.observed.base.init)
+    (hnonterminal :
+      ¬ G.observed.base.isTerminal history.1)
+    (i : N)
+    (hmover :
+      G.observed.base.mover history.1 = some i) :
+    BehavioralProfile.toHistoryPolicy
+        G
+        (profile.toBehavioral G.observed)
+        history hnonterminal =
+      PMF.pure
+        (profile.actionAt G.observed history i hmover
+          (G.observed.base.toArena.isDecision_of_not_isTerminal
+            history.1 hnonterminal)) := by
+  rw [BehavioralProfile.toHistoryPolicy_of_mover
+    G (profile.toBehavioral G.observed)
+    history hnonterminal i hmover]
+  unfold ObservedGame.BehavioralProfile.actionLawAt
+    ObservedGame.BehavioralStrategy.actionLawAt
+    ControlledObservedGame.BehavioralStrategy.actionLawAt
+    ObservedGame.PureProfile.toBehavioral
+    ObservedGame.PureStrategy.toBehavioral
+    ObservedGame.PureProfile.actionAt
+    ObservedGame.PureStrategy.actionAt
+  dsimp only
+  exact PMF.pure_map _ _
+
 /-- Bounded optional-payoff law of a mixed contingent-plan profile.
 
 Every player independently samples a complete pure plan once.  Conditional on
@@ -306,103 +340,114 @@ theorem mapProfile_toBehavioral (e : G.Iso H)
         (profile.toBehavioral G) := by
   funext i targetInformation
   let sourceInformation :=
-    (e.infoStateEquiv i).symm targetInformation
+    (e.representedInfoEquiv i).symm targetInformation
   have hinformation :
-      e.infoStateEquiv i sourceInformation =
+      e.representedInfoEquiv i sourceInformation =
         targetInformation :=
-    (e.infoStateEquiv i).apply_symm_apply
+    (e.representedInfoEquiv i).apply_symm_apply
       targetInformation
   have hpure :=
     Equiv.piCongr_apply_of_eq
-      (W := G.InfoAction i)
-      (Z := H.InfoAction i)
-      (e.infoStateEquiv i)
-      (e.infoActionEquiv i)
+      (W := fun information : G.RepresentedInfo i =>
+        G.InfoAction i information.1)
+      (Z := fun information : H.RepresentedInfo i =>
+        H.InfoAction i information.1)
+      (e.representedInfoEquiv i)
+      (e.representedInfoActionEquiv i)
       (profile i)
       sourceInformation targetInformation
       hinformation
   have hbehavior :=
     Equiv.piCongr_apply_of_eq
-      (W := fun information =>
-        PMF (G.InfoAction i information))
-      (Z := fun information =>
-        PMF (H.InfoAction i information))
-      (e.infoStateEquiv i)
+      (W := fun information : G.RepresentedInfo i =>
+        PMF (G.InfoAction i information.1))
+      (Z := fun information : H.RepresentedInfo i =>
+        PMF (H.InfoAction i information.1))
+      (e.representedInfoEquiv i)
       (fun information =>
         PMF.mapEquiv
-          (e.infoActionEquiv i information))
+          (e.representedInfoActionEquiv i information))
       ((profile.toBehavioral G) i)
       sourceInformation targetInformation
       hinformation
   unfold ObservedGame.PureProfile.toBehavioral
     ObservedGame.PureStrategy.toBehavioral
   change
-    PMF.pure
-        (((e.infoStateEquiv i).piCongr
-          (e.infoActionEquiv i))
-          (profile i) targetInformation) =
+    (PMF.pure
+        (e.strategyEquiv i (profile i) targetInformation) :
+      PMF (H.InfoAction i targetInformation.1)) =
       e.behavioralStrategyEquiv i
         ((profile.toBehavioral G) i)
         targetInformation
+  change
+    e.strategyEquiv i (profile i) targetInformation = _ at hpure
   rw [hpure]
   unfold behavioralStrategyEquiv
   refine Eq.trans ?_ hbehavior.symm
   change
     PMF.pure
         (cast
-          (congrArg (H.InfoAction i) hinformation)
-          (e.infoActionEquiv i sourceInformation
+          (congrArg
+            (fun information : H.RepresentedInfo i =>
+              H.InfoAction i information.1) hinformation)
+          (e.representedInfoActionEquiv i sourceInformation
             (profile i sourceInformation))) =
       cast
         (congrArg
-          (fun information =>
-            PMF (H.InfoAction i information))
+          (fun information : H.RepresentedInfo i =>
+            PMF (H.InfoAction i information.1))
           hinformation)
         ((PMF.pure
           (profile i sourceInformation)).map
-            (e.infoActionEquiv i sourceInformation))
+            (e.representedInfoActionEquiv i sourceInformation))
   symm
   calc
     cast
         (congrArg
-          (fun information =>
-            PMF (H.InfoAction i information))
+          (fun information : H.RepresentedInfo i =>
+            PMF (H.InfoAction i information.1))
           hinformation)
         ((PMF.pure
           (profile i sourceInformation)).map
-            (e.infoActionEquiv i sourceInformation)) =
+            (e.representedInfoActionEquiv i sourceInformation)) =
       cast
         (congrArg
-          (fun information =>
-            PMF (H.InfoAction i information))
+          (fun information : H.RepresentedInfo i =>
+            PMF (H.InfoAction i information.1))
           hinformation)
         (PMF.pure
-          (e.infoActionEquiv i sourceInformation
+          (e.representedInfoActionEquiv i sourceInformation
             (profile i sourceInformation))) := by
       exact congrArg
         (cast
           (congrArg
-            (fun information =>
-              PMF (H.InfoAction i information))
+            (fun information : H.RepresentedInfo i =>
+              PMF (H.InfoAction i information.1))
             hinformation))
         (PMF.pure_map
-          (f := e.infoActionEquiv i sourceInformation)
+          (f := e.representedInfoActionEquiv i sourceInformation)
           (profile i sourceInformation))
     _ = cast
         (congrArg PMF
-          (congrArg (H.InfoAction i) hinformation))
+          (congrArg
+            (fun information : H.RepresentedInfo i =>
+              H.InfoAction i information.1) hinformation))
         (PMF.pure
-          (e.infoActionEquiv i sourceInformation
+          (e.representedInfoActionEquiv i sourceInformation
             (profile i sourceInformation))) := by
       congr
     _ = PMF.pure
         (cast
-          (congrArg (H.InfoAction i) hinformation)
-          (e.infoActionEquiv i sourceInformation
+          (congrArg
+            (fun information : H.RepresentedInfo i =>
+              H.InfoAction i information.1) hinformation)
+          (e.representedInfoActionEquiv i sourceInformation
             (profile i sourceInformation))) :=
       PMF.cast_pure
-        (congrArg (H.InfoAction i) hinformation)
-        (e.infoActionEquiv i sourceInformation
+        (congrArg
+          (fun information : H.RepresentedInfo i =>
+            H.InfoAction i information.1) hinformation)
+        (e.representedInfoActionEquiv i sourceInformation
           (profile i sourceInformation))
 
 /-- Independent sampling of player plans commutes with strict profile

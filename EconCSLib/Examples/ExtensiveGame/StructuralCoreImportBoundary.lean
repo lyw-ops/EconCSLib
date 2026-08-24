@@ -20,7 +20,9 @@ negative source-import boundary is enforced by
 #check ControlledGame.isChanceState
 #check Arena.History
 #check Arena.CompletePlayFromHistory
+#check ExtensiveGame.ControlledDecisionGame
 #check ExtensiveGame.ControlledObservedGame
+#check ExtensiveGame.ControlledDecisionGame.RepresentedInfo
 #check ExtensiveGame.ControlledObservedGame.ContinuationRootPresentation
 #check ExtensiveGame.ControlledObservedGame.PureStrategy
 #check ExtensiveGame.ControlledObservedGame.PureProfile

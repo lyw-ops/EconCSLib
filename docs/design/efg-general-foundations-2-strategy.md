@@ -20,8 +20,9 @@ Retain the following distinction:
 - `InfoState i` is the acting player's complete decision-memory state;
 - `infoObserve` forgets memory and returns the current signal.
 
-`InfoState` is authoritative for strategy measurability and information
-consistency.
+`InfoState` is the raw information/memory carrier. `RepresentedInfo`, the
+subtype witnessed at a genuine decision, is authoritative for strategy
+measurability and information consistency.
 
 Add reusable predicates rather than fields:
 
@@ -33,8 +34,7 @@ Add reusable predicates rather than fields:
   history factors through the current public state where required;
 - `SignalTraceBuilder.HasPerfectRecall`: optional asynchronous trace recall
   when transitions may emit `none` as a silent event;
-- `FiniteReachableInformation`: only represented decision information is
-  finite.
+- finite strategy hypotheses quantify directly over `RepresentedInfo`.
 
 The existing `HasPerfectRecall` remains the classical own-information and
 own-action condition used by Kuhn's theorem. Signal recall is an independent
@@ -47,22 +47,21 @@ regressions in all relevant directions: classic recall without public recall,
 private-signal recall without public recall, public recall without
 private-signal recall, and public recall without classic recall.
 
-Unrepresented information states are allowed in the general carrier, but they
-can make total contingent-plan types artificially large or even empty.
-Textbook finite certificates should therefore require full representation, or
-explicitly quotient/restrict strategies to represented information.
+Unrepresented information states are allowed in the raw carrier and are
+ignored by strategies. Full representation is required only when an external
+format promises that every catalogued raw value occurs.
 
 ## 8. Strategy taxonomy
 
 | Strategy | Intended type | Semantic role |
 |---|---|---|
-| Pure | one `InfoAction` at every `InfoState` | deterministic contingent plan |
-| Behavioral | one local action law at every `InfoState` | fresh local randomization |
+| Pure | one `InfoAction` at every `RepresentedInfo` | deterministic contingent plan |
+| Behavioral | one local action law at every `RepresentedInfo` | fresh local randomization |
 | Discrete mixed | `PMF` on pure strategies | countably supported ex-ante randomization |
 | Analytic mixed | probability measure on a measurable pure-strategy space | non-discrete ex-ante randomization |
 | Discrete general | `PMF` on behavioral strategies | countably supported random behavioral plan |
 | Analytic general | probability measure on a measurable behavioral-strategy space | textbook general strategy in full generality |
-| Quasi | a nonempty set of actions at each information state | nondeterministic permission, not probability |
+| Quasi | a nonempty set of actions at each represented information coordinate | nondeterministic permission, not probability |
 
 The canonical discrete names are `DiscreteGeneralStrategy` and
 `DiscreteGeneralProfile`; the shorter former names were removed during
@@ -161,21 +160,17 @@ with, at minimum:
 - a uniform structural length bound;
 - finite legal action types on represented histories;
 - finite player type when a theorem enumerates profiles;
-- full decision-information representation, or an explicit represented
-  strategy quotient;
-- decision-mover coherence at reachable histories: a history labeled with a
-  player mover has a nonempty action type;
+- finite `RepresentedInfo` carriers for algorithms that enumerate strategy
+  coordinates;
 - decidable terminal and mover tests only for executable constructions.
 
 Perfect recall, no chance, zero sum, total preferences, and decidable utility
 comparison are separate theorem hypotheses.
 
 Decision-mover coherence is not imposed on `ExtensiveGame`: execution ignores
-the mover at a terminal state. It is needed by the finite contingent-plan
-profile because a player-labeled terminal history otherwise induces an empty
-represented `InfoAction` fiber and can make the total pure-strategy type
-uninhabited. A frontend may instead normalize every terminal mover to `none`
-and prove that this leaves execution unchanged.
+the mover at a terminal state, and `IsDecision` prevents such an endpoint from
+entering `RepresentedInfo`. Every represented coordinate is inhabited by
+transporting the action in its decision witness through `actionEquiv`.
 
 Finite state is neither necessary nor sufficient: a finite-state arena may
 cycle, while an infinite ambient state type may have a finite reachable

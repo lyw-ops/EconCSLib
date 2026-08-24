@@ -9,14 +9,15 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.WellFormed
 /-!
 # Finite-EFG well-formedness regressions
 
-These examples show why full decision-information representation is a real
-finite-profile hypothesis rather than decorative metadata.
+These examples distinguish raw information catalogs from represented strategy
+coordinates.
 
 The presentations use one-state terminal base games. A ghost Boolean
-information carrier fails `AllDecisionInfoRepresented`; an empty carrier
-satisfies the structural finite-EFG certificate. A separate regression shows
-that an irrelevant terminal player label fails mover normalization but still
-creates no strategy coordinate.
+information carrier fails the optional `AllDecisionInfoRepresented`
+certificate but still satisfies the structural finite-EFG certificate and has
+an inhabited pure-profile type. A separate regression shows that an irrelevant
+terminal player label fails mover normalization but still creates no strategy
+coordinate.
 -/
 
 namespace FiniteEFGWellFormedness
@@ -53,7 +54,6 @@ theorem canonicalTerminalGame_pureProfile_nonempty :
     Nonempty canonicalTerminalGame.PureProfile :=
   ExtensiveGame.ObservedGame.completeInformation_nonempty_pureProfile
     terminalBase
-    canonicalTerminalGame_decisionMoverCoherent
 
 /-- The unconstrained base carrier also permits a semantically ignored player
 label at a terminal state. -/
@@ -86,11 +86,11 @@ the complete-information strategy carrier to be inhabited. -/
 theorem playerLabeledCanonicalTerminalGame_pureProfile_nonempty :
     Nonempty playerLabeledCanonicalTerminalGame.PureProfile := by
   refine ⟨fun _player information => ?_⟩
-  exact
-    (information.property.2
-      (by
-        change IsEmpty Empty
-        infer_instance)).elim
+  have hfalse : False := by
+    rcases information.property with ⟨witness⟩
+    rcases witness.decision with ⟨action⟩
+    exact action.elim
+  exact hfalse.elim
 
 /-- A presentation with decision-information values that are never realized.
 -/
@@ -109,14 +109,48 @@ def ghostGame : ExtensiveGame.ObservedGame Unit Unit where
   InfoAction := fun _ _ => Empty
   actionEquiv := fun _ _ _ _ => Equiv.refl Empty
 
-/-- Ghost decision information is rejected even though the compact base game
-is finite and terminal. -/
+/-- The stronger raw-catalog certificate detects ghost decision information. -/
 theorem ghostGame_not_allDecisionInfoRepresented :
     ¬ ghostGame.AllDecisionInfoRepresented := by
   intro hrepresented
   rcases hrepresented () false with ⟨witness⟩
   have hmover := witness.mover
   simp [ghostGame, terminalBase] at hmover
+
+/-- Ghost raw information does not obstruct structural finiteness because no
+value is represented at a genuine decision. -/
+def ghostGame_finiteEFG :
+    ghostGame.FiniteEFGHypotheses where
+  lengthBound := 0
+  hasLengthBound :=
+    Arena.HasLengthBoundAt.of_terminal
+      (current :=
+        Arena.HistoryFrom.nil
+          ghostGame.base.toArena ghostGame.base.init)
+      (by
+        change IsEmpty Empty
+        infer_instance)
+  finiteAction := by
+    intro _history
+    change Finite Empty
+    infer_instance
+  finiteRepresentedInfo := by
+    intro i
+    letI : Finite
+        (ghostGame.toControlledObservedGame.InfoState i) := by
+      change Finite Bool
+      infer_instance
+    exact
+      Finite.of_injective
+        (fun information : ghostGame.RepresentedInfo i =>
+          information.1)
+        Subtype.val_injective
+
+/-- Ghost raw information creates neither a strategic obligation nor an empty
+pure-profile carrier. -/
+theorem ghostGame_pureProfile_nonempty :
+    Nonempty ghostGame.PureProfile :=
+  ExtensiveGame.ObservedGame.nonempty_pureProfile
 
 /-- A presentation with no declared decision information, matching the fact
 that the base has no player decision histories. -/
@@ -130,13 +164,13 @@ def cleanGame : ExtensiveGame.ObservedGame Unit Unit where
   observe_public := by simp
   InfoState := fun _ => Empty
   infoObserve := fun _ information => information.elim
-  infoAt := fun _ _ hmover _hnonterminal => by
+  infoAt := fun _ _ hmover _hdecision => by
     simp [terminalBase] at hmover
   infoAt_observe := by
-    intro _ _ hmover _hnonterminal
+    intro _ _ hmover _hdecision
     simp [terminalBase] at hmover
   InfoAction := fun _ information => information.elim
-  actionEquiv := fun _ _ hmover _hnonterminal => by
+  actionEquiv := fun _ _ hmover _hdecision => by
     simp [terminalBase] at hmover
 
 theorem cleanGame_allDecisionInfoRepresented :
@@ -166,19 +200,22 @@ def cleanGame_finiteEFG :
     intro history
     change Finite Empty
     infer_instance
-  finiteInfoState := by
+  finiteRepresentedInfo := by
     intro _i
-    change Finite Empty
-    infer_instance
-  allDecisionInfoRepresented :=
-    cleanGame_allDecisionInfoRepresented
-  decisionMoverCoherent :=
-    cleanGame_decisionMoverCoherent
+    letI : Finite
+        (cleanGame.toControlledObservedGame.InfoState _i) := by
+      change Finite Empty
+      infer_instance
+    exact
+      Finite.of_injective
+        (fun information : cleanGame.RepresentedInfo _i =>
+          information.1)
+        Subtype.val_injective
 
-/-- The finite certificate rules out an accidentally empty pure-profile
-carrier. -/
+/-- Represented decision coordinates make the pure-profile carrier inhabited,
+independently of the finite certificate. -/
 theorem cleanGame_pureProfile_nonempty :
     Nonempty cleanGame.PureProfile :=
-  cleanGame_finiteEFG.nonempty_pureProfile
+  ExtensiveGame.ObservedGame.nonempty_pureProfile
 
 end FiniteEFGWellFormedness

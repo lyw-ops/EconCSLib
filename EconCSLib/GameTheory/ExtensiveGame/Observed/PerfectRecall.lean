@@ -46,14 +46,14 @@ theorem personalDecisionAt_actionEquiv
     (G : ObservedGame N U) (i : N)
     (history : G.base.toArena.HistoryFrom G.base.init)
     (hmover : G.base.mover history.1 = some i)
-    (hnonterminal : ¬ G.base.isTerminal history.1)
+    (hdecision : G.base.toArena.IsDecision history.1)
     (action :
-      G.InfoAction i (G.infoAt history i hmover hnonterminal)) :
+      G.InfoAction i (G.infoAt history i hmover hdecision)) :
     G.personalDecisionAt i history hmover
-        (G.actionEquiv history i hmover hnonterminal action) =
-      ⟨G.infoAt history i hmover hnonterminal, action⟩ :=
+        (G.actionEquiv history i hmover hdecision action) =
+      ⟨G.representedInfoAt history i hmover hdecision, action⟩ :=
   ControlledObservedGame.personalDecisionAt_actionEquiv
-    G.toControlledObservedGame i history hmover hnonterminal action
+    G.toControlledObservedGame i history hmover hdecision action
 
 /-- Compatibility spelling for the path-recursive remembered-decision
 extractor. -/
@@ -191,12 +191,12 @@ theorem HasNoAbsentMindedness.info_ne_of_mem_ownDecisionHistory
     (hnoAbsent : G.HasNoAbsentMindedness i)
     (history : G.base.toArena.HistoryFrom G.base.init)
     (hmover : G.base.mover history.1 = some i)
-    (hnonterminal : ¬ G.base.isTerminal history.1)
+    (hdecision : G.base.toArena.IsDecision history.1)
     (decision : G.PersonalDecision i)
     (hmem : decision ∈ G.ownDecisionHistory i history) :
-    decision.1 ≠ G.infoAt history i hmover hnonterminal :=
+    decision.1 ≠ G.representedInfoAt history i hmover hdecision :=
   ControlledObservedGame.HasNoAbsentMindedness.info_ne_of_mem_ownDecisionHistory
-    hnoAbsent history hmover hnonterminal decision hmem
+    hnoAbsent history hmover hdecision decision hmem
 
 /-- No player is absent-minded. -/
 abbrev NoAbsentMindedness (G : ObservedGame N U) : Prop :=
@@ -239,11 +239,12 @@ theorem remembered_infoAt [DecidableEq N]
     (i : N)
     (history : G.base.toArena.HistoryFrom G.base.init)
     (hmover : G.base.mover history.1 = some i)
-    (hnonterminal : ¬ G.base.isTerminal history.1) :
-    certificate.remembered i (G.infoAt history i hmover hnonterminal) =
+    (hdecision : G.base.toArena.IsDecision history.1) :
+    certificate.remembered i
+        (G.representedInfoAt history i hmover hdecision) =
       G.ownDecisionHistory i history :=
   ControlledObservedGame.RecallCertificate.remembered_infoAt
-    certificate i history hmover hnonterminal
+    certificate i history hmover hdecision
 
 /-- A factorization certificate proves perfect recall. -/
 theorem perfectRecall [DecidableEq N]
@@ -271,7 +272,7 @@ theorem recallCertificate_nonempty_iff_perfectRecall
 namespace Iso
 
 /-- Strictly map a remembered personal decision. -/
-def personalDecisionEquiv (e : G.Iso H) (i : N) :
+noncomputable def personalDecisionEquiv (e : G.Iso H) (i : N) :
     G.PersonalDecision i ≃ H.PersonalDecision i :=
   e.toControlledIso.personalDecisionEquiv i
 

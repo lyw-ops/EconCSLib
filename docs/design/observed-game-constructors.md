@@ -114,18 +114,16 @@ The following data must not be inferred by a convenience constructor:
 
 - `ExtensiveGame.ofArena` cannot infer `init`, `mover`, or `payoff`. A bare
   arena is not yet a game.
-- `historyInformation` deliberately uses every complete history as every
-  player's `InfoState`. Therefore `PureStrategy i` and behavioral strategies
-  request an `InfoAction` at histories where `i` does not move, including
-  terminal histories. If those action fibers are empty, the strategy type can
-  be empty. Prefer `decisionHistoryInformation` or the canonical
-  `completeInformation` when the strategy domain must exclude
-  such histories.
-- `completeInformation` excludes chance and other-player
-  histories, but the base carrier permits a terminal state to retain a player
-  mover label. Such a state produces an empty action fiber and is rejected by
-  `DecisionMoverCoherent`; standard frontends may instead normalize every
-  terminal mover to `none`.
+- `historyInformation` deliberately uses every complete history as the raw
+  `InfoState` carrier. Strategies nevertheless range over `RepresentedInfo`,
+  so histories where the player does not genuinely decide do not become
+  coordinates. Prefer `decisionHistoryInformation` or the canonical
+  `completeInformation` when a smaller raw carrier is useful for enumeration
+  or external interchange.
+- `completeInformation` excludes chance, other-player, and terminal
+  occurrences from represented coordinates through `IsDecision`. A base
+  carrier may retain a player label at a terminal state; it is semantically
+  ignored. Standard frontends may still normalize terminal movers to `none`.
 - `PublicObservationPresentation.trivial` intentionally hides all public
   history. `fullHistory` intentionally reveals all of it. Neither choice is a
   harmless implementation detail.

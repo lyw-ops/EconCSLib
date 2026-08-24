@@ -143,15 +143,25 @@ theorem tinyRightHistory_nonterminal :
     ¬ tinyObservedGame.base.isTerminal tinyRightHistory.1 :=
   fun hterminal => hterminal.false P1Action.Stop
 
+theorem tinyLeftHistory_decision :
+    tinyObservedGame.base.toArena.IsDecision tinyLeftHistory.1 :=
+  tinyObservedGame.base.toArena.isDecision_of_not_isTerminal _
+    tinyLeftHistory_nonterminal
+
+theorem tinyRightHistory_decision :
+    tinyObservedGame.base.toArena.IsDecision tinyRightHistory.1 :=
+  tinyObservedGame.base.toArena.isDecision_of_not_isTerminal _
+    tinyRightHistory_nonterminal
+
 /-- The compiler actually identifies the left and right player-1 decisions as
 one information state. -/
 theorem tinyObserved_infoAt_left_right :
     tinyObservedGame.infoAt
         tinyLeftHistory Player.P1 tinyLeftHistory_mover
-          tinyLeftHistory_nonterminal =
+          tinyLeftHistory_decision =
       tinyObservedGame.infoAt
         tinyRightHistory Player.P1 tinyRightHistory_mover
-          tinyRightHistory_nonterminal :=
+          tinyRightHistory_decision :=
   tiny.decisionInfoAt_eq_of_same_info
     State.left State.right Player.P1
     tinyLeftHistory_mover tinyRightHistory_mover
@@ -161,27 +171,27 @@ theorem tinyObserved_infoAt_left_right :
 choice at the two hidden nodes. -/
 theorem tinyObserved_choice_left_right
     (profile : tinyObservedGame.PureProfile) :
-    (⟨tinyObservedGame.infoAt
+    (⟨tinyObservedGame.representedInfoAt
           tinyLeftHistory Player.P1 tinyLeftHistory_mover
-            tinyLeftHistory_nonterminal,
+            tinyLeftHistory_decision,
         profile Player.P1
-          (tinyObservedGame.infoAt
+          (tinyObservedGame.representedInfoAt
             tinyLeftHistory Player.P1 tinyLeftHistory_mover
-              tinyLeftHistory_nonterminal)⟩ :
-      Σ information : tinyObservedGame.InfoState Player.P1,
-        tinyObservedGame.InfoAction Player.P1 information) =
-    ⟨tinyObservedGame.infoAt
+              tinyLeftHistory_decision)⟩ :
+      Σ information : tinyObservedGame.RepresentedInfo Player.P1,
+        tinyObservedGame.InfoAction Player.P1 information.1) =
+    ⟨tinyObservedGame.representedInfoAt
         tinyRightHistory Player.P1 tinyRightHistory_mover
-          tinyRightHistory_nonterminal,
+          tinyRightHistory_decision,
       profile Player.P1
-        (tinyObservedGame.infoAt
+        (tinyObservedGame.representedInfoAt
           tinyRightHistory Player.P1 tinyRightHistory_mover
-            tinyRightHistory_nonterminal)⟩ :=
+            tinyRightHistory_decision)⟩ :=
   profile.choice_eq_of_infoState_eq
     tinyObservedGame Player.P1
     tinyLeftHistory tinyRightHistory
     tinyLeftHistory_mover tinyRightHistory_mover
-    tinyLeftHistory_nonterminal tinyRightHistory_nonterminal
+    tinyLeftHistory_decision tinyRightHistory_decision
     tinyObserved_infoAt_left_right
 
 /-- Remaining decision depth of a compact tiny-game state. -/

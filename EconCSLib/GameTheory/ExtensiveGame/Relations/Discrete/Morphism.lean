@@ -249,6 +249,13 @@ theorem isTerminal_of_map_isTerminal (f : A.Hom B) {s : A.State}
     A.IsTerminal s :=
   ⟨fun action => hterminal.false (f.action s action)⟩
 
+/-- A strict morphism maps genuine decision states to genuine decision
+states. -/
+theorem isDecision (f : A.Hom B) {s : A.State}
+    (hdecision : A.IsDecision s) :
+    B.IsDecision (f.state s) :=
+  hdecision.map (f.action s)
+
 /-- Exact terminality preservation along a strict Arena morphism. -/
 def PreservesTerminal (f : A.Hom B) : Prop :=
   ∀ s : A.State, A.IsTerminal s ↔ B.IsTerminal (f.state s)
@@ -489,6 +496,14 @@ theorem isTerminal_iff (e : A.Iso B) (s : A.State) :
     exact ⟨fun targetAction =>
       hsource.false ((e.actionEquiv s).symm targetAction)⟩
   · exact e.toHom.isTerminal_of_map_isTerminal
+
+/-- Arena isomorphisms preserve and reflect genuine decision states. -/
+theorem isDecision_iff (e : A.Iso B) (s : A.State) :
+    A.IsDecision s ↔ B.IsDecision (e.stateEquiv s) := by
+  constructor
+  · exact e.toHom.isDecision
+  · intro htarget
+    exact htarget.map (e.actionEquiv s).symm
 
 /-- The underlying strict morphism of an Arena isomorphism preserves
 terminality exactly. -/

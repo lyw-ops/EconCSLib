@@ -73,15 +73,31 @@ def IsReachablePlayerInformation
       G.observed.base.toArena.HistoryFrom G.observed.base.init)
     (hmover :
       G.observed.base.mover history.1 = some information.1)
-    (hnonterminal :
-      ¬ G.observed.base.isTerminal history.1),
-    G.observed.infoAt history information.1 hmover hnonterminal =
+    (hdecision :
+      G.observed.base.toArena.IsDecision history.1),
+    G.observed.infoAt history information.1 hmover hdecision =
       information.2
 
 /-- Proof-carrying carrier of reachable original player-information points. -/
 abbrev ReachablePlayerInformation (G : ObservedChanceGame N U) :=
   {information : PlayerInformationPoint G //
     IsReachablePlayerInformation G information}
+
+/-- The represented behavioral-strategy coordinate carried by a reachable
+player-information point. -/
+def ReachablePlayerInformation.representedInfo
+    {G : ObservedChanceGame N U}
+    (information : ReachablePlayerInformation G) :
+    G.observed.RepresentedInfo information.1.1 := by
+  refine ⟨information.1.2, ?_⟩
+  rcases information.2 with
+    ⟨history, hmover, hdecision, hinformation⟩
+  exact ⟨{
+    history := history
+    mover := hmover
+    decision := hdecision
+    infoAt_eq := hinformation
+  }⟩
 
 /-- A player-controlled history viewed as a history together with its uniquely
 determined mover. -/
@@ -102,8 +118,11 @@ def reachablePlayerInformationAt
     (hmover : G.observed.base.mover history.1 = some i)
     (hnonterminal : ¬ G.observed.base.isTerminal history.1) :
     ReachablePlayerInformation G :=
-  ⟨⟨i, G.observed.infoAt history i hmover hnonterminal⟩,
-    ⟨history, hmover, hnonterminal, rfl⟩⟩
+  let hdecision :=
+    G.observed.base.toArena.isDecision_of_not_isTerminal
+      history.1 hnonterminal
+  ⟨⟨i, G.observed.infoAt history i hmover hdecision⟩,
+    ⟨history, hmover, hdecision, rfl⟩⟩
 
 /-- Canonical disjoint information tags for the countable-discrete
 presentation. -/
@@ -179,7 +198,12 @@ noncomputable instance instCountableReachablePlayerInformation
     intro information
     rcases information with
       ⟨⟨i, playerInformation⟩,
-        ⟨history, hmover, hnonterminal, hinformation⟩⟩
+        ⟨history, hmover, hdecision, hinformation⟩⟩
+    have hnonterminal :
+        ¬ G.observed.base.isTerminal history.1 :=
+      fun hterminal =>
+        (G.observed.base.toArena.isTerminal_iff_not_isDecision
+          history.1).1 hterminal hdecision
     refine
       ⟨⟨history, ⟨i, hmover, hnonterminal⟩⟩, ?_⟩
     apply Subtype.ext
@@ -232,11 +256,11 @@ noncomputable instance instCountableCountableInformationAction
   | .player information => by
       rcases information with
         ⟨⟨i, playerInformation⟩,
-          ⟨history, hmover, hnonterminal, hinformation⟩⟩
+          ⟨history, hmover, hdecision, hinformation⟩⟩
       let transport :
           G.observed.InfoAction i playerInformation ≃
             G.observed.InfoAction i
-              (G.observed.infoAt history i hmover hnonterminal) :=
+              (G.observed.infoAt history i hmover hdecision) :=
         Equiv.cast
           (congrArg (G.observed.InfoAction i)
             hinformation.symm)
@@ -245,14 +269,14 @@ noncomputable instance instCountableCountableInformationAction
             (fun action : G.observed.InfoAction i playerInformation =>
               (⟨history,
                 G.observed.actionEquiv history i hmover
-                  hnonterminal
+                  hdecision
                   (transport action)⟩ :
                 CompleteHistoryAction G)) by
           intro action₁ action₂ heq
           apply transport.injective
           apply
             (G.observed.actionEquiv history i hmover
-              hnonterminal).injective
+              hdecision).injective
           exact eq_of_heq (Sigma.mk.inj_iff.mp heq).2).countable
   | .chance history _hchance => by
       exact
@@ -538,6 +562,9 @@ noncomputable def realizedAction
   classical
   let history :=
     MeasurableKernelArena.latestEventState time events
+  let hdecision :=
+    G.observed.base.toArena.isDecision_of_not_isTerminal
+      history.1 hnonterminal
   exact match hmover : G.observed.base.mover history.1 with
   | some i =>
       if htag :
@@ -547,7 +574,7 @@ noncomputable def realizedAction
                 hnonterminal) then
         ⟨history,
           G.observed.actionEquiv history i hmover
-            hnonterminal
+            hdecision
             (cast
               (congrArg CountableInformation.Action htag)
               taggedAction.2)⟩
@@ -604,7 +631,9 @@ theorem realizedAction_player
       G.observed.InfoAction i
         (G.observed.infoAt
           (MeasurableKernelArena.latestEventState time events)
-          i hmover hnonterminal)) :
+          i hmover
+            (G.observed.base.toArena.isDecision_of_not_isTerminal _
+              hnonterminal))) :
     realizedAction G time events hnonterminal
         (playerAction G
           (reachablePlayerInformationAt G
@@ -614,7 +643,10 @@ theorem realizedAction_player
       ⟨MeasurableKernelArena.latestEventState time events,
         G.observed.actionEquiv
           (MeasurableKernelArena.latestEventState time events)
-          i hmover hnonterminal action⟩ := by
+          i hmover
+            (G.observed.base.toArena.isDecision_of_not_isTerminal _
+              hnonterminal)
+          action⟩ := by
   classical
   unfold realizedAction
   dsimp
@@ -846,7 +878,7 @@ noncomputable def abstractMeasure
   | .terminal => 0
   | .player information =>
       @PMF.toMeasure (CountableAction G) ⊤
-        ((profile information.1.1 information.1.2).map
+        ((profile information.1.1 information.representedInfo).map
           (playerAction G information))
   | .chance history hchance =>
       @PMF.toMeasure (CountableAction G) ⊤
@@ -876,7 +908,7 @@ theorem abstractKernel_player
     (information : ReachablePlayerInformation G) :
     abstractKernel G profile (.player information) =
       @PMF.toMeasure (CountableAction G) ⊤
-        ((profile information.1.1 information.1.2).map
+        ((profile information.1.1 information.representedInfo).map
           (playerAction G information)) :=
   rfl
 
@@ -924,25 +956,29 @@ theorem abstractKernel_bind_realization_of_mover
             (⟨MeasurableKernelArena.latestEventState time events,
               action⟩ :
               (AnalyticHistoryArena G).ActionBundle))) := by
+  let hdecision :=
+    G.observed.base.toArena.isDecision_of_not_isTerminal
+      (MeasurableKernelArena.latestEventState time events).1
+      hnonterminal
   rw [abstractKernel_player]
   calc
     _ =
         @PMF.toMeasure (AnalyticHistoryArena G).ActionBundle ⊤
           ((profile i
-              (G.observed.infoAt
+              (reachablePlayerInformationAt G
                 (MeasurableKernelArena.latestEventState time events)
-                i hmover hnonterminal)).map
+                i hmover hnonterminal).representedInfo).map
             (fun action =>
               (⟨MeasurableKernelArena.latestEventState time events,
                 G.observed.actionEquiv
                   (MeasurableKernelArena.latestEventState time events)
-                  i hmover hnonterminal action⟩ :
+                  i hmover hdecision action⟩ :
                 (AnalyticHistoryArena G).ActionBundle))) :=
       bind_mapped_realization G time events hnonterminal
         (profile i
-          (G.observed.infoAt
+          (reachablePlayerInformationAt G
             (MeasurableKernelArena.latestEventState time events)
-            i hmover hnonterminal))
+            i hmover hnonterminal).representedInfo)
         (playerAction G
           (reachablePlayerInformationAt G
             (MeasurableKernelArena.latestEventState time events)
@@ -951,7 +987,7 @@ theorem abstractKernel_bind_realization_of_mover
           (⟨MeasurableKernelArena.latestEventState time events,
             G.observed.actionEquiv
               (MeasurableKernelArena.latestEventState time events)
-              i hmover hnonterminal action⟩ :
+              i hmover hdecision action⟩ :
             (AnalyticHistoryArena G).ActionBundle))
         (realizedAction_player G time events hnonterminal i hmover)
     _ = _ := by
@@ -963,11 +999,11 @@ theorem abstractKernel_bind_realization_of_mover
         (PMF.map_comp
           (G.observed.actionEquiv
             (MeasurableKernelArena.latestEventState time events)
-            i hmover hnonterminal)
+            i hmover hdecision)
           (profile i
-            (G.observed.infoAt
+            (reachablePlayerInformationAt G
               (MeasurableKernelArena.latestEventState time events)
-              i hmover hnonterminal))
+              i hmover hnonterminal).representedInfo)
           (fun action =>
             (⟨MeasurableKernelArena.latestEventState time events,
               action⟩ :
@@ -1032,7 +1068,7 @@ theorem abstractKernel_isFinite
       haveI :
           IsProbabilityMeasure
             (@PMF.toMeasure (CountableAction G) ⊤
-              ((profile information.1.1 information.1.2).map
+              ((profile information.1.1 information.representedInfo).map
                 (playerAction G information))) :=
         inferInstance
       exact le_of_eq measure_univ
@@ -1300,7 +1336,9 @@ theorem informationOfPlayerInformation_at
     (hmover : G.observed.base.mover history.1 = some i)
     (hnonterminal : ¬ G.observed.base.isTerminal history.1) :
     informationOfPlayerInformation G
-        ⟨i, G.observed.infoAt history i hmover hnonterminal⟩ =
+        ⟨i, G.observed.infoAt history i hmover
+          (G.observed.base.toArena.isDecision_of_not_isTerminal _
+            hnonterminal)⟩ =
       .player
         (reachablePlayerInformationAt G history i hmover
           hnonterminal) := by
@@ -1311,7 +1349,10 @@ theorem informationOfPlayerInformation_at
   · rename_i hunreachable
     exact
       (hunreachable
-        ⟨history, hmover, hnonterminal, rfl⟩).elim
+        ⟨history, hmover,
+          G.observed.base.toArena.isDecision_of_not_isTerminal _
+            hnonterminal,
+          rfl⟩).elim
 
 /-- Every observed chance game satisfying the stated countability hypotheses
 has a canonical discrete analytic presentation. -/

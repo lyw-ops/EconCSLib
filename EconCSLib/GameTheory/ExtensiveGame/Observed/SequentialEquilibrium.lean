@@ -45,20 +45,17 @@ open scoped ENNReal
 
 variable {N U : Type*} (G : ObservedChanceGame N U)
 
-/-- Nonnegative, not necessarily normalized belief weights at every declared
-decision information state.
-
-The finite model certificate used by Bayes normalization separately ensures
-that every declared information state has a decision-history witness. -/
+/-- Nonnegative, not necessarily normalized belief weights at every
+represented decision-information coordinate. -/
 abbrev RawBeliefSystem :=
-  (i : N) → (information : G.observed.InfoState i) →
-    G.observed.DecisionInfoWitness i information → ℝ≥0∞
+  (i : N) → (information : G.observed.RepresentedInfo i) →
+    G.observed.DecisionInfoWitness i information.1 → ℝ≥0∞
 
 /-- A normalized belief over complete decision-history occurrences at every
-declared information state. -/
+represented information coordinate. -/
 abbrev BeliefSystem :=
-  (i : N) → (information : G.observed.InfoState i) →
-    PMF (G.observed.DecisionInfoWitness i information)
+  (i : N) → (information : G.observed.RepresentedInfo i) →
+    PMF (G.observed.DecisionInfoWitness i information.1)
 
 namespace BeliefSystem
 
@@ -70,7 +67,7 @@ def toRaw (beliefs : G.BeliefSystem) : G.RawBeliefSystem :=
 /-- Every information-state belief has total mass one. -/
 @[simp]
 theorem tsum_apply (beliefs : G.BeliefSystem)
-    (i : N) (information : G.observed.InfoState i) :
+    (i : N) (information : G.observed.RepresentedInfo i) :
     ∑' occurrence, beliefs i information occurrence = 1 :=
   PMF.tsum_coe (beliefs i information)
 
@@ -78,8 +75,8 @@ theorem tsum_apply (beliefs : G.BeliefSystem)
 decision-history occurrence. -/
 def TendsTo (sequence : ℕ → G.BeliefSystem)
     (limit : G.BeliefSystem) : Prop :=
-  ∀ (i : N) (information : G.observed.InfoState i)
-    (occurrence : G.observed.DecisionInfoWitness i information),
+  ∀ (i : N) (information : G.observed.RepresentedInfo i)
+    (occurrence : G.observed.DecisionInfoWitness i information.1),
     Tendsto
       (fun n => sequence n i information occurrence)
       atTop
@@ -88,7 +85,7 @@ def TendsTo (sequence : ℕ → G.BeliefSystem)
 end BeliefSystem
 
 /-- A behavioral assessment: strategic behavior together with normalized
-beliefs at every decision information state. -/
+beliefs at every represented decision-information coordinate. -/
 structure Assessment where
   /-- Information-indexed behavioral profile. -/
   behavior : G.observed.BehavioralProfile
@@ -102,8 +99,8 @@ namespace BehavioralProfile
 every declared decision information state has positive mass. -/
 def IsCompletelyMixed
     (profile : G.observed.BehavioralProfile) : Prop :=
-  ∀ (i : N) (information : G.observed.InfoState i)
-    (action : G.observed.InfoAction i information),
+  ∀ (i : N) (information : G.observed.RepresentedInfo i)
+    (action : G.observed.InfoAction i information.1),
     0 < profile i information action
 
 /-- Pointwise convergence of every information-indexed action
@@ -111,8 +108,8 @@ probability. -/
 def TendsTo
     (sequence : ℕ → G.observed.BehavioralProfile)
     (limit : G.observed.BehavioralProfile) : Prop :=
-  ∀ (i : N) (information : G.observed.InfoState i)
-    (action : G.observed.InfoAction i information),
+  ∀ (i : N) (information : G.observed.RepresentedInfo i)
+    (action : G.observed.InfoAction i information.1),
     Tendsto
       (fun n => sequence n i information action)
       atTop
@@ -123,11 +120,11 @@ end BehavioralProfile
 /-- Structural hypotheses for the first finite sequential-equilibrium layer.
 
 Player finiteness is a typeclass parameter. The finite-EFG certificate
-supplies a bounded, locally finite history unfolding, finite information
-carriers, representation of every declared information state, and mover
-coherence. Chance is part of `ObservedChanceGame`; the recall certificate
-proves perfect recall. Decidability of terminality is stored only because the
-existing executable bounded stochastic semantics requires it. -/
+supplies a bounded, locally finite history unfolding and finite represented
+decision-information carriers. Chance is part of `ObservedChanceGame`; the
+recall certificate proves perfect recall. Decidability of terminality is
+stored only because the existing executable bounded stochastic semantics
+requires it. -/
 structure FiniteSequentialHypotheses
     [Fintype N] [DecidableEq N] where
   /-- Finite occurrence-sensitive observed-EFG presentation. -/
@@ -171,13 +168,13 @@ noncomputable def finiteHistory
         intro first second heq
         exact congrArg Subtype.val heq)
 
-/-- Every information state has finitely many occurrence-sensitive decision
-history witnesses. -/
+/-- Every represented information coordinate has finitely many
+occurrence-sensitive decision-history witnesses. -/
 @[implicit_reducible]
 noncomputable def finiteDecisionInfoWitness
     (h : G.FiniteSequentialHypotheses)
-    (i : N) (information : G.observed.InfoState i) :
-    Finite (G.observed.DecisionInfoWitness i information) := by
+    (i : N) (information : G.observed.RepresentedInfo i) :
+    Finite (G.observed.DecisionInfoWitness i information.1) := by
   letI : Finite G.observed.base.History := finiteHistory G h
   exact
     Finite.of_injective
@@ -193,8 +190,8 @@ a behavioral profile and the game's declared chance kernels. -/
 noncomputable def reachWeight
     (h : G.FiniteSequentialHypotheses)
     (profile : G.observed.BehavioralProfile)
-    {i : N} {information : G.observed.InfoState i}
-    (occurrence : G.observed.DecisionInfoWitness i information) :
+    {i : N} {information : G.observed.RepresentedInfo i}
+    (occurrence : G.observed.DecisionInfoWitness i information.1) :
     ℝ≥0∞ := by
   letI :
       (state : G.observed.base.State) →
@@ -212,32 +209,32 @@ noncomputable def reachWeight
 noncomputable def informationReachWeight
     (h : G.FiniteSequentialHypotheses)
     (profile : G.observed.BehavioralProfile)
-    (i : N) (information : G.observed.InfoState i) :
+    (i : N) (information : G.observed.RepresentedInfo i) :
     ℝ≥0∞ :=
   ∑' occurrence,
     reachWeight G h profile
       (occurrence :
-        G.observed.DecisionInfoWitness i information)
+        G.observed.DecisionInfoWitness i information.1)
 
 /-- The information state is reached with positive total probability by the
 given behavioral profile. -/
 def HasPositiveInformationReach
     (h : G.FiniteSequentialHypotheses)
     (profile : G.observed.BehavioralProfile)
-    (i : N) (information : G.observed.InfoState i) : Prop :=
+    (i : N) (information : G.observed.RepresentedInfo i) : Prop :=
   informationReachWeight G h profile i information ≠ 0
 
 /-- The finite information-set reach denominator is never infinite. -/
 theorem informationReachWeight_ne_top
     (h : G.FiniteSequentialHypotheses)
     (profile : G.observed.BehavioralProfile)
-    (i : N) (information : G.observed.InfoState i) :
+    (i : N) (information : G.observed.RepresentedInfo i) :
     informationReachWeight G h profile i information ≠ ∞ := by
   letI : Finite
-      (G.observed.DecisionInfoWitness i information) :=
+      (G.observed.DecisionInfoWitness i information.1) :=
     finiteDecisionInfoWitness G h i information
   letI : Fintype
-      (G.observed.DecisionInfoWitness i information) :=
+      (G.observed.DecisionInfoWitness i information.1) :=
     Fintype.ofFinite _
   rw [informationReachWeight, tsum_fintype]
   exact ENNReal.sum_ne_top.2 fun occurrence _ =>
@@ -248,10 +245,10 @@ normalizing the occurrence reach weights. -/
 noncomputable def bayesBelief
     (h : G.FiniteSequentialHypotheses)
     (profile : G.observed.BehavioralProfile)
-    (i : N) (information : G.observed.InfoState i)
+    (i : N) (information : G.observed.RepresentedInfo i)
     (hpositive :
       HasPositiveInformationReach G h profile i information) :
-    PMF (G.observed.DecisionInfoWitness i information) :=
+    PMF (G.observed.DecisionInfoWitness i information.1) :=
   PMF.normalize
     (fun occurrence => reachWeight G h profile occurrence)
     hpositive
@@ -263,11 +260,11 @@ information-state reach weight. -/
 theorem bayesBelief_apply
     (h : G.FiniteSequentialHypotheses)
     (profile : G.observed.BehavioralProfile)
-    (i : N) (information : G.observed.InfoState i)
+    (i : N) (information : G.observed.RepresentedInfo i)
     (hpositive :
       HasPositiveInformationReach G h profile i information)
     (occurrence :
-      G.observed.DecisionInfoWitness i information) :
+      G.observed.DecisionInfoWitness i information.1) :
     bayesBelief G h profile i information hpositive occurrence =
       reachWeight G h profile occurrence *
         (informationReachWeight G h profile i information)⁻¹ :=
@@ -278,7 +275,7 @@ theorem bayesBelief_apply
 theorem bayesBelief_tsum
     (h : G.FiniteSequentialHypotheses)
     (profile : G.observed.BehavioralProfile)
-    (i : N) (information : G.observed.InfoState i)
+    (i : N) (information : G.observed.RepresentedInfo i)
     (hpositive :
       HasPositiveInformationReach G h profile i information) :
     ∑' occurrence,
@@ -307,11 +304,11 @@ structure KrepsWilsonConsistencyCertificate
   /-- Every perturbation puts positive mass on every player action. -/
   completelyMixed :
     ∀ n, BehavioralProfile.IsCompletelyMixed G (tremble n)
-  /-- Every information set has a Bayes denominator along the perturbation
-  sequence. -/
+  /-- Every represented information coordinate has a Bayes denominator along
+  the perturbation sequence. -/
   positiveReach :
     ∀ (n : ℕ) (i : N)
-      (information : G.observed.InfoState i),
+      (information : G.observed.RepresentedInfo i),
       FiniteSequentialHypotheses.HasPositiveInformationReach
         G h (tremble n) i information
   /-- Perturbed behavior converges pointwise to limiting behavior. -/
@@ -320,9 +317,9 @@ structure KrepsWilsonConsistencyCertificate
   /-- Bayes beliefs induced by the perturbations converge pointwise to the
   limiting belief system. -/
   beliefsTendTo :
-    ∀ (i : N) (information : G.observed.InfoState i)
+    ∀ (i : N) (information : G.observed.RepresentedInfo i)
       (occurrence :
-        G.observed.DecisionInfoWitness i information),
+        G.observed.DecisionInfoWitness i information.1),
       Tendsto
         (fun n =>
           FiniteSequentialHypotheses.bayesBelief G h
@@ -359,9 +356,9 @@ theorem KrepsWilsonConsistencyCertificate.belief_converges
     (consistent :
       Assessment.KrepsWilsonConsistencyCertificate
         G h assessment)
-    (i : N) (information : G.observed.InfoState i)
+    (i : N) (information : G.observed.RepresentedInfo i)
     (occurrence :
-      G.observed.DecisionInfoWitness i information) :
+      G.observed.DecisionInfoWitness i information.1) :
     Tendsto
       (fun n =>
         FiniteSequentialHypotheses.bayesBelief G h
@@ -385,8 +382,8 @@ structure SequentialDecisionEvaluator where
   given information state under the supplied assessment. -/
   value :
     G.Assessment →
-      (i : N) → (information : G.observed.InfoState i) →
-        PMF (G.observed.InfoAction i information) → ℝ
+      (i : N) → (information : G.observed.RepresentedInfo i) →
+        PMF (G.observed.InfoAction i information.1) → ℝ
 
 namespace Assessment
 
@@ -398,8 +395,8 @@ deviation according to the supplied continuation evaluator. -/
 def IsSequentiallyRationalFor
     (assessment : G.Assessment)
     (evaluator : G.SequentialDecisionEvaluator) : Prop :=
-  ∀ (i : N) (information : G.observed.InfoState i)
-    (deviation : PMF (G.observed.InfoAction i information)),
+  ∀ (i : N) (information : G.observed.RepresentedInfo i)
+    (deviation : PMF (G.observed.InfoAction i information.1)),
     evaluator.value assessment i information deviation ≤
       evaluator.value assessment i information
         (assessment.behavior i information)

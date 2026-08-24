@@ -114,13 +114,31 @@ theorem repeated_nonterminal :
   toExtensiveGame_not_isTerminal_node root 0
     (.Leaf leafPayoff) [.Leaf alternativePayoff]
 
+/-- The repeated node is a genuine decision point. -/
+theorem repeated_decision :
+    (toExtensiveGame root).toArena.IsDecision repeated :=
+  (toExtensiveGame root).toArena.isDecision_of_not_isTerminal
+    repeated repeated_nonterminal
+
 /-- The direct occurrence of player `0`'s decision at `repeated`. -/
 def firstOcc : (toOccurrenceObservedGame root).InfoState (0 : Player) :=
-  ⟨⟨repeated, directHistory⟩, rfl, repeated_nonterminal⟩
+  ⟨⟨repeated, directHistory⟩, rfl, repeated_decision⟩
 
 /-- The occurrence of player `0`'s decision at `repeated` reached via `middle`. -/
 def secondOcc : (toOccurrenceObservedGame root).InfoState (0 : Player) :=
-  ⟨⟨repeated, viaMiddleHistory⟩, rfl, repeated_nonterminal⟩
+  ⟨⟨repeated, viaMiddleHistory⟩, rfl, repeated_decision⟩
+
+/-- The direct occurrence as a represented pure-strategy coordinate. -/
+def firstRepresented :
+    (toOccurrenceObservedGame root).RepresentedInfo (0 : Player) :=
+  (toOccurrenceObservedGame root).representedInfoAt
+    ⟨repeated, directHistory⟩ 0 rfl repeated_decision
+
+/-- The detour occurrence as a represented pure-strategy coordinate. -/
+def secondRepresented :
+    (toOccurrenceObservedGame root).RepresentedInfo (0 : Player) :=
+  (toOccurrenceObservedGame root).representedInfoAt
+    ⟨repeated, viaMiddleHistory⟩ 0 rfl repeated_decision
 
 /-- The two occurrences are genuinely distinct occurrence information states:
 their underlying histories differ in length. -/
@@ -182,34 +200,35 @@ noncomputable def separatingOccurrenceStrategy :
   classical
   intro information
   exact
-    if h : information = secondOcc then
+    if h : information = secondRepresented then
       h ▸ secondAlternativeAction
     else
-      firstLegalAction information
+      firstLegalAction information.1
 
 @[simp]
 theorem separatingOccurrenceStrategy_first :
-    separatingOccurrenceStrategy firstOcc =
+    separatingOccurrenceStrategy firstRepresented =
       (⟨.Leaf leafPayoff, List.mem_cons_self⟩ :
         (toOccurrenceObservedGame root).InfoAction
-          (0 : Player) firstOcc) := by
+          (0 : Player) firstRepresented.1) := by
   rw [separatingOccurrenceStrategy]
   split
   · rename_i hsame
-    exact (firstOcc_ne_secondOcc hsame).elim
+    exact (firstOcc_ne_secondOcc
+      (congrArg Subtype.val hsame)).elim
   · rfl
 
 @[simp]
 theorem separatingOccurrenceStrategy_second :
-    separatingOccurrenceStrategy secondOcc =
+    separatingOccurrenceStrategy secondRepresented =
       secondAlternativeAction := by
   rw [separatingOccurrenceStrategy, dif_pos rfl]
 
 /-- The occurrence strategy makes observably different child choices at the
 two histories with the same endpoint subtree. -/
 theorem separatingOccurrenceStrategy_distinguishes :
-    (separatingOccurrenceStrategy firstOcc).1 ≠
-      (separatingOccurrenceStrategy secondOcc).1 := by
+    (separatingOccurrenceStrategy firstRepresented).1 ≠
+      (separatingOccurrenceStrategy secondRepresented).1 := by
   rw [separatingOccurrenceStrategy_first,
     separatingOccurrenceStrategy_second]
   intro heq
@@ -227,13 +246,17 @@ theorem endpointLift_same_choice
     (strategy :
       (toObservedGame root).PureStrategy
         (0 : Player)) :
-    (liftEndpointPureStrategy root 0 strategy firstOcc).1 =
-      (liftEndpointPureStrategy root 0 strategy secondOcc).1 := by
+    (liftEndpointPureStrategy root 0 strategy firstRepresented).1 =
+      (liftEndpointPureStrategy root 0 strategy secondRepresented).1 := by
   unfold liftEndpointPureStrategy
   change
-    (strategy (forgetOccurrenceInfo root 0 firstOcc)).1 =
-      (strategy (forgetOccurrenceInfo root 0 secondOcc)).1
-  rw [forgetOccurrenceInfo_merges]
+    (strategy
+      ((endpointInformationRefinement root).toControlled
+        |>.forgetRepresentedInfo 0 firstRepresented)).1 =
+      (strategy
+        ((endpointInformationRefinement root).toControlled
+          |>.forgetRepresentedInfo 0 secondRepresented)).1
+  congr 2
 
 /-- Merged decision occurrences obstruct every strict observed-game isomorphism
 from the endpoint compiler to the occurrence compiler, not only the canonical
@@ -276,30 +299,44 @@ theorem not_nonempty_iso_toOccurrenceObservedGame_of_merged_histories
       ¬ (toOccurrenceObservedGame treeRoot).base.isTerminal
         (e.historyIso.stateEquiv second).1 :=
     (not_congr (e.isTerminal_iff second)).mp hsecond_nonterminal
+  let hfirst_decision :=
+    (toExtensiveGame treeRoot).toArena.isDecision_of_not_isTerminal
+      first.1 hfirst_nonterminal
+  let hsecond_decision :=
+    (toExtensiveGame treeRoot).toArena.isDecision_of_not_isTerminal
+      second.1 hsecond_nonterminal
+  let htfirst_decision :=
+    (toOccurrenceObservedGame treeRoot).base.toArena
+      |>.isDecision_of_not_isTerminal
+        (e.historyIso.stateEquiv first).1 htfirst_nonterminal
+  let htsecond_decision :=
+    (toOccurrenceObservedGame treeRoot).base.toArena
+      |>.isDecision_of_not_isTerminal
+        (e.historyIso.stateEquiv second).1 htsecond_nonterminal
   have hinfo :
       (toObservedGame treeRoot).infoAt first i hfirst
-          hfirst_nonterminal =
+          hfirst_decision =
         (toObservedGame treeRoot).infoAt second i hsecond
-          hsecond_nonterminal :=
+          hsecond_decision :=
     forgetOccurrenceInfo_eq_of_endpoint_eq treeRoot i
-      ⟨first, hfirst, hfirst_nonterminal⟩
-      ⟨second, hsecond, hsecond_nonterminal⟩ hendpoint
+      ⟨first, hfirst, hfirst_decision⟩
+      ⟨second, hsecond, hsecond_decision⟩ hendpoint
   have hmapped :
       (toOccurrenceObservedGame treeRoot).infoAt
           (e.historyIso.stateEquiv first) i htfirst
-            htfirst_nonterminal =
+            htfirst_decision =
         (toOccurrenceObservedGame treeRoot).infoAt
           (e.historyIso.stateEquiv second) i htsecond
-            htsecond_nonterminal := by
-    rw [← e.map_infoAt first i hfirst hfirst_nonterminal
-        htfirst htfirst_nonterminal,
-      ← e.map_infoAt second i hsecond hsecond_nonterminal
-        htsecond htsecond_nonterminal, hinfo]
+            htsecond_decision := by
+    rw [← e.map_infoAt first i hfirst hfirst_decision
+        htfirst htfirst_decision,
+      ← e.map_infoAt second i hsecond hsecond_decision
+        htsecond htsecond_decision, hinfo]
   exact hdifferent
     (e.historyIso.stateEquiv.injective
       (toOccurrenceObservedGame_hasSingletonInformation treeRoot i
-        _ _ htfirst htfirst_nonterminal htsecond
-          htsecond_nonterminal hmapped))
+        _ _ htfirst htfirst_decision htsecond
+          htsecond_decision hmapped))
 
 /-- **N-1B.** No strict observed-game isomorphism from the endpoint compiler to
 the occurrence compiler exists for this concrete tree.

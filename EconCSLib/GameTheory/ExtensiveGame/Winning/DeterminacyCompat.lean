@@ -111,10 +111,6 @@ def WellFoundedPrefixHypotheses.toControlled
   noChance := h.noChance
   perfectInformation := h.perfectInformation
   zeroSum := h.zeroSum
-  allDecisionInfoRepresented :=
-    h.allDecisionInfoRepresented
-  decisionMoverCoherent :=
-    h.decisionMoverCoherent
   prefixDecision := h.prefixDecision
 
 /-- Legacy payoff-aware finite determinacy is the canonical payoff-free

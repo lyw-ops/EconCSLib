@@ -303,8 +303,9 @@ partial Arena-to-tree direction.
 stopped-execution naturality under explicit terminal/policy preservation, and
 defines relational simulations and bisimulations for non-functional
 correspondences.
-`Game.lean` separates observations at every history from decision
-information states and indexes abstract actions by the latter.
+`Game.lean` separates observations at every history from decision information;
+strategies index abstract actions by the represented-information subtype rather
+than by unused raw information values.
 `PerfectRecall.lean` extracts each player's ordered history of prior
 decision information states and own abstract actions. Equality of current
 information states must preserve that sequence; strict observed-EFG
@@ -447,10 +448,11 @@ continuation-wide certificate induces a `ContinuationGameForm.Hom` and
 bounded designated-continuation Nash transfer. The distinction is necessary: perfect recall gives the
 standard root-scoped Kuhn realization, but ex-ante correlations inside an
 arbitrary mixed plan need not admit one behavioralization that preserves every
-off-path continuation simultaneously. For finite decision-information spaces,
+off-path continuation simultaneously. For finite represented
+decision-information spaces,
 the behavioral-to-mixed construction is implemented by independently sampling
-one action at each information state, with every local marginal proved equal
-to the source behavioral law. The corresponding concrete legal-action
+one action at each represented information coordinate, with every local
+marginal proved equal to the source behavioral law. The corresponding concrete legal-action
 marginal at every player history is also proved exact, including the outer
 independent product over players.
 `DeferredSampling.lean` proves the representation-neutral multi-step

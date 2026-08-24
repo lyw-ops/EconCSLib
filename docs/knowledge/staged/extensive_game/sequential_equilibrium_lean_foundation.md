@@ -27,9 +27,9 @@ tags:
 The first implementation targets a discrete `ObservedChanceGame` with a finite
 player type and an `ObservedGame.FiniteEFGHypotheses` certificate. The latter
 supplies a uniformly bounded, locally finite complete-history unfolding, finite
-information-state carriers, representation of every declared decision
-information state, and mover coherence. A separate recall certificate supplies
-perfect recall.
+represented decision-information carriers. A separate recall certificate
+supplies perfect recall. Unused raw information values and terminal mover
+labels are not strategy coordinates.
 
 The carrier of nodes inside information state `information` for player `i` is
 
@@ -37,10 +37,10 @@ The carrier of nodes inside information state `information` for player `i` is
 G.observed.DecisionInfoWitness i information
 ```
 
-and therefore retains a complete history occurrence, the mover and
-nonterminal proofs, and the equality identifying the history's information
-state. Equal endpoint states reached through different histories remain
-different belief points.
+and therefore retains a complete history occurrence, the mover proof,
+constructive `IsDecision` evidence, and the equality identifying the history's
+information state. Equal endpoint states reached through different histories
+remain different belief points.
 
 ## Proposed signatures and invariants
 
@@ -48,12 +48,12 @@ Raw belief weights and normalized beliefs remain separate:
 
 ```lean
 RawBeliefSystem G :=
-  (i : N) → (information : G.observed.InfoState i) →
-    G.observed.DecisionInfoWitness i information → ℝ≥0∞
+  (i : N) → (information : G.observed.RepresentedInfo i) →
+    G.observed.DecisionInfoWitness i information.1 → ℝ≥0∞
 
 BeliefSystem G :=
-  (i : N) → (information : G.observed.InfoState i) →
-    PMF (G.observed.DecisionInfoWitness i information)
+  (i : N) → (information : G.observed.RepresentedInfo i) →
+    PMF (G.observed.DecisionInfoWitness i information.1)
 ```
 
 An assessment pairs a behavioral profile with a normalized belief system.
@@ -68,11 +68,12 @@ these reach weights and is defined only from a proof that their total is
 nonzero. The finite-EFG certificate proves that the denominator is finite.
 
 A behavioral profile is completely mixed when every abstract action at every
-declared information state has positive probability. Kreps--Wilson
+represented information coordinate has positive probability. Kreps--Wilson
 consistency is certified by one sequence of completely mixed behavioral
 profiles such that:
 
-1. every information state has positive total reach under every perturbation;
+1. every represented information coordinate has positive total reach under
+   every perturbation;
 2. action probabilities converge pointwise to the assessment's behavioral
    profile; and
 3. the corresponding Bayes beliefs converge pointwise to the assessment's
@@ -87,8 +88,9 @@ value evaluator:
 
 ```lean
 SequentialDecisionEvaluator.value :
-  Assessment G → (i : N) → (information : G.observed.InfoState i) →
-    PMF (G.observed.InfoAction i information) → ℝ
+  Assessment G →
+    (i : N) → (information : G.observed.RepresentedInfo i) →
+    PMF (G.observed.InfoAction i information.1) → ℝ
 ```
 
 The predicate compares the assessment's action law with every local

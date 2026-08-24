@@ -109,9 +109,8 @@ theorem oneStep_allDecisionInfoRepresented :
           Arena.HistoryFrom.nil oneStepArena 0
         mover := by
           rfl
-        nonterminal := by
-          change ¬ IsEmpty Bool
-          exact not_isEmpty_iff.mpr ⟨false⟩
+        decision := by
+          exact ⟨false⟩
         infoAt_eq := rfl }⟩
 
 theorem oneStep_decisionMoverCoherent :
@@ -154,14 +153,13 @@ def oneStep_finiteEFG :
           (show Finite Bool from inferInstance)
     · simpa [hstate] using
         (show Finite Empty from inferInstance)
-  finiteInfoState := by
+  finiteRepresentedInfo := by
     intro _player
-    change Finite Unit
-    infer_instance
-  allDecisionInfoRepresented :=
-    oneStep_allDecisionInfoRepresented
-  decisionMoverCoherent :=
-    oneStep_decisionMoverCoherent
+    exact
+      Finite.of_injective
+        (fun information : oneStepObserved.RepresentedInfo _player =>
+          information.1)
+        Subtype.val_injective
 
 /-- The finite unfolding is genuinely enumerable despite its infinite
 ambient compact state type. -/
@@ -261,22 +259,8 @@ def oneStep_controlledFinite :
   lengthBound := oneStep_finiteEFG.lengthBound
   hasLengthBound := oneStep_finiteEFG.hasLengthBound
   finiteAction := oneStep_finiteEFG.finiteAction
-  finiteInfoState := oneStep_finiteEFG.finiteInfoState
-  allDecisionInfoRepresented := by
-    intro player information
-    cases player
-    cases information
-    refine
-      ⟨
-        { history :=
-            Arena.HistoryFrom.nil oneStepArena 0
-          mover := rfl
-          nonterminal := by
-            change ¬ IsEmpty Bool
-            exact not_isEmpty_iff.mpr ⟨false⟩
-          infoAt_eq := rfl }⟩
-  decisionMoverCoherent :=
-    oneStep_finiteEFG.decisionMoverCoherent
+  finiteRepresentedInfo :=
+    oneStep_finiteEFG.finiteRepresentedInfo
 
 /-- A nontrivial external root presentation selecting the initial history and
 the left terminal occurrence. -/

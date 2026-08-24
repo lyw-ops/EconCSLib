@@ -25,7 +25,7 @@ The current architecture is logically sound.  Its canonical semantic line is:
                │                              │
                └──────────────┬───────────────┘
                               ▼
-           ControlledGame / ControlledObservedGame
+   ControlledGame / ControlledDecisionGame / ControlledObservedGame
                               │
                  ┌────────────┼──────────────┐
                  ▼            ▼              ▼
@@ -54,8 +54,9 @@ one literal import chain.  In particular:
   Facade.
 - history-sensitive terminal and path outcomes are exposed by the opt-in
   `Interface.Objective` facade without probability or equilibrium.
-- `ControlledObservedGame` is the minimal payoff-free carrier of controlled
-  dynamics and information. `ObservedGame` and `ObservedChanceGame` are
+- `ControlledDecisionGame` is the minimal payoff-free carrier of controlled
+  dynamics and decision information. `ControlledObservedGame` adds optional
+  private/public observations. `ObservedGame` and `ObservedChanceGame` are
   payoff-aware/discrete compatibility extensions, not dependencies of the
   payoff-free spine.
 - finite PMF execution, infinite discrete path execution, and non-atomic
@@ -344,7 +345,8 @@ bridge and the endpoint-policy results used by `FiniteArenaExtraction` and
 ## Semantic contract rules
 
 - The minimal carrier line
-  `Arena -> ControlledGame -> ControlledObservedGame` is governed by
+  `Arena -> ControlledGame -> ControlledDecisionGame -> ControlledObservedGame`
+  is governed by
   [`efg-minimal-core-freeze.md`](efg-minimal-core-freeze.md). Its compatibility
   freeze is deferred while the current API/generality review continues. A
   narrow guard keeps `InfoAction` aligned with the base action universe rather
@@ -496,27 +498,33 @@ use `Interface.Restart`.
 
 ## Large-file audit
 
-Declaration counts are top-level declaration-family counts used for
-maintenance triage, not API cardinalities.
+The audit covers every EFG `.lean` source with at least 800 physical lines.
+Stable bands replace volatile exact line and declaration counts. The governance
+checker verifies both complete membership and the recorded band; crossing a
+band or the 800-line threshold therefore requires an explicit review without
+turning routine small edits into documentation churn.
 
-| Module | Lines / declarations | Main responsibility | Semantic layers crossed | Cohesion | Repeated transport/index work | Existing bundle | Candidate split | Risk | Decision |
-|---|---:|---|---|---|---|---|---|---|---|
-| `Compiler.GameTreeObserved` | 836 / 57 | endpoint compiler and exact legacy-policy bridges | frontend → execution → game form | High: one preservation chain | Moderate dependent-history transport | game-form isomorphism and termination package | construction / operational / strategic bridge | High; occurrence compiler imports it | Keep |
-| `Compiler.GameTreeOccurrenceObserved` | 1214 / 56 | occurrence compiler, refinement bridge, and finite SPE | frontend → observed relation → equilibrium | High around one compiler | High history/action transports | complete system and refinement objects | core / endpoint bridge / Kuhn | High; public compiler names and long proof chain | Keep; future trigger at next independent compiler theorem |
-| `Execution.InfiniteTrajectory` | 917 / 43 | path law, stopping, payoff convergence | infinite execution → outcome limit | High around one path law | Moderate time indices | probability-measure and stopping packages | path construction / payoff convergence | Medium-high; shared filtration and measurability lemmas | Keep |
-| `Observed.BehaviorMorphism` | 847 / 28 | behavioral strategy/execution/equilibrium transfer | relation → execution → bounded equilibrium | High around strict isomorphism | High casts through dependent action fibers | strategy equivalence and continuation iso | strategy transport / law transfer / Nash | Medium; split could lower imports but duplicates transport context | Queue only |
-| `Observed.Continuation` | 1001 / 36 | pure and behavioral continuation adapters | pure + behavioral equilibrium adapters | Medium-high; two parallel halves | Moderate casts | continuation morphism/simulation/iso bundles | pure / behavioral leaves plus aggregate | Medium; useful only if clients need one half independently | Queue on measured import demand |
-| `Observed.Kuhn` | 866 / 41 | finite hypotheses, behavioral-to-mixed, realization | finite probability → strategy → equilibrium | High proof progression | Moderate table/index transport | hypothesis structures and realization records | hypotheses / plan sampling / realization | Medium-high; wrappers share theorem names | Keep |
-| `Observed.PerfectRecall` | 934 / 33 | personal-decision recall and iso transfer | information structure → relation transfer | High | High dependent-list transport | `RecallCertificate` | structure / iso transfer | Medium-high; certificate equivalence links halves | Keep |
-| `Observed.Controlled.Morphism` (former monolith) | 1883 / layered declaration families | payoff-free structural, lawful-subgame, and recall transport | controlled structure → subgames/recall | Three separable layers | High dependent casts in the structural base | `Hom`, `InformationRefinement`, and `Iso` | `Core` / `Subgame` / `Recall` leaves plus facade | Low after preserving declaration names | **Split and hierarchy migration implemented**; exact closures 9 / 9, 11 / 11, and 12 / 12 |
-| `Observed.SPE` | 923 / 34 | total pure semantics and lawful/complete SPE | termination → root systems → equilibrium transfer | High | High history/root transport | terminating-on and complete-system packages | termination / equilibrium / iso transfer | High; cyclic import risk with morphism/refinement | Keep |
-| `Kernel.EventPath` | 1119 / 60 | event paths, policies, state projection | analytic execution + projection bridge | High | High coordinate/index arithmetic | `EventHistoryActionPolicy` and path measures | event core / policy path / projections | High; Ionescu–Tulcea proof chain | Keep |
-| `Presentation.Chance.Countable` | 1347 / 59 | reachable countability and automatic analytic presentation | types/instances → realization → profile compiler | High | High dependent tags and casts | `presentation`, `measurablePresentation`, kernel adapter | carriers / realization / profile adapters | High; scoped instances cross every section | Keep |
-| `Continuation.Observed` | 1108 / 58 | absolute/fresh continuation and bounded/terminal equilibrium | path → outcome → two utility regimes | Medium-high | High clock/prefix arithmetic | named bounded and terminal predicate families | path adapter / bounded utility / terminal utility | High; same continuation identities feed both regimes | Keep |
-| `Equilibrium.Outcome` | 1028 / 45 | path utility, Nash, termination, convergence | assembly → outcome → limit payoff | High | Moderate measure transports | bounded and terminal extension structures | utility/Nash / terminal convergence | Medium-high; shared integrability lemmas | Queue only if another outcome family appears |
-| `Presentation.Kernel.ProfileAssembly` | 987 / 36 | measurable profile/deviation assembly | presentation → roles → deviations | High | High tagged dependent transport | `ProfileAssembly` and `PlayerStrategy` | roles/core / deviations / adapters | High; measurable instances are cross-cutting | Keep |
-| `Restart.Assembly` | 818 / 56 | lift every raw certificate to all deviations | restart certificates → semantic compatibility | High theorem matrix | Low casts, high repeated route plumbing | deviation-compatible predicates | split by certificate family | Medium; would worsen route navigation | Keep |
-| `Restart.Certificates` | 1168 / 30 | prove equivalence/implication chain among raw certificates | step kernels → finite prefixes → full paths | Very high | Very high splice/index arithmetic | named certificate propositions | implication families | High; one induction chain | Keep |
+| Module | Line band | Main responsibility | Cohesion / split trigger | Decision |
+|---|---:|---|---|---|
+| `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism.Core` | `1200+` | payoff-free `Hom`, information refinement, strict `Iso`, and Iso algebra | Three carrier-transport families share the same dependent casts; split only when a real consumer avoids a measured closure and the module-path migration is reviewed | Queue measured `Hom` / refinement / `Iso` split; do not grow paths during the API freeze |
+| `EconCSLib.GameTheory.ExtensiveGame.Observed.FiniteUnfolding` | `1200+` | finite occurrence unfolding and structural/stochastic preservation | One compiler-preservation chain; split when a second independent consumer needs only construction or only preservation | Keep |
+| `EconCSLib.GameTheory.ExtensiveGame.Simulation.Presentation.Chance.Countable` | `1200+` | reachable countability and automatic analytic presentation | Scoped instances and dependent tags connect construction through realization | Keep |
+| `EconCSLib.GameTheory.ExtensiveGame.Compiler.GameTreeOccurrenceObserved` | `1200+` | occurrence compiler, endpoint refinement bridge, and finite SPE | One public compiler route; revisit at the next independent compiler theorem | Keep |
+| `EconCSLib.GameTheory.ExtensiveGame.Simulation.Restart.Certificates` | `1000-1199` | implications among restart step, prefix, and full-path certificates | One splice/index induction graph | Keep |
+| `EconCSLib.GameTheory.ExtensiveGame.Simulation.Kernel.EventPath` | `1000-1199` | analytic event paths, policies, and state projection | One Ionescu--Tulcea construction and projection chain | Keep |
+| `EconCSLib.GameTheory.ExtensiveGame.Simulation.Continuation.Observed` | `1000-1199` | absolute/fresh continuation and bounded/terminal equilibrium | Shared clock and prefix identities; revisit when another independent utility regime appears | Keep |
+| `EconCSLib.GameTheory.ExtensiveGame.Simulation.Equilibrium.Outcome` | `1000-1199` | path utility, Nash, termination, and convergence | Shared measurability/integrability lemmas; split only for an independent outcome family | Queue on new outcome family |
+| `EconCSLib.GameTheory.ExtensiveGame.Simulation.Presentation.Kernel.ProfileAssembly` | `800-999` | measurable player/chance profile and deviation assembly | Cross-cutting measurable tagged-fiber instances | Keep |
+| `EconCSLib.GameTheory.ExtensiveGame.Execution.InfiniteTrajectory` | `800-999` | path laws, stopping, and payoff convergence | Shared filtration, stopping, and coordinate laws | Keep |
+| `EconCSLib.GameTheory.ExtensiveGame.Observed.Morphism.Structural` | `800-999` | payoff-aware strict observed-game isomorphism and structural transport | Dependent history/action transport is shared; split only on measured adapter demand | Queue on measured import demand |
+| `EconCSLib.GameTheory.ExtensiveGame.Observed.Kuhn` | `800-999` | finite hypotheses, behavioral-to-mixed construction, and realization | One proof progression with shared conditioning tables | Keep |
+| `EconCSLib.GameTheory.ExtensiveGame.Observed.BehaviorMorphism` | `800-999` | behavioral strategy, law, and equilibrium transport | Dependent action casts connect all stages | Queue on measured import demand |
+| `EconCSLib.GameTheory.ExtensiveGame.Observed.SPE` | `800-999` | termination-certified continuation semantics and standard pure SPE | Root, termination, and Iso transfer theorems share one transport chain | Keep |
+| `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Recall` | `800-999` | classic, signal, public recall, and factorization certificates | Trace builders and recall hierarchy share dependent list transport | Keep |
+| `EconCSLib.GameTheory.ExtensiveGame.Winning.Determinacy` | `800-999` | finite and well-founded logical determinacy | One well-founded recursion route; descriptive-set determinacy belongs in a separate future owner | Keep |
+| `EconCSLib.GameTheory.ExtensiveGame.Observed.Game` | `800-999` | payoff-aware observed-game compatibility carrier and pure execution | Central adapter owner; split only when a leaf can avoid the carrier construction closure | Keep |
+| `EconCSLib.GameTheory.ExtensiveGame.Simulation.Restart.Assembly` | `800-999` | lift raw restart certificates across all deviations | Deliberate theorem matrix over one certificate family | Keep |
+| `EconCSLib.GameTheory.ExtensiveGame.Observed.Continuation` | `800-999` | pure and behavioral continuation compatibility adapters | Two parallel halves; split only when a client measurably avoids one half | Queue on measured import demand |
 
 The current worktree contains the high-value, dependency-ordered splits for
 controlled morphisms, continuation game forms, observed
@@ -535,21 +543,24 @@ and negative facade regressions.
 
 ## Maintenance queue and stop conditions
 
-1. Revisit `Observed.Continuation` only if a real client can avoid a material
+1. Revisit `Controlled.Morphism.Core` only with a measured closure reduction
+   and an explicit module-path migration decision; line count does not reopen
+   the Canonical/Frontend API-growth freeze.
+2. Revisit `Observed.Continuation` only if a real client can avoid a material
    behavioral or pure dependency by importing one half.
-2. Revisit `BehaviorMorphism` only after its dependent-cast helpers can be
+3. Revisit `BehaviorMorphism` only after its dependent-cast helpers can be
    packaged without duplicating proof state.
-3. Revisit analytic outcome/continuation files when a second independent
+4. Revisit analytic outcome/continuation files when a second independent
    outcome or continuation family makes the current cohesion false.
-4. Revisit the two large compiler files during a planned compiler API release,
+5. Revisit the large compiler files during a planned compiler API release,
    not during unrelated theorem work.
-5. Retain Restart `Certificates` and `Assembly` while their implication graphs
+6. Retain Restart `Certificates` and `Assembly` while their implication graphs
    remain single proof chains; line count alone is not a split trigger.
-6. Consider further physical `Simulation/` moves only when ownership is as
+7. Consider further physical `Simulation/` moves only when ownership is as
    unambiguous as the discrete execution/relation moves or an import-closure
    measurement demonstrates a reduction. Navigation aesthetics alone do not
    pass the gate.
-7. Keep historical root removals covered by explicit-import examples and
+8. Keep historical root removals covered by explicit-import examples and
    negative root guards.
 
 This queue is intentionally part of the governance document rather than a new
@@ -611,11 +622,16 @@ rather than remaining an invisible transitive import. Review and CI maintain:
   temporary compatibility modules;
 - deleted module paths cannot be recreated or imported;
 - no minimal carrier declaration is currently fingerprint-frozen;
-- the registered Canonical/Frontend module inventory and its 1,711 explicit
-  public source declarations do not grow beyond the reviewed baseline;
-- a focused source check requires `ControlledObservedGame.base :
-  ControlledGame.{uN, uA, uS} N` and `InfoAction ... : Type uA`, preventing
-  the base action/state universe swap from recurring;
+- the 102 registered Canonical/Frontend modules currently own 1,735 explicit
+  public source declarations and do not grow beyond the reviewed 1,739-entry
+  2026-08-12 post-audit baseline; the four-declaration reduction removes
+  availability/finite-certificate wrappers whose conclusions never used their
+  certificates, while the baseline remains an addition ceiling rather than a
+  current-count claim;
+- a focused source check requires `ControlledDecisionGame.base :
+  ControlledGame.{uN, uA, uS} N`, `InfoAction ... : Type uA`, and the matching
+  universe order on the `ControlledObservedGame` extension, preventing the
+  base action/state universe swap from recurring;
 - `Interface.StructuralCore` has exactly the five structural EFG dependencies
   and `Interface.Core` cannot regain Objective/Winning;
 - every payoff-free `Controlled.Infrastructure.*` leaf obeys the existing
@@ -632,6 +648,11 @@ rather than remaining an invisible transitive import. Review and CI maintain:
 - canonical controlled modules cannot reach the three `.Compat` payoff-aware
   adapters, whose exact imports and namespaces are fixed;
 - the governed EFG/GameForm/PMF source graph is acyclic;
+- the semantic-regime routes keep finite PMF, infinite discrete,
+  analytic-kernel, and FOSG compilation ownership distinct while requiring
+  the two full-path producers to point toward the common lawful path carrier;
+- every EFG source at or above 800 physical lines appears exactly once in the
+  machine-checked large-file audit with the correct stable line band;
 - Canonical, Frontend, and Internal modules do not directly import Historical
   modules except for exact, reasoned importer/imported allowlist pairs;
 - `Structural.History` cannot import `Subgame`, and `StochasticGameTree` cannot

@@ -303,7 +303,9 @@ noncomputable def behavioralMacroContinuationSimulation
       (serializedBehavioralMacroContinuationFamily
         G D rootPayoff sourceDeclaredRoot horizon) where
   RootRel := Rel G
-  strategyMap := fun _ strategy => strategy
+  strategyMap := fun i strategy =>
+    serializedObservedBehavioralStrategy G D rootPayoff
+      sourceDeclaredRoot i strategy
   outcomeMap := id
   map_declaredRoot := by
     intro source target hrelated
@@ -370,24 +372,33 @@ theorem exists_relatedTargetHistory
 /-- The concrete finite-player sequential compiler realizes the generic
 behavioral semantics of a weak FOSG serialization.
 
-The playerwise strategy equivalence is definitionally the identity because
-the compiler reuses source information states and abstract actions.  The
-target laws nevertheless execute the genuine serialized micro game: one
+The playerwise equivalence is supplied explicitly because the source may
+contain unrepresented information coordinates.  The target laws execute the
+genuine serialized micro game: one
 initial chance step followed by `n + 2` micro steps per source macro step. -/
 noncomputable def behavioralWeakSerializationBridge
     [(world : G.WorldState) →
       Decidable (G.isTerminal world)]
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
-    (sourceDeclaredRoot : G.HistoryState → Prop) :
+    (sourceDeclaredRoot : G.HistoryState → Prop)
+    (certificate :
+      BehavioralStrategyEquivalence G D rootPayoff sourceDeclaredRoot) :
     (weakSerialization
       G D rootPayoff sourceDeclaredRoot).BehavioralBridge D where
-  strategyEquiv := fun _ => Equiv.refl _
+  strategyEquiv := certificate.strategyEquiv
   targetPayoffLawFrom :=
     serializedBehavioralMicroPayoffLawFrom
       G D rootPayoff sourceDeclaredRoot
   map_payoffLawFrom := by
     intro source target hrelated profile horizon
+    have hprofile :
+        (fun i => certificate.strategyEquiv i (profile i)) =
+          serializedObservedBehavioralProfile G D rootPayoff
+            sourceDeclaredRoot profile := by
+      funext i information
+      exact certificate.strategyEquiv_apply i (profile i) information
+    rw [hprofile]
     exact
       (serializedBehavioralMicroPayoffLawFrom_eq
         G D rootPayoff sourceDeclaredRoot
@@ -410,6 +421,13 @@ noncomputable def behavioralWeakSerializationBridge
       (serializedStoppedPayoffAtHistory G rootPayoff)
   map_initialPayoffLaw := by
     intro profile horizon
+    have hprofile :
+        (fun i => certificate.strategyEquiv i (profile i)) =
+          serializedObservedBehavioralProfile G D rootPayoff
+            sourceDeclaredRoot profile := by
+      funext i information
+      exact certificate.strategyEquiv_apply i (profile i) information
+    rw [hprofile]
     exact
       (initializedBehavioralMicroPayoffLaw_eq
         G D rootPayoff sourceDeclaredRoot
@@ -457,12 +475,30 @@ theorem behavioralMacroContinuationSimulation_strategySurjective
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
     (sourceDeclaredRoot : G.HistoryState → Prop)
+    (certificate :
+      BehavioralStrategyEquivalence G D rootPayoff sourceDeclaredRoot)
     (horizon : ℕ) :
     (behavioralMacroContinuationSimulation
       G D rootPayoff sourceDeclaredRoot
       horizon).StrategySurjective := by
   intro i targetStrategy
-  exact ⟨targetStrategy, rfl⟩
+  refine ⟨(certificate.strategyEquiv i).symm targetStrategy, ?_⟩
+  funext information
+  change
+    serializedObservedBehavioralStrategy G D rootPayoff
+        sourceDeclaredRoot i
+        ((certificate.strategyEquiv i).symm targetStrategy) information =
+      targetStrategy information
+  rw [show
+    serializedObservedBehavioralStrategy G D rootPayoff
+        sourceDeclaredRoot i
+        ((certificate.strategyEquiv i).symm targetStrategy) information =
+      certificate.strategyEquiv i
+        ((certificate.strategyEquiv i).symm targetStrategy) information by
+      exact (certificate.strategyEquiv_apply i _ information).symm]
+  exact congrFun
+    ((certificate.strategyEquiv i).apply_symm_apply targetStrategy)
+    information
 
 /-- The macro continuation simulation preserves a common root-independent
 functional on optional terminal-payoff laws. -/
@@ -538,6 +574,8 @@ theorem behavioralMacroNashOnDeclaredRoots_iff
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
     (sourceDeclaredRoot : G.HistoryState → Prop)
+    (certificate :
+      BehavioralStrategyEquivalence G D rootPayoff sourceDeclaredRoot)
     (utility :
       PMF (Option (Fin (n + 1) → U)) →
         Fin (n + 1) → V)
@@ -553,6 +591,18 @@ theorem behavioralMacroNashOnDeclaredRoots_iff
           G D rootPayoff sourceDeclaredRoot
           profile)
         horizon := by
+  let bridge :=
+    behavioralWeakSerializationBridge
+      G D rootPayoff sourceDeclaredRoot certificate
+  have hprofile :
+      bridge.mapProfile profile =
+        serializedObservedBehavioralProfile G D rootPayoff
+          sourceDeclaredRoot profile := by
+    funext i information
+    exact certificate.strategyEquiv_apply i (profile i) information
+  have htransfer :=
+    bridge.macroNashOnDeclaredRoots_iff utility profile horizon
+  rw [hprofile] at htransfer
   simpa
       [IsSourceBehavioralMacroNashOnDeclaredRoots,
         IsSerializedBehavioralMacroNashOnDeclaredRoots,
@@ -569,11 +619,7 @@ theorem behavioralMacroNashOnDeclaredRoots_iff
         FOSG.behavioralPayoffLawFrom,
         IsSerializedDeclaredMacroRoot,
         serializedObservedBehavioralProfile]
-    using
-      ((behavioralWeakSerializationBridge
-          G D rootPayoff sourceDeclaredRoot
-          ).macroNashOnDeclaredRoots_iff
-        utility profile horizon)
+    using htransfer
 
 /-- Full finite-macro-horizon behavioral Nash on presentation-designated continuations on the source: Nash at the random
 initialization root and Nash at every admissible proper macro continuation. -/
@@ -634,6 +680,8 @@ theorem behavioralMacroNashOnDeclaredContinuations_iff
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
     (sourceDeclaredRoot : G.HistoryState → Prop)
+    (certificate :
+      BehavioralStrategyEquivalence G D rootPayoff sourceDeclaredRoot)
     (utility :
       PMF (Option (Fin (n + 1) → U)) →
         Fin (n + 1) → V)
@@ -649,6 +697,18 @@ theorem behavioralMacroNashOnDeclaredContinuations_iff
           G D rootPayoff sourceDeclaredRoot
           profile)
         horizon := by
+  let bridge :=
+    behavioralWeakSerializationBridge
+      G D rootPayoff sourceDeclaredRoot certificate
+  have hprofile :
+      bridge.mapProfile profile =
+        serializedObservedBehavioralProfile G D rootPayoff
+          sourceDeclaredRoot profile := by
+    funext i information
+    exact certificate.strategyEquiv_apply i (profile i) information
+  have htransfer :=
+    bridge.macroNashOnDeclaredContinuations_iff utility profile horizon
+  rw [hprofile] at htransfer
   simpa
       [IsSourceBehavioralMacroNashOnDeclaredContinuations,
         IsSerializedBehavioralMacroNashOnDeclaredContinuations,
@@ -675,10 +735,6 @@ theorem behavioralMacroNashOnDeclaredContinuations_iff
         initializedSourceStateLaw,
         IsSerializedDeclaredMacroRoot,
         serializedObservedBehavioralProfile]
-    using
-      ((behavioralWeakSerializationBridge
-          G D rootPayoff sourceDeclaredRoot
-          ).macroNashOnDeclaredContinuations_iff
-        utility profile horizon)
+    using htransfer
 
 end ExtensiveGame.FOSG.Sequentialization
