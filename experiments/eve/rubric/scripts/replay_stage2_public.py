@@ -5,7 +5,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -23,7 +25,11 @@ from rubric_common import (  # noqa: E402
     canonical_json_bytes,
     evaluate_shadow,
     load_json,
+    propagate_prerequisite_status,
     sha256_file,
+    validate_obligation_results,
+    validate_prerequisite_consistency,
+    validate_shadow_result,
 )
 
 
@@ -31,6 +37,14 @@ TASK_ROOT = REPO_ROOT / "experiments" / "eve" / "stage2_entry_game"
 MANIFEST_PATH = RUBRIC_ROOT / "replay" / "stage2-public-manifest.json"
 REPORT_JSON = RUBRIC_ROOT / "reports" / "R000_STAGE2_REPLAY.json"
 REPORT_MD = RUBRIC_ROOT / "reports" / "R000_STAGE2_REPLAY.md"
+DIRECT_CASE_PATH = TASK_ROOT / "direct" / "case.json"
+TRANSPORT_CASE_PATH = TASK_ROOT / "transport" / "case.json"
+PAIRED_CRITERION_IDS = (
+    "PAIRED.SAME_SOURCE_LOCK",
+    "PAIRED.SAME_MATHEMATICAL_TARGET",
+    "PAIRED.INDEPENDENT_WORKSPACES",
+    "PAIRED.ROUTE_AGREEMENT",
+)
 
 
 def apply_operations(source: str, route: str, operations: list[dict[str, Any]]) -> str:
@@ -102,40 +116,209 @@ def _protected_snapshot(rubric: dict[str, Any]) -> dict[str, str]:
     }
 
 
+def _obligation_result(
+    criterion_id: str,
+    status: str,
+    evidence: list[str],
+    rationale: str,
+) -> dict[str, Any]:
+    return {
+        "criterion_id": criterion_id,
+        "status": status,
+        "evidence": evidence,
+        "rationale": rationale,
+    }
+
+
+def source_lock_obligation(
+    direct_case: Any,
+    transport_case: Any,
+    *,
+    repo_root: Path = REPO_ROOT,
+) -> dict[str, Any]:
+    """Compare both case source locks and verify the tracked locked file."""
+
+    criterion_id = "PAIRED.SAME_SOURCE_LOCK"
+    evidence: list[str] = []
+    locks: dict[str, dict[str, str]] = {}
+    malformed: list[str] = []
+    for label, case in (("direct-case", direct_case), ("transport-case", transport_case)):
+        lock = case.get("source_lock") if isinstance(case, dict) else None
+        if not isinstance(lock, dict):
+            malformed.append(f"{label}:source_lock")
+            continue
+        normalized: dict[str, str] = {}
+        for field in ("id", "path", "sha256"):
+            value = lock.get(field)
+            if not isinstance(value, str) or not value:
+                malformed.append(f"{label}:source_lock.{field}")
+                continue
+            if field == "sha256" and re.fullmatch(r"[0-9a-f]{64}", value) is None:
+                malformed.append(f"{label}:source_lock.sha256")
+                continue
+            normalized[field] = value
+            evidence.append(f"{label}:source_lock.{field}={value}")
+        locks[label] = normalized
+    if malformed:
+        return _obligation_result(
+            criterion_id,
+            "UNKNOWN",
+            evidence + [f"malformed:{item}" for item in sorted(malformed)],
+            "One or both case manifests have a missing or malformed source-lock contract.",
+        )
+
+    direct_lock = locks["direct-case"]
+    transport_lock = locks["transport-case"]
+    mismatched = [
+        field
+        for field in ("id", "path", "sha256")
+        if direct_lock[field] != transport_lock[field]
+    ]
+    if mismatched:
+        return _obligation_result(
+            criterion_id,
+            "FAIL",
+            evidence + [f"source-lock:mismatched-field={field}" for field in mismatched],
+            "The direct and transport case manifests record different source-lock identities.",
+        )
+
+    relative_path = direct_lock["path"]
+    root = repo_root.resolve()
+    try:
+        locked_path = (root / relative_path).resolve()
+        locked_path.relative_to(root)
+    except (OSError, ValueError):
+        return _obligation_result(
+            criterion_id,
+            "FAIL",
+            evidence + ["source-lock:path-is-not-repository-relative"],
+            "The shared source-lock path does not resolve inside the repository.",
+        )
+    if not locked_path.is_file():
+        return _obligation_result(
+            criterion_id,
+            "FAIL",
+            evidence + [f"source-lock:tracked-path={relative_path}"],
+            "The shared source-lock path does not name an existing repository file.",
+        )
+    try:
+        tracked = subprocess.run(
+            ["git", "ls-files", "--error-unmatch", "--", relative_path],
+            cwd=root,
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except OSError:
+        return _obligation_result(
+            criterion_id,
+            "UNKNOWN",
+            evidence,
+            "The replay could not determine whether the shared source-lock file is tracked.",
+        )
+    if tracked.returncode == 1:
+        return _obligation_result(
+            criterion_id,
+            "FAIL",
+            evidence + [f"source-lock:untracked-path={relative_path}"],
+            "The shared source-lock path names a file that is not tracked by Git.",
+        )
+    if tracked.returncode != 0:
+        return _obligation_result(
+            criterion_id,
+            "UNKNOWN",
+            evidence,
+            "Git returned an unexpected result while checking the shared source-lock path.",
+        )
+
+    actual_sha256 = sha256_file(locked_path)
+    evidence.extend((
+        f"source-lock:tracked-path={relative_path}",
+        f"source-lock:file-sha256={actual_sha256}",
+    ))
+    if actual_sha256 != direct_lock["sha256"]:
+        return _obligation_result(
+            criterion_id,
+            "FAIL",
+            evidence,
+            "The tracked shared source-lock file does not match the manifest SHA-256.",
+        )
+    return _obligation_result(
+        criterion_id,
+        "PASS",
+        evidence,
+        "Both case manifests record the same source-lock identity, and its "
+        "tracked file SHA-256 matches.",
+    )
+
+
 def paired_obligations(
     accepted: list[dict[str, Any]],
     direct_path: Path,
     transport_path: Path,
+    rubric: dict[str, Any],
 ) -> list[dict[str, Any]]:
-    both_accepted = len(accepted) == 2 and all(
-        item["hard_oracle"]["hard_accepted"] for item in accepted
+    by_route = {
+        item["route"]: item
+        for item in accepted
+        if item.get("route") in ("direct", "transport")
+    }
+    both_accepted = set(by_route) == {"direct", "transport"} and all(
+        item["hard_oracle"]["hard_accepted"] for item in by_route.values()
     )
-    return [
-        {
-            "criterion_id": "PAIRED.SAME_SOURCE_LOCK",
-            "status": "PASS",
-            "evidence": ["direct-and-transport-case-source-lock-sha256"],
-            "rationale": "Both frozen case manifests record the same source-lock path and SHA-256.",
-        },
-        {
-            "criterion_id": "PAIRED.SAME_MATHEMATICAL_TARGET",
-            "status": "UNKNOWN",
-            "evidence": [],
-            "rationale": "R000 does not convert the natural-language Stage 3 review into machine PASS evidence.",
-        },
-        {
-            "criterion_id": "PAIRED.INDEPENDENT_WORKSPACES",
-            "status": "PASS" if direct_path.resolve() != transport_path.resolve() else "FAIL",
-            "evidence": ["replay-runtime:distinct-temporary-directories"],
-            "rationale": "The replay materialized and evaluated the two routes in distinct temporary directories.",
-        },
-        {
-            "criterion_id": "PAIRED.ROUTE_AGREEMENT",
-            "status": "PASS" if both_accepted else "UNKNOWN",
-            "evidence": ["hard-oracle:two-complete-score-one-route-reports"] if both_accepted else [],
-            "rationale": "Both complete deterministic route reports accept under the shared paired task contract." if both_accepted else "Complete matching accepted route reports were not available.",
-        },
-    ]
+    criteria = {item["criterion_id"]: item for item in rubric["criteria"]}
+    results: dict[str, dict[str, Any]] = {}
+    results["PAIRED.SAME_SOURCE_LOCK"] = source_lock_obligation(
+        load_json(DIRECT_CASE_PATH), load_json(TRANSPORT_CASE_PATH)
+    )
+    results["PAIRED.SAME_MATHEMATICAL_TARGET"] = _obligation_result(
+        "PAIRED.SAME_MATHEMATICAL_TARGET",
+        "UNKNOWN",
+        [],
+        "R000 does not convert the natural-language Stage 3 review into machine PASS evidence.",
+    )
+    independent = direct_path.resolve() != transport_path.resolve()
+    results["PAIRED.INDEPENDENT_WORKSPACES"] = _obligation_result(
+        "PAIRED.INDEPENDENT_WORKSPACES",
+        "PASS" if independent else "FAIL",
+        ["replay-runtime:distinct-temporary-directories"] if independent else [],
+        "The replay materialized and evaluated the two routes in distinct temporary directories."
+        if independent
+        else "The two accepted routes used the same materialized workspace.",
+    )
+
+    prerequisite_results: dict[str, dict[str, Any]] = {}
+    for route in ("direct", "transport"):
+        result = by_route.get(route)
+        if result is not None:
+            prerequisite_results.update({
+                obligation["criterion_id"]: obligation
+                for obligation in result["obligations"]
+                if obligation["criterion_id"].startswith(route.upper() + ".")
+            })
+    prerequisite_results.update(results)
+    route_agreement = _obligation_result(
+        "PAIRED.ROUTE_AGREEMENT",
+        "PASS" if both_accepted else "UNKNOWN",
+        ["hard-oracle:two-complete-score-one-route-reports"] if both_accepted else [],
+        "Both complete deterministic route reports accept under the shared paired task contract."
+        if both_accepted
+        else "Complete matching accepted route reports were not available.",
+    )
+    results["PAIRED.ROUTE_AGREEMENT"] = propagate_prerequisite_status(
+        criteria["PAIRED.ROUTE_AGREEMENT"],
+        prerequisite_results,
+        route_agreement,
+    )
+    prerequisite_results.update(results)
+    validate_prerequisite_consistency(
+        rubric,
+        prerequisite_results,
+        criterion_ids=set(PAIRED_CRITERION_IDS),
+    )
+    paired = [results[criterion_id] for criterion_id in PAIRED_CRITERION_IDS]
+    validate_obligation_results(paired, path="$paired_obligations")
+    return paired
 
 
 def replay(
@@ -158,6 +341,7 @@ def replay(
 
     accepted_results: list[dict[str, Any]] = []
     mutation_results: list[dict[str, Any]] = []
+    mutation_expectations: list[dict[str, Any]] = []
     with tempfile.TemporaryDirectory(prefix="eve-rubric-r000-replay-") as raw_temp:
         temp_root = Path(raw_temp)
         accepted_paths: dict[str, Path] = {}
@@ -167,11 +351,16 @@ def replay(
                 route, "accepted", [], temp_root, entry["candidate_id"]
             )
             accepted_paths[route] = candidate
-            accepted_results.append(evaluate_shadow(
+            accepted_result = evaluate_shadow(
                 route, candidate, entry["candidate_id"], rubric_path
-            ))
+            )
+            validate_shadow_result(accepted_result)
+            accepted_results.append(accepted_result)
         paired = paired_obligations(
-            accepted_results, accepted_paths["direct"], accepted_paths["transport"]
+            accepted_results,
+            accepted_paths["direct"],
+            accepted_paths["transport"],
+            rubric,
         )
         for mutation in mutations:
             candidate = materialize_candidate(
@@ -181,11 +370,20 @@ def replay(
             result = evaluate_shadow(
                 mutation["route"], candidate, mutation["id"], rubric_path
             )
-            result["expected_failure_code"] = mutation["expected_failure"]
-            result["expected_failure_preserved"] = (
-                mutation["expected_failure"] in result["hard_oracle"]["failure_codes"]
-            )
+            validate_shadow_result(result)
             mutation_results.append(result)
+            mutation_expectations.append({
+                "candidate_id": mutation["id"],
+                "expected_failure_code": mutation["expected_failure"],
+                "expected_failure_preserved": (
+                    mutation["expected_failure"]
+                    in result["hard_oracle"]["failure_codes"]
+                ),
+            })
+
+    for result in accepted_results + mutation_results:
+        validate_shadow_result(result)
+    validate_obligation_results(paired, path="$paired_obligations")
 
     protected_after = _protected_snapshot(rubric)
     runtime_after = _tree_snapshot(runtime_root)
@@ -204,7 +402,7 @@ def replay(
             item["hard_oracle"]["hard_accepted"] for item in mutation_results
         ),
         "expected_failure_codes_preserved": sum(
-            item["expected_failure_preserved"] for item in mutation_results
+            item["expected_failure_preserved"] for item in mutation_expectations
         ),
         "expected_failure_codes_total": len(mutation_results),
     }
@@ -237,6 +435,7 @@ def replay(
         "corpus_semantics": manifest["corpus_semantics"],
         "accepted_results": accepted_results,
         "mutation_results": mutation_results,
+        "mutation_expectations": mutation_expectations,
         "paired_obligations": paired,
         "metrics": metrics,
         "historical_asset_sha256_before": protected_before,
@@ -264,6 +463,10 @@ def replay(
 def render_markdown(report: dict[str, Any]) -> str:
     metrics = report["metrics"]
     invariants = report["invariants"]
+    paired = {
+        item["criterion_id"]: item["status"]
+        for item in report["paired_obligations"]
+    }
     return f"""# R000 Stage 2 public replay
 
 Status: `{report['status']}`
@@ -283,6 +486,13 @@ evidence. The review is Codex AI review, not independent human review.
 - Model calls / sessions: `0/0`
 - EvE execute invocations: `0`
 - Quota consumed by this task: `0`
+
+## Paired obligations
+
+- `PAIRED.SAME_SOURCE_LOCK`: `{paired['PAIRED.SAME_SOURCE_LOCK']}`
+- `PAIRED.SAME_MATHEMATICAL_TARGET`: `{paired['PAIRED.SAME_MATHEMATICAL_TARGET']}`
+- `PAIRED.INDEPENDENT_WORKSPACES`: `{paired['PAIRED.INDEPENDENT_WORKSPACES']}`
+- `PAIRED.ROUTE_AGREEMENT`: `{paired['PAIRED.ROUTE_AGREEMENT']}`
 
 ## Limitation
 

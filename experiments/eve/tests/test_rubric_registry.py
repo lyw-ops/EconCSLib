@@ -15,6 +15,7 @@ if str(SCRIPT_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPT_ROOT))
 
 from rubric_common import (  # noqa: E402
+    PREREQUISITE_OVERRIDE_REGISTRY,
     R000_PATH,
     REPO_ROOT,
     canonical_json_bytes,
@@ -47,6 +48,9 @@ class RubricRegistryTests(unittest.TestCase):
         for criterion in self.criteria:
             with self.subTest(criterion=criterion["criterion_id"]):
                 self.assertLessEqual(set(criterion["prerequisites"]), identifiers)
+
+    def test_r000_registers_no_prerequisite_overrides(self) -> None:
+        self.assertEqual(PREREQUISITE_OVERRIDE_REGISTRY, {})
 
     def test_all_four_obligation_graphs_are_present_and_acyclic(self) -> None:
         for name in ("core", "direct", "transport", "paired"):

@@ -12,7 +12,8 @@ SCRIPT_ROOT = SIDECAR_ROOT / "rubric" / "scripts"
 if str(SCRIPT_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPT_ROOT))
 
-from replay_stage2_public import replay  # noqa: E402
+from replay_stage2_public import replay, source_lock_obligation  # noqa: E402
+from rubric_common import validate_obligation_results, validate_shadow_result  # noqa: E402
 
 
 class RubricStage2ReplayTests(unittest.TestCase):
@@ -40,8 +41,8 @@ class RubricStage2ReplayTests(unittest.TestCase):
         self.assertEqual(self.report["metrics"]["expected_failure_codes_preserved"], 12)
         self.assertEqual(self.report["metrics"]["expected_failure_codes_total"], 12)
         self.assertTrue(all(
-            item["expected_failure_code"] in item["hard_oracle"]["failure_codes"]
-            for item in self.report["mutation_results"]
+            item["expected_failure_preserved"]
+            for item in self.report["mutation_expectations"]
         ))
 
     def test_no_blocking_false_accepts(self) -> None:
@@ -66,8 +67,52 @@ class RubricStage2ReplayTests(unittest.TestCase):
 
     def test_paired_review_only_claim_is_not_machine_passed(self) -> None:
         paired = {item["criterion_id"]: item for item in self.report["paired_obligations"]}
+        self.assertEqual(paired["PAIRED.SAME_SOURCE_LOCK"]["status"], "PASS")
         self.assertEqual(paired["PAIRED.SAME_MATHEMATICAL_TARGET"]["status"], "UNKNOWN")
         self.assertEqual(paired["PAIRED.INDEPENDENT_WORKSPACES"]["status"], "PASS")
+        self.assertEqual(paired["PAIRED.ROUTE_AGREEMENT"]["status"], "UNKNOWN")
+
+    def test_source_lock_evidence_is_machine_checked_and_concrete(self) -> None:
+        paired = {item["criterion_id"]: item for item in self.report["paired_obligations"]}
+        result = paired["PAIRED.SAME_SOURCE_LOCK"]
+        self.assertTrue(any(
+            item.startswith("direct-case:source_lock.id=")
+            for item in result["evidence"]
+        ))
+        self.assertTrue(any(
+            item.startswith("transport-case:source_lock.id=")
+            for item in result["evidence"]
+        ))
+        self.assertTrue(any(
+            item.startswith("source-lock:file-sha256=")
+            for item in result["evidence"]
+        ))
+        self.assertTrue(all(not item.startswith("/") for item in result["evidence"]))
+
+    def test_source_lock_mismatch_fails_and_missing_field_is_unknown(self) -> None:
+        def case(sha256: str) -> dict:
+            return {
+                "source_lock": {
+                    "id": "LOCK",
+                    "path": "tracked-source.json",
+                    "sha256": sha256,
+                }
+            }
+
+        mismatch = source_lock_obligation(case("a" * 64), case("b" * 64))
+        self.assertEqual(mismatch["status"], "FAIL")
+        missing = case("a" * 64)
+        del missing["source_lock"]["sha256"]
+        self.assertEqual(
+            source_lock_obligation(missing, case("a" * 64))["status"],
+            "UNKNOWN",
+        )
+
+    def test_all_replay_shadow_and_obligation_outputs_match_schemas(self) -> None:
+        for result in self.report["accepted_results"] + self.report["mutation_results"]:
+            validate_shadow_result(result)
+            validate_obligation_results(result["obligations"])
+        validate_obligation_results(self.report["paired_obligations"])
 
 
 if __name__ == "__main__":

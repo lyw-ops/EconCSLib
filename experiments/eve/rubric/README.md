@@ -87,6 +87,32 @@ Every result uses exactly one of five statuses:
 `UNKNOWN` is intentional, not a weak pass. It is used for review-only paired
 claims and syntactic observations that cannot establish mathematical meaning.
 
+## Prerequisite semantics
+
+R000 uses strict prerequisite-consistent status propagation. A criterion cannot
+receive `PASS` while an applicable prerequisite is `FAIL`, `UNKNOWN`,
+`NOT_EVALUATED`, or `NOT_APPLICABLE`. R000 currently defines no
+stronger-evidence prerequisite overrides. Future rubric versions may introduce
+explicitly registered stronger independent-evidence overrides, but an override
+must name the exact criterion/prerequisite pair and none exists in R000.
+
+The runtime invariant checks every generated obligation package as well as the
+static DAG. `PAIRED.SAME_MATHEMATICAL_TARGET` remains `UNKNOWN`, so the current
+`PAIRED.ROUTE_AGREEMENT` result is also `UNKNOWN`; neither paired diagnostic
+controls hard acceptance. `PAIRED.SAME_SOURCE_LOCK` receives `PASS` only after
+the replay reads both case manifests, compares `source_lock.id`, `.path`, and
+`.sha256`, confirms the shared path is tracked, and hashes the actual locked
+file. It is not hard-coded.
+
+Every generated obligation result is validated deterministically against
+`obligation-result.schema.json`. Every complete shadow result, including
+accepted, ordinary-rejection, fatal-rejection, and wrapper-error outputs, is
+validated against `shadow-evaluation.schema.json` before it is returned. A
+schema-invalid shadow result is replaced by a schema-valid fail-closed result
+with `hard_accepted=false` and `shadow_search_score=0.0`. The public replay
+revalidates all two accepted and twelve mutation shadow results plus every
+paired obligation before producing its report.
+
 ## Fail-fast mapping
 
 The old evaluator initializes all gates to false, then returns at the first

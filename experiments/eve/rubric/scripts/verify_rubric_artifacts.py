@@ -19,9 +19,11 @@ from rubric_common import (  # noqa: E402
     RUBRIC_ROOT,
     canonical_json_bytes,
     load_json,
+    obligation_result_validation_errors,
+    prerequisite_consistency_errors,
     sha256_bytes,
     sha256_file,
-    validate_instance,
+    shadow_result_validation_errors,
 )
 from validate_rubric import validate_rubric  # noqa: E402
 
@@ -57,19 +59,63 @@ def verify_artifacts() -> dict[str, Any]:
         report = load_json(report_path)
         if report.get("status") != "passed":
             errors.append("tracked Stage 2 replay report is not passed")
-        schema = load_json(RUBRIC_ROOT / "schemas" / "shadow-evaluation.schema.json")
-        obligation_schema = load_json(RUBRIC_ROOT / "schemas" / "obligation-result.schema.json")
-        for group in (report.get("accepted_results", []), report.get("mutation_results", [])):
+        accepted_results = report.get("accepted_results", [])
+        mutation_results = report.get("mutation_results", [])
+        mutation_expectations = report.get("mutation_expectations", [])
+        paired = report.get("paired_obligations", [])
+        if len(accepted_results) != 2 or len(mutation_results) != 12:
+            errors.append("tracked replay must contain two accepted and twelve mutation results")
+        if len(mutation_expectations) != len(mutation_results):
+            errors.append("tracked replay mutation expectations do not match mutation results")
+        elif [
+            item.get("candidate_id") if isinstance(item, dict) else None
+            for item in mutation_expectations
+        ] != [
+            item.get("candidate_id") if isinstance(item, dict) else None
+            for item in mutation_results
+        ]:
+            errors.append("tracked replay mutation expectation order is malformed")
+        if {
+            item.get("criterion_id") for item in paired if isinstance(item, dict)
+        } != {
+            "PAIRED.SAME_SOURCE_LOCK",
+            "PAIRED.SAME_MATHEMATICAL_TARGET",
+            "PAIRED.INDEPENDENT_WORKSPACES",
+            "PAIRED.ROUTE_AGREEMENT",
+        }:
+            errors.append("tracked replay paired obligation package is malformed")
+        for group in (accepted_results, mutation_results):
             for result in group:
-                shadow_view = {
-                    key: value for key, value in result.items()
-                    if key not in {"expected_failure_code", "expected_failure_preserved"}
-                }
-                errors.extend(validate_instance(shadow_view, schema, "$replay.shadow"))
-                for obligation in result.get("obligations", []):
-                    errors.extend(validate_instance(
-                        obligation, obligation_schema, "$replay.shadow.obligations[]"
-                    ))
+                errors.extend(shadow_result_validation_errors(result))
+                errors.extend(prerequisite_consistency_errors(
+                    rubric, result.get("obligations", [])
+                ))
+        errors.extend(obligation_result_validation_errors(
+            paired, path="$replay.paired_obligations"
+        ))
+        paired_context = {
+            obligation["criterion_id"]: obligation
+            for result in accepted_results
+            for obligation in result.get("obligations", [])
+            if obligation.get("criterion_id", "").startswith(
+                result.get("route", "").upper() + "."
+            )
+        }
+        paired_context.update({
+            obligation["criterion_id"]: obligation
+            for obligation in paired
+            if isinstance(obligation, dict) and "criterion_id" in obligation
+        })
+        errors.extend(prerequisite_consistency_errors(
+            rubric,
+            paired_context,
+            criterion_ids={
+                "PAIRED.SAME_SOURCE_LOCK",
+                "PAIRED.SAME_MATHEMATICAL_TARGET",
+                "PAIRED.INDEPENDENT_WORKSPACES",
+                "PAIRED.ROUTE_AGREEMENT",
+            },
+        ))
     if not (RUBRIC_ROOT / "reports" / "R000_STAGE2_REPLAY.md").is_file():
         errors.append("tracked Stage 2 replay Markdown report is missing")
 

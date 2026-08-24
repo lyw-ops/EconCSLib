@@ -8,6 +8,7 @@ import importlib.util
 import json
 import sys
 import tempfile
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
@@ -99,6 +100,16 @@ FATAL_CRITERIA = {
     "CORE.ROUTE_IDENTITY",
 }
 
+# R000 is deliberately strict: no criterion may override a non-PASS
+# prerequisite. A future rubric may register exact criterion/prerequisite pairs
+# here and use ``registered_stronger_independent`` evidence at propagation time,
+# but adding an entry is a rubric-versioned semantic change.
+PREREQUISITE_OVERRIDE_REGISTRY: dict[str, frozenset[str]] = {}
+DIRECT_EVIDENCE_STRENGTHS = {
+    "ordinary",
+    "registered_stronger_independent",
+}
+
 
 def canonical_json_bytes(value: Any) -> bytes:
     """Return the repository's canonical deterministic JSON encoding."""
@@ -166,6 +177,145 @@ def _result(criterion_id: str, status: str, evidence: list[str], rationale: str)
         "evidence": evidence,
         "rationale": rationale,
     }
+
+
+def propagate_prerequisite_status(
+    criterion: dict[str, Any],
+    prerequisite_results: dict[str, dict[str, Any]],
+    direct_result: dict[str, Any],
+    *,
+    direct_evidence_strength: str = "ordinary",
+) -> dict[str, Any]:
+    """Apply R000's conservative proof-obligation prerequisite semantics.
+
+    A future rubric may explicitly register a stronger independent-evidence
+    override for an exact criterion/prerequisite pair. R000 registers none, so
+    every applicable prerequisite must be ``PASS`` before a direct ``PASS`` can
+    survive propagation. A failed prerequisite blocks proof of the dependent
+    criterion but does not by itself prove that the dependent claim is false,
+    so the conservative propagated status is ``UNKNOWN``.
+    """
+
+    if direct_evidence_strength not in DIRECT_EVIDENCE_STRENGTHS:
+        raise ValueError(
+            f"unknown direct evidence strength: {direct_evidence_strength}"
+        )
+    if direct_result["status"] != "PASS":
+        return direct_result
+
+    criterion_id = criterion["criterion_id"]
+    registered = PREREQUISITE_OVERRIDE_REGISTRY.get(criterion_id, frozenset())
+    active_overrides = (
+        registered
+        if direct_evidence_strength == "registered_stronger_independent"
+        else frozenset()
+    )
+    blockers: list[tuple[str, str]] = []
+    for prerequisite_id in criterion.get("prerequisites", []):
+        prerequisite = prerequisite_results.get(prerequisite_id)
+        status = prerequisite.get("status") if isinstance(prerequisite, dict) else "MISSING"
+        if status != "PASS" and prerequisite_id not in active_overrides:
+            blockers.append((prerequisite_id, str(status)))
+    if not blockers:
+        return direct_result
+
+    propagated_status = (
+        "NOT_EVALUATED"
+        if all(status == "NOT_EVALUATED" for _identifier, status in blockers)
+        else "UNKNOWN"
+    )
+    evidence = list(direct_result.get("evidence", []))
+    evidence.extend(
+        f"prerequisite:{identifier}:status={status}"
+        for identifier, status in blockers
+    )
+    blocker_summary = ", ".join(
+        f"{identifier}={status}" for identifier, status in blockers
+    )
+    return _result(
+        criterion_id,
+        propagated_status,
+        evidence,
+        "Strict R000 prerequisite propagation blocks direct PASS because "
+        f"these prerequisites are not PASS: {blocker_summary}.",
+    )
+
+
+def propagate_obligation_results(
+    rubric: dict[str, Any],
+    results: dict[str, dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    """Propagate prerequisites to a fixed point across one obligation package."""
+
+    propagated = {identifier: dict(result) for identifier, result in results.items()}
+    criteria = rubric.get("criteria", [])
+    for _iteration in range(len(criteria) + 1):
+        changed = False
+        for criterion in criteria:
+            criterion_id = criterion["criterion_id"]
+            if criterion_id not in propagated:
+                continue
+            updated = propagate_prerequisite_status(
+                criterion,
+                propagated,
+                propagated[criterion_id],
+            )
+            if updated != propagated[criterion_id]:
+                propagated[criterion_id] = updated
+                changed = True
+        if not changed:
+            break
+    else:  # pragma: no cover - guarded by registry DAG validation
+        raise RuntimeError("prerequisite propagation did not reach a fixed point")
+    return propagated
+
+
+def prerequisite_consistency_errors(
+    rubric: dict[str, Any],
+    results: dict[str, dict[str, Any]] | list[dict[str, Any]],
+    *,
+    criterion_ids: set[str] | None = None,
+) -> list[str]:
+    """Return runtime proof-graph violations for PASS obligation results."""
+
+    by_id = (
+        results
+        if isinstance(results, dict)
+        else {item["criterion_id"]: item for item in results}
+    )
+    errors: list[str] = []
+    for criterion in rubric.get("criteria", []):
+        criterion_id = criterion["criterion_id"]
+        if criterion_ids is not None and criterion_id not in criterion_ids:
+            continue
+        result = by_id.get(criterion_id)
+        if not isinstance(result, dict) or result.get("status") != "PASS":
+            continue
+        registered = PREREQUISITE_OVERRIDE_REGISTRY.get(criterion_id, frozenset())
+        for prerequisite_id in criterion.get("prerequisites", []):
+            prerequisite = by_id.get(prerequisite_id)
+            status = prerequisite.get("status") if isinstance(prerequisite, dict) else "MISSING"
+            if status != "PASS" and prerequisite_id not in registered:
+                errors.append(
+                    f"{criterion_id}: PASS has non-PASS prerequisite "
+                    f"{prerequisite_id}={status}"
+                )
+    return errors
+
+
+def validate_prerequisite_consistency(
+    rubric: dict[str, Any],
+    results: dict[str, dict[str, Any]] | list[dict[str, Any]],
+    *,
+    criterion_ids: set[str] | None = None,
+) -> None:
+    """Raise deterministically when a runtime obligation package violates its DAG."""
+
+    errors = prerequisite_consistency_errors(
+        rubric, results, criterion_ids=criterion_ids
+    )
+    if errors:
+        raise ValueError("prerequisite consistency failed: " + "; ".join(errors))
 
 
 def map_core_obligations(report: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -366,6 +516,8 @@ def map_obligations(report: dict[str, Any], rubric: dict[str, Any], route: str) 
                 [],
                 "No deterministic R000 adapter evidence is defined for this criterion.",
             )
+    results = propagate_obligation_results(rubric, results)
+    validate_prerequisite_consistency(rubric, results)
     return [results[item["criterion_id"]] for item in rubric["criteria"]]
 
 
@@ -472,7 +624,7 @@ def evaluate_shadow(
             ))
         shadow_score = 0.0
 
-    return {
+    result = {
         "schema_version": "1.0.0",
         "rubric_id": rubric["rubric_id"],
         "candidate_id": candidate_id,
@@ -497,6 +649,7 @@ def evaluate_shadow(
             "Syntactic evidence is never promoted to proof of a semantic obligation.",
         ],
     }
+    return finalize_shadow_result(result, rubric)
 
 
 def validate_instance(instance: Any, schema: dict[str, Any], path: str = "$") -> list[str]:
@@ -551,3 +704,134 @@ def validate_instance(instance: Any, schema: dict[str, Any], path: str = "$") ->
         if "maximum" in schema and instance > schema["maximum"]:
             errors.append(f"{path}: above maximum")
     return errors
+
+
+class OutputSchemaValidationError(ValueError):
+    """A generated R000 result failed one of its formal output schemas."""
+
+    def __init__(self, errors: list[str]) -> None:
+        self.errors = tuple(errors)
+        super().__init__("; ".join(errors))
+
+
+@lru_cache(maxsize=None)
+def _output_schema(name: str) -> dict[str, Any]:
+    return load_json(RUBRIC_ROOT / "schemas" / f"{name}.schema.json")
+
+
+def obligation_result_validation_errors(
+    obligations: list[dict[str, Any]],
+    *,
+    path: str = "$obligations",
+) -> list[str]:
+    """Validate every real obligation result against its formal schema."""
+
+    schema = _output_schema("obligation-result")
+    errors: list[str] = []
+    for index, obligation in enumerate(obligations):
+        errors.extend(validate_instance(obligation, schema, f"{path}[{index}]"))
+    return errors
+
+
+def validate_obligation_results(
+    obligations: list[dict[str, Any]],
+    *,
+    path: str = "$obligations",
+) -> None:
+    errors = obligation_result_validation_errors(obligations, path=path)
+    if errors:
+        raise OutputSchemaValidationError(errors)
+
+
+def shadow_result_validation_errors(result: dict[str, Any]) -> list[str]:
+    """Validate a complete shadow result and all nested obligation results."""
+
+    errors = validate_instance(result, _output_schema("shadow-evaluation"), "$shadow")
+    obligations = result.get("obligations")
+    if isinstance(obligations, list):
+        errors.extend(obligation_result_validation_errors(obligations))
+    return errors
+
+
+def validate_shadow_result(result: dict[str, Any]) -> None:
+    errors = shadow_result_validation_errors(result)
+    if errors:
+        raise OutputSchemaValidationError(errors)
+
+
+def _schema_failure_shadow_result(
+    invalid_result: dict[str, Any],
+    rubric: dict[str, Any],
+    errors: list[str],
+) -> dict[str, Any]:
+    """Replace schema-invalid output with a deterministic, schema-valid failure."""
+
+    route = invalid_result.get("route")
+    if route not in ("direct", "transport"):
+        route = "direct"
+    candidate_id = invalid_result.get("candidate_id")
+    if not isinstance(candidate_id, str) or not candidate_id:
+        candidate_id = "SCHEMA-INVALID"
+    error_report = {
+        "schema_version": "1.0.0",
+        "status": "error",
+        "score": 0.0,
+        "failure_codes": ["shadow-output-schema-invalid"],
+        "validation_errors": errors,
+    }
+    obligations = []
+    for criterion in rubric["criteria"]:
+        status = (
+            "NOT_APPLICABLE"
+            if criterion["applies_when"] not in ("all", route)
+            else "UNKNOWN"
+        )
+        obligations.append(_result(
+            criterion["criterion_id"],
+            status,
+            ["shadow-output-schema-validation:failed"],
+            "The generated shadow output failed deterministic schema validation, "
+            "so the additive wrapper failed closed.",
+        ))
+    return {
+        "schema_version": "1.0.0",
+        "rubric_id": rubric["rubric_id"],
+        "candidate_id": candidate_id,
+        "route": route,
+        "hard_oracle": {
+            "adapter_path": repo_relative(LEGACY_EVALUATOR_PATH),
+            "status": "error",
+            "score": 0.0,
+            "hard_accepted": False,
+            "failure_codes": ["shadow-output-schema-invalid"],
+            "report_sha256": sha256_bytes(canonical_json_bytes(error_report)),
+        },
+        "obligations": obligations,
+        "failure_frontier": ["OUTPUT_SCHEMA_VALIDATION"],
+        "shadow_search_score": 0.0,
+        "score_semantics": "non-authoritative-shadow-only",
+        "controls_selection": False,
+        "mathematical_acceptance": False,
+        "limitations": [
+            "The generated shadow output failed deterministic schema validation.",
+            "The existing deterministic binary evaluator remains the only acceptance oracle.",
+        ],
+    }
+
+
+def finalize_shadow_result(
+    result: dict[str, Any],
+    rubric: dict[str, Any],
+) -> dict[str, Any]:
+    """Return a validated shadow result or a deterministic fail-closed replacement."""
+
+    errors = shadow_result_validation_errors(result)
+    if not errors:
+        return result
+    failed_closed = _schema_failure_shadow_result(result, rubric, errors)
+    replacement_errors = shadow_result_validation_errors(failed_closed)
+    if replacement_errors:  # pragma: no cover - internal schema/constructor defect
+        raise RuntimeError(
+            "schema failure replacement is invalid: " + "; ".join(replacement_errors)
+        )
+    return failed_closed

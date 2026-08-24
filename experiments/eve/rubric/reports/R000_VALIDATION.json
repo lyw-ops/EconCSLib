@@ -9,7 +9,7 @@
     {
       "command": "python3 experiments/eve/rubric/scripts/verify_rubric_artifacts.py",
       "exit_code": 0,
-      "result": "7 historical source hashes and canonical R000 hash passed"
+      "result": "7 historical source hashes, canonical R000 hash, replay report structure, 14 shadow outputs, 494 obligation outputs, and runtime prerequisite consistency passed"
     },
     {
       "command": "python3 experiments/eve/rubric/scripts/replay_stage2_public.py --rubric experiments/eve/rubric/versions/R000.json --verify",
@@ -20,18 +20,18 @@
       "command": "python3 -m unittest experiments.eve.tests.test_rubric_registry experiments.eve.tests.test_rubric_shadow_score experiments.eve.tests.test_rubric_stage2_replay -v",
       "exit_code": 0,
       "failed": 0,
-      "passed": 29,
+      "passed": 37,
       "skipped": 0,
-      "tests": 29
+      "tests": 37
     },
     {
       "command": "python3 -m unittest discover -s experiments/eve/tests -v",
       "error": 1,
       "exit_code": 1,
       "failed": 13,
-      "passed": 155,
+      "passed": 165,
       "skipped": 3,
-      "tests": 172
+      "tests": 182
     },
     {
       "command": "clean-base targeted reproduction at f266f1e: test_efg_micro_evaluator + operator manifest hash + DEV-002 protocol identity",
@@ -62,6 +62,37 @@
     "model_sessions": 0,
     "quota_consumed_by_this_task": 0
   },
+  "protected_historical_sha256": {
+    "experiments/eve/scripts/evaluate_stage2_entry_game.py": {
+      "after": "7dd10441541593ea63d9de70595b786e130a67327a33c8d6cf4c91d63d6c256f",
+      "before": "7dd10441541593ea63d9de70595b786e130a67327a33c8d6cf4c91d63d6c256f"
+    },
+    "experiments/eve/scripts/evaluator_common.py": {
+      "after": "4d3d51d21b08e8a49554e476d5782b424575d80d4c57616eb319789a9514cfa4",
+      "before": "4d3d51d21b08e8a49554e476d5782b424575d80d4c57616eb319789a9514cfa4"
+    },
+    "experiments/eve/stage2_entry_game/direct/case.json": {
+      "after": "7de31d85c925ed4e5d0128f8ad1cbc557b893c1b00a369ba3b6148937202597c",
+      "before": "7de31d85c925ed4e5d0128f8ad1cbc557b893c1b00a369ba3b6148937202597c"
+    },
+    "experiments/eve/stage2_entry_game/mutations.json": {
+      "after": "bf5cce8e4058e8bc305a401121523a4f9267f018e4749dfbb18ca070e0ea8e43",
+      "before": "bf5cce8e4058e8bc305a401121523a4f9267f018e4749dfbb18ca070e0ea8e43"
+    },
+    "experiments/eve/stage2_entry_game/transport/case.json": {
+      "after": "31f28e01ece383775832f3b5aa0dd4a3a6488dc6338d6d7feaee07a4be875850",
+      "before": "31f28e01ece383775832f3b5aa0dd4a3a6488dc6338d6d7feaee07a4be875850"
+    },
+    "experiments/eve/stage3_review/review-record.json": {
+      "after": "6137c65f4681a2efc50bc9b6665c89b193e6751795c25a557af2c7f50b1d19ea",
+      "before": "6137c65f4681a2efc50bc9b6665c89b193e6751795c25a557af2c7f50b1d19ea"
+    },
+    "experiments/eve/stage3_review/rubric.json": {
+      "after": "850500f10be16916974590907313be3f3f1dad3c68296da800393b5697b6e177",
+      "before": "850500f10be16916974590907313be3f3f1dad3c68296da800393b5697b6e177"
+    }
+  },
+  "rubric_version_decision": "R000 remains 0.1.0: this is a seed implementation audit repair, not R000-to-R001 evolution; the registry and canonical hash are unchanged.",
   "schema_version": "1.0.0",
   "status": "TASK_VALIDATION_PASSED_WITH_REPRODUCED_BASELINE_FAILURES"
 }

@@ -450,42 +450,48 @@
         {
           "criterion_id": "TRANSPORT.PAYOFF_PRESERVATION",
           "evidence": [
-            "hard-oracle:gates.target_declarations:lean-kernel-contract"
+            "hard-oracle:gates.target_declarations:lean-kernel-contract",
+            "prerequisite:TRANSPORT.PROFILE_ENCODER:status=UNKNOWN"
           ],
-          "rationale": "The compiled deterministic contract directly checks this obligation.",
-          "status": "PASS"
+          "rationale": "Strict R000 prerequisite propagation blocks direct PASS because these prerequisites are not PASS: TRANSPORT.PROFILE_ENCODER=UNKNOWN.",
+          "status": "UNKNOWN"
         },
         {
           "criterion_id": "TRANSPORT.HYPOTHESIS_BRIDGE",
           "evidence": [
-            "hard-oracle:gates.target_declarations:lean-kernel-contract"
+            "hard-oracle:gates.target_declarations:lean-kernel-contract",
+            "prerequisite:TRANSPORT.PAYOFF_PRESERVATION:status=UNKNOWN"
           ],
-          "rationale": "The compiled deterministic contract directly checks this obligation.",
-          "status": "PASS"
+          "rationale": "Strict R000 prerequisite propagation blocks direct PASS because these prerequisites are not PASS: TRANSPORT.PAYOFF_PRESERVATION=UNKNOWN.",
+          "status": "UNKNOWN"
         },
         {
           "criterion_id": "TRANSPORT.NASH_PRESERVATION",
           "evidence": [
-            "hard-oracle:gates.target_declarations:lean-kernel-contract"
+            "hard-oracle:gates.target_declarations:lean-kernel-contract",
+            "prerequisite:TRANSPORT.HYPOTHESIS_BRIDGE:status=UNKNOWN"
           ],
-          "rationale": "The compiled deterministic contract directly checks this obligation.",
-          "status": "PASS"
+          "rationale": "Strict R000 prerequisite propagation blocks direct PASS because these prerequisites are not PASS: TRANSPORT.HYPOTHESIS_BRIDGE=UNKNOWN.",
+          "status": "UNKNOWN"
         },
         {
           "criterion_id": "TRANSPORT.SPE_PRESERVATION",
           "evidence": [
-            "hard-oracle:gates.target_declarations:lean-kernel-contract"
+            "hard-oracle:gates.target_declarations:lean-kernel-contract",
+            "prerequisite:TRANSPORT.HYPOTHESIS_BRIDGE:status=UNKNOWN"
           ],
-          "rationale": "The compiled deterministic contract directly checks this obligation.",
-          "status": "PASS"
+          "rationale": "Strict R000 prerequisite propagation blocks direct PASS because these prerequisites are not PASS: TRANSPORT.HYPOTHESIS_BRIDGE=UNKNOWN.",
+          "status": "UNKNOWN"
         },
         {
           "criterion_id": "TRANSPORT.CERTIFICATE_COMPLETE",
           "evidence": [
-            "hard-oracle:gates.target_declarations:lean-kernel-contract"
+            "hard-oracle:gates.target_declarations:lean-kernel-contract",
+            "prerequisite:TRANSPORT.NASH_PRESERVATION:status=UNKNOWN",
+            "prerequisite:TRANSPORT.SPE_PRESERVATION:status=UNKNOWN"
           ],
-          "rationale": "The compiled deterministic contract directly checks this obligation.",
-          "status": "PASS"
+          "rationale": "Strict R000 prerequisite propagation blocks direct PASS because these prerequisites are not PASS: TRANSPORT.NASH_PRESERVATION=UNKNOWN, TRANSPORT.SPE_PRESERVATION=UNKNOWN.",
+          "status": "UNKNOWN"
         },
         {
           "criterion_id": "TRANSPORT.CERTIFICATE_CONSUMED",
@@ -522,10 +528,13 @@
         {
           "criterion_id": "TRANSPORT.CONCLUSION_TRANSPORT",
           "evidence": [
-            "hard-oracle:gates.target_declarations:lean-kernel-contract"
+            "hard-oracle:gates.target_declarations:lean-kernel-contract",
+            "prerequisite:TRANSPORT.GENERAL_NASH_THEOREM_APPLICATION:status=UNKNOWN",
+            "prerequisite:TRANSPORT.GENERAL_SPE_THEOREM_APPLICATION:status=UNKNOWN",
+            "prerequisite:TRANSPORT.EQUALITY_REFLECTION:status=UNKNOWN"
           ],
-          "rationale": "The compiled deterministic contract directly checks this obligation.",
-          "status": "PASS"
+          "rationale": "Strict R000 prerequisite propagation blocks direct PASS because these prerequisites are not PASS: TRANSPORT.GENERAL_NASH_THEOREM_APPLICATION=UNKNOWN, TRANSPORT.GENERAL_SPE_THEOREM_APPLICATION=UNKNOWN, TRANSPORT.EQUALITY_REFLECTION=UNKNOWN.",
+          "status": "UNKNOWN"
         },
         {
           "criterion_id": "PAIRED.SAME_SOURCE_LOCK",
@@ -608,12 +617,72 @@
     "mutations_evaluated": 12,
     "mutations_hard_rejected": 12
   },
+  "mutation_expectations": [
+    {
+      "candidate_id": "DIRECT-UNFIXED",
+      "expected_failure_code": "route-discipline-violation",
+      "expected_failure_preserved": true
+    },
+    {
+      "candidate_id": "DIRECT-PLACEHOLDER",
+      "expected_failure_code": "forbidden-construct",
+      "expected_failure_preserved": true
+    },
+    {
+      "candidate_id": "DIRECT-ABSTRACT-LEAK",
+      "expected_failure_code": "route-discipline-violation",
+      "expected_failure_preserved": true
+    },
+    {
+      "candidate_id": "DIRECT-PREFIX-TAMPER",
+      "expected_failure_code": "protected-task-prefix-changed",
+      "expected_failure_preserved": true
+    },
+    {
+      "candidate_id": "DIRECT-WRONG-NAME",
+      "expected_failure_code": "target-declaration-missing-or-wrong-type",
+      "expected_failure_preserved": true
+    },
+    {
+      "candidate_id": "DIRECT-EXTRA-IMPORT",
+      "expected_failure_code": "forbidden-import",
+      "expected_failure_preserved": true
+    },
+    {
+      "candidate_id": "TRANSPORT-UNFIXED",
+      "expected_failure_code": "route-discipline-violation",
+      "expected_failure_preserved": true
+    },
+    {
+      "candidate_id": "TRANSPORT-PLACEHOLDER",
+      "expected_failure_code": "forbidden-construct",
+      "expected_failure_preserved": true
+    },
+    {
+      "candidate_id": "TRANSPORT-MISSING-CERTIFICATE",
+      "expected_failure_code": "route-discipline-violation",
+      "expected_failure_preserved": true
+    },
+    {
+      "candidate_id": "TRANSPORT-PREFIX-TAMPER",
+      "expected_failure_code": "protected-task-prefix-changed",
+      "expected_failure_preserved": true
+    },
+    {
+      "candidate_id": "TRANSPORT-EXTRA-IMPORT",
+      "expected_failure_code": "forbidden-import",
+      "expected_failure_preserved": true
+    },
+    {
+      "candidate_id": "TRANSPORT-WRONG-TARGET",
+      "expected_failure_code": "target-declaration-missing-or-wrong-type",
+      "expected_failure_preserved": true
+    }
+  ],
   "mutation_results": [
     {
       "candidate_id": "DIRECT-UNFIXED",
       "controls_selection": false,
-      "expected_failure_code": "route-discipline-violation",
-      "expected_failure_preserved": true,
       "failure_frontier": [
         "CORE.ROUTE_IDENTITY"
       ],
@@ -877,8 +946,6 @@
     {
       "candidate_id": "DIRECT-PLACEHOLDER",
       "controls_selection": false,
-      "expected_failure_code": "forbidden-construct",
-      "expected_failure_preserved": true,
       "failure_frontier": [
         "CORE.NO_PLACEHOLDER"
       ],
@@ -1134,8 +1201,6 @@
     {
       "candidate_id": "DIRECT-ABSTRACT-LEAK",
       "controls_selection": false,
-      "expected_failure_code": "route-discipline-violation",
-      "expected_failure_preserved": true,
       "failure_frontier": [
         "CORE.ROUTE_IDENTITY"
       ],
@@ -1399,8 +1464,6 @@
     {
       "candidate_id": "DIRECT-PREFIX-TAMPER",
       "controls_selection": false,
-      "expected_failure_code": "protected-task-prefix-changed",
-      "expected_failure_preserved": true,
       "failure_frontier": [
         "CORE.TASK_IDENTITY"
       ],
@@ -1652,8 +1715,6 @@
     {
       "candidate_id": "DIRECT-WRONG-NAME",
       "controls_selection": false,
-      "expected_failure_code": "target-declaration-missing-or-wrong-type",
-      "expected_failure_preserved": true,
       "failure_frontier": [
         "CORE.TARGET_DECLARATIONS"
       ],
@@ -1930,8 +1991,6 @@
     {
       "candidate_id": "DIRECT-EXTRA-IMPORT",
       "controls_selection": false,
-      "expected_failure_code": "forbidden-import",
-      "expected_failure_preserved": true,
       "failure_frontier": [
         "CORE.IMPORT_BOUNDARY"
       ],
@@ -2181,8 +2240,6 @@
     {
       "candidate_id": "TRANSPORT-UNFIXED",
       "controls_selection": false,
-      "expected_failure_code": "route-discipline-violation",
-      "expected_failure_preserved": true,
       "failure_frontier": [
         "CORE.ROUTE_IDENTITY"
       ],
@@ -2440,8 +2497,6 @@
     {
       "candidate_id": "TRANSPORT-PLACEHOLDER",
       "controls_selection": false,
-      "expected_failure_code": "forbidden-construct",
-      "expected_failure_preserved": true,
       "failure_frontier": [
         "CORE.NO_PLACEHOLDER"
       ],
@@ -2697,8 +2752,6 @@
     {
       "candidate_id": "TRANSPORT-MISSING-CERTIFICATE",
       "controls_selection": false,
-      "expected_failure_code": "route-discipline-violation",
-      "expected_failure_preserved": true,
       "failure_frontier": [
         "CORE.ROUTE_IDENTITY"
       ],
@@ -2956,8 +3009,6 @@
     {
       "candidate_id": "TRANSPORT-PREFIX-TAMPER",
       "controls_selection": false,
-      "expected_failure_code": "protected-task-prefix-changed",
-      "expected_failure_preserved": true,
       "failure_frontier": [
         "CORE.TASK_IDENTITY"
       ],
@@ -3209,8 +3260,6 @@
     {
       "candidate_id": "TRANSPORT-EXTRA-IMPORT",
       "controls_selection": false,
-      "expected_failure_code": "forbidden-import",
-      "expected_failure_preserved": true,
       "failure_frontier": [
         "CORE.IMPORT_BOUNDARY"
       ],
@@ -3460,8 +3509,6 @@
     {
       "candidate_id": "TRANSPORT-WRONG-TARGET",
       "controls_selection": false,
-      "expected_failure_code": "target-declaration-missing-or-wrong-type",
-      "expected_failure_preserved": true,
       "failure_frontier": [
         "CORE.TARGET_DECLARATIONS"
       ],
@@ -3757,9 +3804,16 @@
     {
       "criterion_id": "PAIRED.SAME_SOURCE_LOCK",
       "evidence": [
-        "direct-and-transport-case-source-lock-sha256"
+        "direct-case:source_lock.id=EVE-ENTRY-GAME-SOURCE-LOCK-001",
+        "direct-case:source_lock.path=experiments/eve/stage2_entry_game/source-lock.json",
+        "direct-case:source_lock.sha256=023e3f3838fd9c350e99a03189bd7cb11bbb0420626834c45213c1167468a596",
+        "transport-case:source_lock.id=EVE-ENTRY-GAME-SOURCE-LOCK-001",
+        "transport-case:source_lock.path=experiments/eve/stage2_entry_game/source-lock.json",
+        "transport-case:source_lock.sha256=023e3f3838fd9c350e99a03189bd7cb11bbb0420626834c45213c1167468a596",
+        "source-lock:tracked-path=experiments/eve/stage2_entry_game/source-lock.json",
+        "source-lock:file-sha256=023e3f3838fd9c350e99a03189bd7cb11bbb0420626834c45213c1167468a596"
       ],
-      "rationale": "Both frozen case manifests record the same source-lock path and SHA-256.",
+      "rationale": "Both case manifests record the same source-lock identity, and its tracked file SHA-256 matches.",
       "status": "PASS"
     },
     {
@@ -3779,10 +3833,12 @@
     {
       "criterion_id": "PAIRED.ROUTE_AGREEMENT",
       "evidence": [
-        "hard-oracle:two-complete-score-one-route-reports"
+        "hard-oracle:two-complete-score-one-route-reports",
+        "prerequisite:PAIRED.SAME_MATHEMATICAL_TARGET:status=UNKNOWN",
+        "prerequisite:TRANSPORT.CONCLUSION_TRANSPORT:status=UNKNOWN"
       ],
-      "rationale": "Both complete deterministic route reports accept under the shared paired task contract.",
-      "status": "PASS"
+      "rationale": "Strict R000 prerequisite propagation blocks direct PASS because these prerequisites are not PASS: PAIRED.SAME_MATHEMATICAL_TARGET=UNKNOWN, TRANSPORT.CONCLUSION_TRANSPORT=UNKNOWN.",
+      "status": "UNKNOWN"
     }
   ],
   "report_id": "EVE-RUBRIC-R000-STAGE2-PUBLIC-REPLAY",

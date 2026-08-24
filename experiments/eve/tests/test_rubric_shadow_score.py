@@ -23,8 +23,12 @@ from rubric_common import (  # noqa: E402
     canonical_json_bytes,
     compute_shadow_score,
     evaluate_shadow,
+    finalize_shadow_result,
     load_json,
     map_obligations,
+    prerequisite_consistency_errors,
+    propagate_prerequisite_status,
+    validate_shadow_result,
 )
 
 
@@ -132,8 +136,54 @@ class RubricShadowScoreTests(unittest.TestCase):
             item["criterion_id"]: item for item in map_obligations(report, self.rubric, "direct")
         }
         self.assertEqual(obligations["CORE.EDIT_BOUNDARY"]["status"], "FAIL")
-        self.assertEqual(obligations["CORE.SOURCE_LOCK"]["status"], "PASS")
+        self.assertEqual(obligations["CORE.SOURCE_LOCK"]["status"], "UNKNOWN")
         self.assertEqual(obligations["CORE.IMPORT_BOUNDARY"]["status"], "NOT_EVALUATED")
+
+    def test_strict_prerequisite_status_propagation(self) -> None:
+        criterion = {"criterion_id": "B", "prerequisites": ["A"]}
+        direct_pass = {
+            "criterion_id": "B",
+            "status": "PASS",
+            "evidence": ["direct:B"],
+            "rationale": "Direct evidence passes.",
+        }
+        for status in ("UNKNOWN", "NOT_EVALUATED", "FAIL"):
+            with self.subTest(status=status):
+                prerequisite = {
+                    "criterion_id": "A",
+                    "status": status,
+                    "evidence": [],
+                    "rationale": "test",
+                }
+                propagated = propagate_prerequisite_status(
+                    criterion, {"A": prerequisite}, direct_pass
+                )
+                self.assertNotEqual(propagated["status"], "PASS")
+        prerequisite_pass = {
+            "criterion_id": "A",
+            "status": "PASS",
+            "evidence": ["direct:A"],
+            "rationale": "Direct evidence passes.",
+        }
+        self.assertEqual(
+            propagate_prerequisite_status(
+                criterion, {"A": prerequisite_pass}, direct_pass
+            )["status"],
+            "PASS",
+        )
+
+    def test_runtime_invariant_detects_dependent_pass(self) -> None:
+        rubric = {
+            "criteria": [
+                {"criterion_id": "A", "prerequisites": []},
+                {"criterion_id": "B", "prerequisites": ["A"]},
+            ]
+        }
+        results = [
+            {"criterion_id": "A", "status": "UNKNOWN"},
+            {"criterion_id": "B", "status": "PASS"},
+        ]
+        self.assertEqual(len(prerequisite_consistency_errors(rubric, results)), 1)
 
     def test_route_specific_criteria_are_not_applicable_on_other_route(self) -> None:
         report = synthetic_report("compile-failed", "CORE.COMPILATION")
@@ -155,6 +205,71 @@ class RubricShadowScoreTests(unittest.TestCase):
         self.assertEqual(result["hard_oracle"]["status"], "error")
         self.assertFalse(result["hard_oracle"]["hard_accepted"])
         self.assertEqual(result["shadow_search_score"], 0.0)
+        validate_shadow_result(result)
+
+    def test_all_shadow_output_classes_are_schema_valid(self) -> None:
+        accepted = {
+            "status": "passed",
+            "score": 1.0,
+            "gates": {gate: True for gate in CRITERION_GATE.values()},
+            "failure_codes": [],
+        }
+        cases = (
+            ("direct", accepted),
+            ("transport", accepted),
+            (
+                "direct",
+                synthetic_report(
+                    "target-declaration-missing-or-wrong-type",
+                    "CORE.TARGET_DECLARATIONS",
+                ),
+            ),
+            (
+                "direct",
+                synthetic_report(
+                    "protected-task-prefix-changed", "CORE.TASK_IDENTITY"
+                ),
+            ),
+        )
+        for index, (route, report) in enumerate(cases):
+            with self.subTest(route=route, index=index):
+                with mock.patch.object(
+                    rubric_common,
+                    "run_hard_oracle",
+                    return_value=(report, "a" * 64),
+                ):
+                    result = evaluate_shadow(
+                        route, Path("does-not-matter"), f"SCHEMA-{index}"
+                    )
+                validate_shadow_result(result)
+
+    def test_invalid_shadow_output_fails_closed(self) -> None:
+        accepted = {
+            "status": "passed",
+            "score": 1.0,
+            "gates": {gate: True for gate in CRITERION_GATE.values()},
+            "failure_codes": [],
+        }
+        with mock.patch.object(
+            rubric_common,
+            "run_hard_oracle",
+            return_value=(accepted, "b" * 64),
+        ):
+            result = evaluate_shadow(
+                "direct", Path("does-not-matter"), "SCHEMA-INVALID"
+            )
+        invalid = dict(result, shadow_search_score=1.2)
+        with self.assertRaises(ValueError):
+            validate_shadow_result(invalid)
+        failed_closed = finalize_shadow_result(invalid, self.rubric)
+        validate_shadow_result(failed_closed)
+        self.assertEqual(failed_closed["hard_oracle"]["status"], "error")
+        self.assertFalse(failed_closed["hard_oracle"]["hard_accepted"])
+        self.assertEqual(failed_closed["shadow_search_score"], 0.0)
+        self.assertIn(
+            "shadow-output-schema-invalid",
+            failed_closed["hard_oracle"]["failure_codes"],
+        )
 
     def test_real_shadow_output_is_byte_deterministic(self) -> None:
         with tempfile.TemporaryDirectory(prefix="eve-rubric-determinism-") as raw_temp:

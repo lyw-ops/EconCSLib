@@ -18,6 +18,13 @@ evidence. The review is Codex AI review, not independent human review.
 - EvE execute invocations: `0`
 - Quota consumed by this task: `0`
 
+## Paired obligations
+
+- `PAIRED.SAME_SOURCE_LOCK`: `PASS`
+- `PAIRED.SAME_MATHEMATICAL_TARGET`: `UNKNOWN`
+- `PAIRED.INDEPENDENT_WORKSPACES`: `PASS`
+- `PAIRED.ROUTE_AGREEMENT`: `UNKNOWN`
+
 ## Limitation
 
 DEV-003 runtime candidates are unavailable in the tracked public checkout;
