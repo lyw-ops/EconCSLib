@@ -293,9 +293,85 @@ compiler. -/
 def endpointThreatProfile : (toObservedGame root).PureProfile :=
   playerProfileToObservedProfile root (fun _ => threat)
 
+/-- The represented root decision coordinate. -/
+def rootInformation : (toObservedGame root).RepresentedInfo (0 : Player) :=
+  ⟨⟨0, .Leaf quitPayoff, [continuation]⟩, ⟨{
+    history := initial
+    mover := rfl
+    decision :=
+      (toExtensiveGame root).toArena.isDecision_of_not_isTerminal _
+        (toExtensiveGame_not_isTerminal_node root 0
+          (.Leaf quitPayoff) [continuation])
+    infoAt_eq := rfl
+  }⟩⟩
+
+/-- The represented off-path player-`1` decision coordinate. -/
+def continuationInformation :
+    (toObservedGame root).RepresentedInfo (1 : Player) :=
+  ⟨⟨1, .Leaf punishPayoff, [.Leaf rewardPayoff]⟩, ⟨{
+    history := offPath
+    mover := rfl
+    decision :=
+      (toExtensiveGame root).toArena.isDecision_of_not_isTerminal _
+        (toExtensiveGame_not_isTerminal_node root 1
+          (.Leaf punishPayoff) [.Leaf rewardPayoff])
+    infoAt_eq := rfl
+  }⟩⟩
+
+/-- Extending and then restricting an observed profile recovers its root
+choice. -/
+theorem extendedProfile_root_choice
+    (profile : (toObservedGame root).PureProfile) :
+    profileStrategy (observedProfileToPlayerProfile root profile)
+        0 (.Leaf quitPayoff) [continuation] =
+      profile 0 rootInformation := by
+  have h := congrFun
+    (congrFun (playerProfileToObservedProfile_toPlayer root profile) 0)
+    rootInformation
+  exact h
+
+/-- Extending and then restricting an observed profile recovers its off-path
+continuation choice. -/
+theorem extendedProfile_continuation_choice
+    (profile : (toObservedGame root).PureProfile) :
+    profileStrategy (observedProfileToPlayerProfile root profile)
+        1 (.Leaf punishPayoff) [.Leaf rewardPayoff] =
+      profile 1 continuationInformation := by
+  have h := congrFun
+    (congrFun (playerProfileToObservedProfile_toPlayer root profile) 1)
+    continuationInformation
+  exact h
+
+@[simp]
+theorem threatProfile_root_apply :
+    threatProfile 0 rootInformation =
+      (⟨.Leaf quitPayoff, List.mem_cons_self⟩ :
+        (toObservedGame root).InfoAction 0 rootInformation.1) :=
+  rfl
+
+@[simp]
+theorem threatProfile_continuation_apply :
+    threatProfile 1 continuationInformation =
+      (⟨.Leaf punishPayoff, List.mem_cons_self⟩ :
+        (toObservedGame root).InfoAction 1
+          continuationInformation.1) :=
+  rfl
+
+@[simp]
+theorem rewardObserved_continuation_apply :
+    playerStrategyToObservedStrategy root 1 rewardDeviation
+        continuationInformation =
+      (⟨.Leaf rewardPayoff,
+        List.mem_cons_of_mem (GameTree.Leaf punishPayoff)
+          List.mem_cons_self⟩ :
+        (toObservedGame root).InfoAction 1
+          continuationInformation.1) := by
+  simp [playerStrategyToObservedStrategy, rewardDeviation,
+    continuationInformation]
+
 /-- The endpoint threat lifted into the occurrence-sensitive strategy
 space. -/
-def occurrenceThreatProfile :
+noncomputable def occurrenceThreatProfile :
     (toOccurrenceObservedGame root).PureProfile :=
   liftEndpointPureProfile root endpointThreatProfile
 
@@ -309,12 +385,79 @@ theorem threat_isNashOnInitialRoot :
   have hcurrent : current = initial := by
     simpa [rootOnlyObserved] using hroot
   subst current
-  have hcompiled :=
-    (terminalContinuationGameForm_isNash_iff_isNashAt
-      root (fun _ => threat) initial).mpr
-        threat_isNashAt_root
-  simpa [rootOnlyObserved, rootOnly_noChance,
-    rootOnly_pureTerminating, threatProfile] using hcompiled
+  intro i deviation
+  change
+    (toObservedGame root).terminalPayoffFrom
+        (Function.update threatProfile i deviation)
+        (toExtensiveGame_noChanceOnHistories root) _ _ i ≤
+      (toObservedGame root).terminalPayoffFrom
+        threatProfile (toExtensiveGame_noChanceOnHistories root) _ _ i
+  rw [terminalPayoffFrom_observedProfile_eq_outcome root,
+    terminalPayoffFrom_observedProfile_eq_outcome root]
+  change
+    outcome
+        (profileStrategy
+          (observedProfileToPlayerProfile root
+            (Function.update threatProfile i deviation)))
+        root i ≤
+      outcome
+        (profileStrategy
+          (observedProfileToPlayerProfile root threatProfile))
+        root i
+  fin_cases i
+  · change
+      outcome
+          (profileStrategy
+            (observedProfileToPlayerProfile root
+              (Function.update threatProfile 0 deviation)))
+          (.Node (0 : Player) (.Leaf quitPayoff) [continuation]) 0 ≤
+        outcome
+          (profileStrategy
+            (observedProfileToPlayerProfile root threatProfile))
+          (.Node (0 : Player) (.Leaf quitPayoff) [continuation]) 0
+    rw [outcome_Node, outcome_Node,
+      extendedProfile_root_choice,
+      extendedProfile_root_choice]
+    rw [Function.update_self, threatProfile_root_apply]
+    have hchoice :
+        (deviation rootInformation).1 = .Leaf quitPayoff ∨
+          (deviation rootInformation).1 = continuation := by
+      simpa [rootInformation] using (deviation rootInformation).2
+    rcases hchoice with hquit | hcontinue
+    · rw [hquit]
+      simp [quitPayoff]
+    · rw [hcontinue]
+      change
+        outcome
+            (profileStrategy
+              (observedProfileToPlayerProfile root
+                (Function.update threatProfile 0 deviation)))
+            (.Node (1 : Player) (.Leaf punishPayoff)
+              [.Leaf rewardPayoff]) 0 ≤
+          outcome
+            (profileStrategy
+              (observedProfileToPlayerProfile root threatProfile))
+            (.Leaf quitPayoff) 0
+      rw [outcome_Node, extendedProfile_continuation_choice]
+      rw [Function.update_of_ne (by decide)]
+      rw [threatProfile_continuation_apply]
+      simp [punishPayoff, quitPayoff]
+  · change
+      outcome
+          (profileStrategy
+            (observedProfileToPlayerProfile root
+              (Function.update threatProfile 1 deviation)))
+          (.Node (0 : Player) (.Leaf quitPayoff) [continuation]) 1 ≤
+        outcome
+          (profileStrategy
+            (observedProfileToPlayerProfile root threatProfile))
+          (.Node (0 : Player) (.Leaf quitPayoff) [continuation]) 1
+    rw [outcome_Node, outcome_Node,
+      extendedProfile_root_choice,
+      extendedProfile_root_choice]
+    rw [Function.update_of_ne (by decide)]
+    rw [threatProfile_root_apply]
+    simp [quitPayoff]
 
 /-- Relative to the explicit conservative initial-only lawful system, the
 threat satisfies subgame perfection *on that system* exactly because its sole
@@ -342,11 +485,68 @@ theorem threat_fails_offPath_continuation :
       (fun payoff : Player → ℤ => payoff)
       (playerProfileToObservedProfile root
         (fun _ => threat)) := by
-  simpa [offPath] using
-    (not_congr
-      (terminalContinuationGameForm_isNash_iff_isNashAt
-        root (fun _ => threat) offPath)).mpr
-        threat_not_isNashAt_continuation
+  intro hnash
+  have hbound :=
+    hnash (1 : Player)
+      (playerStrategyToObservedStrategy root 1 rewardDeviation)
+  change
+    (toObservedGame root).terminalPayoffFrom
+        (Function.update endpointThreatProfile 1
+          (playerStrategyToObservedStrategy root 1 rewardDeviation))
+        (toExtensiveGame_noChanceOnHistories root) offPath _ 1 ≤
+      (toObservedGame root).terminalPayoffFrom
+        endpointThreatProfile
+        (toExtensiveGame_noChanceOnHistories root) offPath _ 1
+    at hbound
+  rw [terminalPayoffFrom_observedProfile_eq_outcome root,
+    terminalPayoffFrom_observedProfile_eq_outcome root] at hbound
+  change
+    outcome
+        (profileStrategy
+          (observedProfileToPlayerProfile root
+            (Function.update endpointThreatProfile 1
+              (playerStrategyToObservedStrategy root 1
+                rewardDeviation))))
+        continuation 1 ≤
+      outcome
+        (profileStrategy
+          (observedProfileToPlayerProfile root endpointThreatProfile))
+        continuation 1
+    at hbound
+  change
+    outcome
+        (profileStrategy
+          (observedProfileToPlayerProfile root
+            (Function.update endpointThreatProfile 1
+              (playerStrategyToObservedStrategy root 1
+                rewardDeviation))))
+        (.Node (1 : Player) (.Leaf punishPayoff)
+          [.Leaf rewardPayoff]) 1 ≤
+      outcome
+        (profileStrategy
+          (observedProfileToPlayerProfile root endpointThreatProfile))
+        (.Node (1 : Player) (.Leaf punishPayoff)
+          [.Leaf rewardPayoff]) 1
+    at hbound
+  rw [outcome_Node, outcome_Node,
+    extendedProfile_continuation_choice,
+    extendedProfile_continuation_choice,
+    Function.update_self,
+    rewardObserved_continuation_apply] at hbound
+  change
+    outcome
+        (profileStrategy
+          (observedProfileToPlayerProfile root
+            (Function.update endpointThreatProfile 1
+              (playerStrategyToObservedStrategy root 1
+                rewardDeviation))))
+        (.Leaf rewardPayoff) 1 ≤
+      outcome
+        (profileStrategy
+          (observedProfileToPlayerProfile root endpointThreatProfile))
+        (.Leaf punishPayoff) 1
+    at hbound
+  norm_num [rewardPayoff, punishPayoff] at hbound
 
 /-- The lifted threat fails standard all-history SPE in the canonical
 occurrence-sensitive compiler.

@@ -173,6 +173,9 @@ theorem behavioralDeviationHistoryLawAlong_eq
                 G realizedBehavior current
                 hterminal hmover]
           | some mover =>
+              let hdecision :=
+                G.observed.base.toArena.isDecision_of_not_isTerminal
+                  current.1 hterminal
               rw [BehavioralProfile.toHistoryPolicy_of_mover
                 G targetBehavior current
                 hterminal mover hmover]
@@ -187,10 +190,10 @@ theorem behavioralDeviationHistoryLawAlong_eq
                     PMF
                       (G.observed.InfoAction mover
                         (G.observed.infoAt
-                          current mover hmover hterminal)) =>
+                          current mover hmover hdecision)) =>
                   abstractLaw.map
                     (G.observed.actionEquiv
-                      current mover hmover hterminal))
+                      current mover hmover hdecision))
               by_cases hmoverWho :
                   mover = who
               · subst mover
@@ -207,14 +210,14 @@ theorem behavioralDeviationHistoryLawAlong_eq
                   Function.update]
                 change
                   target
-                      (G.observed.infoAt
-                        current who hmover hterminal) =
+                      (G.observed.representedInfoAt
+                        current who hmover hdecision) =
                     h.recallCertificate.behavioralizeMixedFrom
                       G.observed root who
                       (h.behavioralToMixedStrategy
                         who target)
-                      (G.observed.infoAt
-                        current who hmover hterminal)
+                      (G.observed.representedInfoAt
+                        current who hmover hdecision)
                 exact
                   (h.behavioralize_behavioralToMixed_at_append
                     G.observed root suffix who hmover' hnonterminal'
@@ -339,6 +342,9 @@ theorem behavioralTableDeviationHistoryLawAlong_eq
                 G mappedDeviation current
                 hterminal hmover]
           | some mover =>
+              let hdecision :=
+                G.observed.base.toArena.isDecision_of_not_isTerminal
+                  current.1 hterminal
               rw [BehavioralProfile.toHistoryPolicy_of_mover
                 G sourceDeviation current
                 hterminal mover hmover]
@@ -353,10 +359,10 @@ theorem behavioralTableDeviationHistoryLawAlong_eq
                     PMF
                       (G.observed.InfoAction mover
                         (G.observed.infoAt
-                          current mover hmover hterminal)) =>
+                          current mover hmover hdecision)) =>
                   abstractLaw.map
                     (G.observed.actionEquiv
-                      current mover hmover hterminal))
+                      current mover hmover hdecision))
               by_cases hmoverWho :
                   mover = who
               · subst mover
@@ -378,14 +384,14 @@ theorem behavioralTableDeviationHistoryLawAlong_eq
                   Function.update, hmoverWho]
                 change
                   profile mover
-                      (G.observed.infoAt
-                        current mover hmover hterminal) =
+                      (G.observed.representedInfoAt
+                        current mover hmover hdecision) =
                     h.recallCertificate.behavioralizeMixedFrom
                       G.observed root mover
                       (h.behavioralToMixedStrategy
                         mover (profile mover))
-                      (G.observed.infoAt
-                        current mover hmover hterminal)
+                      (G.observed.representedInfoAt
+                        current mover hmover hdecision)
                 exact
                   (h.behavioralize_behavioralToMixed_at_append
                     G.observed root suffix mover

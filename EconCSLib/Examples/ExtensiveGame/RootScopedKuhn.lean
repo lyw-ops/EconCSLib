@@ -137,6 +137,11 @@ def observed : ObservedGame Unit (Bool × Bool) where
   actionEquiv := fun history _ hmover _ =>
     actionEquiv history.1 hmover
 
+/-- The represented strategy coordinate at the initial decision. -/
+private def firstInformation : observed.RepresentedInfo () :=
+  observed.representedInfoAt
+    ⟨Stage.start, Arena.History.nil⟩ () rfl ⟨false⟩
+
 private theorem ownDecisionHistory_at_mover
     (history :
       observed.base.toArena.HistoryFrom
@@ -147,7 +152,7 @@ private theorem ownDecisionHistory_at_mover
       match history.1 with
       | .start => []
       | .after first =>
-          [⟨DecisionInfo.first, first⟩]
+          [⟨firstInformation, first⟩]
       | .done _ _ => [] := by
   rcases history with ⟨finish, path⟩
   induction path with
@@ -217,10 +222,16 @@ concrete game. -/
 def hypotheses :
     observed.FiniteKuhnHypotheses where
   perfectRecall := observed_perfectRecall
-  finiteInfoState := by
+  finiteRepresentedInfo := by
     intro i
-    change Finite DecisionInfo
-    infer_instance
+    letI : Finite
+        (observed.toControlledObservedGame.InfoState i) := by
+      change Finite DecisionInfo
+      infer_instance
+    exact
+      Finite.of_injective
+        (fun information : observed.RepresentedInfo i => information.1)
+        Subtype.val_injective
 
 /-- The concrete game contains no chance-controlled decision stage. -/
 theorem base_noChance : observed.base.NoChanceOnHistories := by
@@ -313,6 +324,13 @@ private theorem afterRoot_not_terminal (first : Bool) :
     ¬ chanceGame.observed.base.isTerminal (afterRoot first).1 :=
   afterStage_not_terminal first
 
+/-- The represented strategy coordinate at the second decision after
+`first`. -/
+private def secondInformation (first : Bool) :
+    observed.RepresentedInfo () :=
+  observed.representedInfoAt
+    (afterRoot first) () rfl ⟨false⟩
+
 private theorem done_terminal (first second : Bool) :
     base.isTerminal (.done first second) :=
   ⟨fun action => nomatch action⟩
@@ -340,11 +358,11 @@ private theorem actionLaw_afterRoot
     ObservedGame.BehavioralStrategy.actionLawAt
         observed (behavioral ()) (afterRoot first) rfl
         (afterRoot_not_terminal first) =
-      behavioral () (.second first) := by
+      behavioral () (secondInformation first) := by
   unfold ObservedGame.BehavioralStrategy.actionLawAt
   change
-    (behavioral () (.second first)).map id =
-      behavioral () (.second first)
+    (behavioral () (secondInformation first)).map id =
+      behavioral () (secondInformation first)
   exact PMF.map_id _
 
 private theorem chanceActionLaw_afterRoot
@@ -354,7 +372,7 @@ private theorem chanceActionLaw_afterRoot
         chanceGame.observed (behavioral ())
         (afterRoot first) rfl
         (afterRoot_not_terminal first) =
-      behavioral () (.second first) :=
+      behavioral () (secondInformation first) :=
   actionLaw_afterRoot behavioral first
 
 private theorem behavioralLaw_afterRoot
@@ -362,7 +380,7 @@ private theorem behavioralLaw_afterRoot
     (first : Bool) :
     chanceGame.behavioralStoppedPayoffLawFrom
         behavioral (afterRoot first) 1 =
-      (behavioral () (.second first)).map
+      (behavioral () (secondInformation first)).map
         (fun second => payoffOutcome first second) := by
   unfold ObservedChanceGame.behavioralStoppedPayoffLawFrom
   rw [Arena.stochasticHistoryPMFFrom]
@@ -373,7 +391,7 @@ private theorem behavioralLaw_afterRoot
   rw [chanceActionLaw_afterRoot]
   rw [PMF.map_bind]
   change
-    (behavioral () (.second first)).bind
+    (behavioral () (secondInformation first)).bind
         (fun second =>
           (PMF.pure (terminalRoot first second)).map
             chanceGame.stoppedPayoffAtHistory) =
@@ -396,24 +414,24 @@ private theorem behavioralLaw_afterRoot
         congrArg PMF.pure
           (stoppedPayoff_terminalRoot first second)
   change
-    (behavioral () (.second first)).bind
+    (behavioral () (secondInformation first)).bind
         (fun second =>
           (PMF.pure (terminalRoot first second)).map
             chanceGame.stoppedPayoffAtHistory) =
       _
   calc
     _ =
-        (behavioral () (.second first)).bind
+        (behavioral () (secondInformation first)).bind
           (PMF.pure ∘
             fun second => payoffOutcome first second) :=
       congrArg
         (fun continuation =>
-          (behavioral () (.second first)).bind continuation)
+          (behavioral () (secondInformation first)).bind continuation)
         hinner
     _ = _ :=
       PMF.bind_pure_comp
         (fun second => payoffOutcome first second)
-        (behavioral () (.second first))
+        (behavioral () (secondInformation first))
 
 private theorem afterFalseRoot_eq :
     afterFalseRoot = afterRoot false :=
@@ -429,19 +447,19 @@ private theorem actionLaw_initial
     ObservedGame.BehavioralStrategy.actionLawAt
         chanceGame.observed (behavioral ())
         initialRoot rfl initial_not_terminal =
-      behavioral () .first := by
+      behavioral () firstInformation := by
   unfold ObservedGame.BehavioralStrategy.actionLawAt
   change
-    (behavioral () .first).map id =
-      behavioral () .first
+    (behavioral () firstInformation).map id =
+      behavioral () firstInformation
   exact PMF.map_id _
 
 private theorem behavioralLaw_initial
     (behavioral : observed.BehavioralProfile) :
     chanceGame.behavioralStoppedPayoffLawFrom
         behavioral initialRoot 2 =
-      (behavioral () .first).bind fun first =>
-        (behavioral () (.second first)).map
+      (behavioral () firstInformation).bind fun first =>
+        (behavioral () (secondInformation first)).map
           (fun second => payoffOutcome first second) := by
   unfold ObservedChanceGame.behavioralStoppedPayoffLawFrom
   rw [Arena.stochasticHistoryPMFFrom]
@@ -459,7 +477,7 @@ private theorem behavioralLaw_initial
           (afterRoot first) 1).map
             chanceGame.stoppedPayoffAtHistory) =
         (fun first =>
-          (behavioral () (.second first)).map
+          (behavioral () (secondInformation first)).map
             (fun second => payoffOutcome first second)) := by
     funext first
     change
@@ -468,7 +486,7 @@ private theorem behavioralLaw_initial
         _
     exact behavioralLaw_afterRoot behavioral first
   change
-    (behavioral () .first).bind
+    (behavioral () firstInformation).bind
         (fun first =>
           (chanceGame.observed.base.toArena.stochasticHistoryPMFFrom
             (ObservedChanceGame.BehavioralProfile.toHistoryPolicy
@@ -478,7 +496,7 @@ private theorem behavioralLaw_initial
       _
   exact congrArg
     (fun continuation =>
-      (behavioral () .first).bind continuation)
+      (behavioral () firstInformation).bind continuation)
     hinner
 
 private theorem payoffOutcome_injective (first : Bool) :
@@ -510,25 +528,25 @@ private theorem behavioralLaw_initial_apply_false
     chanceGame.behavioralStoppedPayoffLawFrom
         behavioral initialRoot 2
         (payoffOutcome false second) =
-      behavioral () .first false *
-        behavioral () (.second false) second := by
+      behavioral () firstInformation false *
+        behavioral () (secondInformation false) second := by
   rw [behavioralLaw_initial]
   rw [PMF.bind_apply]
   change
     (∑' first : Bool,
-      behavioral () .first first *
-        (behavioral () (.second first)).map
+      behavioral () firstInformation first *
+        (behavioral () (secondInformation first)).map
           (payoffOutcome first)
           (payoffOutcome false second)) =
       _
   rw [tsum_bool]
   have hfalse :
-      (behavioral () (.second false)).map
+      (behavioral () (secondInformation false)).map
           (payoffOutcome false)
           (payoffOutcome false second) =
-        behavioral () (.second false) second :=
+        behavioral () (secondInformation false) second :=
     PMF.map_apply_of_injective
-      (behavioral () (.second false))
+      (behavioral () (secondInformation false))
       (payoffOutcome false)
       (payoffOutcome_injective false)
       second
@@ -541,11 +559,11 @@ private theorem behavioralLaw_afterFalse_apply
     chanceGame.behavioralStoppedPayoffLawFrom
         behavioral afterFalseRoot 1
         (payoffOutcome false second) =
-      behavioral () (.second false) second := by
+      behavioral () (secondInformation false) second := by
   rw [afterFalseRoot_eq, behavioralLaw_afterRoot]
   exact
     PMF.map_apply_of_injective
-      (behavioral () (.second false))
+      (behavioral () (secondInformation false))
       (payoffOutcome false)
       (payoffOutcome_injective false)
       second
@@ -783,8 +801,8 @@ theorem no_rootIndependent_behavioralProfile :
   rw [behavioralLaw_afterFalse_apply,
     mixedLaw_afterFalse_apply] at hcontinuationTrue
   have hsecond :
-      behavioral () (.second false) false =
-        behavioral () (.second false) true :=
+      behavioral () (secondInformation false) false =
+        behavioral () (secondInformation false) true :=
     hcontinuationFalse.trans hcontinuationTrue.symm
   have hinitialFalse :=
     congrArg
@@ -805,7 +823,7 @@ theorem no_rootIndependent_behavioralProfile :
     hinitialFalse.symm.trans <|
       (congrArg
         (fun probability =>
-          behavioral () .first false * probability)
+          behavioral () firstInformation false * probability)
         hsecond).trans hinitialTrue
   exact (by norm_num : (2⁻¹ : ENNReal) ≠ 0) hhalfZero
 

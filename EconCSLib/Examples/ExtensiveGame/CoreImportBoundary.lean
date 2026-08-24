@@ -105,14 +105,16 @@ theorem decisionHistory_isEmpty :
       (ControlledObservedGame.CompleteInformation.DecisionHistory
         terminalPlayerLabeledBase ()) :=
   ⟨fun information =>
-    information.property.2
-      (terminalPlayerLabeledBase_isTerminal information.1.1)⟩
+    (not_nonempty_iff.mpr
+      (terminalPlayerLabeledBase_isTerminal information.1.1))
+      information.property.2⟩
 
 /-- The resulting strategy is the unique vacuous function on an empty
 decision-information carrier. -/
 def vacuousPureStrategy :
     (ControlledObservedGame.completeInformation terminalPlayerLabeledBase).PureStrategy
       () :=
-  fun information => (decisionHistory_isEmpty.false information).elim
+  fun information =>
+    (decisionHistory_isEmpty.false information.1).elim
 
 end TerminalMoverDecisionBoundary

@@ -17,33 +17,37 @@ The mathematical data line remains structurally minimal:
 ```text
 Arena { State, Action, next }
   -> ControlledGame N { init, mover }
-    -> ControlledObservedGame N {
-         private/public observations,
+    -> ControlledDecisionGame N {
          decision information/actions,
-         coherence/equivalence laws
+         local action equivalences
        }
+      -> ControlledObservedGame N {
+           private/public observations and projection laws
+         }
 ```
 
 No payoff, probability, objective, recall, finiteness, root selection, or
-solution concept was added to these records. The decision-information
-operations of `ControlledObservedGame` were narrowed to genuine nonterminal
-player decisions: `infoAt`, `infoAt_observe`, and `actionEquiv` now take an
-explicit nonterminal proof. This changes a structural contract, not stored
-game data, and prevents an arbitrary mover label on a terminal endpoint from
-creating a strategy coordinate. New semantic fields still require a
+solution concept is stored in these records. `ControlledDecisionGame` is the
+minimal strategy carrier and requires constructive `Arena.IsDecision`
+evidence for `infoAt` and `actionEquiv`; observations are an additive
+`ControlledObservedGame` extension. Strategies quantify over
+`RepresentedInfo`, the subtype of raw information values witnessed at a real
+player decision. Terminal mover labels and unused raw information values
+therefore create no strategy coordinate. New semantic fields still require a
 demonstrated representation failure that cannot be handled by an external
 certificate, adapter, relation, or compiler.
 
-As of 2026-08-04 this data line is governed by
+As of 2026-08-12 this data line is governed by
 [`efg-minimal-core-freeze.md`](efg-minimal-core-freeze.md). Governance checks
-the corrected action/state universe mapping of `ControlledObservedGame` and
+the action/state universe mapping of `ControlledDecisionGame`, the universe
+mapping of its observational extension, and
 the current exact `StructuralCore` import closure. The compatibility freeze is
-deferred: all three carriers and the facade boundary remain reviewable, with
+deferred: all four carriers and the facade boundary remain reviewable, with
 explicit architectural and regression evidence required for changes.
 
 | Property | Verdict | Source-based reason |
 |---|---|---|
-| Data-record minimality | Pass after semantic repair | No data family was added. The controlled-observation decision operations now explicitly require nonterminality, matching their documented domain and excluding terminal strategy coordinates. |
+| Data-record minimality | Pass after semantic repair | Decision information/actions form an observation-free carrier. Each coordinate requires constructive decision evidence; observations are an optional extension. |
 | Literal structural import boundary | Pass, F1 resolved | `Interface.StructuralCore` has the exact five-module EFG/local closure enforced by governance. |
 | Infrastructure cohesion | Pass, F2 resolved | Six responsibility leaves separate execution, general well-formedness, subgames, finite certificates, quasistrategies, and recall; their aggregate is a declaration-free canonical facade. |
 | Morphism layering | Pass, F7 resolved | Structural, lawful-subgame, and recall transport have separate exact closures; their aggregate is a declaration-free canonical facade. |
@@ -53,7 +57,7 @@ explicit architectural and regression evidence required for changes.
 | Assumption generality | Pass | Finiteness, decidability, recall, termination, measurability, and ambient-state no-chance remain external. Canonical pure execution needs only reachable no-chance. |
 | Player-label compatibility | Pass for bijections | `relabelPlayers` reindexes mover, observation, information, actions, presentations, profiles, and lawful/complete subgame systems without changing Arena histories. |
 | Representation compatibility | Pass with explicit preservation claims | Compilers and relations retain their existing preservation packages; absence from a package is not inferred. |
-| Controlled module-family clarity | Pass, F12 resolved | The complete `Observed.Controlled` hierarchy has one carrier, five semantic owners, ten responsibility owners, two declaration-free facades, and three payoff-aware adapters; flat siblings are forbidden. |
+| Controlled module-family clarity | Pass, F12 resolved | The `Observed.Controlled` root owns the decision carrier and its observational extension; the governed module hierarchy still has one carrier module, five semantic owners, ten responsibility owners, two declaration-free facades, and three payoff-aware adapters. |
 | Example placement | Pass, F14 resolved | Reusable EFG modules contain no `namespace Examples`; history, stopped-execution, finite-imperfect, and fair-coin regressions are opt-in `EconCSLib.Examples` modules and are absent from library facades. |
 | Pre-stability API debt | Pass, F15 resolved | Exact deprecated aliases with zero repository source consumers were hard-deleted; canonical replacements remain documented and negative facade guards prevent accidental reintroduction. |
 | Validation policy | Delegated | Current required commands live in `AGENTS.md` and the governance document; this audit does not preserve a dated pass/fail snapshot. |
@@ -88,20 +92,20 @@ structure ControlledGame (N) extends Arena where
   mover : State -> Option N
 ```
 
-At a reachable nonterminal state, `some i` identifies a player decision and
-`none` is the nature label. Terminal mover normalization is not a record
-field; its exact reachable-history certificate is recorded in section 7.
+At a reachable state with an actual action, `some i` identifies a player
+decision and `none` is the nature label. Terminal mover normalization is not a
+record field; its exact reachable-history certificate is recorded in section
+7.
 
-### 2.3 `ControlledObservedGame N`
+### 2.3 `ControlledDecisionGame N`
 
 Owner: `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled`.
 
-The record adds private and public observations, decision information,
-information-indexed actions, and the structural laws `observe_public`,
-`infoAt_observe`, and `actionEquiv`. Decision information and its action
-equivalence are defined only when the history is nonterminal and controlled by
-the named player. It stores no payoff, chance law, objective, root selection,
-recall, termination, or finiteness assumption.
+The record adds only decision information, information-indexed actions, and
+`actionEquiv`. `infoAt` and `actionEquiv` require both a matching mover and
+constructive `Arena.IsDecision` evidence. It stores no observation, payoff,
+chance law, objective, root selection, recall, termination, or finiteness
+assumption.
 
 Its universe mapping is deliberately
 `base : ControlledGame.{uN, uA, uS} N`: `ControlledGame` exposes
@@ -113,15 +117,31 @@ made the payoff-aware projection collapse otherwise independent levels, and
 forced an artificial action `ULift` in finite unfolding. The correction
 removes those constraints without adding carrier data.
 
+`DecisionInfoWitness` packages one represented decision occurrence, including
+its decision evidence. `RepresentedInfo` restricts strategies to raw
+information values with such a witness. Consequently neither full raw
+representation nor terminal-mover normalization is required to inhabit a pure
+strategy.
+
+### 2.4 `ControlledObservedGame N`
+
+Owner: `EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled`.
+
+This optional extension adds all-history private/public observations,
+`observe_public`, and the projection `infoObserve` with `infoAt_observe`.
+Decision memory may contain more information than the current observation;
+`infoObserve` is deliberately not required to be injective. Analyses using
+only information sets and contingent plans need not choose observation types.
+
 During the current design review no carrier has a whole-structure freeze
-fingerprint. Governance checks the corrected `ControlledObservedGame`
-universe mapping separately because it is a specific mathematical regression,
-not a compatibility freeze.
+fingerprint. Governance checks both carrier universe mappings separately
+because they protect a specific mathematical regression, not a compatibility
+freeze.
 
 `ContinuationRootPresentation G` remains a separate caller-selected
 presentation. A declared root is not thereby a standard EFG subgame.
 
-### 2.4 Exact generality boundary
+### 2.5 Exact generality boundary
 
 The core is general for turn-based extensive-form games with dependent legal
 actions, world-state carriers that may contain cycles or merges, and distinct
@@ -140,12 +160,12 @@ plays. That statement has four intentional limits:
    `ControlledObservedGame.relabelPlayers`, with a dependent pure-profile
    equivalence and unchanged Arena/history carrier. Adding, deleting, or
    merging players remains an explicit non-bijective compiler operation.
-4. `ControlledObservedGame` deliberately permits unrepresented information
-   states and terminal endpoints carrying a player label, but terminal
-   endpoints are excluded from `infoAt` and pure-strategy coordinates.
-   `AllDecisionInfoRepresented` and `DecisionMoverCoherent` are external
-   certificates, so the data record does not confuse a model obligation with
-   universal structure.
+4. `ControlledDecisionGame` deliberately permits unused raw information
+   states and terminal endpoints carrying a player label. `RepresentedInfo`
+   excludes both unused values and endpoints lacking an actual action from
+   strategy coordinates. `AllDecisionInfoRepresented` and
+   `DecisionMoverCoherent` remain optional external certificates for clients
+   that need those stronger presentation properties.
 
 These are scope boundaries, not hidden hypotheses. A theorem outside this
 boundary must add an adapter or a named certificate instead of strengthening
@@ -168,7 +188,8 @@ The facade itself is excluded from both counts. Its exact transitive closure is
 The positive regression
 `Examples.ExtensiveGame.StructuralCoreImportBoundary` elaborates
 `Arena`, `ControlledGame`, `Arena.History`,
-`Arena.CompletePlayFromHistory`, `ControlledObservedGame`,
+`Arena.CompletePlayFromHistory`, `ControlledDecisionGame`,
+`ControlledObservedGame`, `RepresentedInfo`,
 `ContinuationRootPresentation`, `PureStrategy`, `PureProfile`,
 `relabelPlayers`, and `relabelPureProfileEquiv`.
 
@@ -230,9 +251,9 @@ leaf.
 | Defining leaf | Authoritative responsibility |
 |---|---|
 | `Controlled.Infrastructure.Core` | no-chance mover helpers, pure-profile history execution, and pure-strategy complete-play compatibility |
-| `Controlled.Infrastructure.WellFormed` | `DecisionInfoWitness`, represented information, mover coherence, terminal normalization on reachable histories, and inhabited strategy/profile consequences |
+| `Controlled.Infrastructure.WellFormed` | optional full raw-information representation, mover coherence, terminal normalization on reachable histories, and compatibility consequences; decision witnesses and represented coordinates belong to the carrier module |
 | `Controlled.Infrastructure.Subgame` | occurrence-sensitive continuation, `IsLawfulSubgameRoot`, `SubgameSystem`, `CompleteSubgameSystem`, and their bijective player-relabel transport |
-| `Controlled.Infrastructure.Finite` | uniform history-length, finite reachable-action/information assumptions, `FiniteEFGHypotheses`, and its well-foundedness/termination consequences |
+| `Controlled.Infrastructure.Finite` | uniform history-length, finite reachable-action/represented-information assumptions, `FiniteEFGHypotheses`, and its well-foundedness/termination consequences |
 | `Controlled.Infrastructure.Quasi` | nonempty action permissions, quasistrategies, refinement, pure embedding, and play compatibility |
 | `Controlled.Infrastructure.Recall` | personal decisions, own-decision histories, perfect/signal/public recall, no-absent-mindedness, and recall certificates |
 | `Winning.Basic` | winning conditions, pure robust winning, and the winning-dependent `HasWinningQuasiStrategy` predicate |
@@ -366,28 +387,28 @@ the relevant normalization without a duplicate well-formedness predicate.
 
 An unreachable or reachable terminal Arena state may still carry `some i`.
 `Structural.Basic` specifies that terminal mover labels are semantically
-ignored, and the controlled-observation record enforces that policy by
-requiring nonterminality before constructing decision information or mapping
-an information action. Thus no terminal endpoint creates a pure-strategy
-coordinate. The reachable-history certificate remains available when a
-compiler or theorem wants a normalized `mover = none` presentation;
+ignored, and the decision-information record enforces that policy by requiring
+constructive `IsDecision` evidence before constructing decision information or
+mapping an information action. Thus no terminal endpoint creates a
+pure-strategy coordinate. The reachable-history certificate remains available
+when a compiler or theorem wants a normalized `mover = none` presentation;
 normalization is no longer needed merely to make strategies mathematically
 well-scoped.
 
 ## 8. Observation fidelity
 
-Lean proves the structural guarantees stored in
-`ControlledObservedGame`:
+Lean proves the structural guarantees split across the two carriers:
 
 - `observe_public`: private observations refine public observations;
 - `infoAt_observe`: decision information projects to the current private
   observation;
-- `actionEquiv`: an information action is exactly a represented history's
-  concrete legal action.
+- `actionEquiv`: in `ControlledDecisionGame`, an information action is exactly
+  a represented decision history's concrete legal action.
 
-External certificates record additional model obligations:
-`AllDecisionInfoRepresented`, `DecisionMoverCoherent`, and classic,
-private-signal, or public recall certificates.
+External certificates record stronger model obligations:
+`AllDecisionInfoRepresented` for APIs intentionally quantifying over the raw
+carrier, `DecisionMoverCoherent` for normalized reachable terminal labels, and
+classic, private-signal, or public recall certificates.
 
 There is no ungrounded global `ObservationFaithful` predicate. Fidelity and
 no-leak claims remain compiler-specific and must compare the compiled
@@ -483,8 +504,8 @@ without changing the serialized game, root semantics, or downstream types.
 
 ## 10. Semantic contract and lifecycle closeout
 
-The hard migration preserved the carrier line while tightening external
-contracts:
+The hard migration split the carrier line at its mathematical boundary and
+tightened external contracts:
 
 - `ControlledGame.NoChanceOnHistories` quantifies only over legal histories
   from `init`; global `NoChance` implies it. Pure execution, total pure
@@ -492,10 +513,14 @@ contracts:
   `Examples.ExtensiveGame.ReachableNoChance` proves an ambient unreachable
   nonterminal nature state can violate global no-chance while canonical pure
   execution and the total continuation game form still elaborate.
-- `PureStrategyAvailabilityCertificate` packages represented decision
-  information plus mover coherence, while
-  `ReachablePureStrategyModelCertificate` adds reachable no-chance. No
-  finiteness, probability, payoff, recall, or termination field was added.
+- `PureStrategyAvailabilityCertificate` is retained as the stronger legacy
+  assertion that every raw information value is represented;
+  `ReachablePureStrategyModelCertificate` adds reachable no-chance. Pure
+  strategy/profile inhabitance itself follows from `RepresentedInfo` and
+  requires neither bundle, mover coherence, nor full raw representation.
+- `FiniteEFGHypotheses` and the finite Kuhn/deferred-sampling packages quantify
+  finiteness over `RepresentedInfo`, not the ambient raw `InfoState` carrier.
+  Ghost raw values therefore cannot strengthen theorem hypotheses.
 - `BoundedHistoryLawFamily` is raw PMF data.
   `CertifiedBehavioralExecutionLaw` adds normalization, legal reachable
   support, terminal absorption, and equality with the concrete behavioral

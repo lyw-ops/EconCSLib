@@ -45,24 +45,24 @@ structure IsLawfulSubgameRoot
   root_information_singleton :
     root ≠ Arena.HistoryFrom.nil G.base.toArena G.base.init →
       ∀ (i : N) (hmover : G.base.mover root.1 = some i)
-      (hnonterminal : ¬ G.base.isTerminal root.1)
+      (hdecision : G.base.toArena.IsDecision root.1)
       (other : G.base.History)
       (hother : G.base.mover other.1 = some i)
-      (hother_nonterminal : ¬ G.base.isTerminal other.1),
-      G.infoAt root i hmover hnonterminal =
-          G.infoAt other i hother hother_nonterminal →
+      (hother_decision : G.base.toArena.IsDecision other.1),
+      G.infoAt root i hmover hdecision =
+          G.infoAt other i hother hother_decision →
         other = root
   /-- Every information set encountered after entry stays wholly inside the
   continuation. -/
   information_closed :
     ∀ current, G.IsContinuationOf root current →
       ∀ (i : N) (hmover : G.base.mover current.1 = some i)
-        (hnonterminal : ¬ G.base.isTerminal current.1)
+        (hdecision : G.base.toArena.IsDecision current.1)
         (other : G.base.History)
         (hother : G.base.mover other.1 = some i)
-        (hother_nonterminal : ¬ G.base.isTerminal other.1),
-        G.infoAt current i hmover hnonterminal =
-            G.infoAt other i hother hother_nonterminal →
+        (hother_decision : G.base.toArena.IsDecision other.1),
+        G.infoAt current i hmover hdecision =
+            G.infoAt other i hother hother_decision →
           G.IsContinuationOf root other
 
 /-- Bijective player relabeling preserves and reflects structural subgame
@@ -202,12 +202,12 @@ theorem root_information_singleton
     (hproper :
       root ≠ Arena.HistoryFrom.nil G.base.toArena G.base.init) :
     ∀ (i : N) (hmover : G.base.mover root.1 = some i)
-      (hnonterminal : ¬ G.base.isTerminal root.1)
+      (hdecision : G.base.toArena.IsDecision root.1)
       (other : G.base.History)
       (hother : G.base.mover other.1 = some i)
-      (hother_nonterminal : ¬ G.base.isTerminal other.1),
-      G.infoAt root i hmover hnonterminal =
-          G.infoAt other i hother hother_nonterminal →
+      (hother_decision : G.base.toArena.IsDecision other.1),
+      G.infoAt root i hmover hdecision =
+          G.infoAt other i hother hother_decision →
         other = root :=
   (system.isLawful hroot).root_information_singleton hproper
 
@@ -218,12 +218,12 @@ theorem information_closed
     (hroot : system.IsRoot root) :
     ∀ current, G.IsContinuationOf root current →
       ∀ (i : N) (hmover : G.base.mover current.1 = some i)
-        (hnonterminal : ¬ G.base.isTerminal current.1)
+        (hdecision : G.base.toArena.IsDecision current.1)
         (other : G.base.History)
         (hother : G.base.mover other.1 = some i)
-        (hother_nonterminal : ¬ G.base.isTerminal other.1),
-        G.infoAt current i hmover hnonterminal =
-            G.infoAt other i hother hother_nonterminal →
+        (hother_decision : G.base.toArena.IsDecision other.1),
+        G.infoAt current i hmover hdecision =
+            G.infoAt other i hother hother_decision →
           G.IsContinuationOf root other :=
   (system.isLawful hroot).information_closed
 

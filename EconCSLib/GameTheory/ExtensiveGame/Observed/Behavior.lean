@@ -15,7 +15,7 @@ Unlike the older state-indexed finite-simplex API in `BehaviorStrategy.lean`,
 this layer makes information-set consistency structural:
 
 ```lean
-(information : G.InfoState i) → PMF (G.InfoAction i information)
+(information : G.RepresentedInfo i) → PMF (G.InfoAction i information.1)
 ```
 
 No finiteness assumption is imposed on action types.  For an
@@ -58,8 +58,8 @@ noncomputable def BehavioralStrategy.actionLawAt {i : N}
     (hmover : G.base.mover history.1 = some i)
     (hnonterminal : ¬ G.base.isTerminal history.1) :
     PMF (G.base.Action history.1) :=
-  (strategy (G.infoAt history i hmover hnonterminal)).map
-    (G.actionEquiv history i hmover hnonterminal)
+  ControlledObservedGame.BehavioralStrategy.actionLawAt
+    G.toControlledObservedGame strategy history hmover hnonterminal
 
 /-- The concrete legal-action law induced by a behavioral profile at a
 player-controlled history. -/
@@ -79,23 +79,27 @@ theorem BehavioralProfile.actionLaw_eq_of_infoState_eq
     (history₁ history₂ :
       G.base.toArena.HistoryFrom G.base.init)
     (hmover₁ : G.base.mover history₁.1 = some i)
-    (hnonterminal₁ : ¬ G.base.isTerminal history₁.1)
+    (hdecision₁ : G.base.toArena.IsDecision history₁.1)
     (hmover₂ : G.base.mover history₂.1 = some i)
-    (hnonterminal₂ : ¬ G.base.isTerminal history₂.1)
+    (hdecision₂ : G.base.toArena.IsDecision history₂.1)
     (hsame :
-      G.infoAt history₁ i hmover₁ hnonterminal₁ =
-        G.infoAt history₂ i hmover₂ hnonterminal₂) :
-    (⟨G.infoAt history₁ i hmover₁ hnonterminal₁,
+      G.infoAt history₁ i hmover₁ hdecision₁ =
+        G.infoAt history₂ i hmover₂ hdecision₂) :
+    (⟨G.toControlledObservedGame.representedInfoAt
+          history₁ i hmover₁ hdecision₁,
         profile i
-          (G.infoAt history₁ i hmover₁ hnonterminal₁)⟩ :
-      Σ information : G.InfoState i,
-        PMF (G.InfoAction i information)) =
-      ⟨G.infoAt history₂ i hmover₂ hnonterminal₂,
+          (G.toControlledObservedGame.representedInfoAt
+            history₁ i hmover₁ hdecision₁)⟩ :
+      Σ information : G.RepresentedInfo i,
+        PMF (G.InfoAction i information.1)) =
+      ⟨G.toControlledObservedGame.representedInfoAt
+          history₂ i hmover₂ hdecision₂,
         profile i
-          (G.infoAt history₂ i hmover₂ hnonterminal₂)⟩ :=
+          (G.toControlledObservedGame.representedInfoAt
+            history₂ i hmover₂ hdecision₂)⟩ :=
   ControlledObservedGame.BehavioralProfile.actionLaw_eq_of_infoState_eq
     G.toControlledObservedGame profile i history₁ history₂
-      hmover₁ hnonterminal₁ hmover₂ hnonterminal₂ hsame
+      hmover₁ hdecision₁ hmover₂ hdecision₂ hsame
 
 /-- Unilateral deviation of an information-indexed behavioral profile. -/
 abbrev BehavioralProfile.deviate [DecidableEq N]

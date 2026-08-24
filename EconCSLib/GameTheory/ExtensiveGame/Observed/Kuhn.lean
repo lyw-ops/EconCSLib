@@ -88,9 +88,9 @@ structure FiniteKuhnHypotheses
     (G : ObservedGame N U) [DecidableEq N] : Prop where
   /-- Players remember their own prior information states and actions. -/
   perfectRecall : G.PerfectRecall
-  /-- Every player has finitely many decision information states. -/
-  finiteInfoState :
-    ∀ i : N, Finite (G.InfoState i)
+  /-- Every player has finitely many represented decision coordinates. -/
+  finiteRepresentedInfo :
+    ∀ i : N, Finite (G.RepresentedInfo i)
 
 /-- The exact hypotheses needed to pre-sample a behavioral profile as
 independent complete contingent plans and prove their local action marginals.
@@ -98,9 +98,9 @@ independent complete contingent plans and prove their local action marginals.
 No player equality or recall property is needed at this construction layer. -/
 structure FiniteInformationHypotheses
     (G : ObservedGame N U) : Prop where
-  /-- Every player has finitely many decision information states. -/
-  finiteInfoState :
-    ∀ i : N, Finite (G.InfoState i)
+  /-- Every player has finitely many represented decision coordinates. -/
+  finiteRepresentedInfo :
+    ∀ i : N, Finite (G.RepresentedInfo i)
 
 /-- The exact structural hypotheses needed to identify pre-sampled complete
 plans with repeated local behavioral execution.
@@ -112,9 +112,9 @@ structure FiniteNoAbsentMindednessHypotheses
     (G : ObservedGame N U) [DecidableEq N] : Prop where
   /-- No player revisits one decision information state along a history. -/
   noAbsentMindedness : G.NoAbsentMindedness
-  /-- Every player has finitely many decision information states. -/
-  finiteInfoState :
-    ∀ i : N, Finite (G.InfoState i)
+  /-- Every player has finitely many represented decision coordinates. -/
+  finiteRepresentedInfo :
+    ∀ i : N, Finite (G.RepresentedInfo i)
 
 namespace FiniteEFGHypotheses
 
@@ -125,7 +125,7 @@ hypothesis needed for independent complete-plan sampling. -/
 def toFiniteInformationHypotheses
     (h : G.FiniteEFGHypotheses) :
     G.FiniteInformationHypotheses where
-  finiteInfoState := h.finiteInfoState
+  finiteRepresentedInfo := h.finiteRepresentedInfo
 
 /-- Adding perfect recall to a structural finite-EFG certificate supplies the
 standard hypotheses for root-scoped constructive Kuhn realization. -/
@@ -135,7 +135,7 @@ def toFiniteKuhnHypotheses
     (hPerfectRecall : G.PerfectRecall) :
     G.FiniteKuhnHypotheses where
   perfectRecall := hPerfectRecall
-  finiteInfoState := h.finiteInfoState
+  finiteRepresentedInfo := h.finiteRepresentedInfo
 
 end FiniteEFGHypotheses
 
@@ -151,31 +151,31 @@ Perfect recall is not needed for the construction or its local marginals; it
 is not needed for the execution comparison either: no-absent-mindedness is the
 strictly weaker property consumed there. -/
 noncomputable def toMixed {i : N}
-    [Fintype (G.InfoState i)]
+    [Fintype (G.RepresentedInfo i)]
     (strategy : G.BehavioralStrategy i) :
     G.MixedStrategy i := by
   change
-    (information : G.InfoState i) →
-      PMF (G.InfoAction i information) at strategy
+    (information : G.RepresentedInfo i) →
+      PMF (G.InfoAction i information.1) at strategy
   change
     PMF
-      ((information : G.InfoState i) →
-        G.InfoAction i information)
+      ((information : G.RepresentedInfo i) →
+        G.InfoAction i information.1)
   exact PMF.fintypePi strategy
 
 /-- The sampled pure plan has exactly the declared behavioral action law at
 each information state. -/
 theorem toMixed_actionMarginal {i : N}
-    [Fintype (G.InfoState i)]
+    [Fintype (G.RepresentedInfo i)]
     (strategy : G.BehavioralStrategy i)
-    (information : G.InfoState i) :
+    (information : G.RepresentedInfo i) :
     (toMixed G strategy).map
         (fun pureStrategy =>
           pureStrategy information) =
       strategy information := by
   change
-    (information : G.InfoState i) →
-      PMF (G.InfoAction i information) at strategy
+    (information : G.RepresentedInfo i) →
+      PMF (G.InfoAction i information.1) at strategy
   change
     (PMF.fintypePi strategy).map
         (fun pureStrategy =>
@@ -190,16 +190,16 @@ namespace FiniteInformationHypotheses
 
 variable {G : ObservedGame N U}
 
-/-- Behavioral-to-mixed construction under finite information only. -/
+/-- Behavioral-to-mixed construction under finite represented information. -/
 noncomputable def behavioralToMixedStrategy
     (h : G.FiniteInformationHypotheses)
     (i : N)
     (strategy : G.BehavioralStrategy i) :
     G.MixedStrategy i :=
-  letI : Finite (G.InfoState i) :=
-    h.finiteInfoState i
-  letI : Fintype (G.InfoState i) :=
-    Fintype.ofFinite (G.InfoState i)
+  letI : Finite (G.RepresentedInfo i) :=
+    h.finiteRepresentedInfo i
+  letI : Fintype (G.RepresentedInfo i) :=
+    Fintype.ofFinite (G.RepresentedInfo i)
   strategy.toMixed G
 
 /-- Independently pre-sample every player's complete contingent plan. -/
@@ -216,19 +216,19 @@ theorem behavioralToMixedStrategy_actionMarginal
     (h : G.FiniteInformationHypotheses)
     (i : N)
     (strategy : G.BehavioralStrategy i)
-    (information : G.InfoState i) :
+    (information : G.RepresentedInfo i) :
     (h.behavioralToMixedStrategy i strategy).map
         (fun pureStrategy => pureStrategy information) =
       strategy information := by
-  letI : Finite (G.InfoState i) :=
-    h.finiteInfoState i
-  letI : Fintype (G.InfoState i) :=
-    Fintype.ofFinite (G.InfoState i)
+  letI : Finite (G.RepresentedInfo i) :=
+    h.finiteRepresentedInfo i
+  letI : Fintype (G.RepresentedInfo i) :=
+    Fintype.ofFinite (G.RepresentedInfo i)
   exact
     BehavioralStrategy.toMixed_actionMarginal
       G strategy information
 
-/-! The concrete-history forms below still consume only finite information:
+/-! The concrete-history forms below still consume only finite represented information:
 `actionAt` merely realizes the already-sampled abstract action through the
 game's indexed action equivalence. -/
 
@@ -248,45 +248,50 @@ theorem behavioralToMixedStrategy_actionLawAt
       i strategy).map
         (fun pureStrategy =>
           pureStrategy.actionAt
-            G history hmover hnonterminal) =
+            G history hmover
+              (G.base.toArena.isDecision_of_not_isTerminal _
+                hnonterminal)) =
       strategy.actionLawAt
         G history hmover hnonterminal := by
+  let hdecision :=
+    G.base.toArena.isDecision_of_not_isTerminal
+      history.1 hnonterminal
   unfold PureStrategy.actionAt
     BehavioralStrategy.actionLawAt
   calc
     (h.behavioralToMixedStrategy
         i strategy).map
           (fun pureStrategy =>
-            G.actionEquiv history i hmover hnonterminal
+            G.actionEquiv history i hmover hdecision
               (pureStrategy
-                (G.infoAt history i hmover hnonterminal))) =
+                (G.representedInfoAt history i hmover hdecision))) =
         ((h.behavioralToMixedStrategy
             i strategy).map
               (fun pureStrategy =>
                 pureStrategy
-                  (G.infoAt history i hmover hnonterminal))).map
-            (G.actionEquiv history i hmover hnonterminal) := by
+                  (G.representedInfoAt history i hmover hdecision))).map
+            (G.actionEquiv history i hmover hdecision) := by
       exact
         (PMF.map_comp
           (fun pureStrategy =>
             pureStrategy
-              (G.infoAt history i hmover hnonterminal))
+              (G.representedInfoAt history i hmover hdecision))
           (h.behavioralToMixedStrategy
             i strategy)
-          (G.actionEquiv history i hmover hnonterminal)).symm
+          (G.actionEquiv history i hmover hdecision)).symm
     _ = (strategy
-          (G.infoAt history i hmover hnonterminal)).map
-            (G.actionEquiv history i hmover hnonterminal) := by
+          (G.representedInfoAt history i hmover hdecision)).map
+            (G.actionEquiv history i hmover hdecision) := by
       exact congrArg
         (fun law :
           PMF
             (G.InfoAction i
-              (G.infoAt history i hmover hnonterminal)) =>
+              (G.infoAt history i hmover hdecision)) =>
           law.map
-            (G.actionEquiv history i hmover hnonterminal))
+            (G.actionEquiv history i hmover hdecision))
         (h.behavioralToMixedStrategy_actionMarginal
           i strategy
-          (G.infoAt history i hmover hnonterminal))
+          (G.representedInfoAt history i hmover hdecision))
 
 /-- The independently sampled complete pure profile has the same current
 concrete-action marginal as the source behavioral profile. -/
@@ -305,7 +310,9 @@ theorem behavioralToMixedProfile_actionLawAt
         profile).pureProfileLaw G).map
         (fun pureProfile =>
           pureProfile.actionAt
-            G history i hmover hnonterminal) =
+            G history i hmover
+              (G.base.toArena.isDecision_of_not_isTerminal _
+                hnonterminal)) =
       profile.actionLawAt
         G history i hmover hnonterminal := by
   unfold MixedProfile.pureProfileLaw
@@ -314,14 +321,18 @@ theorem behavioralToMixedProfile_actionLawAt
         (h.behavioralToMixedProfile profile)).map
           (fun pureProfile =>
             PureProfile.actionAt
-              G pureProfile history i hmover hnonterminal) =
+              G pureProfile history i hmover
+                (G.base.toArena.isDecision_of_not_isTerminal _
+                  hnonterminal)) =
         ((PMF.fintypePi
           (h.behavioralToMixedProfile profile)).map
             (fun pureProfile =>
               pureProfile i)).map
           (fun pureStrategy =>
             PureStrategy.actionAt
-              G pureStrategy history hmover hnonterminal) := by
+              G pureStrategy history hmover
+                (G.base.toArena.isDecision_of_not_isTerminal _
+                  hnonterminal)) := by
       exact
         (PMF.map_comp
           (fun pureProfile => pureProfile i)
@@ -329,12 +340,16 @@ theorem behavioralToMixedProfile_actionLawAt
             (h.behavioralToMixedProfile profile))
           (fun pureStrategy =>
             PureStrategy.actionAt
-              G pureStrategy history hmover hnonterminal)).symm
+              G pureStrategy history hmover
+                (G.base.toArena.isDecision_of_not_isTerminal _
+                  hnonterminal))).symm
     _ = (h.behavioralToMixedStrategy
           i (profile i)).map
             (fun pureStrategy =>
               PureStrategy.actionAt
-                G pureStrategy history hmover hnonterminal) := by
+                G pureStrategy history hmover
+                  (G.base.toArena.isDecision_of_not_isTerminal _
+                    hnonterminal)) := by
       rw [PMF.fintypePi_map_apply]
       rfl
     _ = profile.actionLawAt
@@ -353,7 +368,7 @@ construction hypotheses. -/
 def toFiniteInformationHypotheses
     (h : G.FiniteNoAbsentMindednessHypotheses) :
     G.FiniteInformationHypotheses where
-  finiteInfoState := h.finiteInfoState
+  finiteRepresentedInfo := h.finiteRepresentedInfo
 
 /-- Compatibility wrapper for the finite-information construction. -/
 noncomputable def behavioralToMixedStrategy
@@ -375,7 +390,7 @@ theorem behavioralToMixedStrategy_actionMarginal
     (h : G.FiniteNoAbsentMindednessHypotheses)
     (i : N)
     (strategy : G.BehavioralStrategy i)
-    (information : G.InfoState i) :
+    (information : G.RepresentedInfo i) :
     (h.behavioralToMixedStrategy i strategy).map
         (fun pureStrategy => pureStrategy information) =
       strategy information :=
@@ -395,7 +410,9 @@ theorem behavioralToMixedStrategy_actionLawAt
       ¬ G.base.isTerminal history.1) :
     (h.behavioralToMixedStrategy i strategy).map
         (fun pureStrategy =>
-          pureStrategy.actionAt G history hmover hnonterminal) =
+          pureStrategy.actionAt G history hmover
+            (G.base.toArena.isDecision_of_not_isTerminal _
+              hnonterminal)) =
       strategy.actionLawAt G history hmover hnonterminal :=
   h.toFiniteInformationHypotheses.behavioralToMixedStrategy_actionLawAt
     i strategy history hmover hnonterminal
@@ -414,7 +431,9 @@ theorem behavioralToMixedProfile_actionLawAt
       ¬ G.base.isTerminal history.1) :
     ((h.behavioralToMixedProfile profile).pureProfileLaw G).map
         (fun pureProfile =>
-          pureProfile.actionAt G history i hmover hnonterminal) =
+          pureProfile.actionAt G history i hmover
+            (G.base.toArena.isDecision_of_not_isTerminal _
+              hnonterminal)) =
       profile.actionLawAt G history i hmover hnonterminal :=
   h.toFiniteInformationHypotheses.behavioralToMixedProfile_actionLawAt
     profile history i hmover hnonterminal
@@ -430,7 +449,7 @@ hypotheses. -/
 def toFiniteInformationHypotheses
     (h : G.FiniteKuhnHypotheses) :
     G.FiniteInformationHypotheses where
-  finiteInfoState := h.finiteInfoState
+  finiteRepresentedInfo := h.finiteRepresentedInfo
 
 /-- The perfect-recall component supplies the no-repeated-information-key
 condition needed by the pre-sampled execution proof. -/
@@ -445,7 +464,7 @@ def toFiniteNoAbsentMindednessHypotheses
     (h : G.FiniteKuhnHypotheses) :
     G.FiniteNoAbsentMindednessHypotheses where
   noAbsentMindedness := h.noAbsentMindedness
-  finiteInfoState := h.finiteInfoState
+  finiteRepresentedInfo := h.finiteRepresentedInfo
 
 /-- Behavioral-to-mixed construction using the finite-information witness
 stored in the Kuhn hypotheses.
@@ -478,7 +497,7 @@ theorem behavioralToMixedStrategy_actionMarginal
     (h : G.FiniteKuhnHypotheses)
     (i : N)
     (strategy : G.BehavioralStrategy i)
-    (information : G.InfoState i) :
+    (information : G.RepresentedInfo i) :
     (h.behavioralToMixedStrategy
       i strategy).map
         (fun pureStrategy =>
@@ -505,7 +524,9 @@ theorem behavioralToMixedStrategy_actionLawAt
       i strategy).map
         (fun pureStrategy =>
           pureStrategy.actionAt
-            G history hmover hnonterminal) =
+            G history hmover
+              (G.base.toArena.isDecision_of_not_isTerminal _
+                hnonterminal)) =
       strategy.actionLawAt
         G history hmover hnonterminal :=
   FiniteNoAbsentMindednessHypotheses.behavioralToMixedStrategy_actionLawAt
@@ -529,7 +550,9 @@ theorem behavioralToMixedProfile_actionLawAt
         profile).pureProfileLaw G).map
         (fun pureProfile =>
           pureProfile.actionAt
-            G history i hmover hnonterminal) =
+            G history i hmover
+              (G.base.toArena.isDecision_of_not_isTerminal _
+                hnonterminal)) =
       profile.actionLawAt
         G history i hmover hnonterminal :=
   FiniteNoAbsentMindednessHypotheses.behavioralToMixedProfile_actionLawAt

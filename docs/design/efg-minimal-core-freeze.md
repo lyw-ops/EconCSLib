@@ -1,10 +1,11 @@
 # EFG Minimal-Core Freeze Readiness
 
-**Effective date:** 2026-08-05
+**Effective date:** 2026-08-05; carrier review updated 2026-08-12
 **Scope:** Canonical/Frontend API growth, candidate carrier data, and the
 literal `Interface.StructuralCore` dependency boundary
-**Status:** API growth frozen; minimal-core source compatibility remains
-deferred
+**Status:** API growth frozen at the reviewed 2026-08-12 post-audit baseline;
+minimal-core source compatibility remains deferred; the decision/observation
+carrier split was admitted as a one-time representation-correction exception
 
 ## Decision
 
@@ -13,11 +14,12 @@ The minimal carrier line remains:
 ```text
 Arena
   -> ControlledGame
-    -> ControlledObservedGame
+    -> ControlledDecisionGame
+      -> ControlledObservedGame
 ```
 
 The carrier, readability, ecosystem, reuse, and mathematical review remains
-active. None of `Arena`, `ControlledGame`, or
+active. None of `Arena`, `ControlledGame`, `ControlledDecisionGame`, or
 `ControlledObservedGame` is source-fingerprint-frozen, and the present
 `Interface.StructuralCore` closure is not an external compatibility promise.
 Changes still require an explicit representation argument, synchronized
@@ -29,6 +31,25 @@ declaration is added after the checked baseline. Internal proof engineering
 and opt-in Experimental work may continue, but Experimental declarations are
 not promoted during the freeze. New mathematical targets belong in the
 knowledge blueprint until the policy is explicitly reopened.
+
+The 2026-08-12 literature-guided carrier audit established a concrete
+representation failure in the previous baseline: decision information was
+inseparable from optional observations, terminal mover labels could induce
+spurious strategy obligations, and unused raw information values leaked into
+strategy, finiteness, and belief coordinates. The maintainer therefore
+approved one explicit growth-freeze exception for the synchronized hard
+migration recorded in this document. Relative to the 2026-08-05 snapshot, the
+reviewed surface has zero new governed modules, 31 added declarations, and
+three removed declarations; the replacement snapshot contains 102 governed
+modules and 1,739 explicit public declarations.
+
+The exception covers only the decision/observation carrier split,
+`RepresentedInfo` strategy coordinates and their structural transports,
+constructive decision evidence, the public-signal trace builder needed by the
+repaired recall hierarchy, and the bridge declarations relocated or exposed
+by that migration. It does not generally reopen Canonical/Frontend growth.
+The API-growth freeze resumes at the new snapshot, and any later addition
+requires a new explicit policy decision.
 
 This is deliberately not a source-compatibility announcement. Existing
 carrier fields, declaration types, implementation ownership, and module paths
@@ -52,8 +73,24 @@ structure ControlledGame (N : Type*) extends Arena where
   init : State
   mover : State → Option N
 
-structure ControlledObservedGame (N : Type uN) where
+structure ControlledDecisionGame (N : Type uN) where
   base : ControlledGame.{uN, uA, uS} N
+  InfoState : N → Type uI
+  infoAt :
+    ∀ (history : base.toArena.HistoryFrom base.init) (i : N),
+      base.mover history.1 = some i →
+      base.toArena.IsDecision history.1 →
+      InfoState i
+  InfoAction : (i : N) → InfoState i → Type uA
+  actionEquiv :
+    ∀ (history : base.toArena.HistoryFrom base.init) (i : N)
+      (hmover : base.mover history.1 = some i)
+      (hdecision : base.toArena.IsDecision history.1),
+      InfoAction i (infoAt history i hmover hdecision) ≃
+        base.Action history.1
+
+structure ControlledObservedGame (N : Type uN)
+    extends ControlledDecisionGame.{uN, uA, uS, uI} N where
   Observation : N → Type uO
   PublicObservation : Type uP
   observe :
@@ -64,34 +101,22 @@ structure ControlledObservedGame (N : Type uN) where
   observe_public :
     ∀ (i : N) (history : base.toArena.HistoryFrom base.init),
       publicOf i (observe i history) = publicObserve history
-  InfoState : N → Type uI
   infoObserve : (i : N) → InfoState i → Observation i
-  infoAt :
-    ∀ (history : base.toArena.HistoryFrom base.init) (i : N),
-      base.mover history.1 = some i →
-      ¬ base.isTerminal history.1 →
-      InfoState i
   infoAt_observe :
     ∀ (history : base.toArena.HistoryFrom base.init) (i : N)
       (hmover : base.mover history.1 = some i)
-      (hnonterminal : ¬ base.isTerminal history.1),
-      infoObserve i (infoAt history i hmover hnonterminal) =
+      (hdecision : base.toArena.IsDecision history.1),
+      infoObserve i (infoAt history i hmover hdecision) =
         observe i history
-  InfoAction : (i : N) → InfoState i → Type uA
-  actionEquiv :
-    ∀ (history : base.toArena.HistoryFrom base.init) (i : N)
-      (hmover : base.mover history.1 = some i)
-      (hnonterminal : ¬ base.isTerminal history.1),
-      InfoAction i (infoAt history i hmover hnonterminal) ≃
-        base.Action history.1
 ```
 
-`ControlledObservedGame` has a narrow regression guard for the corrected
-universe mapping. `ControlledGame`'s exposed universe order is
-player/action/state, so the base must be instantiated as
-`ControlledGame.{uN, uA, uS}`. This keeps `InfoAction : Type uA` aligned with
-the base action fiber while leaving the base state independently in `Type
-uS`.
+`ControlledDecisionGame` and its observation extension have a narrow
+regression guard for the corrected universe mapping. `ControlledGame`'s
+exposed universe order is player/action/state, so the base must be instantiated
+as `ControlledGame.{uN, uA, uS}`. This keeps `InfoAction : Type uA` aligned
+with the base action fiber while leaving the base state independently in
+`Type uS`. `ControlledObservedGame` must extend it with
+`ControlledDecisionGame.{uN, uA, uS, uI}`.
 
 The previous spelling `ControlledGame.{uN, uS, uA}` accidentally put the base
 action in `uS` and the base state in `uA`. It therefore tied `InfoAction` to
@@ -121,7 +146,11 @@ The current candidate design preserves these interpretations:
 - terminality is derived from an empty action fiber;
 - `mover s = none` is a non-player-control label, not a probability law;
 - terminal mover labels create no strategy coordinate because decision
-  information requires nonterminality;
+  information requires constructive `IsDecision` evidence;
+- strategies range over `RepresentedInfo`, so unused raw `InfoState` values
+  create neither obligations nor deviations;
+- private/public observation is an optional extension of the decision core,
+  not the definition of an information set;
 - histories remain occurrence-sensitive even when world-state paths merge;
 - payoff, objective, probability, recall, finiteness, termination,
   root-selection, equilibrium, measurability, and compiler data remain
@@ -137,14 +166,14 @@ downstream alternatives cannot express.
 
 The current review may still change:
 
-- any of the three carrier declarations;
+- any of the four carrier declarations;
 - the `Interface.StructuralCore` membership and dependency boundary;
 - existing derived definitions, lemmas, instances, constructors, and
   equivalences, without growing the checked public surface;
 - implementation ownership and existing higher-level facade boundaries;
 - theorem statements under honestly stated additional hypotheses.
 
-The corrected `ControlledObservedGame` action/state universe mapping remains a
+The corrected decision/observation action-state universe mapping remains a
 required invariant unless a later representation change explicitly replaces
 it with a more general, proved design.
 
@@ -154,7 +183,9 @@ it with a more general, proved design.
 invariants:
 
 1. the corrected action/state universe mapping of
-   `ControlledObservedGame`, without fingerprinting the declaration; and
+   `ControlledDecisionGame` and the universe order of its
+   `ControlledObservedGame` extension, without fingerprinting either
+   declaration; and
 2. the current exact transitive EFG closure of `Interface.StructuralCore` as
    an import-boundary regression.
 
@@ -166,5 +197,7 @@ fingerprints, documentation, and regression evidence in the same change.
 `scripts/check_efg_api_growth.py` separately compares all registered
 Canonical/Frontend module paths and explicit public source declarations
 against `scripts/efg_api_growth_baseline.json`. CI rejects additions.
-Updating that baseline is a policy change, not routine maintenance, and must
-be accompanied by an explicit revision of this decision.
+The baseline was refreshed on 2026-08-12 under the narrowly scoped exception
+above and now records 102 governed modules and 1,739 explicit public
+declarations. Updating it again is a policy change, not routine maintenance,
+and must be accompanied by another explicit revision of this decision.

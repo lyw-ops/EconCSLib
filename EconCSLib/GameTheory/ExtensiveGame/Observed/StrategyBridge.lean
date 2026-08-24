@@ -142,7 +142,7 @@ theorem mixedSemantics_atIndex
 
 /-- A strict observed-game isomorphism acts uniformly on the complete indexed
 pure semantics, rather than requiring a new relation at each fuel. -/
-def pureIso
+noncomputable def pureIso
     {G H : ObservedGame N U}
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
@@ -227,7 +227,7 @@ noncomputable def mixedIso
 
 /-- Strict structural relabeling as a uniform pure-strategy
 designated-root Nash bridge. -/
-def pure
+noncomputable def pure
     {G H : ObservedGame N U}
     {V : Type uV} [DecidableEq N] [Preorder V]
     [(state : G.base.State) →

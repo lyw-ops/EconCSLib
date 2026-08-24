@@ -386,7 +386,9 @@ def informationAt
     (hnonterminal :
       ¬ h.toFiniteHistoryGame.isTerminal state) :
     G.InfoState i :=
-  G.infoAt (h.originalHistory state) i hmover hnonterminal
+  G.infoAt (h.originalHistory state) i hmover
+    (G.base.toArena.isDecision_of_not_isTerminal
+      (h.originalHistory state).1 hnonterminal)
 
 /-- The pulled-back private observation has exactly the original public
 component. -/
@@ -427,24 +429,6 @@ noncomputable def toFiniteObservedGame
   actionEquiv := fun history i hmover hnonterminal =>
     G.actionEquiv
       (h.originalHistory history.1) i hmover hnonterminal
-
-/-- Pure contingent plans are definitionally unchanged by finite occurrence
-unfolding because information-state and abstract-action families are reused
-exactly. -/
-def pureStrategyEquiv
-    (h : G.FiniteEFGHypotheses) (i : N) :
-    h.toFiniteObservedGame.PureStrategy i ≃
-      G.PureStrategy i :=
-  Equiv.refl _
-
-/-- Behavioral contingent plans are also definitionally unchanged. Thus
-componentwise pure and behavioral unilateral replacements use the same
-strategy carrier before and after extraction. -/
-def behavioralStrategyEquiv
-    (h : G.FiniteEFGHypotheses) (i : N) :
-    h.toFiniteObservedGame.BehavioralStrategy i ≃
-      G.BehavioralStrategy i :=
-  Equiv.refl _
 
 /-- Pull an external root presentation back to the finite occurrence
 presentation. This records visibility only and makes no standard-subgame
@@ -869,11 +853,11 @@ theorem infoAt_eq
 
 /-- Pure contingent-plan carriers are canonically equivalent under
 payoff-free finite occurrence unfolding. -/
-def pureStrategyEquiv
+noncomputable def pureStrategyEquiv
     (h : G.FiniteEFGHypotheses) (i : N) :
     h.toFiniteObservedGame.PureStrategy i ≃
       G.PureStrategy i :=
-  Equiv.refl _
+  h.toOriginalIso.strategyEquiv i
 
 /-- Project a complete play of the bounded unfolding to the corresponding
 occurrence-sensitive complete play of the original arena. -/
@@ -939,14 +923,14 @@ theorem mem_pullWinningCondition_iff
 
 /-- Map a finite-unfolding pure profile back to the original payoff-free
 information carrier. -/
-def mapPureProfile
+noncomputable def mapPureProfile
     (h : G.FiniteEFGHypotheses)
     (profile : h.toFiniteObservedGame.PureProfile) :
     G.PureProfile :=
   fun i => h.pureStrategyEquiv i (profile i)
 
 /-- Lift an original pure strategy to the finite unfolding. -/
-def liftPureStrategy
+noncomputable def liftPureStrategy
     (h : G.FiniteEFGHypotheses)
     {i : N} (strategy : G.PureStrategy i) :
     h.toFiniteObservedGame.PureStrategy i :=
@@ -1129,7 +1113,9 @@ noncomputable def behavioralStrategyEquiv
     (h.toFiniteObservedChanceGame chanceKernel).BehavioralStrategy i ≃
       (DiscreteControlledObservedChanceGame.withChanceKernel
         G chanceKernel).BehavioralStrategy i :=
-  Equiv.refl _
+  (h.toOriginalIso.representedInfoEquiv i).piCongr fun information =>
+    PMF.mapEquiv
+      (h.toOriginalIso.infoActionEquiv i information.1)
 
 /-- Map a finite-unfolding behavioral profile back to the original
 payoff-free discrete chance presentation. -/
@@ -1224,24 +1210,87 @@ theorem mapBehavioralHistoryPolicy
       have hnonterminalProof : htarget = hsource :=
         Subsingleton.elim _ _
       cases hnonterminalProof
-      unfold
-        DiscreteControlledObservedChanceGame.BehavioralStrategy.actionLawAt
+      let sourceDecision :=
+        h.toFiniteObservedGame.base.toArena
+          |>.isDecision_of_not_isTerminal history.1 hsource
+      let targetDecision :=
+        G.base.toArena.isDecision_of_not_isTerminal
+          (h.originalHistory history.1).1 hsource
+      let sourceInformation :=
+        h.toFiniteObservedGame.representedInfoAt
+          history i hmover sourceDecision
+      let targetInformation :=
+        G.representedInfoAt (h.originalHistory history.1)
+          i hmover targetDecision
+      have hrepresented :
+          h.toOriginalIso.representedInfoEquiv i sourceInformation =
+            targetInformation := by
+        apply Subtype.ext
+        rfl
+      have hchoice :
+          h.mapBehavioralProfile chanceKernel profile i targetInformation =
+            (profile i sourceInformation).map
+              (h.toOriginalIso.infoActionEquiv
+                i sourceInformation.1) := by
+        simpa [mapBehavioralProfile, behavioralStrategyEquiv,
+          sourceInformation, targetInformation] using
+          Equiv.piCongr_apply_of_eq
+            (W := fun information :
+                h.toFiniteObservedGame.RepresentedInfo i =>
+              PMF
+                (h.toFiniteObservedGame.InfoAction
+                  i information.1))
+            (Z := fun information : G.RepresentedInfo i =>
+              PMF (G.InfoAction i information.1))
+            (h.toOriginalIso.representedInfoEquiv i)
+            (fun information =>
+              PMF.mapEquiv
+                (h.toOriginalIso.infoActionEquiv
+                  i information.1))
+            (profile i) sourceInformation targetInformation hrepresented
+      simp only
+        [DiscreteControlledObservedChanceGame.BehavioralStrategy.actionLawAt,
+          ControlledObservedGame.BehavioralStrategy.actionLawAt]
       change
-        ((profile i
-            (G.infoAt
-              (h.originalHistory history.1) i hmover
-              hsource)).map
-          (G.actionEquiv
-            (h.originalHistory history.1)
-            i hmover hsource)).map id =
-          (profile i
-            (G.infoAt
-              (h.originalHistory history.1) i hmover
-              hsource)).map
-            (G.actionEquiv
-              (h.originalHistory history.1) i hmover
-              hsource)
-      exact PMF.map_id _
+        (((profile i sourceInformation).map
+            (h.toFiniteObservedGame.actionEquiv
+              history i hmover sourceDecision)).map
+          (h.toOriginalIso.historyIso.actionEquiv history)) =
+          ((h.mapBehavioralProfile chanceKernel profile i
+              targetInformation).map
+            (G.actionEquiv (h.originalHistory history.1)
+              i hmover targetDecision))
+      rw [hchoice]
+      calc
+        ((profile i sourceInformation).map
+              (h.toFiniteObservedGame.actionEquiv
+                history i hmover sourceDecision)).map
+            (h.toOriginalIso.historyIso.actionEquiv history) =
+            (profile i sourceInformation).map
+              ((h.toOriginalIso.historyIso.actionEquiv history) ∘
+                (h.toFiniteObservedGame.actionEquiv
+                  history i hmover sourceDecision)) :=
+          PMF.map_comp
+            (h.toFiniteObservedGame.actionEquiv
+              history i hmover sourceDecision)
+            (profile i sourceInformation) _
+        _ =
+            (profile i sourceInformation).map
+              ((G.actionEquiv (h.originalHistory history.1)
+                  i hmover targetDecision) ∘
+                (h.toOriginalIso.infoActionEquiv
+                  i sourceInformation.1)) := by
+          rfl
+        _ =
+            ((profile i sourceInformation).map
+                (h.toOriginalIso.infoActionEquiv
+                  i sourceInformation.1)).map
+              (G.actionEquiv (h.originalHistory history.1)
+                i hmover targetDecision) :=
+          (PMF.map_comp
+            (h.toOriginalIso.infoActionEquiv
+              i sourceInformation.1)
+            (profile i sourceInformation) _).symm
   | none =>
       have htargetMover :
           G.base.mover
@@ -1360,3 +1409,34 @@ theorem state_ne_of_originalHistory_ne
   exact hne (congrArg h.originalHistory heq)
 
 end ExtensiveGame.ControlledObservedGame.FiniteEFGHypotheses
+
+namespace ExtensiveGame.ObservedGame.FiniteEFGHypotheses
+
+variable {N U : Type*} {G : ObservedGame N U}
+
+/-- Pure contingent plans are canonically equivalent under the payoff-bearing
+finite occurrence unfolding. The raw information/action families are reused,
+while represented-coordinate witnesses are transported through the canonical
+history isomorphism. -/
+noncomputable def pureStrategyEquiv
+    (h : G.FiniteEFGHypotheses) (i : N) :
+    h.toFiniteObservedGame.PureStrategy i ≃
+      G.PureStrategy i :=
+  ControlledObservedGame.FiniteEFGHypotheses.pureStrategyEquiv
+    (G := G.toControlledObservedGame) h i
+
+/-- Behavioral contingent plans are canonically equivalent under the
+payoff-bearing finite occurrence unfolding. -/
+noncomputable def behavioralStrategyEquiv
+    (h : G.FiniteEFGHypotheses) (i : N) :
+    h.toFiniteObservedGame.BehavioralStrategy i ≃
+      G.BehavioralStrategy i :=
+  let controlledHypotheses :
+      G.toControlledObservedGame.FiniteEFGHypotheses := h
+  (controlledHypotheses.toOriginalIso.representedInfoEquiv i).piCongr
+    fun information =>
+      PMF.mapEquiv
+        (controlledHypotheses.toOriginalIso.infoActionEquiv
+          i information.1)
+
+end ExtensiveGame.ObservedGame.FiniteEFGHypotheses

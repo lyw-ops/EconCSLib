@@ -99,7 +99,7 @@ variable {G H : ObservedGame N U}
 
 /-- Every strict observed-EFG isomorphism induces a strict game-form
 isomorphism between corresponding bounded continuation games. -/
-def continuationGameFormIso
+noncomputable def continuationGameFormIso
     [(s : G.base.State) → Decidable (G.base.isTerminal s)]
     [(t : H.base.State) → Decidable (H.base.isTerminal t)]
     (e : G.Iso H)

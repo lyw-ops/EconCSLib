@@ -30,7 +30,8 @@ abbrev game :=
 
 /-- Read the sole real action from a complete pure profile. -/
 def profileAction (profile : game.PureProfile) : ℝ :=
-  profile () ()
+  profile ()
+    ObservedChanceMeasurableUncountableBoundary.rootInformation
 
 /-- Make the constant one-player plan selecting one real action. -/
 def profileOfAction (action : ℝ) : game.PureProfile :=
@@ -53,7 +54,8 @@ def profileEquiv : game.PureProfile ≃ ℝ where
 
 /-- Read the sole action from one player's pure strategy. -/
 def strategyAction (strategy : game.PureStrategy ()) : ℝ :=
-  strategy ()
+  strategy
+    ObservedChanceMeasurableUncountableBoundary.rootInformation
 
 /-- One-player pure strategies are equivalent to real actions. -/
 def strategyEquiv : game.PureStrategy () ≃ ℝ where

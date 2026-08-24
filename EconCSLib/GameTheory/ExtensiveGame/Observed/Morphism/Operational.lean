@@ -57,8 +57,11 @@ theorem map_toHistoryPolicy
   rw [PureProfile.toHistoryPolicy_of_mover
     G profile hNoChanceG h hsource i hsourceMover]
   exact
-    e.map_actionAt profile h i hsourceMover hsource
-      htargetMover htarget
+    e.map_actionAt profile h i hsourceMover
+      (G.base.toArena.isDecision_of_not_isTerminal h.1 hsource)
+      htargetMover
+      (H.base.toArena.isDecision_of_not_isTerminal
+        (e.historyIso.stateEquiv h).1 htarget)
 
 /-- Strict history mapping commutes exactly with continuation execution of a
 mapped no-chance pure profile. -/

@@ -119,9 +119,9 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism
 ```
 
-No forwarding stubs remain at the flat paths. Every declaration keeps its
-namespace, parameters, and full declaration name; only imports change. New
-internal code should import the narrow owner:
+No forwarding stubs remain at the flat paths. During that path migration every
+declaration kept its namespace, parameters, and full declaration name; only
+imports changed. New internal code should import the narrow owner:
 
 | Need | Narrow defining import |
 |---|---|
@@ -242,10 +242,12 @@ surface.
   `EventClock`-qualified forms. The old trace appends one signal per
   transition. Asynchronous models should supply `SignalTraceBuilder`, whose
   `eventSignal : ... → Option Signal` permits silent events.
-- Repeated profile-availability assumptions can use
-  `PureStrategyAvailabilityCertificate`; add reachable no-chance with
-  `ReachablePureStrategyModelCertificate`. These bundles intentionally omit
-  finiteness, payoff, probability, recall, and termination.
+- Pure profiles are inhabited directly because strategies range over
+  `RepresentedInfo`. `PureStrategyAvailabilityCertificate` now means the
+  stronger legacy property that every raw information value is represented;
+  `ReachablePureStrategyModelCertificate` additionally supplies reachable
+  no-chance. These bundles intentionally omit finiteness, payoff, probability,
+  recall, and termination.
 
 ## Record-field migration
 
@@ -353,6 +355,14 @@ table remains as a migration map, not as an inventory of live aliases.
 
 | Removed declaration | Replacement | Since | Semantics |
 |---|---|---|---|
+| `ControlledObservedGame.AllDecisionInfoRepresented.nonempty_pureStrategy` | `ControlledObservedGame.nonempty_pureStrategy` | 2026-08-14 | The strategy domain is `RepresentedInfo`, so inhabitation needs no full raw-information representation premise |
+| `ControlledObservedGame.AllDecisionInfoRepresented.nonempty_pureProfile` | `ControlledObservedGame.nonempty_pureProfile` | 2026-08-14 | Same general inhabitation theorem at profile level |
+| `ObservedGame.AllDecisionInfoRepresented.nonempty_pureStrategy` | `ObservedGame.nonempty_pureStrategy` | 2026-08-14 | Payoff-aware projection of the general controlled theorem |
+| `ObservedGame.AllDecisionInfoRepresented.nonempty_pureProfile` | `ObservedGame.nonempty_pureProfile` | 2026-08-14 | Payoff-aware projection of the general controlled theorem |
+| `ControlledObservedGame.PureStrategyAvailabilityCertificate.nonempty_pureProfile` | `ControlledObservedGame.nonempty_pureProfile` | 2026-08-14 | Removed wrapper ignored its availability certificate |
+| `ControlledObservedGame.FiniteEFGHypotheses.nonempty_pureProfile` | `ControlledObservedGame.nonempty_pureProfile` | 2026-08-14 | Removed wrapper ignored its finite certificate |
+| `ObservedGame.FiniteEFGHypotheses.nonempty_pureStrategy` | `ObservedGame.nonempty_pureStrategy` | 2026-08-14 | Removed wrapper ignored its finite certificate |
+| `ObservedGame.FiniteEFGHypotheses.nonempty_pureProfile` | `ObservedGame.nonempty_pureProfile` | 2026-08-14 | Removed wrapper ignored its finite certificate |
 | `FiniteImperfectGame.actionAt_same_info_label` | `FiniteImperfectGame.actionAt_same_info` | 2026-07-29 | Identical transport-aware information-consistency statement |
 | `PathOutcomeFromHistory.continueAt` | `PathOutcomeFromHistory.rebaseTailAt` | 2026-07-31 | Same absolute-tail rebasing operation; root objectives now use `PathOutcome.afterHistory` |
 | `WinningConditionFrom.continueAt` | `WinningConditionFrom.rebaseTailAt` | 2026-07-31 | Same absolute-tail rebasing operation; root objectives now use `WinningCondition.afterHistory` |

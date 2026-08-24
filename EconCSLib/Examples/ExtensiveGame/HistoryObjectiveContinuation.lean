@@ -99,7 +99,8 @@ noncomputable def routeObjective :
 already-terminal continuations. -/
 noncomputable def profile : game.PureProfile :=
   fun _player information =>
-    Classical.choice (not_isEmpty_iff.mp information.2.2)
+    Classical.choice
+      (game.representedInfo_nonempty_infoAction _ information)
 
 /-- The left continuation evaluates the left occurrence. -/
 theorem left_outcome :

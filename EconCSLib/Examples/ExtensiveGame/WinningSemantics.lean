@@ -146,6 +146,19 @@ theorem zero_strategic :
 def initial : arena.HistoryFrom .root :=
   Arena.HistoryFrom.nil arena .root
 
+/-- The sole represented decision-information coordinate of player `1`. -/
+def oneInformation : game.RepresentedInfo 1 :=
+  game.representedInfoAt initial 1 rfl ⟨false⟩
+
+@[simp]
+theorem representedInfo_one_eq
+    (information : game.RepresentedInfo 1) :
+    information = oneInformation := by
+  apply Subtype.ext
+  change information.1 = ()
+  cases information.1
+  rfl
+
 def afterFalse : arena.HistoryFrom .root :=
   ⟨.after false, initial.2.snoc false⟩
 
@@ -194,13 +207,13 @@ theorem zero_not_pathwise :
   have honeState := congrArg Sigma.fst hone
   simp only [ExtensiveGame.ObservedGame.PureStrategy.actionAt, game] at hzeroState honeState
   change State.after false =
-    State.after (strategy ()) at hzeroState
+    State.after (strategy oneInformation) at hzeroState
   change State.terminal false true =
-    State.terminal false (strategy ()) at honeState
-  have hchosenFalse : strategy () = false := by
+    State.terminal false (strategy oneInformation) at honeState
+  have hchosenFalse : strategy oneInformation = false := by
     injection hzeroState with h
     exact h.symm
-  have hchosenTrue : strategy () = true := by
+  have hchosenTrue : strategy oneInformation = true := by
     injection honeState with _ h
     exact h.symm
   rw [hchosenFalse] at hchosenTrue

@@ -8,17 +8,18 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Wel
 /-!
 # Payoff-free recall infrastructure
 
-Personal-decision histories, classic recall, event-clock private/public
-signal recall, no-absent-mindedness, and their factorization certificates.
+Personal-decision histories, classic recall, asynchronous private/public
+signal recall, event-clock specializations, no-absent-mindedness, and their
+factorization certificates.
 The event-clock trace appends one signal at every arena transition and
 therefore reveals transition count. `SignalTraceBuilder` is an optional
 external asynchronous trace layer whose `eventSignal` may return `none` for a
 silent event. The always-emitting builder recovers the event-clock trace; no
 equivalence with arbitrary silent-event recall is claimed.
 
-Recall uses the general `DecisionInfoWitness` from
-`Controlled.Infrastructure.WellFormed` and has no finite-EFG, structural
-history-length, or execution dependency.
+Recall uses the general `DecisionInfoWitness` and `RepresentedInfo` from the
+carrier module and has no finite-EFG, structural history-length, or execution
+dependency.
 -/
 
 namespace ExtensiveGame.ControlledObservedGame
@@ -30,8 +31,8 @@ variable {N : Type*} {G : ControlledObservedGame N}
 /-- One remembered information-state/action pair. -/
 abbrev PersonalDecision
     (G : ControlledObservedGame N) (i : N) :=
-  Σ information : G.InfoState i,
-    G.InfoAction i information
+  Σ information : G.RepresentedInfo i,
+    G.InfoAction i information.1
 
 /-- Package the abstract decision represented by a concrete action. -/
 def personalDecisionAt
@@ -40,10 +41,9 @@ def personalDecisionAt
     (hmover : G.base.mover history.1 = some i)
     (action : G.base.Action history.1) :
     G.PersonalDecision i :=
-  let hnonterminal : ¬ G.base.isTerminal history.1 :=
-    fun hterminal => hterminal.false action
-  ⟨G.infoAt history i hmover hnonterminal,
-    (G.actionEquiv history i hmover hnonterminal).symm action⟩
+  let hdecision : G.base.toArena.IsDecision history.1 := ⟨action⟩
+  ⟨G.representedInfoAt history i hmover hdecision,
+    (G.actionEquiv history i hmover hdecision).symm action⟩
 
 /-- Packaging an action just realized from the information fiber recovers
 that information/action pair. -/
@@ -52,12 +52,12 @@ theorem personalDecisionAt_actionEquiv
     (G : ControlledObservedGame N) (i : N)
     (history : G.base.History)
     (hmover : G.base.mover history.1 = some i)
-    (hnonterminal : ¬ G.base.isTerminal history.1)
+    (hdecision : G.base.toArena.IsDecision history.1)
     (action :
-      G.InfoAction i (G.infoAt history i hmover hnonterminal)) :
+      G.InfoAction i (G.infoAt history i hmover hdecision)) :
     G.personalDecisionAt i history hmover
-        (G.actionEquiv history i hmover hnonterminal action) =
-      ⟨G.infoAt history i hmover hnonterminal, action⟩ := by
+        (G.actionEquiv history i hmover hdecision action) =
+      ⟨G.representedInfoAt history i hmover hdecision, action⟩ := by
   simp [personalDecisionAt]
 
 /-- Path-recursive worker extracting one player's past decisions. -/
@@ -261,11 +261,11 @@ def HasPerfectRecall [DecidableEq N]
     (G : ControlledObservedGame N) (i : N) : Prop :=
   ∀ (first second : G.base.History)
     (hfirst : G.base.mover first.1 = some i)
-    (hfirst_nonterminal : ¬ G.base.isTerminal first.1)
+    (hfirst_decision : G.base.toArena.IsDecision first.1)
     (hsecond : G.base.mover second.1 = some i)
-    (hsecond_nonterminal : ¬ G.base.isTerminal second.1),
-    G.infoAt first i hfirst hfirst_nonterminal =
-        G.infoAt second i hsecond hsecond_nonterminal →
+    (hsecond_decision : G.base.toArena.IsDecision second.1),
+    G.infoAt first i hfirst hfirst_decision =
+        G.infoAt second i hsecond hsecond_decision →
       G.ownDecisionHistory i first =
         G.ownDecisionHistory i second
 
@@ -279,11 +279,11 @@ def HasSingletonInformation
     (G : ControlledObservedGame N) (i : N) : Prop :=
   ∀ (first second : G.base.History)
     (hfirst : G.base.mover first.1 = some i)
-    (hfirst_nonterminal : ¬ G.base.isTerminal first.1)
+    (hfirst_decision : G.base.toArena.IsDecision first.1)
     (hsecond : G.base.mover second.1 = some i)
-    (hsecond_nonterminal : ¬ G.base.isTerminal second.1),
-    G.infoAt first i hfirst hfirst_nonterminal =
-        G.infoAt second i hsecond hsecond_nonterminal →
+    (hsecond_decision : G.base.toArena.IsDecision second.1),
+    G.infoAt first i hfirst hfirst_decision =
+        G.infoAt second i hsecond hsecond_decision →
       first = second
 
 /-- Every player has singleton decision information. -/
@@ -312,12 +312,12 @@ def HasNoAbsentMindedness
       G.base.toArena.History
         (G.base.next first.1 action) finish)
     (hsecond : G.base.mover finish = some i)
-    (hsecond_nonterminal : ¬ G.base.isTerminal finish),
+    (hsecond_decision : G.base.toArena.IsDecision finish),
     G.infoAt first i hfirst
-        (fun hterminal => hterminal.false action) ≠
+        ⟨action⟩ ≠
       G.infoAt
         ⟨finish, (first.2.snoc action).append suffix⟩
-        i hsecond hsecond_nonterminal
+        i hsecond hsecond_decision
 
 /-- Under no absent-mindedness, an earlier remembered information state
 differs from the current decision information state. -/
@@ -327,10 +327,10 @@ theorem HasNoAbsentMindedness.info_ne_of_mem_ownDecisionHistory
     (hnoAbsent : G.HasNoAbsentMindedness i)
     (history : G.base.History)
     (hmover : G.base.mover history.1 = some i)
-    (hnonterminal : ¬ G.base.isTerminal history.1)
+    (hdecision : G.base.toArena.IsDecision history.1)
     (decision : G.PersonalDecision i)
     (hmem : decision ∈ G.ownDecisionHistory i history) :
-    decision.1 ≠ G.infoAt history i hmover hnonterminal := by
+    decision.1 ≠ G.representedInfoAt history i hmover hdecision := by
   obtain ⟨occurrence⟩ :=
     G.exists_personalDecisionOccurrence_of_mem
       i history decision hmem
@@ -338,19 +338,19 @@ theorem HasNoAbsentMindedness.info_ne_of_mem_ownDecisionHistory
     hnoAbsent
       ⟨occurrence.state, occurrence.before⟩
       occurrence.mover occurrence.action
-      history.1 occurrence.after hmover hnonterminal
+      history.1 occurrence.after hmover hdecision
   rw [occurrence.path_eq] at hdistinct
   have hfirst :
-      G.infoAt
+      G.representedInfoAt
           ⟨occurrence.state, occurrence.before⟩
           i occurrence.mover
-          (fun hterminal => hterminal.false occurrence.action) =
+          ⟨occurrence.action⟩ =
         decision.1 :=
     by
       simpa [personalDecisionAt] using
         congrArg Sigma.fst occurrence.decision_eq
   intro hequal
-  exact hdistinct (hfirst.trans hequal)
+  exact hdistinct (congrArg Subtype.val (hfirst.trans hequal))
 
 /-- No player is absent-minded. -/
 def NoAbsentMindedness
@@ -385,7 +385,7 @@ theorem HasPerfectRecall.hasNoAbsentMindedness [DecidableEq N]
     simpa using htail
   have hequal :=
     hrecall first second hfirst
-      (fun hterminal => hterminal.false action)
+      ⟨action⟩
       hsecond hsecond_nonterminal hsame
   rw [hequal] at hstrict
   exact Nat.lt_irrefl _ hstrict
@@ -519,14 +519,58 @@ def HasPerfectRecall
     (builder : G.SignalTraceBuilder) (i : N) : Prop :=
   ∀ (first second : G.base.History)
     (hfirst : G.base.mover first.1 = some i)
-    (hfirst_nonterminal : ¬ G.base.isTerminal first.1)
+    (hfirst_decision : G.base.toArena.IsDecision first.1)
     (hsecond : G.base.mover second.1 = some i)
-    (hsecond_nonterminal : ¬ G.base.isTerminal second.1),
-    G.infoAt first i hfirst hfirst_nonterminal =
-        G.infoAt second i hsecond hsecond_nonterminal →
+    (hsecond_decision : G.base.toArena.IsDecision second.1),
+    G.infoAt first i hfirst hfirst_decision =
+        G.infoAt second i hsecond hsecond_decision →
       builder.trace i first = builder.trace i second
 
 end SignalTraceBuilder
+
+/-- External builder for a public signal trace with optional silent events.
+
+Unlike `publicSignalHistory`, the trace does not append at every Arena
+transition. Its length therefore need not reveal a public clock. -/
+structure PublicSignalTraceBuilder (G : ControlledObservedGame N) where
+  /-- Public signal carrier. -/
+  Signal : Type*
+  /-- Initial public signal before any transition. -/
+  initial : Signal
+  /-- Optional public signal emitted by one legal transition. -/
+  eventSignal :
+    (history : G.base.History) →
+      G.base.Action history.1 → Option Signal
+
+namespace PublicSignalTraceBuilder
+
+/-- Public trace built along one dependent history, omitting silent events. -/
+def tracePath
+    (builder : G.PublicSignalTraceBuilder) :
+    {state : G.base.State} →
+      G.base.toArena.History G.base.init state →
+        List builder.Signal
+  | _, .nil => [builder.initial]
+  | _, @Arena.History.snoc _ _ state path action =>
+      builder.tracePath path ++
+        (builder.eventSignal ⟨state, path⟩ action).toList
+
+/-- Asynchronous public trace of a complete history. -/
+def trace
+    (builder : G.PublicSignalTraceBuilder)
+    (history : G.base.History) :
+    List builder.Signal :=
+  builder.tracePath history.2
+
+/-- Current public observation determines an external public trace, without
+assuming that every transition emits a signal. -/
+def HasPerfectRecall
+    (builder : G.PublicSignalTraceBuilder) : Prop :=
+  ∀ first second : G.base.History,
+    G.publicObserve first = G.publicObserve second →
+      builder.trace first = builder.trace second
+
+end PublicSignalTraceBuilder
 
 /-- The existing observation sequence as an event-clock trace builder.
 
@@ -560,6 +604,39 @@ theorem eventClockSignalTraceBuilder_trace
         Option.toList_some, signalHistory, signalHistoryPath]
       exact congrArg (fun trace => trace ++ [_]) ih
 
+/-- The existing public-observation sequence as an always-emitting public
+trace builder. -/
+def eventClockPublicSignalTraceBuilder
+    (G : ControlledObservedGame N) :
+    G.PublicSignalTraceBuilder where
+  Signal := G.PublicObservation
+  initial :=
+    G.publicObserve
+      (Arena.HistoryFrom.nil G.base.toArena G.base.init)
+  eventSignal := fun history action =>
+    some
+      (G.publicObserve
+        ⟨G.base.next history.1 action,
+          history.2.snoc action⟩)
+
+/-- The always-emitting public trace is the existing event-clock public signal
+history. -/
+theorem eventClockPublicSignalTraceBuilder_trace
+    (G : ControlledObservedGame N)
+    (history : G.base.History) :
+    G.eventClockPublicSignalTraceBuilder.trace history =
+      G.publicSignalHistory history := by
+  rcases history with ⟨finish, path⟩
+  induction path with
+  | nil => rfl
+  | snoc path action ih =>
+      simp only [PublicSignalTraceBuilder.trace,
+        PublicSignalTraceBuilder.tracePath,
+        eventClockPublicSignalTraceBuilder,
+        Option.toList_some, publicSignalHistory,
+        publicSignalHistoryPath]
+      exact congrArg (fun trace => trace ++ [_]) ih
+
 /-- The private-signal sequence factors through current decision information
 under the event-clock convention: the initial observation is recorded and
 every Arena transition appends exactly one signal. -/
@@ -567,11 +644,11 @@ def HasEventClockSignalPerfectRecall
     (G : ControlledObservedGame N) (i : N) : Prop :=
   ∀ (first second : G.base.History)
     (hfirst : G.base.mover first.1 = some i)
-    (hfirst_nonterminal : ¬ G.base.isTerminal first.1)
+    (hfirst_decision : G.base.toArena.IsDecision first.1)
     (hsecond : G.base.mover second.1 = some i)
-    (hsecond_nonterminal : ¬ G.base.isTerminal second.1),
-    G.infoAt first i hfirst hfirst_nonterminal =
-        G.infoAt second i hsecond hsecond_nonterminal →
+    (hsecond_decision : G.base.toArena.IsDecision second.1),
+    G.infoAt first i hfirst hfirst_decision =
+        G.infoAt second i hsecond hsecond_decision →
       G.signalHistory i first =
         G.signalHistory i second
 
@@ -610,6 +687,22 @@ def HasEventClockPublicPerfectRecall
     G.publicObserve first = G.publicObserve second →
       G.publicSignalHistory first =
         G.publicSignalHistory second
+
+/-- Event-clock public recall is exactly asynchronous public recall for the
+always-emitting builder. Builders with silent events impose no public clock. -/
+theorem hasEventClockPublicPerfectRecall_iff
+    (G : ControlledObservedGame N) :
+    G.HasEventClockPublicPerfectRecall ↔
+      G.eventClockPublicSignalTraceBuilder.HasPerfectRecall := by
+  constructor
+  · intro hrecall first second hsame
+    rw [G.eventClockPublicSignalTraceBuilder_trace first,
+      G.eventClockPublicSignalTraceBuilder_trace second]
+    exact hrecall first second hsame
+  · intro hrecall first second hsame
+    rw [← G.eventClockPublicSignalTraceBuilder_trace first,
+      ← G.eventClockPublicSignalTraceBuilder_trace second]
+    exact hrecall first second hsame
 
 /-- Singleton decision information implies private-signal recall. -/
 theorem HasSingletonInformation.hasEventClockSignalPerfectRecall
@@ -664,7 +757,7 @@ theorem HasEventClockSignalPerfectRecall.hasNoAbsentMindedness
     ⟨finish, (first.2.snoc action).append suffix⟩
   have hsignals :=
     hrecall first second hfirst
-      (fun hterminal => hterminal.false action)
+      ⟨action⟩
       hsecond hsecond_nonterminal hsame
   have hfirstLength := G.signalHistory_length i first
   have hsecondLength := G.signalHistory_length i second
@@ -694,14 +787,14 @@ structure RecallCertificate [DecidableEq N]
     (G : ControlledObservedGame N) where
   /-- Remembered own-decision trace for every information state. -/
   remembered :
-    (i : N) → G.InfoState i →
+    (i : N) → G.RepresentedInfo i →
       List (G.PersonalDecision i)
   /-- The assigned trace agrees at every represented decision. -/
   remembered_infoAt :
     ∀ (i : N) (history : G.base.History)
       (hmover : G.base.mover history.1 = some i)
-      (hnonterminal : ¬ G.base.isTerminal history.1),
-      remembered i (G.infoAt history i hmover hnonterminal) =
+      (hdecision : G.base.toArena.IsDecision history.1),
+      remembered i (G.representedInfoAt history i hmover hdecision) =
         G.ownDecisionHistory i history
 
 /-- A recall factorization certificate proves perfect recall. -/
@@ -714,7 +807,7 @@ theorem RecallCertificate.perfectRecall [DecidableEq N]
     hfirst_nonterminal]
   rw [← certificate.remembered_infoAt i second hsecond
     hsecond_nonterminal]
-  rw [hsame]
+  exact congrArg (certificate.remembered i) (Subtype.ext hsame)
 
 /-- Perfect recall canonically yields a factorization certificate by choosing
 one represented history for every reachable information state. -/
@@ -725,32 +818,19 @@ noncomputable def PerfectRecall.toRecallCertificate
   remembered := by
     classical
     exact fun i information =>
-      if hexists :
-          Nonempty (G.DecisionInfoWitness i information) then
-        G.ownDecisionHistory i
-          (Classical.choice hexists).history
-      else
-        []
+      G.ownDecisionHistory i
+        (Classical.choice information.2).history
   remembered_infoAt := by
-    intro i history hmover hnonterminal
+    intro i history hmover hdecision
     classical
-    let witness :
-        G.DecisionInfoWitness i
-          (G.infoAt history i hmover hnonterminal) :=
-      ⟨history, hmover, hnonterminal, rfl⟩
-    have hexists :
-        Nonempty
-          (G.DecisionInfoWitness i
-            (G.infoAt history i hmover hnonterminal)) :=
-      ⟨witness⟩
-    rw [dif_pos hexists]
+    let information := G.representedInfoAt history i hmover hdecision
+    let witness := Classical.choice information.2
     exact
       hrecall i
-        (Classical.choice hexists).history history
-        (Classical.choice hexists).mover
-        (Classical.choice hexists).nonterminal
-        hmover hnonterminal
-        (Classical.choice hexists).infoAt_eq
+        witness.history history
+        witness.mover witness.decision
+        hmover hdecision
+        witness.infoAt_eq
 
 /-- Perfect recall is equivalent to the existence of a factorization
 certificate. -/
@@ -769,15 +849,15 @@ structure SignalRecallCertificate
     (G : ControlledObservedGame N) where
   /-- Signal sequence assigned to every decision information state. -/
   rememberedSignals :
-    (i : N) → G.InfoState i →
+    (i : N) → G.RepresentedInfo i →
       List (G.Observation i)
   /-- The assigned sequence agrees with every represented decision history. -/
   rememberedSignals_infoAt :
     ∀ (i : N) (history : G.base.History)
       (hmover : G.base.mover history.1 = some i)
-      (hnonterminal : ¬ G.base.isTerminal history.1),
+      (hdecision : G.base.toArena.IsDecision history.1),
       rememberedSignals i
-        (G.infoAt history i hmover hnonterminal) =
+        (G.representedInfoAt history i hmover hdecision) =
         G.signalHistory i history
 
 /-- A payoff-free private-signal factorization certificate proves signal
@@ -791,7 +871,7 @@ theorem SignalRecallCertificate.eventClockSignalPerfectRecall
     hfirst_nonterminal]
   rw [← certificate.rememberedSignals_infoAt i second hsecond
     hsecond_nonterminal]
-  rw [hsame]
+  exact congrArg (certificate.rememberedSignals i) (Subtype.ext hsame)
 
 /-- Factorization certificate for payoff-free public recall. -/
 structure PublicRecallCertificate

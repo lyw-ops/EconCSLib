@@ -222,9 +222,9 @@ theorem historyPath_snoc {root tree : StochasticGameTree N}
 /-- A nonterminal player-controlled complete history occurrence. -/
 abbrev OccurrenceInfo (root : StochasticGameTree N) (i : N) :=
   { history :
-      (toExtensiveGame root).toArena.HistoryFrom root //
+    (toExtensiveGame root).toArena.HistoryFrom root //
     (toExtensiveGame root).mover history.1 = some i ∧
-      ¬ (toExtensiveGame root).isTerminal history.1 }
+      (toExtensiveGame root).toArena.IsDecision history.1 }
 
 /-- Occurrence-sensitive observed presentation of a stochastic tree before its
 chance kernels are attached. -/
@@ -297,7 +297,7 @@ noncomputable def policyToBehavioralProfile
     (root : StochasticGameTree N) (policy : Policy N) :
     (toObservedGame root).BehavioralProfile :=
   fun i information =>
-    PMF.pure (policyActionAt root policy i information)
+    PMF.pure (policyActionAt root policy i information.1)
 
 /-- At a player occurrence, compiled behavioral execution selects exactly the
 source policy's child occurrence. -/
@@ -327,7 +327,9 @@ theorem policyHistoryPolicy_player
     (PMF.pure
       (policyActionAt root policy mover
         ⟨⟨.Player mover arity child, history⟩,
-          rfl, hnonterminal⟩)).map id =
+          rfl,
+          (toExtensiveGame root).toArena
+            |>.isDecision_of_not_isTerminal _ hnonterminal⟩)).map id =
       PMF.pure
         (policy (historyPath history) mover arity child)
   change
@@ -566,7 +568,7 @@ theorem policyToBehavioralProfile_deviate [DecidableEq N]
     funext information
     unfold policyToBehavioralProfile
     congr 1
-    rcases information with
+    rcases information.1 with
       ⟨⟨tree, history⟩, hmover, _hnonterminal⟩
     cases tree with
     | Leaf payoff =>

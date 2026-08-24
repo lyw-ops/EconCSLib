@@ -4,9 +4,11 @@ from tempfile import TemporaryDirectory
 
 from scripts.check_efg_governance import (
     FROZEN_MINIMAL_CORE_STRUCTURES,
-    controlled_observed_universe_mapping_is_valid,
+    controlled_carrier_universe_mapping_is_valid,
     documentation_link_errors,
+    documented_large_efg_modules,
     frozen_structure_digest,
+    large_efg_line_band,
 )
 
 
@@ -72,29 +74,75 @@ namespace Arena
             frozen_structure_digest(source, self.START, self.END)
         )
 
-    def test_controlled_observed_universe_mapping_keeps_action_and_state_separate(
+    def test_controlled_carrier_universe_mapping_keeps_action_and_state_separate(
         self,
     ):
         valid = """\
-structure ControlledObservedGame (N : Type uN) where
+structure ControlledDecisionGame (N : Type uN) where
   base : ControlledGame.{uN, uA, uS} N
   InfoState : N → Type uI
   InfoAction : (i : N) → InfoState i → Type uA
-namespace ControlledObservedGame
+structure ControlledObservedGame (N : Type uN)
+    extends ControlledDecisionGame.{uN, uA, uS, uI} N where
+  Observation : N → Type uO
 """
         state_tied = """\
-structure ControlledObservedGame (N : Type uN) where
+structure ControlledDecisionGame (N : Type uN) where
   base : ControlledGame.{uN, uS, uA} N
   InfoState : N → Type uI
   InfoAction : (i : N) → InfoState i → Type uA
-namespace ControlledObservedGame
+structure ControlledObservedGame (N : Type uN)
+    extends ControlledDecisionGame.{uN, uA, uS, uI} N where
+  Observation : N → Type uO
+"""
+        observed_swapped = """\
+structure ControlledDecisionGame (N : Type uN) where
+  base : ControlledGame.{uN, uA, uS} N
+  InfoState : N → Type uI
+  InfoAction : (i : N) → InfoState i → Type uA
+structure ControlledObservedGame (N : Type uN)
+    extends ControlledDecisionGame.{uN, uS, uA, uI} N where
+  Observation : N → Type uO
 """
 
         self.assertTrue(
-            controlled_observed_universe_mapping_is_valid(valid)
+            controlled_carrier_universe_mapping_is_valid(valid)
         )
         self.assertFalse(
-            controlled_observed_universe_mapping_is_valid(state_tied)
+            controlled_carrier_universe_mapping_is_valid(state_tied)
+        )
+        self.assertFalse(
+            controlled_carrier_universe_mapping_is_valid(observed_swapped)
+        )
+
+    def test_large_efg_line_bands_are_stable(self):
+        self.assertEqual(large_efg_line_band(800), "800-999")
+        self.assertEqual(large_efg_line_band(999), "800-999")
+        self.assertEqual(large_efg_line_band(1000), "1000-1199")
+        self.assertEqual(large_efg_line_band(1200), "1200+")
+        with self.assertRaises(ValueError):
+            large_efg_line_band(799)
+
+    def test_large_file_audit_parser_reports_duplicate_module(self):
+        source = """\
+| Module | Line band | Decision |
+|---|---:|---|
+| `EconCSLib.GameTheory.ExtensiveGame.Observed.Game` | `800-999` | Keep |
+| `EconCSLib.GameTheory.ExtensiveGame.Observed.Game` | `800-999` | Keep |
+"""
+
+        rows, duplicates = documented_large_efg_modules(source)
+
+        self.assertEqual(
+            rows,
+            {
+                "EconCSLib.GameTheory.ExtensiveGame.Observed.Game":
+                    "800-999"
+            },
+        )
+        self.assertEqual(
+            duplicates,
+            {"EconCSLib.GameTheory.ExtensiveGame.Observed.Game"},
         )
 
     def test_documentation_link_check_accepts_existing_relative_target(self):

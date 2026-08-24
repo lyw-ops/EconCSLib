@@ -38,8 +38,8 @@ variable {N : Type*} (G : ControlledObservedGame N)
 /-- A countably supported behavioral strategy indexed by payoff-free decision
 information. -/
 abbrev BehavioralStrategy (i : N) :=
-  (information : G.InfoState i) →
-    PMF (G.InfoAction i information)
+  (information : G.RepresentedInfo i) →
+    PMF (G.InfoAction i information.1)
 
 /-- One payoff-free discrete behavioral strategy per player. -/
 abbrev BehavioralProfile :=
@@ -60,9 +60,10 @@ noncomputable def BehavioralStrategy.actionLawAt
     (hmover : G.base.mover history.1 = some i)
     (hnonterminal : ¬ G.base.isTerminal history.1) :
     PMF (G.base.Action history.1) :=
-  (strategy
-    (G.infoAt history i hmover hnonterminal)).map
-      (G.actionEquiv history i hmover hnonterminal)
+  let hdecision :=
+    G.base.toArena.isDecision_of_not_isTerminal history.1 hnonterminal
+  (strategy (G.representedInfoAt history i hmover hdecision)).map
+    (G.actionEquiv history i hmover hdecision)
 
 /-- Equal information states force a behavioral profile to choose the same
 dependent abstract action law. -/
@@ -70,26 +71,26 @@ theorem BehavioralProfile.actionLaw_eq_of_infoState_eq
     (profile : G.BehavioralProfile) (i : N)
     (first second : G.base.History)
     (firstMover : G.base.mover first.1 = some i)
-    (firstNonterminal : ¬ G.base.isTerminal first.1)
+    (firstDecision : G.base.toArena.IsDecision first.1)
     (secondMover : G.base.mover second.1 = some i)
-    (secondNonterminal : ¬ G.base.isTerminal second.1)
+    (secondDecision : G.base.toArena.IsDecision second.1)
     (hsame :
-      G.infoAt first i firstMover firstNonterminal =
-        G.infoAt second i secondMover secondNonterminal) :
-    (⟨G.infoAt first i firstMover firstNonterminal,
+      G.infoAt first i firstMover firstDecision =
+        G.infoAt second i secondMover secondDecision) :
+    (⟨G.representedInfoAt first i firstMover firstDecision,
         profile i
-          (G.infoAt first i firstMover firstNonterminal)⟩ :
-      Σ information : G.InfoState i,
-        PMF (G.InfoAction i information)) =
-      ⟨G.infoAt second i secondMover secondNonterminal,
+          (G.representedInfoAt first i firstMover firstDecision)⟩ :
+      Σ information : G.RepresentedInfo i,
+        PMF (G.InfoAction i information.1)) =
+      ⟨G.representedInfoAt second i secondMover secondDecision,
         profile i
-          (G.infoAt second i secondMover secondNonterminal)⟩ :=
+          (G.representedInfoAt second i secondMover secondDecision)⟩ :=
   congrArg
-    (fun information : G.InfoState i =>
+    (fun information : G.RepresentedInfo i =>
       (⟨information, profile i information⟩ :
-        Σ state : G.InfoState i,
-          PMF (G.InfoAction i state)))
-    hsame
+        Σ state : G.RepresentedInfo i,
+          PMF (G.InfoAction i state.1)))
+    (Subtype.ext hsame)
 
 end ControlledObservedGame
 

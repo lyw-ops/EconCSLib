@@ -21,12 +21,12 @@ variable {N : Type uN} {U : Type uU}
 /-- A global strategic randomization key: one player and one of that
 player's decision information states. -/
 abbrev DecisionKey (G : ObservedGame N U) :=
-  Σ i : N, G.InfoState i
+  Σ i : N, G.RepresentedInfo i
 
 /-- The dependent action value stored at a global decision key. -/
 abbrev DecisionValue (G : ObservedGame N U)
     (key : G.DecisionKey) :=
-  G.InfoAction key.1 key.2
+  G.InfoAction key.1 key.2.1
 
 /-- Currying identifies one flat table over global decision keys with a pure
 contingent-plan profile. -/
@@ -34,8 +34,8 @@ def decisionTableEquiv (G : ObservedGame N U) :
     ((key : G.DecisionKey) →
       G.DecisionValue key) ≃
       G.PureProfile :=
-  Equiv.piCurry fun i information =>
-    G.InfoAction i information
+  Equiv.piCurry fun i (information : G.RepresentedInfo i) =>
+    G.InfoAction i information.1
 
 /-- Flatten a behavioral profile into the independent law family indexed by
 global decision keys. -/
@@ -64,9 +64,11 @@ def FutureDecisionKeysAvailable
     (hmover : G.base.mover finish = some i)
     (hnonterminal : ¬ G.base.isTerminal finish),
     (⟨i,
-      G.infoAt
+      G.representedInfoAt
         ⟨finish, current.2.append suffix⟩
-        i hmover hnonterminal⟩ : G.DecisionKey) ∈ remaining
+        i hmover
+          (G.base.toArena.isDecision_of_not_isTerminal _
+            hnonterminal)⟩ : G.DecisionKey) ∈ remaining
 
 namespace FutureDecisionKeysAvailable
 
@@ -121,7 +123,9 @@ theorem afterPlayer
       ⟨G.base.next current.1 action,
         current.2.snoc action⟩
       (remaining.erase
-        (⟨i, G.infoAt current i hmover hnonterminal⟩ :
+        (⟨i, G.representedInfoAt current i hmover
+          (G.base.toArena.isDecision_of_not_isTerminal _
+            hnonterminal)⟩ :
           G.DecisionKey)) := by
   intro finish suffix j hfinish hfinish_nonterminal
   apply Finset.mem_erase.mpr
@@ -134,12 +138,19 @@ theorem afterPlayer
         G.infoAt
             ⟨finish,
               (current.2.snoc action).append suffix⟩
-            i hfinish hfinish_nonterminal =
-          G.infoAt current i hmover hnonterminal :=
-      eq_of_heq (Sigma.mk.inj_iff.mp heq).2
+            i hfinish
+              (G.base.toArena.isDecision_of_not_isTerminal _
+                hfinish_nonterminal) =
+          G.infoAt current i hmover
+            (G.base.toArena.isDecision_of_not_isTerminal _
+              hnonterminal) :=
+      congrArg Subtype.val
+        (eq_of_heq (Sigma.mk.inj_iff.mp heq).2)
     exact
       (hnoAbsent i current hmover action
-        finish suffix hfinish hfinish_nonterminal) hinfo.symm
+        finish suffix hfinish
+          (G.base.toArena.isDecision_of_not_isTerminal _
+            hfinish_nonterminal)) hinfo.symm
   · let extended :
         G.base.toArena.History current.1 finish :=
       (Arena.History.nil.snoc action).append suffix
@@ -158,7 +169,9 @@ theorem current
     (i : N)
     (hmover : G.base.mover current.1 = some i)
     (hnonterminal : ¬ G.base.isTerminal current.1) :
-    (⟨i, G.infoAt current i hmover hnonterminal⟩ :
+    (⟨i, G.representedInfoAt current i hmover
+      (G.base.toArena.isDecision_of_not_isTerminal _
+        hnonterminal)⟩ :
       G.DecisionKey) ∈ remaining := by
   simpa using
     havailable
@@ -185,10 +198,10 @@ theorem map_fintypePi_decisionLaw
           G.decisionTableEquiv =
       (h.behavioralToMixedProfile profile).pureProfileLaw G := by
   classical
-  letI (i : N) : Finite (G.InfoState i) :=
-    h.finiteInfoState i
-  letI (i : N) : Fintype (G.InfoState i) :=
-    Fintype.ofFinite (G.InfoState i)
+  letI (i : N) : Finite (G.RepresentedInfo i) :=
+    h.finiteRepresentedInfo i
+  letI (i : N) : Fintype (G.RepresentedInfo i) :=
+    Fintype.ofFinite (G.RepresentedInfo i)
   ext pureProfile
   rw [PMF.map_equiv_apply,
     PMF.fintypePi_apply]
@@ -199,7 +212,7 @@ theorem map_fintypePi_decisionLaw
           (G.decisionTableEquiv.symm
             pureProfile key)) =
         ∏ i : N,
-          ∏ information : G.InfoState i,
+          ∏ information : G.RepresentedInfo i,
             profile i information
               (pureProfile i information) := by
       rw [show
@@ -207,7 +220,7 @@ theorem map_fintypePi_decisionLaw
           (Finset.univ : Finset N).sigma
             (fun i =>
               (Finset.univ :
-                Finset (G.InfoState i))) by
+                Finset (G.RepresentedInfo i))) by
           ext key
           simp]
       rw [Finset.prod_sigma]
@@ -215,6 +228,8 @@ theorem map_fintypePi_decisionLaw
       intro i _
       apply Finset.prod_congr rfl
       intro information _
+      apply congrArg (profile i information)
+      change (Sigma.uncurry pureProfile) ⟨i, information⟩ = _
       rfl
     _ = ∏ i : N,
           (h.behavioralToMixedProfile profile i)

@@ -68,7 +68,7 @@ abbrev OccurrenceInfo (root : GameTree N U) (i : N) :=
   { history :
       (toExtensiveGame root).toArena.HistoryFrom root //
     (toExtensiveGame root).mover history.1 = some i ∧
-      ¬ (toExtensiveGame root).isTerminal history.1 }
+      (toExtensiveGame root).toArena.IsDecision history.1 }
 
 namespace OccurrenceInfo
 
@@ -614,7 +614,7 @@ theorem forgetOccurrenceInfo_infoAt
     (hmover :
       (toExtensiveGame root).mover history.1 = some i)
     (hnonterminal :
-      ¬ (toExtensiveGame root).isTerminal history.1) :
+      (toExtensiveGame root).toArena.IsDecision history.1) :
     forgetOccurrenceInfo root i
         ((toOccurrenceObservedGame root).infoAt
           history i hmover hnonterminal) =
@@ -645,7 +645,7 @@ theorem forgetOccurrenceInfoActionEquiv_at
     (hmover :
       (toExtensiveGame root).mover history.1 = some i)
     (hnonterminal :
-      ¬ (toExtensiveGame root).isTerminal history.1)
+      (toExtensiveGame root).toArena.IsDecision history.1)
     (action :
       (toObservedGame root).InfoAction i
         ((toObservedGame root).infoAt history i hmover
@@ -859,20 +859,18 @@ theorem isEndpointBehavioralNashOnAllContinuationsAtFuel_of_occurrenceLift
 
 /-- Lift an endpoint/node-indexed pure strategy to the finer
 occurrence-sensitive information structure. -/
-def liftEndpointPureStrategy
+noncomputable def liftEndpointPureStrategy
     (root : GameTree N U) (i : N)
     (strategy : (toObservedGame root).PureStrategy i) :
     (toOccurrenceObservedGame root).PureStrategy i :=
-  fun information =>
-    forgetOccurrenceInfoActionEquiv root i information
-      (strategy (forgetOccurrenceInfo root i information))
+  (endpointInformationRefinement root).mapStrategy i strategy
 
 /-- Lift a complete endpoint-indexed pure profile occurrence by occurrence. -/
-def liftEndpointPureProfile
+noncomputable def liftEndpointPureProfile
     (root : GameTree N U)
     (profile : (toObservedGame root).PureProfile) :
     (toOccurrenceObservedGame root).PureProfile :=
-  fun i => liftEndpointPureStrategy root i (profile i)
+  (endpointInformationRefinement root).mapProfile profile
 
 /-- The reusable information-refinement lift specializes definitionally to the
 endpoint strategy lift. -/
@@ -904,7 +902,7 @@ theorem liftEndpointPureStrategy_actionAt
     (hmover :
       (toExtensiveGame root).mover history.1 = some i)
     (hnonterminal :
-      ¬ (toExtensiveGame root).isTerminal history.1) :
+      (toExtensiveGame root).toArena.IsDecision history.1) :
     (liftEndpointPureStrategy root i strategy).actionAt
         (toOccurrenceObservedGame root)
         history hmover hnonterminal =
@@ -924,7 +922,7 @@ theorem liftEndpointPureProfile_actionAt
     (hmover :
       (toExtensiveGame root).mover history.1 = some i)
     (hnonterminal :
-      ¬ (toExtensiveGame root).isTerminal history.1) :
+      (toExtensiveGame root).toArena.IsDecision history.1) :
     (liftEndpointPureProfile root profile).actionAt
         (toOccurrenceObservedGame root)
         history i hmover hnonterminal =
@@ -954,7 +952,8 @@ theorem liftEndpointPureProfile_toHistoryPolicy
       ((toObservedGame root).mover_playerAt
         (toExtensiveGame_noChanceOnHistories root)
         history hnonterminal)
-      hnonterminal
+      ((toExtensiveGame root).toArena.isDecision_of_not_isTerminal
+        _ hnonterminal)
 
 /-! ### Canonical occurrence-sensitive SPE -/
 
@@ -1100,7 +1099,8 @@ theorem occurrenceOutcome_deviate_le_value
             (occurrenceBackwardInductionProfile root).actionAt
                 (toOccurrenceObservedGame root)
                 ⟨.Node mover head tail, history⟩ mover rfl
-                hnonterminal =
+                ((toExtensiveGame root).toArena
+                  |>.isDecision_of_not_isTerminal _ hnonterminal) =
               (optStrategy : Strategy N U)
                 mover head tail := by
           rw [←

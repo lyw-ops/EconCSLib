@@ -17,7 +17,7 @@ universe uN uU uAS uO uI uP
 
 variable {N : Type uN} {U : Type uU}
 
-/-- Under finite information and no absent-mindedness, independently sampling
+/-- Under finite represented information and no absent-mindedness, independently sampling
 a complete pure plan from a behavioral profile gives exactly the same bounded
 complete-history law as sampling locally during play. -/
 theorem behavioralToMixed_stoppedHistoryLawFrom_of_noAbsentMindedness
@@ -38,10 +38,10 @@ theorem behavioralToMixed_stoppedHistoryLawFrom_of_noAbsentMindedness
         (BehavioralProfile.toHistoryPolicy G profile)
         current fuel := by
   classical
-  letI (i : N) : Finite (G.observed.InfoState i) :=
-    h.finiteInfoState i
-  letI (i : N) : Fintype (G.observed.InfoState i) :=
-    Fintype.ofFinite (G.observed.InfoState i)
+  letI (i : N) : Finite (G.observed.RepresentedInfo i) :=
+    h.finiteRepresentedInfo i
+  letI (i : N) : Fintype (G.observed.RepresentedInfo i) :=
+    Fintype.ofFinite (G.observed.RepresentedInfo i)
   letI : Fintype G.observed.DecisionKey :=
     inferInstance
   let hnoAbsent :=
@@ -108,7 +108,7 @@ theorem behavioralToMixed_stoppedHistoryLawFrom
         hweak profile current fuel
 
 /-- Behavioral-to-mixed conversion preserves the complete bounded optional
-payoff law at every continuation root under finite information and no
+payoff law at every continuation root under finite represented information and no
 absent-mindedness. -/
 theorem behavioralToMixed_stoppedPayoffLawFrom_of_noAbsentMindedness
     (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
@@ -243,7 +243,8 @@ theorem behavioralToMixedContinuationHom_of_noAbsentMindedness_utilityCompatible
   rfl
 
 /-- Mixed bounded Nash on presentation-designated continuations of the independently pre-sampled plan reflects to
-behavioral bounded Nash on presentation-designated continuations under finite information and no absent-mindedness.
+behavioral bounded Nash on presentation-designated continuations under finite
+represented information and no absent-mindedness.
 Perfect recall is not required for this one-way result. -/
 theorem isBehavioralNashOnRootsAtFuel_of_behavioralToMixed_of_noAbsentMindedness
     (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)

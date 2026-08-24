@@ -39,11 +39,11 @@ theorem inverseInfoAt (e : G.Iso H)
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource : G.base.mover history.1 = some i)
-    (hsource_nonterminal : ¬ G.base.isTerminal history.1)
+    (hsource_nonterminal : G.base.toArena.IsDecision history.1)
     (htarget :
       H.base.mover (e.historyIso.stateEquiv history).1 = some i)
     (htarget_nonterminal :
-      ¬ H.base.isTerminal
+      H.base.toArena.IsDecision
         (e.historyIso.stateEquiv history).1) :
     (e.infoStateEquiv i).symm
         (H.infoAt
@@ -121,9 +121,9 @@ private theorem actionEquiv_heq_of_history_eq
       G.base.toArena.HistoryFrom G.base.init}
     (hhistory : first = second)
     (hfirst : G.base.mover first.1 = some i)
-    (hfirst_nonterminal : ¬ G.base.isTerminal first.1)
+    (hfirst_nonterminal : G.base.toArena.IsDecision first.1)
     (hsecond : G.base.mover second.1 = some i)
-    (hsecond_nonterminal : ¬ G.base.isTerminal second.1)
+    (hsecond_nonterminal : G.base.toArena.IsDecision second.1)
     (firstAction :
       G.InfoAction i
         (G.infoAt first i hfirst hfirst_nonterminal))
@@ -150,11 +150,11 @@ private theorem inverse_infoActionAt
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource : G.base.mover history.1 = some i)
-    (hsource_nonterminal : ¬ G.base.isTerminal history.1)
+    (hsource_nonterminal : G.base.toArena.IsDecision history.1)
     (htarget :
       H.base.mover (e.historyIso.stateEquiv history).1 = some i)
     (htarget_nonterminal :
-      ¬ H.base.isTerminal
+      H.base.toArena.IsDecision
         (e.historyIso.stateEquiv history).1)
     (action :
       H.InfoAction i
@@ -274,7 +274,7 @@ def symm (e : G.Iso H) : H.Iso G where
         G.base.mover sourceHistory.1 = some i := by
       simpa [Arena.Iso.symm] using htarget
     have htarget_nonterminal' :
-        ¬ G.base.isTerminal sourceHistory.1 := by
+        G.base.toArena.IsDecision sourceHistory.1 := by
       simpa [Arena.Iso.symm] using htarget_nonterminal
     simpa [Arena.Iso.symm] using
       e.inverseInfoAt sourceHistory i
@@ -290,7 +290,7 @@ def symm (e : G.Iso H) : H.Iso G where
         G.base.mover sourceHistory.1 = some i := by
       simpa [Arena.Iso.symm] using htarget
     have htarget_nonterminal' :
-        ¬ G.base.isTerminal sourceHistory.1 := by
+        G.base.toArena.IsDecision sourceHistory.1 := by
       simpa [Arena.Iso.symm] using htarget_nonterminal
     have hcore :=
       e.inverse_infoActionAt

@@ -27,6 +27,7 @@ disagree, use this authority order:
 | [`efg-module-status.md`](efg-module-status.md) | complete module census, lifecycle, responsibility and recommended facade | Authoritative lifecycle register; checker verifies source parity and totals |
 | [`efg-public-api.md`](efg-public-api.md) | import choice and the semantics promised by each facade | Authoritative user import guide; closure counts are links to governance |
 | [`efg-controlled-api.md`](efg-controlled-api.md) | controlled hierarchy navigation and responsibility rationale | Focused ownership guide; Lean and governance decide actual owners/edges |
+| [`efg-semantic-universes.md`](efg-semantic-universes.md) | execution-regime ownership, common path-law boundary, and adapter direction | Authoritative semantic-regime contract; checker enforces import consequences and Lean proves preservation |
 | [`efg-preservation-matrix.md`](efg-preservation-matrix.md) | relation strengths and proved preservation coverage | Focused mathematical review ledger; Lean decides proof status |
 | [`efg-mathematical-provenance.md`](efg-mathematical-provenance.md) | literature-to-Lean hypothesis translation and gaps | Focused provenance ledger |
 | [`efg-arbitrary-measure-strategies.md`](efg-arbitrary-measure-strategies.md) | arbitrary-measure strategy carrier boundary | Focused mathematical rationale |
@@ -55,6 +56,7 @@ focused notes rather than `efg-*.md` files; the same authority order applies.
 | Number and lifecycle of modules | `efg-module-status.md` plus checker source-parity check | Link to the register; do not copy its status totals |
 | Which import a user should choose | `efg-public-api.md` | Link to the relevant row |
 | Which module owns a declaration | Lean source; module status summarizes responsibility | Link to the source/module row |
+| Which execution regime owns a model and how it reaches the common path-law layer | `efg-semantic-universes.md` | Use native, adapter-backed, compiler-backed, or open; do not call separate producers one universal executor |
 | Preservation strength | Lean theorem plus `efg-preservation-matrix.md` | Never upgrade a missing field by prose |
 | Literature interpretation | `efg-mathematical-provenance.md` and focused notes | Record representation translations and gaps explicitly |
 | Removed or renamed APIs | `efg-api-migration.md` or `docs/HISTORY.md` | Do not present dated transitions as current architecture |
@@ -69,7 +71,8 @@ focused notes rather than `efg-*.md` files; the same authority order applies.
   [`efg-controlled-api.md`](efg-controlled-api.md).
 - Reviewer checking mathematics: start with
   [`efg-mathematical-provenance.md`](efg-mathematical-provenance.md) and
-  [`efg-preservation-matrix.md`](efg-preservation-matrix.md), then inspect the
+  [`efg-semantic-universes.md`](efg-semantic-universes.md), then use
+  [`efg-preservation-matrix.md`](efg-preservation-matrix.md) and inspect the
   cited Lean declarations.
 - Maintainer changing a facade or lifecycle state: read
   [`efg-minimal-core-freeze.md`](efg-minimal-core-freeze.md),

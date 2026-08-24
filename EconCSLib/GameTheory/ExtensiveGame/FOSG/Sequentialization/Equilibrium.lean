@@ -51,9 +51,15 @@ noncomputable def serializedBehavioralGameForm
       sourceDeclaredRoot).observed.BehavioralStrategy
   Outcome := PMF (Option (Fin (n + 1) → U))
   outcome profile :=
-    (initializedBehavioralTargetMicroStateLaw G D rootPayoff
-      sourceDeclaredRoot profile horizon).map
-        (serializedStoppedPayoffAtHistory G rootPayoff)
+    ((game G rootPayoff).toArena.stochasticHistoryPMFFrom
+      (ObservedChanceGame.BehavioralProfile.toHistoryPolicy
+        (observedChanceGame G D rootPayoff sourceDeclaredRoot)
+        profile)
+      (Arena.HistoryFrom.nil
+        (game G rootPayoff).toArena
+        (game G rootPayoff).init)
+      (1 + horizon * (n + 2))).map
+      (serializedStoppedPayoffAtHistory G rootPayoff)
 
 /-- Exact finite-horizon game-form isomorphism between FOSG behavioral play
 and genuine serialized observed-EFG behavioral play. -/
@@ -62,14 +68,36 @@ noncomputable def behavioralGameFormIso
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
     (sourceDeclaredRoot : G.HistoryState → Prop)
+    (certificate :
+      BehavioralStrategyEquivalence G D rootPayoff sourceDeclaredRoot)
     (horizon : Nat) :
     (sourceBehavioralGameForm G D horizon).Iso
       (serializedBehavioralGameForm G D rootPayoff
         sourceDeclaredRoot horizon) where
-  strategyEquiv := fun _ => Equiv.refl _
+  strategyEquiv := certificate.strategyEquiv
   outcomeEquiv := Equiv.refl _
   map_outcome := by
     intro profile
+    have hprofile :
+        (fun i => certificate.strategyEquiv i (profile i)) =
+          serializedObservedBehavioralProfile G D rootPayoff
+            sourceDeclaredRoot profile := by
+      funext i information
+      exact certificate.strategyEquiv_apply i (profile i) information
+    change
+      (initializedSourceStateLaw G
+        (D.behavioralHistoryPolicy profile) horizon).map
+          G.stoppedPayoffAtHistory =
+        ((game G rootPayoff).toArena.stochasticHistoryPMFFrom
+          (ObservedChanceGame.BehavioralProfile.toHistoryPolicy
+            (observedChanceGame G D rootPayoff sourceDeclaredRoot)
+            (fun i => certificate.strategyEquiv i (profile i)))
+          (Arena.HistoryFrom.nil
+            (game G rootPayoff).toArena
+            (game G rootPayoff).init)
+          (1 + horizon * (n + 2))).map
+          (serializedStoppedPayoffAtHistory G rootPayoff)
+    rw [hprofile]
     exact
       initializedBehavioralMicroPayoffLaw_eq G D rootPayoff
         sourceDeclaredRoot profile horizon
@@ -85,6 +113,8 @@ theorem behavioralIsNash_iff
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
     (sourceDeclaredRoot : G.HistoryState → Prop)
+    (certificate :
+      BehavioralStrategyEquivalence G D rootPayoff sourceDeclaredRoot)
     (horizon : Nat)
     {V : Type*} [Preorder V]
     (utility :
@@ -97,10 +127,10 @@ theorem behavioralIsNash_iff
         sourceDeclaredRoot horizon).IsNash
           utility
           ((behavioralGameFormIso G D rootPayoff
-            sourceDeclaredRoot horizon).mapProfile profile) := by
+            sourceDeclaredRoot certificate horizon).mapProfile profile) := by
   exact
     (behavioralGameFormIso G D rootPayoff
-      sourceDeclaredRoot horizon).isNash_iff
+      sourceDeclaredRoot certificate horizon).isNash_iff
         (by
           intro outcome i
           rfl)

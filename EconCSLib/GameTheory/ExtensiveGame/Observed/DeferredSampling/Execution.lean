@@ -96,14 +96,19 @@ noncomputable def boundedHistoryTree
         | some i =>
             let key : G.observed.DecisionKey :=
               ⟨i,
-                G.observed.infoAt current i hmover hterminal⟩
+                G.observed.representedInfoAt current i hmover
+                  (G.observed.base.toArena.isDecision_of_not_isTerminal _
+                    hterminal)⟩
             let selected : ↥remaining :=
               ⟨key,
                 havailable.current i hmover hterminal⟩
             .query selected fun abstractAction =>
               let action :=
                 G.observed.actionEquiv
-                  current i hmover hterminal abstractAction
+                  current i hmover
+                    (G.observed.base.toArena.isDecision_of_not_isTerminal _
+                      hterminal)
+                  abstractAction
               G.boundedHistoryTree
                 hnoAbsent
                 ⟨G.observed.base.next
@@ -168,15 +173,20 @@ theorem boundedHistoryTree_runOnDemand
         rw [boundedHistoryTree, dif_neg hterminal]
         split
         · rename_i i hmover
+          let hdecision :=
+            G.observed.base.toArena.isDecision_of_not_isTerminal
+              current.1 hterminal
           rw [BehavioralProfile.toHistoryPolicy_of_mover
             G profile current hterminal i hmover]
           unfold ObservedGame.BehavioralProfile.actionLawAt
             ObservedGame.BehavioralStrategy.actionLawAt
+            ControlledObservedGame.BehavioralStrategy.actionLawAt
+          dsimp only
           rw [PMF.bind_map]
           change
             (profile i
-                (G.observed.infoAt
-                  current i hmover hterminal)).bind
+                (G.observed.representedInfoAt
+                  current i hmover hdecision)).bind
                 (fun abstractAction =>
                   PMF.FreshQueryTree.runOnDemand
                     (profile.decisionLaw G.observed)
@@ -184,60 +194,61 @@ theorem boundedHistoryTree_runOnDemand
                       hnoAbsent
                       ⟨G.observed.base.next current.1
                           (G.observed.actionEquiv
-                            current i hmover hterminal
+                            current i hmover hdecision
                             abstractAction),
                         current.2.snoc
                           (G.observed.actionEquiv
-                            current i hmover hterminal
+                            current i hmover hdecision
                             abstractAction)⟩
                       (remaining.erase
                         (⟨i,
-                          G.observed.infoAt
-                            current i hmover hterminal⟩ :
+                          G.observed.representedInfoAt
+                            current i hmover hdecision⟩ :
                           G.observed.DecisionKey))
                       (havailable.afterPlayer
                         hnoAbsent i hmover hterminal
                         (G.observed.actionEquiv
-                          current i hmover hterminal
+                          current i hmover hdecision
                           abstractAction))
                       fuel)) =
               (profile i
-                (G.observed.infoAt
-                  current i hmover hterminal)).bind
+                (G.observed.representedInfoAt
+                  current i hmover hdecision)).bind
                 (fun abstractAction =>
                   G.observed.base.toArena.stochasticHistoryPMFFrom
                       (BehavioralProfile.toHistoryPolicy
                         G profile)
                       ⟨G.observed.base.next current.1
                           (G.observed.actionEquiv
-                            current i hmover hterminal
+                            current i hmover hdecision
                             abstractAction),
                         current.2.snoc
                           (G.observed.actionEquiv
-                            current i hmover hterminal
+                            current i hmover hdecision
                             abstractAction)⟩
                       fuel)
           apply congrArg (fun continuation =>
             (profile i
-              (G.observed.infoAt
-                current i hmover hterminal)).bind continuation)
+              (G.observed.representedInfoAt
+                current i hmover hdecision)).bind continuation)
           funext abstractAction
           exact
             ih
               ⟨G.observed.base.next current.1
                   (G.observed.actionEquiv
-                    current i hmover hterminal abstractAction),
+                    current i hmover hdecision abstractAction),
                 current.2.snoc
                   (G.observed.actionEquiv
-                    current i hmover hterminal abstractAction)⟩
+                    current i hmover hdecision abstractAction)⟩
               (remaining.erase
                 (⟨i,
-                  G.observed.infoAt current i hmover hterminal⟩ :
+                  G.observed.representedInfoAt current i hmover
+                    hdecision⟩ :
                   G.observed.DecisionKey))
               (havailable.afterPlayer
                 hnoAbsent i hmover hterminal
                 (G.observed.actionEquiv
-                  current i hmover hterminal abstractAction))
+                  current i hmover hdecision abstractAction))
         · rename_i hmover
           rw [BehavioralProfile.toHistoryPolicy_of_chance
             G profile current hterminal hmover]
@@ -330,53 +341,55 @@ theorem boundedHistoryTree_runWithTable
         rw [boundedHistoryTree, dif_neg hterminal]
         split
         · rename_i i hmover
-          rw [BehavioralProfile.toHistoryPolicy_of_mover
-            G
-            ((G.observed.decisionTableEquiv
-              fullTable).toBehavioral G.observed)
+          let hdecision :=
+            G.observed.base.toArena.isDecision_of_not_isTerminal
+              current.1 hterminal
+          rw [G.pureProfile_toBehavioral_toHistoryPolicy_of_mover
+            (G.observed.decisionTableEquiv fullTable)
             current hterminal i hmover]
-          unfold ObservedGame.BehavioralProfile.actionLawAt
-            ObservedGame.BehavioralStrategy.actionLawAt
-            ObservedGame.PureProfile.toBehavioral
-            ObservedGame.PureStrategy.toBehavioral
-          rw [PMF.pure_map, PMF.pure_bind]
+          rw [PMF.pure_bind]
+          unfold ObservedGame.PureProfile.actionAt
+            ObservedGame.PureStrategy.actionAt
+            ControlledObservedGame.PureStrategy.actionAt
           change
             PMF.FreshQueryTree.runWithTable
                 (G.boundedHistoryTree
                   hnoAbsent
                   ⟨G.observed.base.next current.1
                       (G.observed.actionEquiv
-                        current i hmover hterminal
+                        current i hmover hdecision
                         (table
                           ⟨⟨i,
-                            G.observed.infoAt
-                              current i hmover hterminal⟩,
+                            G.observed.representedInfoAt
+                              current i hmover hdecision⟩,
                             havailable.current i hmover hterminal⟩)),
                     current.2.snoc
                       (G.observed.actionEquiv
-                        current i hmover hterminal
+                        current i hmover hdecision
                         (table
                           ⟨⟨i,
-                            G.observed.infoAt
-                              current i hmover hterminal⟩,
+                            G.observed.representedInfoAt
+                              current i hmover hdecision⟩,
                             havailable.current i hmover hterminal⟩))⟩
                   (remaining.erase
                     (⟨i,
-                      G.observed.infoAt current i hmover hterminal⟩ :
+                      G.observed.representedInfoAt current i hmover
+                        hdecision⟩ :
                       G.observed.DecisionKey))
                   (havailable.afterPlayer
                     hnoAbsent i hmover hterminal
                     (G.observed.actionEquiv
-                      current i hmover hterminal
+                      current i hmover hdecision
                       (table
                         ⟨⟨i,
-                          G.observed.infoAt
-                            current i hmover hterminal⟩,
+                          G.observed.representedInfoAt
+                            current i hmover hdecision⟩,
                           havailable.current i hmover hterminal⟩)))
                   fuel)
                 (PMF.FreshQueryTree.eraseTable
                   ⟨⟨i,
-                    G.observed.infoAt current i hmover hterminal⟩,
+                    G.observed.representedInfoAt current i hmover
+                      hdecision⟩,
                     havailable.current i hmover hterminal⟩
                   table) =
               G.observed.base.toArena.stochasticHistoryPMFFrom
@@ -386,54 +399,57 @@ theorem boundedHistoryTree_runWithTable
                       G.observed))
                 ⟨G.observed.base.next current.1
                     (G.observed.actionEquiv
-                      current i hmover hterminal
+                      current i hmover hdecision
                       (fullTable
-                        ⟨i,
-                          G.observed.infoAt
-                            current i hmover hterminal⟩)),
+                      ⟨i,
+                          G.observed.representedInfoAt
+                            current i hmover hdecision⟩)),
                   current.2.snoc
                     (G.observed.actionEquiv
-                      current i hmover hterminal
+                      current i hmover hdecision
                       (fullTable
-                        ⟨i,
-                          G.observed.infoAt
-                            current i hmover hterminal⟩))⟩
+                      ⟨i,
+                          G.observed.representedInfoAt
+                            current i hmover hdecision⟩))⟩
                 fuel
           rw [hagrees
             ⟨⟨i,
-              G.observed.infoAt current i hmover hterminal⟩,
+              G.observed.representedInfoAt current i hmover
+                hdecision⟩,
               havailable.current i hmover hterminal⟩]
           apply
             ih
               ⟨G.observed.base.next current.1
                   (G.observed.actionEquiv
-                    current i hmover hterminal
+                    current i hmover hdecision
                     (fullTable
                       ⟨i,
-                        G.observed.infoAt
-                          current i hmover hterminal⟩)),
+                        G.observed.representedInfoAt
+                          current i hmover hdecision⟩)),
                 current.2.snoc
                   (G.observed.actionEquiv
-                    current i hmover hterminal
+                    current i hmover hdecision
                     (fullTable
                       ⟨i,
-                        G.observed.infoAt
-                          current i hmover hterminal⟩))⟩
+                        G.observed.representedInfoAt
+                          current i hmover hdecision⟩))⟩
               (remaining.erase
                 (⟨i,
-                  G.observed.infoAt current i hmover hterminal⟩ :
+                  G.observed.representedInfoAt current i hmover
+                    hdecision⟩ :
                   G.observed.DecisionKey))
               (havailable.afterPlayer
                 hnoAbsent i hmover hterminal
                 (G.observed.actionEquiv
-                  current i hmover hterminal
+                  current i hmover hdecision
                   (fullTable
                     ⟨i,
-                      G.observed.infoAt
-                        current i hmover hterminal⟩)))
+                      G.observed.representedInfoAt
+                        current i hmover hdecision⟩)))
               (PMF.FreshQueryTree.eraseTable
                 ⟨⟨i,
-                  G.observed.infoAt current i hmover hterminal⟩,
+                  G.observed.representedInfoAt current i hmover
+                    hdecision⟩,
                   havailable.current i hmover hterminal⟩
                 table)
           intro key

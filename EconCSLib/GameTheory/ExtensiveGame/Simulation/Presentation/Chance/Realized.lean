@@ -145,7 +145,9 @@ structure AnalyticPresentation
             G.observed.infoAt
               (MeasurableKernelArena.latestEventState
                 time events)
-              i hmover hnonterminal⟩
+              i hmover
+              (G.observed.base.toArena.isDecision_of_not_isTerminal _
+                hnonterminal)⟩
 
 namespace AnalyticPresentation
 
@@ -192,10 +194,14 @@ theorem abstractKernel_eq_of_player_infoAt_eq
     (hsame :
       G.observed.infoAt
           (MeasurableKernelArena.latestEventState time events₁)
-          i hmover₁ hnonterminal₁ =
+          i hmover₁
+          (G.observed.base.toArena.isDecision_of_not_isTerminal _
+            hnonterminal₁) =
         G.observed.infoAt
           (MeasurableKernelArena.latestEventState time events₂)
-          i hmover₂ hnonterminal₂) :
+          i hmover₂
+          (G.observed.base.toArena.isDecision_of_not_isTerminal _
+            hnonterminal₂)) :
     (presentation.toPolicy profile).abstractKernel time
         (presentation.information.informationAt time events₁) =
       (presentation.toPolicy profile).abstractKernel time

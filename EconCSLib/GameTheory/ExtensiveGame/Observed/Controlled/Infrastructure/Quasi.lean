@@ -26,11 +26,12 @@ structure NonemptyActionSet (Action : Type*) where
   /-- At least one value is permitted. -/
   nonempty : allowed.Nonempty
 
-/-- Information-consistent nondeterministic permissions for player `i`. -/
+/-- Information-consistent nondeterministic permissions for player `i`,
+indexed only by information values represented at genuine decisions. -/
 def QuasiStrategy
     (G : ControlledObservedGame N) (i : N) :=
-  (information : G.InfoState i) →
-    NonemptyActionSet (G.InfoAction i information)
+  (information : G.RepresentedInfo i) →
+    NonemptyActionSet (G.InfoAction i information.1)
 
 namespace QuasiStrategy
 
@@ -60,21 +61,22 @@ def IsCompatibleWithQuasiStrategyFrom
       ¬ G.base.isTerminal (play.historyAt n).1)
     (hmover :
       G.base.mover (play.historyAt n).1 = some i),
-    ∃ abstractAction :
-        G.InfoAction i
-          (G.infoAt (play.historyAt n) i hmover hnonterminal),
+    let hdecision :=
+      G.base.toArena.isDecision_of_not_isTerminal
+        (play.historyAt n).1 hnonterminal
+    let information :=
+      G.representedInfoAt (play.historyAt n) i hmover hdecision
+    ∃ abstractAction : G.InfoAction i information.1,
       abstractAction ∈
-          (strategy
-            (G.infoAt (play.historyAt n) i hmover
-              hnonterminal)).allowed ∧
+          (strategy information).allowed ∧
         play.historyAt (n + 1) =
           ⟨G.base.next (play.historyAt n).1
               (G.actionEquiv
-                (play.historyAt n) i hmover hnonterminal
+                (play.historyAt n) i hmover hdecision
                 abstractAction),
             (play.historyAt n).2.snoc
               (G.actionEquiv
-                (play.historyAt n) i hmover hnonterminal
+                (play.historyAt n) i hmover hdecision
                 abstractAction)⟩
 
 /-- Root-started quasistrategy compatibility. -/
@@ -98,17 +100,25 @@ theorem isCompatibleWithQuasiStrategy_ofPure_iff
   · intro h n hterminal hmover
     rcases h n hterminal hmover with
       ⟨action, hallowed, hnext⟩
+    let hdecision :=
+      G.base.toArena.isDecision_of_not_isTerminal
+        (play.historyAt n).1 hterminal
+    let information :=
+      G.representedInfoAt (play.historyAt n) i hmover hdecision
     have ha :
         action =
-          strategy
-            (G.infoAt (play.historyAt n) i hmover hterminal) := by
+          strategy information := by
       simpa [QuasiStrategy.ofPure] using hallowed
     subst action
     exact hnext
   · intro h n hterminal hmover
+    let hdecision :=
+      G.base.toArena.isDecision_of_not_isTerminal
+        (play.historyAt n).1 hterminal
+    let information :=
+      G.representedInfoAt (play.historyAt n) i hmover hdecision
     exact
-      ⟨strategy
-          (G.infoAt (play.historyAt n) i hmover hterminal),
+      ⟨strategy information,
         Set.mem_singleton _,
         h n hterminal hmover⟩
 

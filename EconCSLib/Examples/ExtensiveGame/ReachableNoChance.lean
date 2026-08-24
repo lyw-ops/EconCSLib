@@ -110,7 +110,7 @@ theorem allDecisionInfoRepresented :
   refine ⟨
     { history := information.1
       mover := information.2.1
-      nonterminal := information.2.2
+      decision := information.2.2
       infoAt_eq := rfl }⟩
 
 /-- Every reachable player-labelled history is the nonterminal root. -/
@@ -130,9 +130,7 @@ theorem decisionMoverCoherent :
 noncomputable def profile : game.PureProfile :=
   fun _ information =>
     Classical.choice
-      (allDecisionInfoRepresented.nonempty_infoAction
-        decisionMoverCoherent
-        () information)
+      (game.representedInfo_nonempty_infoAction () information)
 
 /-- Reachable no-chance is sufficient to build the canonical pure history
 policy; the unreachable nature state is never queried. -/

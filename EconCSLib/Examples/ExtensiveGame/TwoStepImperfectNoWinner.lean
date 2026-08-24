@@ -62,7 +62,7 @@ def base : ControlledGame (Fin 2) where
 Boolean action. -/
 def baseActionEquiv (state : State) (i : Fin 2)
     (hmover : base.mover state = some i)
-    (_hnonterminal : ¬ base.isTerminal state) :
+    (_hdecision : base.toArena.IsDecision state) :
     Bool ≃ base.Action state := by
   cases state with
   | root =>
@@ -87,17 +87,25 @@ def game : ControlledObservedGame (Fin 2) where
   infoAt := fun _ _ _ _ => ()
   infoAt_observe := by simp
   InfoAction := fun _ _ => Bool
-  actionEquiv := fun history i hmover hnonterminal =>
-    baseActionEquiv history.1 i hmover hnonterminal
+  actionEquiv := fun history i hmover hdecision =>
+    baseActionEquiv history.1 i hmover hdecision
 
 /-- The initial empty history. -/
 def initial : arena.HistoryFrom .root :=
   Arena.HistoryFrom.nil arena .root
 
+/-- The sole represented decision-information coordinate of player `0`. -/
+def zeroInformation : game.RepresentedInfo 0 :=
+  game.representedInfoAt initial 0 rfl ⟨false⟩
+
 /-- History after choosing one hidden bit. -/
 def afterHidden (bit : Bool) :
     arena.HistoryFrom .root :=
   ⟨.hidden bit, initial.2.snoc bit⟩
+
+/-- The sole represented decision-information coordinate of player `1`. -/
+def oneInformation : game.RepresentedInfo 1 :=
+  game.representedInfoAt (afterHidden false) 1 rfl ⟨false⟩
 
 /-- Terminal history after a bit and guess. -/
 def afterGuess (bit guess : Bool) :
@@ -194,7 +202,7 @@ theorem play_compatible_zero
     (strategy : game.PureStrategy 0)
     (guess : Bool) :
     game.IsCompatibleWithPlayerStrategy
-      0 strategy (play (strategy ()) guess) := by
+      0 strategy (play (strategy zeroInformation) guess) := by
   intro n hnonterminal hmover
   cases n with
   | zero =>
@@ -221,7 +229,7 @@ theorem play_compatible_one
     (strategy : game.PureStrategy 1)
     (bit : Bool) :
     game.IsCompatibleWithPlayerStrategy
-      1 strategy (play bit (strategy ())) := by
+      1 strategy (play bit (strategy oneInformation)) := by
   intro n hnonterminal hmover
   cases n with
   | zero =>
@@ -251,10 +259,10 @@ theorem no_pure_winner_zero :
   rintro ⟨strategy, hwinning⟩
   have hwins :=
     hwinning
-      (play (strategy ()) (strategy ()))
-      (play_compatible_zero strategy (strategy ()))
+      (play (strategy zeroInformation) (strategy zeroInformation))
+      (play_compatible_zero strategy (strategy zeroInformation))
   exact (play_mem_zero_iff
-    (strategy ()) (strategy ())).mp hwins rfl
+    (strategy zeroInformation) (strategy zeroInformation)).mp hwins rfl
 
 /-- Player `1` has no pure pathwise winning strategy: player `0` can choose
 the opposite hidden bit. -/
@@ -263,14 +271,14 @@ theorem no_pure_winner_one :
       game.HasPathwiseWinningStrategy
         winning 1 strategy := by
   rintro ⟨strategy, hwinning⟩
-  let bit := !(strategy ())
+  let bit := !(strategy oneInformation)
   have hwins :=
     hwinning
-      (play bit (strategy ()))
+      (play bit (strategy oneInformation))
       (play_compatible_one strategy bit)
   have heq :=
-    (play_mem_one_iff bit (strategy ())).mp hwins
-  cases hguess : strategy () <;>
+    (play_mem_one_iff bit (strategy oneInformation)).mp hwins
+  cases hguess : strategy oneInformation <;>
     simp [bit, hguess] at heq
 
 /-- Neither player has a pure pathwise winning strategy. -/

@@ -16,37 +16,6 @@ namespace ExtensiveGame.ObservedChanceGame
 
 variable {N U : Type*} (G : ObservedChanceGame N U)
 
-/-- At a player history, the stochastic policy induced by a pure profile's
-Dirac behavioral embedding is the point mass at that profile's prescribed
-concrete action. -/
-theorem pureProfile_toBehavioral_toHistoryPolicy_of_mover
-    (profile : G.observed.PureProfile)
-    (history :
-      G.observed.base.toArena.HistoryFrom
-        G.observed.base.init)
-    (hnonterminal :
-      ¬ G.observed.base.isTerminal history.1)
-    (i : N)
-    (hmover :
-      G.observed.base.mover history.1 = some i) :
-    BehavioralProfile.toHistoryPolicy
-        G
-        (profile.toBehavioral G.observed)
-        history hnonterminal =
-      PMF.pure
-        (profile.actionAt
-          G.observed history i hmover hnonterminal) := by
-  rw [BehavioralProfile.toHistoryPolicy_of_mover
-    G (profile.toBehavioral G.observed)
-    history hnonterminal i hmover]
-  unfold ObservedGame.BehavioralProfile.actionLawAt
-    ObservedGame.BehavioralStrategy.actionLawAt
-    ObservedGame.PureProfile.toBehavioral
-    ObservedGame.PureStrategy.toBehavioral
-    ObservedGame.PureProfile.actionAt
-    ObservedGame.PureStrategy.actionAt
-  rw [PMF.pure_map]
-
 /-- Sequential posterior exposure of arbitrary mixed pure plans has exactly
 the same bounded complete-history law as the root-scoped conditional
 behavioral profile.
@@ -220,12 +189,18 @@ theorem posteriorMixedHistoryLawAlong_eq_behavioral
             have hnonterminal' :
                 ¬ G.observed.base.isTerminal finish := by
               simpa [current] using hterminal
+            let hdecision :=
+              G.observed.base.toArena.isDecision_of_not_isTerminal
+                current.1 hterminal
+            let hdecision' :=
+              G.observed.base.toArena.isDecision_of_not_isTerminal
+                finish hnonterminal'
             let information :=
-              G.observed.infoAt
-                current i hmover hterminal
+              G.observed.representedInfoAt
+                current i hmover hdecision
             let abstractToConcrete :=
               G.observed.actionEquiv
-                current i hmover hterminal
+                current i hmover hdecision
             let currentPlanLaw :
                 PMF
                   (G.observed.PureStrategy i) :=
@@ -262,6 +237,8 @@ theorem posteriorMixedHistoryLawAlong_eq_behavioral
               unfold
                 ObservedGame.BehavioralProfile.actionLawAt
                 ObservedGame.BehavioralStrategy.actionLawAt
+                ControlledObservedGame.BehavioralStrategy.actionLawAt
+              dsimp only
               change
                 (certificate.behavioralizeMixedFrom
                     G.observed root i (profile i)
@@ -269,12 +246,12 @@ theorem posteriorMixedHistoryLawAlong_eq_behavioral
                       abstractToConcrete =
                   _
               rw [certificate.behavioralizeMixedFrom_at_append
-                G.observed root suffix i hmover' hnonterminal'
+                G.observed root suffix i hmover' hdecision'
                 (profile i)]
               rfl
             rw [htargetAction, PMF.bind_map]
             let continuation :
-                G.observed.InfoAction i information →
+                G.observed.InfoAction i information.1 →
                   G.observed.PureProfile →
                     PMF
                       (G.observed.base.toArena.HistoryFrom
@@ -334,7 +311,7 @@ theorem posteriorMixedHistoryLawAlong_eq_behavioral
             funext abstractAction
             have hposteriorUpdate :=
               profile.posteriorAfterDecisions_relative_snoc_of_mover
-                G.observed root suffix i hmover' hnonterminal'
+                G.observed root suffix i hmover' hdecision'
                 abstractAction
             have ihAction :=
               ih

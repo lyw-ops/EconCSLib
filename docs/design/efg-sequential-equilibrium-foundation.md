@@ -11,18 +11,18 @@ facade.
 |---|---|---|
 | node in an information set | `ObservedGame.DecisionInfoWitness` | contains a complete history occurrence, so endpoint merging cannot erase belief points |
 | raw belief data | `RawBeliefSystem` | nonnegative weights only; no normalization claim |
-| belief system | `BeliefSystem` | a `PMF` at every player information state |
+| belief system | `BeliefSystem` | a `PMF` at every represented player information coordinate |
 | assessment | `Assessment` | behavioral profile plus normalized beliefs |
 | completely mixed profile | `BehavioralProfile.IsCompletelyMixed` | every abstract information action has positive mass |
 | reached-set Bayes belief | `FiniteSequentialHypotheses.bayesBelief` | requires a proof of positive total reach |
 | consistency | `Assessment.IsKrepsWilsonConsistent` | one completely mixed sequence, positive perturbation reach, and pointwise topological convergence |
 | sequential rationality | `Assessment.IsSequentiallyRationalFor` | parameterized by a local continuation-value evaluator |
 
-`ObservedGame.FiniteEFGHypotheses` excludes ghost information states through
-`allDecisionInfoRepresented` and makes the occurrence carrier finite through
-its uniform history bound and locally finite action fibers. Chance is supplied
-by `ObservedChanceGame`; the behavioral history policy uses that declared
-kernel exactly.
+`ObservedGame.FiniteEFGHypotheses` makes represented information finite and
+makes each occurrence carrier finite through its uniform history bound and
+locally finite action fibers. Ghost raw information values are ignored by both
+strategies and beliefs. Chance is supplied by `ObservedChanceGame`; the
+behavioral history policy uses that declared kernel exactly.
 
 ## Zero-probability information sets
 
