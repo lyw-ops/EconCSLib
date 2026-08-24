@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "authoritative": {"const": false, "type": "boolean"},
+    "canonical_identity": {"type": "object"},
+    "controls_selection": {"const": false, "type": "boolean"},
+    "criteria": {"type": "object"},
+    "delta_path": {"type": "string"},
+    "evidence_contract": {"type": "object"},
+    "limitations": {"minItems": 1, "type": "array"},
+    "obligation_graphs": {"type": "object"},
+    "parent_identity": {"type": "object"},
+    "parent_rubric_id": {"const": "EVE-RUBRIC-R000", "type": "string"},
+    "prerequisite_overrides": {"type": "array"},
+    "rubric_id": {"const": "EVE-RUBRIC-R001", "type": "string"},
+    "schema_version": {"const": "1.1.0", "type": "string"},
+    "scope": {"type": "string"},
+    "shadow_progress_vector": {"type": "object"},
+    "shadow_search_score": {"type": "object"},
+    "status": {"const": "CHILD_SHADOW_NOT_PROMOTED", "type": "string"},
+    "trusted_acceptance_oracle": {"type": "object"},
+    "version": {"const": "0.2.0", "type": "string"}
+  },
+  "required": [
+    "schema_version", "rubric_id", "version", "parent_rubric_id", "status",
+    "authoritative", "controls_selection", "scope", "parent_identity",
+    "canonical_identity", "trusted_acceptance_oracle", "criteria",
+    "obligation_graphs", "prerequisite_overrides", "delta_path",
+    "evidence_contract", "shadow_search_score", "shadow_progress_vector",
+    "limitations"
+  ],
+  "title": "EVE R001 child rubric registry",
+  "type": "object"
+}

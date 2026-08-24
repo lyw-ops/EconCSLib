@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Validate the R000 registry, schemas, prerequisites, and obligation DAGs."""
+"""Validate an R000 or R001 registry and its obligation contracts."""
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -41,6 +42,17 @@ def _acyclic(nodes: set[str], edges: list[tuple[str, str]]) -> bool:
 def validate_rubric(rubric_path: Path = R000_PATH) -> dict[str, Any]:
     errors: list[str] = []
     rubric = load_json(rubric_path)
+    if rubric.get("rubric_id") == "EVE-RUBRIC-R001":
+        from compare_rubrics import compare_rubrics
+
+        comparison = compare_rubrics(R000_PATH, rubric_path)
+        return {
+            "status": comparison["status"],
+            "rubric_id": rubric.get("rubric_id"),
+            "criteria": comparison["criteria_inherited"],
+            "graphs": 4,
+            "errors": comparison["errors"],
+        }
     schemas = {
         name: load_json(RUBRIC_ROOT / "schemas" / f"{name}.schema.json")
         for name in ("rubric", "criterion", "obligation-result", "shadow-evaluation")
@@ -127,8 +139,15 @@ def validate_rubric(rubric_path: Path = R000_PATH) -> dict[str, Any]:
     }
 
 
-def main() -> int:
-    report = validate_rubric()
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--rubric", type=Path, default=R000_PATH)
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _parser().parse_args(argv)
+    report = validate_rubric(args.rubric)
     print(json.dumps(report, indent=2, sort_keys=True))
     return 0 if report["status"] == "passed" else 1
 

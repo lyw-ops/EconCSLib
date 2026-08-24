@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "properties": {
+    "comparisons": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_id": {"minLength": 1, "type": "string"},
+          "child_hard_accepted": {"type": "boolean"},
+          "child_projection_sha256": {"minLength": 64, "type": "string"},
+          "child_shadow_search_score": {"type": "number"},
+          "failure_codes_equal": {"type": "boolean"},
+          "hard_decision_equal": {"type": "boolean"},
+          "parent_hard_accepted": {"type": "boolean"},
+          "parent_projection_sha256": {"minLength": 64, "type": "string"},
+          "parent_shadow_search_score": {"type": "number"},
+          "projection_bytes_equal": {"type": "boolean"},
+          "route": {"enum": ["direct", "transport"]},
+          "scalar_score_bytes_equal": {"type": "boolean"}
+        },
+        "required": [
+          "candidate_id", "route", "parent_hard_accepted", "child_hard_accepted",
+          "hard_decision_equal", "failure_codes_equal", "parent_shadow_search_score",
+          "child_shadow_search_score", "scalar_score_bytes_equal",
+          "parent_projection_sha256", "child_projection_sha256",
+          "projection_bytes_equal"
+        ],
+        "type": "object"
+      },
+      "minItems": 14,
+      "type": "array"
+    },
+    "parent_rubric_id": {"const": "EVE-RUBRIC-R000", "type": "string"},
+    "report_id": {"const": "EVE-RUBRIC-R001-PARENT-CHILD-REPLAY", "type": "string"},
+    "rubric_id": {"const": "EVE-RUBRIC-R001", "type": "string"},
+    "schema_version": {"const": "1.0.0", "type": "string"},
+    "status": {"enum": ["passed", "failed"]}
+  },
+  "required": [
+    "schema_version", "report_id", "rubric_id", "parent_rubric_id", "status",
+    "comparisons"
+  ],
+  "title": "EVE R001 parent-child replay comparison",
+  "type": "object"
+}

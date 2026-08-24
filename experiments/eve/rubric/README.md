@@ -220,3 +220,39 @@ hard/soft authority boundary, score capping, DAG validity, conservative
 syntactic evidence, replay immutability, deterministic output, public-corpus
 claims, model/EvE non-execution, and REP-003 non-modification. It does not
 replace independent human review.
+
+## R001 evidence-hardened child
+
+`versions/R001.json` is the non-promoted child of R000. It inherits all 35
+criteria and all four obligation graphs byte-identically, preserves
+`R000-CONTIGUOUS-FRONTIER-V1`, and leaves the trusted Stage 2 evaluator
+unchanged. `deltas/R000_TO_R001.json` records that the only semantic addition
+is the evidence contract and its non-authoritative structured diagnostic.
+
+Every R001 obligation result carries an `evidence_packet` whose claim, status,
+strength, repository-relative source path, source SHA-256, registered verifier,
+derivation, and prerequisite statuses are checked. A missing packet, source
+drift, unknown verifier, or review/syntactic evidence presented as semantic
+`PASS` fails closed. Paired review claims remain `UNKNOWN`.
+
+`shadow_progress_vector` counts only verified direct evidence. It cannot make a
+hard decision, excludes review-only and syntactic-only evidence, uses no
+learned weights, and is not connected to candidate selection. The scalar
+`shadow_search_score` remains byte-equal to R000 for every candidate in the
+public 14-candidate development corpus.
+
+Run the offline parent-child checks from the repository root:
+
+```bash
+python3 experiments/eve/rubric/scripts/validate_rubric.py \
+  --rubric experiments/eve/rubric/versions/R001.json
+python3 experiments/eve/rubric/scripts/compare_rubrics.py
+python3 experiments/eve/rubric/scripts/replay_parent_child.py \
+  --parent experiments/eve/rubric/versions/R000.json \
+  --child experiments/eve/rubric/versions/R001.json \
+  --verify
+```
+
+R001 has status `CHILD_SHADOW_NOT_PROMOTED`, is non-authoritative, and does not
+control selection. Its public replay is not hidden evaluation, benchmark
+generalization evidence, model-capability evidence, or causal EvE evidence.
