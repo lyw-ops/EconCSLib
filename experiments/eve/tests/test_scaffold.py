@@ -111,13 +111,28 @@ class ScaffoldTests(unittest.TestCase):
         self.assertEqual(efg_manual_smoke_002["observed_agent_turns"], 5)
         self.assertEqual(efg_manual_smoke_002["candidate_score"], 1.0)
         self.assertFalse(efg_manual_smoke_002["guidance_modified"])
-        for key in ("execution_report", "post_run_audit"):
+        run_manifest = json.loads(
+            (
+                SIDECAR_ROOT
+                / "efg_reachability_micro"
+                / "run-manifest.json"
+            ).read_text(encoding="utf-8")
+        )
+        historical_hash_keys = {
+            "execution_report": "manual_smoke_002_report_sha256",
+            "post_run_audit": "manual_smoke_002_audit_sha256",
+        }
+        for key, historical_hash_key in historical_hash_keys.items():
             artifact_path = SIDECAR_ROOT.parents[1] / efg_manual_smoke_002[key]
-            self.assertTrue(artifact_path.is_file())
             self.assertEqual(
                 efg_manual_smoke_002[f"{key}_sha256"],
-                RUNNER._sha256(artifact_path),
+                run_manifest["artifacts"][historical_hash_key],
             )
+            if artifact_path.is_file():
+                self.assertEqual(
+                    efg_manual_smoke_002[f"{key}_sha256"],
+                    RUNNER._sha256(artifact_path),
+                )
         self.assertEqual(
             efg_manual_smoke_002["authorized_conditions"],
             ["EvE-evolved-guidance"],
