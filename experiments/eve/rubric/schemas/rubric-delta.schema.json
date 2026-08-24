@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "child": {"type": "object"},
+    "criterion_delta": {"type": "object"},
+    "delta_id": {"const": "EVE-RUBRIC-R000-TO-R001", "type": "string"},
+    "evidence_contract_delta": {"type": "object"},
+    "obligation_graph_delta": {"type": "object"},
+    "parent": {"type": "object"},
+    "prerequisite_overrides": {"type": "array"},
+    "schema_version": {"const": "1.0.0", "type": "string"},
+    "scoring_delta": {"type": "object"},
+    "status_delta": {"type": "object"}
+  },
+  "required": [
+    "schema_version", "delta_id", "parent", "child", "criterion_delta",
+    "obligation_graph_delta", "scoring_delta", "evidence_contract_delta",
+    "prerequisite_overrides", "status_delta"
+  ],
+  "title": "EVE rubric parent-child delta",
+  "type": "object"
+}

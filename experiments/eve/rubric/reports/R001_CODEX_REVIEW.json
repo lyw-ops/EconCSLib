@@ -1,0 +1,91 @@
+{
+  "checks": {
+    "absolute_paths_or_timestamps_in_outputs": "PASS",
+    "criterion_and_obligation_graph_delta_complete": "PASS",
+    "criterion_dag_acyclic": "PASS",
+    "evidence_deletion_or_downgrade_cannot_improve_vector": "PASS",
+    "evidence_packets_support_pass": "PASS",
+    "hard_oracle_byte_identity": "PASS",
+    "model_or_eve_execution": "PASS_ZERO",
+    "paired_unknown_not_upgraded": "PASS",
+    "parent_hash_fail_closed": "PASS",
+    "public_corpus_not_described_as_benchmark": "PASS",
+    "r000_files_reports_and_output_bytes_unchanged": "PASS",
+    "r001_authority_and_selection_boundary": "PASS",
+    "scalar_score_byte_equality_14_of_14": "PASS",
+    "shadow_vector_fatal_guard": "PASS",
+    "syntactic_and_review_evidence_not_overinterpreted": "PASS"
+  },
+  "findings": [],
+  "historical_hashes": {
+    "historical_protected_tree_sha256": "ac4238dca42f2c0f06bdb9cdde6b2fb2c3327a1f620ca49c5165757fa469e1a9",
+    "r000_canonical_sha256": "a8a2a9a70ffd8c744057dc7ad60393f3f5373e0cacb4b98d46a551302fadd719",
+    "r000_file_sha256": "81615a8cb35dea8d557dee0a16ad6d3375418afaee76c812ab12694aeb4d4cdf",
+    "r001_canonical_sha256": "e10d83d75e391629af7047699d3785755a1630a768fd64c3518e8dec7005bade",
+    "trusted_hard_evaluator_sha256": "7dd10441541593ea63d9de70595b786e130a67327a33c8d6cf4c91d63d6c256f"
+  },
+  "independent_human_review": false,
+  "model_and_execution": {
+    "eve_execute_invocations": 0,
+    "model_calls": 0,
+    "model_sessions": 0,
+    "quota_consumed_by_this_task": 0
+  },
+  "promotion_gates_unsatisfied": [
+    "independent human disagreement review",
+    "fresh-task evaluation",
+    "private/hidden holdout",
+    "prospective parent-child experiment",
+    "evidence that ranking improves budgeted success",
+    "causal EvE evidence"
+  ],
+  "promotion_status": "NOT_PROMOTED",
+  "review_id": "EVE-RUBRIC-R001-CODEX-SELF-REVIEW",
+  "reviewer_kind": "codex-ai-review",
+  "schema_version": "1.0.0",
+  "status": "reviewed-no-blocking-findings",
+  "subject": "EVE-RUBRIC-R001 evidence-hardened shadow child",
+  "validation": [
+    {
+      "command": "python3 experiments/eve/rubric/scripts/validate_rubric.py --rubric experiments/eve/rubric/versions/R000.json",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 experiments/eve/rubric/scripts/validate_rubric.py --rubric experiments/eve/rubric/versions/R001.json",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 experiments/eve/rubric/scripts/verify_rubric_artifacts.py",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 experiments/eve/rubric/scripts/replay_parent_child.py --parent experiments/eve/rubric/versions/R000.json --child experiments/eve/rubric/versions/R001.json --verify",
+      "evidence_packets": 494,
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -m unittest discover -s experiments/eve/tests -p 'test_rubric_*.py' -v",
+      "exit_code": 0,
+      "failed": 0,
+      "passed": 64,
+      "skipped": 0,
+      "tests": 64
+    },
+    {
+      "command": "python3 -m unittest discover -s experiments/eve/tests -v",
+      "exit_code": 0,
+      "failed": 0,
+      "passed": 206,
+      "skipped": 3,
+      "tests": 209
+    },
+    {
+      "command": "python3 scripts/check_lean_placeholders.py EconCSLib",
+      "exit_code": 0
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0
+    }
+  ]
+}

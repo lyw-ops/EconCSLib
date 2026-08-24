@@ -1,0 +1,49 @@
+{
+  "child": {
+    "canonical_sha256": "e10d83d75e391629af7047699d3785755a1630a768fd64c3518e8dec7005bade",
+    "canonical_sha256_path": "experiments/eve/rubric/versions/R001.sha256",
+    "rubric_id": "EVE-RUBRIC-R001"
+  },
+  "criterion_delta": {
+    "added": [],
+    "changed": [],
+    "removed": [],
+    "rationale": "R001 inherits every R000 criterion byte-identically; evidence hardening changes result contracts, not mathematical criteria."
+  },
+  "delta_id": "EVE-RUBRIC-R000-TO-R001",
+  "evidence_contract_delta": {
+    "changes": [
+      "Every obligation result carries a repository-relative, hash-bound evidence packet.",
+      "PASS requires a registered verifier and direct non-review, non-syntactic evidence for semantic criteria.",
+      "Missing packets, source hash drift, and unknown verifiers fail closed.",
+      "Prerequisite statuses are recorded explicitly in every packet."
+    ],
+    "rationale": "The additional contract makes the provenance and derivation of every status machine-auditable without changing hard acceptance."
+  },
+  "obligation_graph_delta": {
+    "added_edges": [],
+    "added_nodes": [],
+    "removed_edges": [],
+    "removed_nodes": [],
+    "rationale": "R001 inherits all four R000 obligation graphs byte-identically."
+  },
+  "parent": {
+    "canonical_sha256": "a8a2a9a70ffd8c744057dc7ad60393f3f5373e0cacb4b98d46a551302fadd719",
+    "rubric_id": "EVE-RUBRIC-R000"
+  },
+  "prerequisite_overrides": [],
+  "schema_version": "1.0.0",
+  "scoring_delta": {
+    "changed": false,
+    "formula_id": "R000-CONTIGUOUS-FRONTIER-V1",
+    "learned_weights": false,
+    "public_corpus_scalar_equality_required": true,
+    "rationale": "R001 preserves the R000 scalar score exactly and adds only a non-authoritative structured progress vector."
+  },
+  "status_delta": {
+    "authoritative": false,
+    "controls_selection": false,
+    "rationale": "R001 remains a shadow child and is not promoted.",
+    "status": "CHILD_SHADOW_NOT_PROMOTED"
+  }
+}

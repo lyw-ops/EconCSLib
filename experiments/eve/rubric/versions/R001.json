@@ -1,0 +1,87 @@
+{
+  "authoritative": false,
+  "canonical_identity": {
+    "algorithm": "sha256",
+    "encoding": "canonical-json",
+    "sha256_path": "experiments/eve/rubric/versions/R001.sha256"
+  },
+  "controls_selection": false,
+  "criteria": {
+    "mode": "inherit-byte-identical",
+    "parent_path": "experiments/eve/rubric/versions/R000.json"
+  },
+  "delta_path": "experiments/eve/rubric/deltas/R000_TO_R001.json",
+  "evidence_contract": {
+    "pass_evidence_strengths": [
+      "lean_kernel",
+      "deterministic_contract",
+      "deterministic_static"
+    ],
+    "require_packet_for_all_results": true,
+    "schema_path": "experiments/eve/rubric/schemas/evidence-packet.schema.json",
+    "semantic_pass_forbidden_strengths": [
+      "syntactic_only",
+      "review_only"
+    ],
+    "unknown_verifier_policy": "fail-closed"
+  },
+  "limitations": [
+    "R001 is an evidence-hardened child shadow rubric and is not promoted.",
+    "The trusted Stage 2 evaluator remains the sole mathematical acceptance oracle.",
+    "The public Stage 2 corpus is development data, not hidden evaluation or benchmark generalization evidence.",
+    "No accepted/rejected labels were used to train or tune weights.",
+    "The progress vector is not connected to candidate selection and supplies no causal EvE or model-capability evidence.",
+    "Codex review is AI review, not independent human review."
+  ],
+  "obligation_graphs": {
+    "mode": "inherit-byte-identical",
+    "parent_directory": "experiments/eve/rubric/obligation_graphs"
+  },
+  "parent_identity": {
+    "canonical_sha256": "a8a2a9a70ffd8c744057dc7ad60393f3f5373e0cacb4b98d46a551302fadd719",
+    "rubric_id": "EVE-RUBRIC-R000",
+    "rubric_path": "experiments/eve/rubric/versions/R000.json",
+    "sha256_path": "experiments/eve/rubric/versions/R000.sha256"
+  },
+  "parent_rubric_id": "EVE-RUBRIC-R000",
+  "prerequisite_overrides": [],
+  "rubric_id": "EVE-RUBRIC-R001",
+  "schema_version": "1.1.0",
+  "scope": "Stage 2 Entry Game public paired development corpus",
+  "shadow_progress_vector": {
+    "authoritative": false,
+    "components": [
+      "hard_accepted",
+      "rank_eligible",
+      "fatal_integrity",
+      "core_frontier_passes",
+      "lean_kernel_route_passes",
+      "deterministic_contract_route_passes",
+      "applicable_unknown_count",
+      "applicable_not_evaluated_count"
+    ],
+    "controls_selection": false,
+    "excluded_evidence_strengths": [
+      "syntactic_only",
+      "review_only"
+    ],
+    "semantics": "non-authoritative-structured-shadow-diagnostic-only"
+  },
+  "shadow_search_score": {
+    "authoritative": false,
+    "controls_selection": false,
+    "formula_id": "R000-CONTIGUOUS-FRONTIER-V1",
+    "maximum_rejected_score": 0.95,
+    "public_corpus_equality_required": true
+  },
+  "status": "CHILD_SHADOW_NOT_PROMOTED",
+  "trusted_acceptance_oracle": {
+    "authoritative": true,
+    "evaluator_path": "experiments/eve/scripts/evaluate_stage2_entry_game.py",
+    "evaluator_sha256": "7dd10441541593ea63d9de70595b786e130a67327a33c8d6cf4c91d63d6c256f",
+    "kind": "existing-deterministic-evaluator",
+    "pass_score": 1.0,
+    "rejection_score": 0.0
+  },
+  "version": "0.2.0"
+}

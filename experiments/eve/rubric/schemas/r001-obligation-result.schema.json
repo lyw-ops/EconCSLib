@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "criterion_id": {"minLength": 3, "type": "string"},
+    "evidence": {"items": {"type": "string"}, "type": "array"},
+    "evidence_packet": {"type": "object"},
+    "rationale": {"minLength": 1, "type": "string"},
+    "status": {
+      "enum": ["PASS", "FAIL", "NOT_EVALUATED", "NOT_APPLICABLE", "UNKNOWN"]
+    }
+  },
+  "required": ["criterion_id", "status", "evidence", "rationale", "evidence_packet"],
+  "title": "EVE R001 obligation result",
+  "type": "object"
+}

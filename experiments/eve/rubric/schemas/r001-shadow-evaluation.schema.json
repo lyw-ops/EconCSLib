@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "candidate_id": {"minLength": 1, "type": "string"},
+    "controls_selection": {"const": false, "type": "boolean"},
+    "failure_frontier": {"items": {"type": "string"}, "type": "array"},
+    "hard_oracle": {"type": "object"},
+    "limitations": {"items": {"type": "string"}, "type": "array"},
+    "mathematical_acceptance": {"const": false, "type": "boolean"},
+    "obligations": {"items": {"type": "object"}, "minItems": 1, "type": "array"},
+    "parent_rubric_id": {"const": "EVE-RUBRIC-R000", "type": "string"},
+    "route": {"enum": ["direct", "transport"]},
+    "rubric_id": {"const": "EVE-RUBRIC-R001", "type": "string"},
+    "schema_version": {"const": "1.1.0", "type": "string"},
+    "score_semantics": {"const": "non-authoritative-shadow-only", "type": "string"},
+    "shadow_progress_vector": {"type": "object"},
+    "shadow_search_score": {"maximum": 1.0, "minimum": 0.0, "type": "number"}
+  },
+  "required": [
+    "schema_version", "rubric_id", "parent_rubric_id", "candidate_id", "route",
+    "hard_oracle", "obligations", "failure_frontier", "shadow_search_score",
+    "shadow_progress_vector", "score_semantics", "controls_selection",
+    "mathematical_acceptance", "limitations"
+  ],
+  "title": "EVE R001 shadow evaluation",
+  "type": "object"
+}

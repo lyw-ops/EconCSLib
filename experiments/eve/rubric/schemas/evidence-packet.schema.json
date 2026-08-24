@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "claim": {"minLength": 1, "type": "string"},
+    "criterion_id": {"minLength": 3, "type": "string"},
+    "derivation": {"minLength": 1, "type": "string"},
+    "evidence_strength": {
+      "enum": ["lean_kernel", "deterministic_contract", "deterministic_static", "syntactic_only", "review_only"]
+    },
+    "oracle_report_sha256": {"minLength": 64, "type": "string"},
+    "prerequisite_statuses": {
+      "additionalProperties": {
+        "enum": ["PASS", "FAIL", "NOT_EVALUATED", "NOT_APPLICABLE", "UNKNOWN"]
+      },
+      "type": "object"
+    },
+    "source_kind": {
+      "enum": ["hard_oracle_report", "rubric_contract", "paired_contract"]
+    },
+    "source_path": {"minLength": 1, "type": "string"},
+    "source_sha256": {"minLength": 64, "type": "string"},
+    "status": {
+      "enum": ["PASS", "FAIL", "NOT_EVALUATED", "NOT_APPLICABLE", "UNKNOWN"]
+    },
+    "verifier_id": {"minLength": 1, "type": "string"}
+  },
+  "required": [
+    "criterion_id",
+    "status",
+    "claim",
+    "evidence_strength",
+    "source_kind",
+    "source_path",
+    "source_sha256",
+    "verifier_id",
+    "derivation",
+    "prerequisite_statuses"
+  ],
+  "title": "EVE R001 evidence packet",
+  "type": "object"
+}
