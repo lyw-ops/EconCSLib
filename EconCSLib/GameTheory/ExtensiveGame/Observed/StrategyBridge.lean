@@ -78,7 +78,7 @@ theorem pureSemantics_atIndex
 
 /-- All natural-number bounded behavioral continuation semantics as one
 indexed continuation family. -/
-noncomputable def behavioralSemantics
+def behavioralSemantics
     (G : ObservedChanceGame N U)
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
@@ -90,7 +90,7 @@ noncomputable def behavioralSemantics
     G.observed.base.toArena.HistoryFrom
       G.observed.base.init
   IsDeclaredRoot := roots.IsRoot
-  Outcome := PMF (Option (N → U))
+  Outcome := FiniteLaw (Option (N → U))
   outcome := fun fuel current profile =>
     G.behavioralStoppedPayoffLawFrom profile current fuel
 
@@ -108,9 +108,9 @@ theorem behavioralSemantics_atIndex
 
 /-- All natural-number bounded mixed continuation semantics as one indexed
 continuation family. -/
-noncomputable def mixedSemantics
+def mixedSemantics
     (G : ObservedChanceGame N U)
-    [Fintype N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (roots : G.observed.RootPresentation) :
@@ -121,7 +121,7 @@ noncomputable def mixedSemantics
     G.observed.base.toArena.HistoryFrom
       G.observed.base.init
   IsDeclaredRoot := roots.IsRoot
-  Outcome := PMF (Option (N → U))
+  Outcome := FiniteLaw (Option (N → U))
   outcome := fun fuel current profile =>
     G.mixedStoppedPayoffLawFrom profile current fuel
 
@@ -129,7 +129,7 @@ noncomputable def mixedSemantics
 family definitionally. -/
 theorem mixedSemantics_atIndex
     (G : ObservedChanceGame N U)
-    [Fintype N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (roots : G.observed.RootPresentation)
@@ -170,7 +170,7 @@ def pureIso
 
 /-- A strict chance-game isomorphism acts uniformly on the complete indexed
 behavioral semantics. -/
-noncomputable def behavioralIso
+def behavioralIso
     {G H : ObservedChanceGame N U}
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
@@ -197,9 +197,9 @@ noncomputable def behavioralIso
 
 /-- A strict chance-game isomorphism acts uniformly on the complete indexed
 mixed semantics. -/
-noncomputable def mixedIso
+def mixedIso
     {G H : ObservedChanceGame N U}
-    [Fintype N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     [(state : H.observed.base.State) →
@@ -259,7 +259,7 @@ def pure
 
 /-- Strict chance-aware relabeling as a uniform behavioral-strategy
 designated-root Nash bridge. -/
-noncomputable def behavioral
+def behavioral
     {G H : ObservedChanceGame N U}
     {V : Type uV} [DecidableEq N] [Preorder V]
     [(state : G.observed.base.State) →
@@ -272,7 +272,7 @@ noncomputable def behavioral
     (hroots :
       e.observedIso.PreservesRootPresentations
         sourceRoots targetRoots)
-    (utility : PMF (Option (N → U)) → N → V)
+    (utility : FiniteLaw (Option (N → U)) → N → V)
     (fuel : ℕ) :
     BoundedDesignatedNashBridge
       G.observed.BehavioralProfile
@@ -290,10 +290,10 @@ noncomputable def behavioral
 
 /-- Strict chance-aware relabeling as a uniform mixed-strategy designated-root
 Nash bridge. -/
-noncomputable def mixed
+def mixed
     {G H : ObservedChanceGame N U}
     {V : Type uV}
-    [Fintype N] [DecidableEq N] [Preorder V]
+    [Fintype N] [LinearOrder N] [Preorder V]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     [(state : H.observed.base.State) →
@@ -304,7 +304,7 @@ noncomputable def mixed
     (hroots :
       e.observedIso.PreservesRootPresentations
         sourceRoots targetRoots)
-    (utility : PMF (Option (N → U)) → N → V)
+    (utility : FiniteLaw (Option (N → U)) → N → V)
     (fuel : ℕ) :
     BoundedDesignatedNashBridge
       G.observed.MixedProfile
@@ -326,15 +326,17 @@ Nash bridge.
 The map samples every behavioral information-state action independently into
 a complete mixed contingent plan. The inverse realization remains
 root-scoped, exactly as required by the finite Kuhn theorem. -/
-noncomputable def kuhn
+def kuhn
     (G : ObservedChanceGame N U)
     {V : Type uV}
-    [Fintype N] [DecidableEq N] [Preorder V]
+    [Fintype N] [LinearOrder N] [Preorder V]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteKuhnHypotheses)
     (roots : G.observed.RootPresentation)
-    (utility : PMF (Option (N → U)) → N → V)
+    (utility : FiniteLaw (Option (N → U)) → N → V)
+    (hutility : ∀ {left right}, left.Equivalent right →
+      ∀ i, utility left i = utility right i)
     (fuel : ℕ) :
     BoundedDesignatedNashBridge
       G.observed.BehavioralProfile
@@ -348,7 +350,7 @@ noncomputable def kuhn
   mapProfile := h.behavioralToMixedProfile
   isNash_iff := fun profile =>
     G.isBehavioralNashOnRootsAtFuel_iff_mixed
-      h roots utility profile fuel
+      h roots utility hutility profile fuel
 
 end ObservedStrategyBridge
 
