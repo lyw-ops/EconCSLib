@@ -18,7 +18,7 @@ branches.
 #check ExtensiveGame.ObservedGame.PureProfileMeasurableModel
 #check ExtensiveGame.ObservedGame.ArbitraryMeasurePureStrategy
 #check ExtensiveGame.ObservedGame.ArbitraryMeasurePureProfileLaw
-#check ExtensiveGame.ObservedGame.ArbitraryMeasurePureProfileLaw.outcomeLaw_ofPMF
+#check ExtensiveGame.ObservedGame.ArbitraryMeasurePureProfileLaw.outcomeLaw_ofFiniteLaw
 #check ExtensiveGame.ObservedGame.MeasurableHistoryModel.PathUtility
 #check ExtensiveGame.ObservedGame.MeasurableHistoryModel.BoundedPathUtility.IsNashOnPresentation
 
@@ -33,3 +33,21 @@ error: Unknown identifier `GameTree.Kuhn_exists_occurrencePureSPE`
 -/
 #guard_msgs in
 #check GameTree.Kuhn_exists_occurrencePureSPE
+
+/-! Conditional laws require an explicit positive-mass witness. -/
+
+open MeasureTheory
+open ExtensiveGame.ObservedGame
+
+example {G : ExtensiveGame.ObservedGame Unit ℝ}
+    {model : MeasurableHistoryModel G}
+    {presentation : MeasurableKernelPresentation G model}
+    (profile : presentation.KernelBehavioralProfile)
+    [MeasurableKernelPresentation.KernelBehavioralProfile.ConditionalContinuation profile]
+    [StandardBorelSpace (ℕ → model.toArena.PathEvent)]
+    [Nonempty (ℕ → model.toArena.PathEvent)]
+    (initialHistory root : CompleteHistory G)
+    (hpositive : profile.canonicalContinuationPrefixMass initialHistory root ≠ 0) :
+    Measure (ℕ → model.toArena.PathEvent) := by
+  fail_if_success exact profile.conditionalContinuationEventPathMeasure initialHistory root
+  exact profile.conditionalContinuationEventPathMeasure initialHistory root hpositive
