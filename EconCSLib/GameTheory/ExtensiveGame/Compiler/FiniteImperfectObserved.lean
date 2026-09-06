@@ -197,6 +197,7 @@ structure ObservedCompiler where
 namespace ObservedCompiler
 
 variable {G : FiniteImperfectGame N U}
+variable [DecidableEq N]
 
 /-- Construct an observed compiler from information well-formedness. -/
 def ofInfoWellFormed
@@ -208,19 +209,17 @@ def ofInfoWellFormed
 
 The compact presentation contains no observations of nonacting players, so
 those histories receive `none`. -/
-noncomputable def observe
+def observe
     (_C : G.ObservedCompiler)
     (i : N)
     (history :
       G.toExtensiveGame.toArena.HistoryFrom
         G.toExtensiveGame.init) :
-    Option (G.DecisionInfo i) := by
-  classical
-  exact
-    if hmover : G.mover history.1 = some i then
-      some (G.decisionInfoAt history.1 i hmover)
-    else
-      none
+    Option (G.DecisionInfo i) :=
+  if hmover : G.mover history.1 = some i then
+    some (G.decisionInfoAt history.1 i hmover)
+  else
+    none
 
 /-- Compile a finite imperfect presentation into the canonical observed-EFG
 layer.
@@ -229,7 +228,7 @@ The source and compiled strategy spaces are both information-indexed. The
 compiler additionally completes unlabeled player nodes as singleton
 information states; it does not claim a literal type equivalence between the
 two presentations. -/
-noncomputable def toObservedGame
+def toObservedGame
     (C : G.ObservedCompiler) :
     ExtensiveGame.ObservedGame N U where
   base := G.toExtensiveGame
@@ -275,11 +274,12 @@ structure ObservedChanceCompiler extends G.ObservedCompiler where
   chanceLaw :
     (state : G.State) →
       G.toExtensiveGame.isChanceState state →
-      PMF (G.Action state)
+      FiniteLaw (G.Action state)
 
 namespace ObservedChanceCompiler
 
 variable {G : FiniteImperfectGame N U}
+variable [DecidableEq N]
 
 /-- Build the conservative initial-root chance compiler without changing the
 legacy compact game record. -/
@@ -288,14 +288,14 @@ def initialRoot
     (chanceLaw :
       (state : G.State) →
         G.toExtensiveGame.isChanceState state →
-        PMF (G.Action state)) :
+        FiniteLaw (G.Action state)) :
     G.ObservedChanceCompiler where
   toObservedCompiler := ObservedCompiler.ofInfoWellFormed hinfo
   chanceLaw := chanceLaw
 
 /-- Compile compact information and the separately supplied normalized chance
 laws to the canonical observed chance-game layer. -/
-noncomputable def toObservedChanceGame
+def toObservedChanceGame
     (C : G.ObservedChanceCompiler) :
     ExtensiveGame.ObservedChanceGame N U :=
   ExtensiveGame.ObservedChanceGame.withChanceKernel
