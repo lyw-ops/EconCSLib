@@ -8,7 +8,14 @@ import EconCSLib.GameTheory.GameForm.Basic
 /-!
 # EconCSLib.GameTheory.GameForm.Continuation.Core
 
-Core continuation-game forms, functional morphisms, and generic Nash-on-declared-roots transfer.
+A continuation family shares complete strategies across caller-declared roots.
+Read `ContinuationGameForm` and `IsNashOnRoots` first, then `Hom` and its
+rootwise `GameForm` view. The transfer theorems state root coverage and
+unilateral-deviation coverage where each direction needs them.
+
+The root predicate carries the caller's interpretation. A representation-aware
+client must identify lawful subgames before using these results as standard
+subgame-perfect equilibrium theorems.
 -/
 
 universe uN uS uR uO uV
