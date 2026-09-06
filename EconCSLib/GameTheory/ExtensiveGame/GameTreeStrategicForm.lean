@@ -50,7 +50,7 @@ def profileStrategy (σ : N → PlayerStrategy N U) : Strategy N U :=
   fun m h t => σ m m h t
 
 /-- The strategic-form extraction of a finite perfect-information tree. -/
-noncomputable def toStrategicGame (g : GameTree N U) : StrategicGame N U where
+def toStrategicGame (g : GameTree N U) : StrategicGame N U where
   strategy := fun _ => PlayerStrategy N U
   payoff σ i := outcome (profileStrategy σ) g i
 
