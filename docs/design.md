@@ -73,7 +73,7 @@ and all `admit` uses remain forbidden.
 | `Math/` | fixed-point theorems, simplex helpers, reusable discrete probability, linear algebra, linear programming, and minimax |
 | `GameTheory/GameForm.lean`, `GameTheory/GameForm/` | stable aggregate plus representation-neutral deterministic, law-valued, and continuation-family semantics, with composable realization and functional/relational Nash-on-declared-roots transfer morphisms; representation-aware standard SPE remains in the EFG layer |
 | `GameTheory/StrategicGame/` | strategic games, equilibrium, dominance, checkers, mixed strategies, ESS, IESDS, correlated-equilibrium foundations, potential games, and zero-sum games |
-| `GameTheory/ExtensiveGame/` | Arena/history-based extensive games, finite tree frontends, observed information, execution, objectives, equilibrium, relations and compilers. Start with the task routes and authority order in `design/efg-document-authority.md`; choose imports through `design/efg-public-api.md`. `Interface.StructuralCore` is the narrow structural facade, `Interface.Core` is the broader Foundation Facade, Canonical/Frontend API growth is frozen, and carrier compatibility remains unfrozen while the documented universe/import regressions stay active. |
+| `GameTheory/ExtensiveGame/` | Arena/history-based extensive games, finite tree frontends, observed information, execution, objectives, equilibrium, relations and compilers. Start with the conceptual and worked-example routes in `design/extensive_game.md`; use `design/efg-document-authority.md` to locate policy and `design/efg-public-api.md` to choose imports. `Interface.StructuralCore` is the narrow structural facade, `Interface.Core` is the broader Foundation Facade, Canonical/Frontend API growth is frozen, and carrier compatibility remains unfrozen while the documented universe/import regressions stay active. |
 | `GameTheory/CoalitionalGame/` | transferable-utility games, the core, and Shapley-value infrastructure |
 | `SocialChoice/` | social-choice vocabulary, voting theory, and fair division |
 | `MarketDesign/Matching/` | matching markets and Gale-Shapley developments |
@@ -109,13 +109,15 @@ compatibility helpers.
 The extensive-form layer uses an arena and state-space model so infinite-state
 and infinite-horizon games remain representable. Separate finite-tree modules
 support backward induction and executable examples.
-The three-record minimal carrier
-`Arena → ControlledGame → ControlledObservedGame` is still under review and
-is not compatibility-frozen. Canonical/Frontend API growth is separately
-frozen, so new capabilities remain in the knowledge blueprint or opt-in
-Experimental work unless that policy is explicitly reopened. Changes to
-existing payoff, probability, objective, recall, finiteness, root-selection,
-or solution-concept boundaries still require a demonstrated representation
+The four-record minimal carrier
+`Arena → ControlledGame → ControlledDecisionGame → ControlledObservedGame` is
+still under review and is not compatibility-frozen. The final observation
+extension is optional for analyses that need only decision information and
+strategies. Canonical/Frontend API growth is separately frozen, so new
+capabilities remain in the knowledge blueprint or opt-in Experimental work
+unless that policy is explicitly reopened. Changes to existing payoff,
+probability, objective, recall, finiteness, root-selection, or
+solution-concept boundaries still require a demonstrated representation
 failure that cannot be handled by an external certificate, adapter, or
 compiler.
 Bijective player renamings use
@@ -137,15 +139,18 @@ terminating, and genuinely infinite EFGs, including path objectives and
 logical winning conditions, is specified in
 [`docs/design/efg-general-foundations.md`](design/efg-general-foundations.md)
 and its continuations for
-[`strategies and solutions`](design/efg-general-foundations-2-strategy.md),
-the [`Lean API plan`](design/efg-general-foundations-3-lean-api.md), and the
-[`theorem roadmap`](design/efg-general-foundations-4-theorem-roadmap.md).
+[`strategies and solutions`](design/efg-general-foundations-2-strategy.md) and
+the implementation-oriented
+[`Lean API notes`](design/efg-general-foundations-3-lean-api.md). Current
+theorem gaps belong in focused boundary notes and staged knowledge nodes rather
+than a second delivery roadmap.
 Lifecycle, frontend/historical boundaries, root-import policy, and the complete
 module register are maintained in
 [`docs/design/efg-governance.md`](design/efg-governance.md) and
 [`docs/design/efg-module-status.md`](design/efg-module-status.md).
 
-Discrete stochastic execution remains `PMF`-based. A separate measurable
+Discrete stochastic execution uses executable `FiniteLaw` values with exact
+rational weights. A separate measurable
 kernel arena admits non-atomic one-step transition laws and receives an exact
 embedding of the discrete layer. Its measurable action-policy interface
 produces a normalized terminal-absorbing one-step kernel and recovers the
@@ -154,19 +159,36 @@ kernels and recovers every discrete `stateLawFrom` exactly. An
 Ionescu--Tulcea construction supplies a normalized infinite discrete-event
 state-path law whose coordinate marginals are exactly those endpoint laws.
 A payoff-free `CompletePathLawSemantics` packages strategy-indexed full
-history-path laws only when each law is a probability measure and is almost
-surely a canonical terminal-absorbing legal play. The discrete behavioral and
-analytic-kernel adapters share this carrier, while local execution coherence
-remains a separate certificate.
+history-path laws only when each law is a probability measure, is almost
+surely a canonical terminal-absorbing legal play, and carries caller-supplied
+bounded coordinate laws equal to its marginals. The discrete behavioral
+adapter consumes a supplied complete law and certifies agreement with every
+executable `FiniteLaw` prefix; the analytic-kernel adapter packages its
+separately owned path measure. Local execution coherence remains a separate
+certificate.
+The exact ownership, facade, adapter direction, and unsupported claims for
+the structural, finite-law, infinite discrete, analytic-kernel, and FOSG
+regimes are governed by
+[`docs/design/efg-semantic-universes.md`](design/efg-semantic-universes.md).
+Executable finite definitions are the primary operational representation for
+effective models. The general carrier and theorem domains remain unchanged.
+Their analytic interpretations are connected by the separately governed
+[`semantic compatibility contract`](design/efg-semantic-compatibility.md).
+Together they form two execution/probability tracks over one shared structural
+EFG layer; representation-neutral theory is not duplicated.
+The executable layer owns values; analytic leaves retain the wider mathematical
+semantics; named equality, approximation, or almost-everywhere theorems state
+exactly what crosses the boundary. Analytic declarations are not lifecycle
+legacy merely because a finite effective subdomain is executable.
 A second policy interface permits time- and finite-state-prefix-dependent
 action kernels and contains the stationary state-Markov executor exactly.
 Analytic observed strategies live in a separate higher layer with
 kernel-valued player laws, a fixed realized chance kernel, and an exact
-embedding of the executable PMF subcase. Constructive profile assembly uses
+embedding of the finite rational-law subcase. Constructive profile assembly uses
 an explicit measurable player-tag space and measurable terminal/player role
 sets; it does not infer ownership measurability or measurable selection.
 Unilateral replacement is implemented by measurable singleton branching,
-and old PMF profiles split and reassemble with exactly the same compiled
+and finite-law profiles split and reassemble with exactly the same compiled
 event policy. Measurable path utilities require explicit integrability;
 uniformly bounded utilities are integrable for every admitted profile and
 support constructive Nash comparison. Terminal payoff evaluation additionally
