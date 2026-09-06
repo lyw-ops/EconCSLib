@@ -16,9 +16,10 @@ Termination therefore occurs almost surely, but its time has unbounded
 support: the unfinished mass at horizon `n` is exactly `2⁻ⁿ`, which is
 strictly positive for every finite `n` and converges to zero.
 
-The example transports that chance process through the canonical
-countable-discrete observed-game presentation. It verifies both sides of the
-new outcome boundary:
+The example uses a supplied analytic profile whose finite coordinate
+marginals are certified against the executable chance process. Countability
+alone no longer manufactures that analytic profile. It verifies both sides
+of the outcome boundary:
 
 * no fixed horizon satisfies `TerminatesBy`;
 * `TerminatesAlmostSurely` does hold;
@@ -34,13 +35,32 @@ namespace Examples.ObservedMeasurableKernelAlmostSureOutcomeBoundary
 open ExtensiveGame
 open MeasurableKernelArena
 
+local macro "finiteLawMeasure(" law:term ")" : term =>
+  `(($law).atoms.foldr
+      (fun atom rest =>
+        (atom.2 : ENNReal) • Measure.dirac atom.1 + rest)
+      0)
+
+local macro "finiteLawMeasureTop(" law:term ")" : term =>
+  `(($law).atoms.foldr
+      (fun atom rest =>
+        (atom.2 : ENNReal) • @Measure.dirac _ ⊤ atom.1 + rest)
+      0)
+
 /-! ## A fair repeat-or-stop chance game -/
 
 /-- The process is either active or terminal. -/
 inductive Node
   | active
   | terminal
-  deriving DecidableEq, Countable
+  deriving DecidableEq
+
+/-- Proof-only countability via the explicit tags `active ↦ 0`, `terminal ↦ 1`.
+The finite executor does not extract an encoding from this instance. -/
+instance : Countable Node :=
+  ⟨⟨(fun node => match node with
+      | .active => 0 | .terminal => 1),
+    by intro a b h; cases a <;> cases b <;> simp_all⟩⟩
 
 /-- A Boolean chance action is available exactly while active. -/
 abbrev nodeAction : Node → Type
@@ -91,15 +111,19 @@ def observed : ObservedGame Unit ℝ where
     change none = some i at hmover
     contradiction
 
+/-- Executable fair-coin law. -/
+def fairCoin : FiniteLaw Bool where
+  atoms := [(false, 1 / 2), (true, 1 / 2)]
+  normalized := by norm_num
+
 /-- Fair chance law at every active complete history. -/
-noncomputable def game : ObservedChanceGame Unit ℝ where
+def game : ObservedChanceGame Unit ℝ where
   observed := observed
   chanceKernel := by
     intro history hchance
     cases hstate : history.1 with
     | active =>
-        simpa [base, nodeAction, hstate] using
-          PMF.bernoulli (1 / 2 : NNReal) (by norm_num)
+        simpa [base, nodeAction, hstate] using fairCoin
     | terminal =>
         exact
           (hchance.2 (by
@@ -182,11 +206,11 @@ theorem decodeHistory_surjective :
   · exact ⟨.inl n, hactive.symm⟩
   · exact ⟨.inr n, hterminal.symm⟩
 
-noncomputable instance historyCountable :
+instance historyCountable :
     Countable History :=
   decodeHistory_surjective.countable
 
-noncomputable instance baseHistoryMeasurable :
+instance baseHistoryMeasurable :
     MeasurableSpace
       (base.toArena.HistoryFrom base.init) :=
   ⊤
@@ -196,7 +220,7 @@ instance baseHistoryMeasurableSingletonClass :
       (base.toArena.HistoryFrom base.init) := by
   infer_instance
 
-noncomputable instance historyMeasurable :
+instance historyMeasurable :
     MeasurableSpace History :=
   ⊤
 
@@ -204,7 +228,7 @@ instance historyMeasurableSingletonClass :
     MeasurableSingletonClass History := by
   infer_instance
 
-noncomputable instance localActionCountable
+instance localActionCountable
     (history : History) :
     Countable (game.observed.base.Action history.1) := by
   change Countable (nodeAction history.1)
@@ -227,13 +251,13 @@ instance gameTerminalDecidable
 
 /-- The player profile is unreachable but supplies the structural behavioral
 argument expected by the observed-chance executor. -/
-noncomputable def behavioralProfile :
+def behavioralProfile :
     game.observed.BehavioralProfile :=
-  fun _ _ => PMF.pure ()
+  fun _ _ => FiniteLaw.pure ()
 
 /-- The induced history policy flips the fair chance coin at every active
 history. -/
-noncomputable def fairHistoryPolicy :
+def fairHistoryPolicy :
     base.toArena.StochasticHistoryPolicy base.init :=
   ObservedChanceGame.BehavioralProfile.toHistoryPolicy
     game behavioralProfile
@@ -256,8 +280,8 @@ theorem fairHistoryPolicy_active
     (n : ℕ) :
     fairHistoryPolicy
         (activeHistory n)
-        (activeHistory_nonterminal n) =
-      PMF.bernoulli (1 / 2 : NNReal) (by norm_num) := by
+      (activeHistory_nonterminal n) =
+      fairCoin := by
   unfold fairHistoryPolicy
   rw [
     ObservedChanceGame.BehavioralProfile.toHistoryPolicy_of_chance
@@ -266,6 +290,32 @@ theorem fairHistoryPolicy_active
       (activeHistory_nonterminal n)
       rfl]
   rfl
+
+private theorem FiniteLaw.eventMass_bind
+    {α β : Type*} (law : FiniteLaw α)
+    (next : α → FiniteLaw β) (event : β → Bool) :
+    (law.bind next).eventMass event =
+      (law.atoms.map fun atom =>
+        atom.2 * (next atom.1).eventMass event).sum := by
+  unfold FiniteLaw.eventMass
+  rw [FiniteLaw.bind_atoms]
+  induction law.atoms with
+  | nil => simp
+  | cons atom atoms ih =>
+      rcases atom with ⟨outcome, weight⟩
+      simp only [List.flatMap_cons, List.map_append, List.sum_append,
+        List.map_cons, List.sum_cons]
+      rw [ih]
+      congr 1
+      simp only [List.map_map, Function.comp_def]
+      induction (next outcome).atoms with
+      | nil => simp
+      | cons inner inners ihInner =>
+          rcases inner with ⟨innerOutcome, innerWeight⟩
+          simp only [List.map_cons, List.sum_cons]
+          rw [ihInner]
+          cases hevent : event innerOutcome <;>
+            simp [mul_add]
 
 @[simp]
 theorem activeHistory_next_repeat (n : ℕ) :
@@ -285,51 +335,49 @@ theorem activeHistory_next_stop (n : ℕ) :
 of the unique still-active history is exactly `2⁻fuel`. -/
 theorem active_survival_probability
     (offset fuel : ℕ) :
-    (base.toArena.stochasticHistoryPMFFrom
-        fairHistoryPolicy (activeHistory offset) fuel)
-        (activeHistory (offset + fuel)) =
-      (1 / 2 : ENNReal) ^ fuel := by
+    (base.toArena.stochasticHistoryLawFrom
+        fairHistoryPolicy (activeHistory offset) fuel).eventMass
+        (fun endpoint =>
+          decide (¬ base.isTerminal endpoint.1)) =
+      (1 / 2 : ℚ≥0) ^ fuel := by
   induction fuel generalizing offset with
   | zero =>
-      rw [base.toArena.stochasticHistoryPMFFrom_zero]
-      simp
+      rw [base.toArena.stochasticHistoryLawFrom_zero]
+      have hnonterminal :
+          ¬ base.isTerminal (activeHistory offset).1 :=
+        activeHistory_nonterminal offset
+      simp [FiniteLaw.eventMass]
+      simpa only [activeHistory_state] using hnonterminal
   | succ fuel ih =>
       rw [
-        base.toArena.stochasticHistoryPMFFrom_succ_of_not_terminal
+        base.toArena.stochasticHistoryLawFrom_succ_of_not_terminal
           fairHistoryPolicy (activeHistory offset) fuel
           (activeHistory_nonterminal offset),
         fairHistoryPolicy_active]
-      rw [PMF.bind_apply]
-      simp only [activeHistory]
-      rw [tsum_fintype, Fintype.sum_bool]
+      rw [FiniteLaw.eventMass_bind]
+      simp only [fairCoin, List.map, List.sum,
+        List.foldr_cons, List.foldr_nil, add_zero]
       change
-        (PMF.bernoulli (1 / 2 : NNReal) (by norm_num) true) *
-              (base.toArena.stochasticHistoryPMFFrom
-                fairHistoryPolicy (terminalHistory offset) fuel)
-                (activeHistory (offset + (fuel + 1))) +
-            (PMF.bernoulli (1 / 2 : NNReal) (by norm_num) false) *
-              (base.toArena.stochasticHistoryPMFFrom
-                fairHistoryPolicy (activeHistory (offset + 1)) fuel)
-                (activeHistory (offset + (fuel + 1))) =
-          (1 / 2 : ENNReal) ^ (fuel + 1)
-      have htarget :
-          offset + (fuel + 1) = (offset + 1) + fuel := by
-        omega
-      rw [htarget]
+        (1 / 2 : ℚ≥0) *
+              (base.toArena.stochasticHistoryLawFrom
+                fairHistoryPolicy (activeHistory (offset + 1)) fuel).eventMass
+                (fun endpoint =>
+                  decide (¬ base.isTerminal endpoint.1)) +
+            (1 / 2 : ℚ≥0) *
+              (base.toArena.stochasticHistoryLawFrom
+                fairHistoryPolicy (terminalHistory offset) fuel).eventMass
+                (fun endpoint =>
+                  decide (¬ base.isTerminal endpoint.1)) =
+          (1 / 2 : ℚ≥0) ^ (fuel + 1)
       rw [ih (offset + 1)]
       rw [
-        base.toArena.stochasticHistoryPMFFrom_of_terminal
+        base.toArena.stochasticHistoryLawFrom_of_terminal
           fairHistoryPolicy (terminalHistory offset)
           (terminalHistory_terminal offset)]
-      simp only [PMF.pure_apply]
-      split
-      · rename_i heq
-        exact
-          (activeHistory_ne_terminalHistory _ _ heq).elim
-      · simp [
-          PMF.bernoulli_apply,
-          pow_succ,
-          mul_comm]
+      have hterminal : base.isTerminal Node.terminal := by
+        change IsEmpty Empty
+        exact ⟨Empty.elim⟩
+      simp [FiniteLaw.eventMass, hterminal, pow_succ, mul_comm]
 
 /-- Every supported nonterminal endpoint after `fuel` further moves is the
 unique all-repeat history. -/
@@ -339,39 +387,38 @@ theorem nonterminal_support_unique
     (hnonterminal :
       ¬ base.isTerminal endpoint.1)
     (hsupport :
-      endpoint ∈
-        (base.toArena.stochasticHistoryPMFFrom
-          fairHistoryPolicy (activeHistory offset) fuel).support) :
+      (base.toArena.stochasticHistoryLawFrom
+        fairHistoryPolicy (activeHistory offset) fuel).HasPositiveAtom
+          endpoint) :
     endpoint = activeHistory (offset + fuel) := by
   induction fuel generalizing offset endpoint with
   | zero =>
-      rw [base.toArena.stochasticHistoryPMFFrom_zero] at hsupport
+      rw [base.toArena.stochasticHistoryLawFrom_zero] at hsupport
       exact
-        (PMF.mem_support_pure_iff
+        (FiniteLaw.hasPositiveAtom_pure_iff
           (activeHistory offset) endpoint).mp hsupport
   | succ fuel ih =>
       rw [
-        base.toArena.stochasticHistoryPMFFrom_succ_of_not_terminal
+        base.toArena.stochasticHistoryLawFrom_succ_of_not_terminal
           fairHistoryPolicy (activeHistory offset) fuel
           (activeHistory_nonterminal offset),
         fairHistoryPolicy_active] at hsupport
       obtain ⟨action, _haction, htail⟩ :=
-        (PMF.mem_support_bind_iff
-          (PMF.bernoulli (1 / 2 : NNReal) (by norm_num))
+        (FiniteLaw.hasPositiveAtom_bind_iff
+          fairCoin
           (fun action =>
-            base.toArena.stochasticHistoryPMFFrom
+            base.toArena.stochasticHistoryLawFrom
               fairHistoryPolicy
               ⟨base.next (activeHistory offset).1 action,
                 (activeHistory offset).2.snoc action⟩
               fuel)
-          endpoint).mp hsupport
+              endpoint).mp hsupport
       cases action with
       | false =>
           have htail' :
-              endpoint ∈
-                (base.toArena.stochasticHistoryPMFFrom
-                  fairHistoryPolicy
-                  (activeHistory (offset + 1)) fuel).support := by
+              (base.toArena.stochasticHistoryLawFrom
+                fairHistoryPolicy
+                (activeHistory (offset + 1)) fuel).HasPositiveAtom endpoint := by
             simpa only [activeHistory_next_repeat] using htail
           have heq :=
             ih (offset + 1) endpoint hnonterminal htail'
@@ -382,18 +429,17 @@ theorem nonterminal_support_unique
               omega
       | true =>
           have htail' :
-              endpoint ∈
-                (base.toArena.stochasticHistoryPMFFrom
-                  fairHistoryPolicy
-                  (terminalHistory offset) fuel).support := by
+              (base.toArena.stochasticHistoryLawFrom
+                fairHistoryPolicy
+                (terminalHistory offset) fuel).HasPositiveAtom endpoint := by
             simpa only [activeHistory_next_stop] using htail
           rw [
-            base.toArena.stochasticHistoryPMFFrom_of_terminal
+            base.toArena.stochasticHistoryLawFrom_of_terminal
               fairHistoryPolicy (terminalHistory offset)
               (terminalHistory_terminal offset)] at htail'
           have heq :
               endpoint = terminalHistory offset :=
-            (PMF.mem_support_pure_iff
+            (FiniteLaw.hasPositiveAtom_pure_iff
               (terminalHistory offset) endpoint).mp htail'
           rw [heq] at hnonterminal
           exact
@@ -408,68 +454,100 @@ theorem nonterminalHistories_measurable :
     MeasurableSet nonterminalHistories :=
   (Set.to_countable _).measurableSet
 
+private theorem finiteLawMeasure_apply_eq_eventMass
+    {α : Type*} [MeasurableSpace α]
+    (law : FiniteLaw α) (event : α → Bool)
+    (hevent : MeasurableSet {outcome | event outcome}) :
+    finiteLawMeasure(law) {outcome | event outcome} =
+      (law.eventMass event : ENNReal) := by
+  have hzero : ((0 : ℚ≥0) : ENNReal) = 0 := by
+    change (((0 : ℚ≥0) : NNReal) : ENNReal) = 0
+    simp
+  have hadd (p q : ℚ≥0) :
+      ((p + q : ℚ≥0) : ENNReal) =
+        (p : ENNReal) + (q : ENNReal) := by
+    change (((p + q : ℚ≥0) : NNReal) : ENNReal) =
+      ((p : NNReal) : ENNReal) + ((q : NNReal) : ENNReal)
+    simp
+  have hmeasure :
+      finiteLawMeasure(law) {outcome | event outcome} =
+        (((law.atoms.map fun atom =>
+          if event atom.1 then atom.2 else 0).sum : ℚ≥0) : ENNReal) := by
+    induction law.atoms with
+    | nil => simp [hzero]
+    | cons atom atoms ih =>
+        rcases atom with ⟨outcome, weight⟩
+        simp only [List.foldr_cons, List.map_cons, List.sum_cons]
+        rw [Measure.add_apply, Measure.smul_apply,
+          Measure.dirac_apply' _ hevent, ih]
+        cases heventOutcome : event outcome <;>
+          simp [heventOutcome, hadd]
+  exact hmeasure
+
 /-- The bounded executor's unfinished mass is exactly the probability of the
 unique all-repeat history. -/
 theorem finite_unfinished_mass
     (fuel : ℕ) :
-    (base.toArena.stochasticHistoryPMFFrom
-        fairHistoryPolicy initialHistory fuel).toMeasure
-        nonterminalHistories =
+    finiteLawMeasure(
+      base.toArena.stochasticHistoryLawFrom
+        fairHistoryPolicy initialHistory fuel) nonterminalHistories =
       (1 / 2 : ENNReal) ^ fuel := by
   let p :=
-    base.toArena.stochasticHistoryPMFFrom
+    base.toArena.stochasticHistoryLawFrom
       fairHistoryPolicy initialHistory fuel
   have hsurvival :
-      p (activeHistory fuel) =
-        (1 / 2 : ENNReal) ^ fuel := by
+      p.eventMass (fun endpoint =>
+          decide (¬ base.isTerminal endpoint.1)) =
+        (1 / 2 : ℚ≥0) ^ fuel := by
     dsimp only [p]
     simpa only [initialHistory, activeHistory, activePath,
       Nat.zero_add] using
       active_survival_probability 0 fuel
-  have hsupport :
-      activeHistory fuel ∈ p.support := by
-    apply (p.mem_support_iff (activeHistory fuel)).2
-    rw [hsurvival]
-    exact pow_ne_zero _ (by norm_num)
-  have hinter :
-      nonterminalHistories ∩ p.support =
-        ({activeHistory fuel} : Set History) := by
-    ext history
-    constructor
-    · intro h
-      have heq :
-          history = activeHistory (0 + fuel) :=
-        nonterminal_support_unique
-          0 fuel history h.1 h.2
-      simpa using heq
-    · intro h
-      have heq : history = activeHistory fuel := by
-        simpa using h
-      subst history
-      exact
-        ⟨activeHistory_nonterminal fuel, hsupport⟩
-  change p.toMeasure nonterminalHistories =
-    (1 / 2 : ENNReal) ^ fuel
+  change finiteLawMeasure(p) nonterminalHistories =
+      (1 / 2 : ENNReal) ^ fuel
+  have hdecMeasurable :
+      MeasurableSet {endpoint : History |
+        decide (¬ base.isTerminal endpoint.1)} := by
+    exact nonterminalHistories_measurable
+  have hdecSet :
+      {endpoint : History | decide (¬ base.isTerminal endpoint.1)} =
+        nonterminalHistories := by
+    ext endpoint
+    simp [nonterminalHistories]
   calc
-    p.toMeasure nonterminalHistories =
-        p.toMeasure
-          (nonterminalHistories ∩ p.support) :=
-      (p.toMeasure_apply_inter_support
-        nonterminalHistories_measurable).symm
-    _ = p.toMeasure ({activeHistory fuel} : Set History) := by
+    finiteLawMeasure(p) nonterminalHistories =
+        finiteLawMeasure(p)
+          {endpoint : History |
+            decide (¬ base.isTerminal endpoint.1)} := by
       exact
-        congrArg
-          (fun set : Set History => p.toMeasure set)
-          hinter
-    _ = p (activeHistory fuel) :=
-      PMF.toMeasure_apply_singleton
-        p (activeHistory fuel)
-        (measurableSet_singleton (activeHistory fuel))
-    _ = (1 / 2 : ENNReal) ^ fuel := hsurvival
+        (congrArg
+          (fun event : Set History => finiteLawMeasure(p) event)
+          hdecSet).symm
+    _ =
+        (p.eventMass (fun endpoint =>
+          decide (¬ base.isTerminal endpoint.1)) : ENNReal) := by
+      exact finiteLawMeasure_apply_eq_eventMass p _ hdecMeasurable
+    _ = (((1 / 2 : ℚ≥0) ^ fuel : ℚ≥0) : ENNReal) := by
+      rw [hsurvival]
+    _ = (1 / 2 : ENNReal) ^ fuel := by
+      calc
+        (((1 / 2 : ℚ≥0) ^ fuel : ℚ≥0) : ENNReal) =
+            ((((1 / 2 : ℚ≥0) ^ fuel : ℚ≥0) : NNReal) : ENNReal) :=
+          (ENNReal.coe_nnratCast _).symm
+        _ = (((1 / 2 : ℚ≥0) : NNReal) : ENNReal) ^ fuel := by
+          congr 1
+          apply NNReal.eq
+          simp
+        _ = ((1 / 2 : ℚ≥0) : ENNReal) ^ fuel := by
+          rw [ENNReal.coe_nnratCast]
+        _ = (1 / 2 : ENNReal) ^ fuel := by
+          congr 1
+          change (((1 / 2 : ℚ≥0) : NNReal) : ENNReal) = _
+          norm_num
 
-/-! ## Canonical analytic presentation and infinite-path outcome -/
+/-! ## Supplied analytic presentation and certified finite marginals -/
 
-noncomputable instance completeHistoryActionCountable :
+instance completeHistoryActionCountable :
     Countable
       (ObservedChanceGame.CompleteHistoryAction game) := by
   infer_instance
@@ -479,7 +557,7 @@ noncomputable def historyModel :
     game.MeasurableHistoryModel :=
   ObservedChanceGame.MeasurableHistoryModel.discrete game
 
-noncomputable instance historyModelPathEventCountable :
+instance historyModelPathEventCountable :
     Countable historyModel.toArena.PathEvent := by
   change
     Countable
@@ -495,16 +573,18 @@ instance historyModelPathEventMeasurableSingletonClass :
       (game.AnalyticHistoryArena).PathEvent
   infer_instance
 
-/-- Canonical general measurable-kernel presentation. -/
-noncomputable def presentation :
-    game.observed.MeasurableKernelPresentation historyModel :=
-  ObservedChanceGame.CountablePresentation.kernelPresentation game
+variable
+  {presentation : game.observed.MeasurableKernelPresentation historyModel}
+  {analyticProfile : presentation.KernelBehavioralProfile}
+  (finiteMarginals :
+    ∀ horizon,
+      (analyticProfile.statePathMeasure initialHistory).map
+          (fun path => path horizon) =
+        finiteLawMeasureTop(
+          base.toArena.stochasticHistoryLawFrom
+            fairHistoryPolicy initialHistory horizon))
 
-/-- Fair chance process embedded in the general kernel-profile interface. -/
-noncomputable def analyticProfile :
-    presentation.KernelBehavioralProfile :=
-  ObservedChanceGame.CountablePresentation.kernelBehavioralProfile
-    game behavioralProfile
+include finiteMarginals
 
 /-- Every finite analytic state coordinate recovers exactly the bounded
 stopped-history executor. -/
@@ -512,12 +592,10 @@ theorem analytic_finite_state_law
     (horizon : ℕ) :
     (analyticProfile.statePathMeasure initialHistory).map
         (fun path => path horizon) =
-      (base.toArena.stochasticHistoryPMFFrom
-        fairHistoryPolicy initialHistory horizon).toMeasure := by
-  exact
-    (ObservedChanceGame.CountablePresentation.presentation game
-      ).compiled_finite_state_law
-        behavioralProfile horizon initialHistory
+      finiteLawMeasureTop(
+        base.toArena.stochasticHistoryLawFrom
+          fairHistoryPolicy initialHistory horizon) :=
+  finiteMarginals horizon
 
 /-- The analytic infinite-path law has exact unfinished mass `2⁻horizon`. -/
 theorem analytic_unfinished_mass
@@ -535,7 +613,7 @@ theorem analytic_unfinished_mass
   rw [← Measure.map_apply
     (measurable_pi_apply horizon)
     nonterminalHistories_measurable]
-  rw [analytic_finite_state_law]
+  rw [analytic_finite_state_law finiteMarginals]
   exact finite_unfinished_mass horizon
 
 /-- Unfinished mass vanishes although it is positive at every finite
@@ -551,14 +629,14 @@ theorem analytic_unfinished_mass_tendsto_zero :
   apply hpow.congr'
   exact
     Filter.Eventually.of_forall fun horizon =>
-      (analytic_unfinished_mass horizon).symm
+      (analytic_unfinished_mass finiteMarginals horizon).symm
 
 /-- The analytic profile reaches some terminal history almost surely. -/
 theorem analytic_reachesTerminalAlmostSurely :
     analyticProfile.ReachesTerminalAlmostSurely
       initialHistory :=
   analyticProfile.reachesTerminalAlmostSurely_of_unfinishedMass_tendsto_zero
-    initialHistory analytic_unfinished_mass_tendsto_zero
+    initialHistory (analytic_unfinished_mass_tendsto_zero finiteMarginals)
 
 /-- Countable-discrete terminal awareness upgrades reachability to eventual
 terminal absorption. -/
@@ -566,7 +644,7 @@ theorem analytic_terminatesAlmostSurely :
     analyticProfile.TerminatesAlmostSurely
       initialHistory :=
   analyticProfile.terminatesAlmostSurely_of_reachesTerminalAlmostSurely
-    initialHistory analytic_reachesTerminalAlmostSurely
+    initialHistory (analytic_reachesTerminalAlmostSurely finiteMarginals)
 
 /-- There is no deterministic finite bound on the random termination time. -/
 theorem analytic_not_terminatesBy
@@ -577,7 +655,7 @@ theorem analytic_not_terminatesBy
       analyticProfile.unfinishedMass initialHistory horizon = 0 :=
     (analyticProfile.terminatesBy_iff_unfinishedMass_eq_zero
       initialHistory horizon).mp hterminates
-  rw [analytic_unfinished_mass] at hzero
+  rw [analytic_unfinished_mass finiteMarginals] at hzero
   have hpositive :
       0 < (1 / 2 : ENNReal) ^ horizon := by
     exact
@@ -585,9 +663,10 @@ theorem analytic_not_terminatesBy
         (pow_ne_zero _ (by norm_num))
   exact hpositive.ne' hzero
 
+omit finiteMarginals in
 /-- Base terminal payoff, extended measurably to every complete history and
 bounded by one. -/
-noncomputable def terminalPayoff :
+def terminalPayoff :
     ObservedGame.MeasurableHistoryModel.BoundedTerminalPayoffExtension
       game.observed historyModel where
   payoff := fun _ history =>
@@ -618,9 +697,9 @@ theorem analytic_expectedUtility_tendsto :
       (nhds
         (terminalPayoff.expectedEventualUtility
           analyticProfile initialHistory
-          analytic_terminatesAlmostSurely ())) :=
+          (analytic_terminatesAlmostSurely finiteMarginals) ())) :=
   terminalPayoff.expectedUtility_tendsto_expectedEventualUtility
     analyticProfile initialHistory
-    analytic_terminatesAlmostSurely ()
+    (analytic_terminatesAlmostSurely finiteMarginals) ()
 
 end Examples.ObservedMeasurableKernelAlmostSureOutcomeBoundary
