@@ -240,5 +240,80 @@ namespace EffectiveLaw
 
 variable {EventCode : Type uEvent} {α : Type uα} [MeasurableSpace α]
 
+/-- Correctness of an effective law with respect to a coded-event
+interpretation and an analytic probability measure. -/
+structure Represents (law : EffectiveLaw EventCode)
+    (semantics : EventSemantics EventCode α) (μ : Measure α) : Prop where
+  /-- The semantic law is normalized. -/
+  isProbabilityMeasure : IsProbabilityMeasure μ
+  /-- Each executable event oracle encloses the corresponding event mass. -/
+  mass : ∀ event,
+    (law.mass event).Represents (μ.real (semantics.denote event))
+
+/-- The executable expectation oracle for every finite rational simple
+observable represents its true integral. -/
+theorem Represents.expect_integral {law : EffectiveLaw EventCode}
+    {semantics : EventSemantics EventCode α} {μ : Measure α}
+    (represents : law.Represents semantics μ)
+    {observable : SimpleObservable EventCode} {f : α → ℝ}
+    (hdenotes : observable.Denotes semantics f) :
+    (law.expect observable).Represents
+      (∫ x, f x ∂μ) := by
+  letI : IsProbabilityMeasure μ := represents.isProbabilityMeasure
+  induction hdenotes with
+  | const value =>
+      refine (RatOracle.exact_represents value).congr ?_
+      simp [probReal_univ]
+  | indicator event =>
+      refine (represents.mass event).congr ?_
+      exact (integral_indicator_one (μ := μ)
+        (semantics.measurable_denote event)).symm
+  | add hleft hright ihLeft ihRight =>
+      refine (ihLeft.add ihRight).congr ?_
+      symm
+      exact integral_add (hleft.integrable μ) (hright.integrable μ)
+  | scale coefficient h ih =>
+      refine (ih.scale coefficient).congr ?_
+      symm
+      exact integral_const_mul (μ := μ) (coefficient : ℝ) _
+
 end EffectiveLaw
+
+namespace ExactLaw
+
+variable {EventCode : Type uEvent} {α : Type uα} [MeasurableSpace α]
+
+variable (law : ExactLaw EventCode)
+variable (semantics : EventSemantics EventCode α) (μ : Measure α)
+variable (hprobability : IsProbabilityMeasure μ)
+variable (hmass : ∀ event,
+  (law.mass event : ℝ) = μ.real (semantics.denote event))
+
+include hprobability hmass
+
+/-- An exact rational backend represents an analytic probability law whenever
+its selected event masses agree after coercion to `ℝ`.  This is the reusable
+bridge for symbolic non-atomic instances with closed-form rational answers. -/
+theorem toEffective_represents :
+    law.toEffective.Represents semantics μ := by
+  refine
+    { isProbabilityMeasure := hprobability
+      mass := ?_ }
+  intro event
+  exact (RatOracle.exact_represents (law.mass event)).congr (hmass event)
+
+/-- Exact rational simple-observable expectation agrees with the genuine
+integral under any represented analytic probability law. -/
+theorem expectRat_eq_integral
+    {observable : SimpleObservable EventCode} {f : α → ℝ}
+    (hdenotes : observable.Denotes semantics f) :
+    (law.expectRat observable : ℝ) = ∫ x, f x ∂μ := by
+  apply RatOracle.Represents.unique
+  · exact (law.toEffective_expect_encloses observable).represents
+  · exact
+      (law.toEffective_represents semantics μ hprobability hmass).expect_integral
+        hdenotes
+
+end ExactLaw
+
 end EffectiveProbability
