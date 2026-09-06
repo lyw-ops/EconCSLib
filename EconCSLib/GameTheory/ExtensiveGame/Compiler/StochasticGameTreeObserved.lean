@@ -15,7 +15,7 @@ private and public observations are complete typed histories, so equal subtree
 values at different paths remain distinct decisions.
 
 The compiler preserves the source tree's finite child-occurrence type and
-chance `PMF` definitionally.  A source pure policy induces a Dirac behavioral
+chance `FiniteLaw` definitionally. A source pure policy induces a Dirac behavioral
 profile.  Bounded execution then has exactly the same endpoint-subtree law as
 the source recursive execution, not merely a coupling or simulation.
 
@@ -32,8 +32,8 @@ Only terminal payoffs are semantic.  The total payoff field required by
 ## Main results
 
 * `policyHistoryPolicy_player` and `policyHistoryPolicy_chance`
-* `stochasticHistoryPMFFrom_map_endpoint`
-* `stochasticHistoryPMFFrom_map_payoff`
+* `stochasticHistoryLawFrom_map_endpoint`
+* `stochasticHistoryLawFrom_map_payoff`
 * `policyToBehavioralProfile_deviate`
 -/
 
@@ -104,7 +104,7 @@ theorem toExtensiveGame_action_player (root : StochasticGameTree N)
 theorem toExtensiveGame_action_chance (root : StochasticGameTree N)
     (arity : ℕ)
     (child : Fin (arity + 1) → StochasticGameTree N)
-    (law : PMF (Fin (arity + 1))) :
+    (law : FiniteLaw (Fin (arity + 1))) :
     (toExtensiveGame root).Action (.Chance arity child law) =
       Fin (arity + 1) := rfl
 
@@ -120,7 +120,7 @@ theorem toExtensiveGame_next_player (root : StochasticGameTree N)
 theorem toExtensiveGame_next_chance (root : StochasticGameTree N)
     (arity : ℕ)
     (child : Fin (arity + 1) → StochasticGameTree N)
-    (law : PMF (Fin (arity + 1)))
+    (law : FiniteLaw (Fin (arity + 1)))
     (action : Fin (arity + 1)) :
     (toExtensiveGame root).next (.Chance arity child law) action =
       child action := rfl
@@ -136,7 +136,7 @@ theorem toExtensiveGame_mover_player (root : StochasticGameTree N)
 theorem toExtensiveGame_mover_chance (root : StochasticGameTree N)
     (arity : ℕ)
     (child : Fin (arity + 1) → StochasticGameTree N)
-    (law : PMF (Fin (arity + 1))) :
+    (law : FiniteLaw (Fin (arity + 1))) :
     (toExtensiveGame root).mover (.Chance arity child law) = none := rfl
 
 @[simp]
@@ -162,7 +162,7 @@ theorem toExtensiveGame_not_isTerminal_player
 theorem toExtensiveGame_not_isTerminal_chance
     (root : StochasticGameTree N) (arity : ℕ)
     (child : Fin (arity + 1) → StochasticGameTree N)
-    (law : PMF (Fin (arity + 1))) :
+    (law : FiniteLaw (Fin (arity + 1))) :
     ¬ (toExtensiveGame root).isTerminal (.Chance arity child law) := by
   intro hterminal
   exact hterminal.false ⟨0, Nat.zero_lt_succ arity⟩
@@ -222,9 +222,9 @@ theorem historyPath_snoc {root tree : StochasticGameTree N}
 /-- A nonterminal player-controlled complete history occurrence. -/
 abbrev OccurrenceInfo (root : StochasticGameTree N) (i : N) :=
   { history :
-      (toExtensiveGame root).toArena.HistoryFrom root //
+    (toExtensiveGame root).toArena.HistoryFrom root //
     (toExtensiveGame root).mover history.1 = some i ∧
-      ¬ (toExtensiveGame root).isTerminal history.1 }
+      (toExtensiveGame root).toArena.IsDecision history.1 }
 
 /-- Occurrence-sensitive observed presentation of a stochastic tree before its
 chance kernels are attached. -/
@@ -236,9 +236,9 @@ def toObservedGame (root : StochasticGameTree N) :
       (toExtensiveGame root))
 
 /-- Extract the constructor-provided chance law at a compiled chance state. -/
-noncomputable def chanceLawAt (root tree : StochasticGameTree N)
+def chanceLawAt (root tree : StochasticGameTree N)
     (hchance : (toExtensiveGame root).isChanceState tree) :
-    PMF ((toExtensiveGame root).Action tree) := by
+    FiniteLaw ((toExtensiveGame root).Action tree) := by
   cases tree with
   | Leaf payoff =>
       exact
@@ -251,7 +251,7 @@ noncomputable def chanceLawAt (root tree : StochasticGameTree N)
       exact law
 
 /-- Compile a stochastic tree to the canonical observed chance-game layer. -/
-noncomputable def toObservedChanceGame (root : StochasticGameTree N) :
+def toObservedChanceGame (root : StochasticGameTree N) :
     ExtensiveGame.ObservedChanceGame N ℝ :=
   ExtensiveGame.ObservedChanceGame.withChanceKernel
     (toObservedGame root)
@@ -267,7 +267,7 @@ theorem toObservedChanceGame_observed
 theorem chanceLawAt_chance (root : StochasticGameTree N)
     (arity : ℕ)
     (child : Fin (arity + 1) → StochasticGameTree N)
-    (law : PMF (Fin (arity + 1)))
+    (law : FiniteLaw (Fin (arity + 1)))
     (hchance :
       (toExtensiveGame root).isChanceState
         (.Chance arity child law)) :
@@ -293,11 +293,11 @@ def policyActionAt (root : StochasticGameTree N)
 
 /-- A source pure policy as a Dirac behavioral profile on the occurrence
 presentation. -/
-noncomputable def policyToBehavioralProfile
+def policyToBehavioralProfile
     (root : StochasticGameTree N) (policy : Policy N) :
     (toObservedGame root).BehavioralProfile :=
   fun i information =>
-    PMF.pure (policyActionAt root policy i information)
+    FiniteLaw.pure (policyActionAt root policy i information.1)
 
 /-- At a player occurrence, compiled behavioral execution selects exactly the
 source policy's child occurrence. -/
@@ -315,7 +315,7 @@ theorem policyHistoryPolicy_player
         (toObservedChanceGame root)
         (policyToBehavioralProfile root policy)
         ⟨.Player mover arity child, history⟩ hnonterminal =
-      PMF.pure
+      FiniteLaw.pure
         (policy (historyPath history) mover arity child) := by
   rw [ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryPolicy_of_mover
     _ _ _ hnonterminal mover rfl]
@@ -324,19 +324,21 @@ theorem policyHistoryPolicy_player
     ExtensiveGame.ObservedGame.BehavioralStrategy.actionLawAt
     policyToBehavioralProfile
   change
-    (PMF.pure
+    (FiniteLaw.pure
       (policyActionAt root policy mover
         ⟨⟨.Player mover arity child, history⟩,
-          rfl, hnonterminal⟩)).map id =
-      PMF.pure
+          rfl,
+          (toExtensiveGame root).toArena
+            |>.isDecision_of_not_isTerminal _ hnonterminal⟩)).map id =
+      FiniteLaw.pure
         (policy (historyPath history) mover arity child)
   change
-    PMF.map id
-        (PMF.pure
+    FiniteLaw.map id
+        (FiniteLaw.pure
           (policy (historyPath history) mover arity child)) =
-      PMF.pure
+      FiniteLaw.pure
         (policy (historyPath history) mover arity child)
-  exact PMF.map_id _
+  exact FiniteLaw.map_id _
 
 /-- At a chance occurrence, compiled behavioral execution uses exactly the
 source constructor's normalized law. -/
@@ -344,7 +346,7 @@ theorem policyHistoryPolicy_chance
     (root : StochasticGameTree N) (policy : Policy N)
     (arity : ℕ)
     (child : Fin (arity + 1) → StochasticGameTree N)
-    (law : PMF (Fin (arity + 1)))
+    (law : FiniteLaw (Fin (arity + 1)))
     (history :
       (toExtensiveGame root).toArena.History
         root (.Chance arity child law))
@@ -362,12 +364,12 @@ theorem policyHistoryPolicy_chance
 
 /-- Source-side bounded endpoint law.  It stops at leaves and otherwise uses
 the same pure player choice and chance bind as the compiled execution. -/
-noncomputable def endpointLawWithFuel :
+def endpointLawWithFuel :
     ℕ → Policy N → List ℕ → StochasticGameTree N →
-      PMF (StochasticGameTree N)
-  | 0, _policy, _path, tree => PMF.pure tree
+      FiniteLaw (StochasticGameTree N)
+  | 0, _policy, _path, tree => FiniteLaw.pure tree
   | _fuel + 1, _policy, _path, .Leaf payoff =>
-      PMF.pure (.Leaf payoff)
+      FiniteLaw.pure (.Leaf payoff)
   | fuel + 1, policy, path, .Player mover arity child =>
       let choice := policy path mover arity child
       endpointLawWithFuel fuel policy
@@ -379,14 +381,14 @@ noncomputable def endpointLawWithFuel :
 
 /-- Bounded compiled execution has exactly the source endpoint-subtree law.
 
-This is an equality of `PMF`s after forgetting the complete target history,
+This is an equality of finite laws after forgetting the complete target history,
 not a strict isomorphism of the source and target presentations. -/
-theorem stochasticHistoryPMFFrom_map_endpoint
+theorem stochasticHistoryLawFrom_map_endpoint
     (root : StochasticGameTree N) (policy : Policy N)
     (current :
       (toExtensiveGame root).toArena.HistoryFrom root)
     (fuel : ℕ) :
-    ((toExtensiveGame root).toArena.stochasticHistoryPMFFrom
+    ((toExtensiveGame root).toArena.stochasticHistoryLawFrom
         (ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryPolicy
           (toObservedChanceGame root)
           (policyToBehavioralProfile root policy))
@@ -395,32 +397,32 @@ theorem stochasticHistoryPMFFrom_map_endpoint
         (historyPath current.2) current.1 := by
   induction fuel generalizing current with
   | zero =>
-      rw [Arena.stochasticHistoryPMFFrom_zero, PMF.pure_map]
+      rw [Arena.stochasticHistoryLawFrom_zero, FiniteLaw.pure_map]
       rfl
   | succ fuel ih =>
       rcases current with ⟨tree, history⟩
       cases tree with
       | Leaf payoff =>
-          rw [Arena.stochasticHistoryPMFFrom_succ_of_terminal
+          rw [Arena.stochasticHistoryLawFrom_succ_of_terminal
             _ _ fuel
             (toExtensiveGame_isTerminal_leaf root payoff)]
-          rw [PMF.pure_map]
+          rw [FiniteLaw.pure_map]
           rfl
       | Player mover arity child =>
           have hnonterminal :=
             toExtensiveGame_not_isTerminal_player
               root mover arity child
-          rw [Arena.stochasticHistoryPMFFrom_succ_of_not_terminal
+          rw [Arena.stochasticHistoryLawFrom_succ_of_not_terminal
             _ _ fuel hnonterminal]
           change
-            PMF.map Sigma.fst
+            FiniteLaw.map Sigma.fst
                 ((ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryPolicy
                     (toObservedChanceGame root)
                     (policyToBehavioralProfile root policy)
                     ⟨.Player mover arity child, history⟩
                     hnonterminal).bind
                   (fun action =>
-                    (toExtensiveGame root).toArena.stochasticHistoryPMFFrom
+                    (toExtensiveGame root).toArena.stochasticHistoryLawFrom
                       (ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryPolicy
                         (toObservedChanceGame root)
                         (policyToBehavioralProfile root policy))
@@ -432,10 +434,10 @@ theorem stochasticHistoryPMFFrom_map_endpoint
           let choice :=
             policy (historyPath history) mover arity child
           change
-            PMF.map Sigma.fst
-                ((PMF.pure choice).bind
+            FiniteLaw.map Sigma.fst
+                ((FiniteLaw.pure choice).bind
                   (fun action =>
-                    (toExtensiveGame root).toArena.stochasticHistoryPMFFrom
+                    (toExtensiveGame root).toArena.stochasticHistoryLawFrom
                       (ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryPolicy
                         (toObservedChanceGame root)
                         (policyToBehavioralProfile root policy))
@@ -444,13 +446,13 @@ theorem stochasticHistoryPMFFrom_map_endpoint
                 (historyPath history ++ [choice.1]) (child choice)
           calc
             _ =
-                PMF.map Sigma.fst
-                  ((toExtensiveGame root).toArena.stochasticHistoryPMFFrom
+                FiniteLaw.map Sigma.fst
+                  ((toExtensiveGame root).toArena.stochasticHistoryLawFrom
                     (ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryPolicy
                       (toObservedChanceGame root)
                       (policyToBehavioralProfile root policy))
                     ⟨child choice, history.snoc choice⟩ fuel) :=
-              congrArg (PMF.map Sigma.fst) (PMF.pure_bind choice _)
+              congrArg (FiniteLaw.map Sigma.fst) (FiniteLaw.pure_bind choice _)
             _ = endpointLawWithFuel fuel policy
                   (historyPath (history.snoc choice)) (child choice) :=
               ih
@@ -462,17 +464,17 @@ theorem stochasticHistoryPMFFrom_map_endpoint
           have hnonterminal :=
             toExtensiveGame_not_isTerminal_chance
               root arity child law
-          rw [Arena.stochasticHistoryPMFFrom_succ_of_not_terminal
+          rw [Arena.stochasticHistoryLawFrom_succ_of_not_terminal
             _ _ fuel hnonterminal]
           change
-            PMF.map Sigma.fst
+            FiniteLaw.map Sigma.fst
                 ((ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryPolicy
                     (toObservedChanceGame root)
                     (policyToBehavioralProfile root policy)
                     ⟨.Chance arity child law, history⟩
                     hnonterminal).bind
                   (fun action =>
-                    (toExtensiveGame root).toArena.stochasticHistoryPMFFrom
+                    (toExtensiveGame root).toArena.stochasticHistoryLawFrom
                       (ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryPolicy
                         (toObservedChanceGame root)
                         (policyToBehavioralProfile root policy))
@@ -481,9 +483,9 @@ theorem stochasticHistoryPMFFrom_map_endpoint
                 (historyPath history) (.Chance arity child law)
           rw [policyHistoryPolicy_chance
             root policy arity child law history hnonterminal]
-          rw [PMF.map_bind]
+          rw [FiniteLaw.map_bind]
           simp only [endpointLawWithFuel]
-          apply congrArg (PMF.bind law)
+          apply congrArg (FiniteLaw.bind law)
           funext choice
           simpa using
             ih
@@ -492,12 +494,12 @@ theorem stochasticHistoryPMFFrom_map_endpoint
 
 /-- Mapping bounded compiled histories to the total payoff field yields
 exactly the source endpoint law mapped through the same payoff function. -/
-theorem stochasticHistoryPMFFrom_map_payoff
+theorem stochasticHistoryLawFrom_map_payoff
     (root : StochasticGameTree N) (policy : Policy N)
     (current :
       (toExtensiveGame root).toArena.HistoryFrom root)
     (fuel : ℕ) :
-    ((toExtensiveGame root).toArena.stochasticHistoryPMFFrom
+    ((toExtensiveGame root).toArena.stochasticHistoryLawFrom
         (ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryPolicy
           (toObservedChanceGame root)
           (policyToBehavioralProfile root policy))
@@ -506,19 +508,19 @@ theorem stochasticHistoryPMFFrom_map_payoff
       (endpointLawWithFuel fuel policy
         (historyPath current.2) current.1).map statePayoff := by
   calc
-    ((toExtensiveGame root).toArena.stochasticHistoryPMFFrom
+    ((toExtensiveGame root).toArena.stochasticHistoryLawFrom
           (ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryPolicy
             (toObservedChanceGame root)
           (policyToBehavioralProfile root policy))
           current fuel).map
         (fun history => (toExtensiveGame root).payoff history.1) =
-      (((toExtensiveGame root).toArena.stochasticHistoryPMFFrom
+      (((toExtensiveGame root).toArena.stochasticHistoryLawFrom
           (ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryPolicy
             (toObservedChanceGame root)
             (policyToBehavioralProfile root policy))
           current fuel).map Sigma.fst).map statePayoff := by
         let executionLaw :=
-          (toExtensiveGame root).toArena.stochasticHistoryPMFFrom
+          (toExtensiveGame root).toArena.stochasticHistoryLawFrom
             (ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryPolicy
               (toObservedChanceGame root)
               (policyToBehavioralProfile root policy))
@@ -526,10 +528,10 @@ theorem stochasticHistoryPMFFrom_map_payoff
         change
           executionLaw.map (statePayoff ∘ Sigma.fst) =
             (executionLaw.map Sigma.fst).map statePayoff
-        exact (PMF.map_comp Sigma.fst executionLaw statePayoff).symm
+        exact (FiniteLaw.map_comp Sigma.fst executionLaw statePayoff).symm
     _ = (endpointLawWithFuel fuel policy
           (historyPath current.2) current.1).map statePayoff := by
-      rw [stochasticHistoryPMFFrom_map_endpoint
+      rw [stochasticHistoryLawFrom_map_endpoint
         root policy current fuel]
 
 /-! ### Unilateral source deviations -/
@@ -566,7 +568,7 @@ theorem policyToBehavioralProfile_deviate [DecidableEq N]
     funext information
     unfold policyToBehavioralProfile
     congr 1
-    rcases information with
+    rcases information.1 with
       ⟨⟨tree, history⟩, hmover, _hnonterminal⟩
     cases tree with
     | Leaf payoff =>
