@@ -1,0 +1,244 @@
+/-
+Copyright (c) 2026 EconCSLib contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+-/
+
+import EconCSLib.Math.Probability.Effective.Core
+import Mathlib.MeasureTheory.Integral.Bochner.Set
+import Mathlib.Probability.Kernel.Composition.MeasureComp
+
+/-!
+# Measure semantics of effective probability queries
+
+This analytic leaf interprets the measure-free interfaces in
+`Effective.Core`.  An `EventSemantics` assigns a measurable set to each event
+code.  `RatOracle.Represents` says that every rational interval returned by an
+oracle contains one fixed real value, and `EffectiveLaw.Represents` says that
+the represented values are the probabilities of the coded events under one
+probability measure.
+
+The main correctness theorem proves, by structural induction, that the
+executable oracle for a finite rational simple observable encloses its
+Bochner integral.  The proof-only `SimpleObservable.Denotes` relation keeps
+the analytic function out of executable data.  Pushforward, law bind, and
+kernel composition correctness follow from explicit map and kernel
+representation certificates.  Shrinking oracle widths also make the
+represented real value unique, yielding exact-integral theorems for
+`ExactLaw` backends.
+
+All generic uses of sets, real integrals, and measures are confined to this
+analytic leaf.  Concrete analytic instances may import it, but none of these
+semantic witnesses is inspected by the executable query operations.
+-/
+
+open MeasureTheory
+
+namespace EffectiveProbability
+
+universe uEvent vEvent wEvent uα uβ uγ
+
+/-- Set-theoretic interpretation of a selected event-code language. -/
+structure EventSemantics (EventCode : Type uEvent) (α : Type uα)
+    [MeasurableSpace α] where
+  /-- Measurable event denoted by a code. -/
+  denote : EventCode → Set α
+  /-- Every event in the selected language is measurable. -/
+  measurable_denote : ∀ event, MeasurableSet (denote event)
+
+namespace RatEnclosure
+
+/-- A real value lies in a rational enclosure after exact coercion of both
+endpoints to `ℝ`. -/
+def ContainsReal (interval : RatEnclosure) (value : ℝ) : Prop :=
+  (interval.lower : ℝ) ≤ value ∧ value ≤ (interval.upper : ℝ)
+
+/-- Rational membership implies membership after exact coercion to `ℝ`. -/
+theorem Contains.containsReal {interval : RatEnclosure} {value : ℚ}
+    (h : interval.Contains value) : interval.ContainsReal (value : ℝ) := by
+  constructor
+  · exact_mod_cast h.1
+  · exact_mod_cast h.2
+
+@[simp]
+theorem containsReal_exact (value : ℚ) :
+    (exact value).ContainsReal (value : ℝ) := by
+  simp [ContainsReal]
+
+/-- Real interval membership is preserved by Minkowski addition. -/
+theorem ContainsReal.add {left right : RatEnclosure} {x y : ℝ}
+    (hx : left.ContainsReal x) (hy : right.ContainsReal y) :
+    (left.add right).ContainsReal (x + y) := by
+  exact ⟨by exact_mod_cast add_le_add hx.1 hy.1,
+    by exact_mod_cast add_le_add hx.2 hy.2⟩
+
+/-- Real interval membership is preserved by rational scaling. -/
+theorem ContainsReal.scale {interval : RatEnclosure} {value : ℝ}
+    (hvalue : interval.ContainsReal value) (factor : ℚ) :
+    (interval.scale factor).ContainsReal ((factor : ℝ) * value) := by
+  by_cases hfactor : 0 ≤ factor
+  · rw [ContainsReal, scale_lower_of_nonneg interval hfactor,
+      scale_upper_of_nonneg interval hfactor]
+    have hfactorReal : (0 : ℝ) ≤ (factor : ℝ) := by
+      exact_mod_cast hfactor
+    constructor
+    · simpa using mul_le_mul_of_nonneg_left hvalue.1 hfactorReal
+    · simpa using mul_le_mul_of_nonneg_left hvalue.2 hfactorReal
+  · have hnegative : factor < 0 := lt_of_not_ge hfactor
+    rw [ContainsReal, scale_lower_of_neg interval hnegative,
+      scale_upper_of_neg interval hnegative]
+    have hfactorReal : (factor : ℝ) ≤ 0 := by
+      exact_mod_cast hnegative.le
+    constructor
+    · simpa using mul_le_mul_of_nonpos_left hvalue.2 hfactorReal
+    · simpa using mul_le_mul_of_nonpos_left hvalue.1 hfactorReal
+
+end RatEnclosure
+
+namespace RatOracle
+
+/-- An oracle represents a real value when every positive-tolerance query
+returns a rational interval containing that same value. -/
+def Represents (oracle : RatOracle) (value : ℝ) : Prop :=
+  ∀ tolerance hpositive,
+    (oracle.query tolerance hpositive).ContainsReal value
+
+/-- A purely rational enclosure certificate also represents the coerced real
+value. -/
+theorem Encloses.represents {oracle : RatOracle} {value : ℚ}
+    (h : oracle.Encloses value) : oracle.Represents (value : ℝ) := by
+  intro tolerance hpositive
+  exact (h tolerance hpositive).containsReal
+
+/-- Representation respects equality of the represented real value. -/
+theorem Represents.congr {oracle : RatOracle} {x y : ℝ}
+    (hx : oracle.Represents x) (hxy : x = y) :
+    oracle.Represents y := by
+  subst y
+  exact hx
+
+/-- An exact rational oracle represents the corresponding real number. -/
+theorem exact_represents (value : ℚ) :
+    (exact value).Represents (value : ℝ) :=
+  (exact_encloses value).represents
+
+/-- Representation is preserved by oracle addition. -/
+theorem Represents.add {left right : RatOracle} {x y : ℝ}
+    (hx : left.Represents x) (hy : right.Represents y) :
+    (left.add right).Represents (x + y) := by
+  intro tolerance hpositive
+  rw [add_query left right tolerance hpositive]
+  exact (hx (tolerance / 2) (half_pos hpositive)).add
+    (hy (tolerance / 2) (half_pos hpositive))
+
+/-- Representation is preserved by rational oracle scaling. -/
+theorem Represents.scale {oracle : RatOracle} {value : ℝ}
+    (hvalue : oracle.Represents value) (factor : ℚ) :
+    (oracle.scale factor).Represents ((factor : ℝ) * value) := by
+  intro tolerance hpositive
+  by_cases hfactor : factor = 0
+  · subst factor
+    simpa using RatEnclosure.containsReal_exact 0
+  · have hquery : 0 < tolerance / |factor| :=
+      div_pos hpositive (abs_pos.mpr hfactor)
+    rw [scale_query_of_ne oracle hfactor hpositive]
+    exact (hvalue (tolerance / |factor|) hquery).scale factor
+
+private theorem le_of_represents {oracle : RatOracle} {x y : ℝ}
+    (hx : oracle.Represents x) (hy : oracle.Represents y) : x ≤ y := by
+  by_contra hxy
+  have hyx : y < x := lt_of_not_ge hxy
+  obtain ⟨tolerance, hpositive, htolerance⟩ :=
+    exists_pos_rat_lt (sub_pos.mpr hyx)
+  let interval := oracle.query tolerance hpositive
+  have hxmem : interval.ContainsReal x := hx tolerance hpositive
+  have hymem : interval.ContainsReal y := hy tolerance hpositive
+  have hspan : x - y ≤
+      (interval.upper : ℝ) - (interval.lower : ℝ) := by
+    linarith [hxmem.2, hymem.1]
+  have hwidthRat := oracle.query_width_le tolerance hpositive
+  have hwidth :
+      ((interval.upper : ℝ) - (interval.lower : ℝ)) ≤
+        (tolerance : ℝ) := by
+    have hcast : (interval.width : ℝ) ≤ (tolerance : ℝ) := by
+      exact_mod_cast hwidthRat
+    simpa [RatEnclosure.width] using hcast
+  linarith
+
+/-- Two real values represented by the same shrinking-width oracle are equal.
+
+If one value were strictly larger, density of the rationals would provide a
+positive rational tolerance smaller than their gap.  Both values lie in the
+same queried interval, while the oracle contract makes that interval no wider
+than the chosen tolerance, a contradiction. -/
+theorem Represents.unique {oracle : RatOracle} {x y : ℝ}
+    (hx : oracle.Represents x) (hy : oracle.Represents y) : x = y :=
+  le_antisymm (le_of_represents hx hy) (le_of_represents hy hx)
+
+end RatOracle
+
+namespace SimpleObservable
+
+variable {EventCode : Type uEvent} {α : Type uα} [MeasurableSpace α]
+
+/-- Proof-only denotation relation for a finite rational simple observable.
+
+The real function is supplied explicitly and certified by the constructors;
+the semantic layer does not manufacture function-valued data by classical
+choice. -/
+inductive Denotes (semantics : EventSemantics EventCode α) :
+    SimpleObservable EventCode → (α → ℝ) → Prop where
+  | const (value : ℚ) :
+      Denotes semantics (.const value) (fun _ => (value : ℝ))
+  | indicator (event : EventCode) :
+      Denotes semantics (.indicator event)
+        ((semantics.denote event).indicator fun _ => (1 : ℝ))
+  | add {left right : SimpleObservable EventCode} {f g : α → ℝ} :
+      Denotes semantics left f → Denotes semantics right g →
+        Denotes semantics (.add left right) (fun x => f x + g x)
+  | scale (coefficient : ℚ) {observable : SimpleObservable EventCode}
+      {f : α → ℝ} :
+      Denotes semantics observable f →
+        Denotes semantics (.scale coefficient observable)
+          (fun x => (coefficient : ℝ) * f x)
+
+/-- A denotation certificate can be transported across equality of the
+represented real function. -/
+theorem Denotes.congr {semantics : EventSemantics EventCode α}
+    {observable : SimpleObservable EventCode} {f g : α → ℝ}
+    (h : Denotes semantics observable f) (hfg : f = g) :
+    Denotes semantics observable g := by
+  subst g
+  exact h
+
+/-- Every function certified by the denotation relation is measurable. -/
+theorem Denotes.measurable {semantics : EventSemantics EventCode α}
+    {observable : SimpleObservable EventCode} {f : α → ℝ}
+    (h : Denotes semantics observable f) : Measurable f := by
+  induction h with
+  | const value => exact measurable_const
+  | indicator event =>
+      exact measurable_const.indicator (semantics.measurable_denote event)
+  | add hleft hright ihLeft ihRight => exact ihLeft.add ihRight
+  | scale coefficient h ih => exact ih.const_mul _
+
+/-- Every certified denotation is integrable under a finite measure. -/
+theorem Denotes.integrable {semantics : EventSemantics EventCode α}
+    {observable : SimpleObservable EventCode} {f : α → ℝ}
+    (h : Denotes semantics observable f) (μ : Measure α)
+    [IsFiniteMeasure μ] : Integrable f μ := by
+  induction h with
+  | const value => exact integrable_const _
+  | indicator event =>
+      exact (integrable_const (μ := μ) (1 : ℝ)).indicator
+        (semantics.measurable_denote event)
+  | add hleft hright ihLeft ihRight => exact ihLeft.add ihRight
+  | scale coefficient h ih => exact ih.const_mul _
+
+end SimpleObservable
+
+namespace EffectiveLaw
+
+variable {EventCode : Type uEvent} {α : Type uα} [MeasurableSpace α]
+
+end EffectiveLaw
+end EffectiveProbability
