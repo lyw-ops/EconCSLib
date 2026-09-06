@@ -103,10 +103,9 @@ structure FiniteTwoPlayerHypotheses
 /-- Minimal structural package consumed by well-founded backward induction.
 
 Unlike `FiniteTwoPlayerHypotheses`, this package does not require a uniform
-history-length bound or finite action/information carriers. The two
-availability fields are needed because an information-indexed pure strategy
-is a total dependent function, including at coordinates not visited by the
-winning play. -/
+history-length bound or finite action/information carriers. Strategies are
+indexed by represented decisions, so no separate raw-information availability
+or terminal-mover normalization field is needed. -/
 structure WellFoundedTwoPlayerHypotheses
     (G : ControlledObservedGame (Fin 2))
     (W : G.base.WinningCondition) : Type _ where
@@ -119,13 +118,50 @@ structure WellFoundedTwoPlayerHypotheses
   perfectInformation : G.PerfectInformation
   /-- Exactly one player wins each complete play. -/
   zeroSum : W.IsTwoPlayerZeroSum
-  /-- Every declared decision information state has a concrete occurrence.
-  -/
-  allDecisionInfoRepresented :
-    G.AllDecisionInfoRepresented
-  /-- Player-labelled histories expose at least one legal action. -/
-  decisionMoverCoherent :
-    G.DecisionMoverCoherent
+
+/-- The canonical root play obtained by replaying one terminal complete
+history and then stuttering forever. -/
+def terminalReplay
+    (G : ControlledObservedGame (Fin 2))
+    (history : G.base.History)
+    (hterminal : G.base.isTerminal history.1) :
+    G.base.CompletePlay :=
+  Arena.CompletePlayFromHistory.prependHistory history.2
+    (Arena.CompletePlayFromHistory.stutter history hterminal)
+
+/-- Explicit runtime data used by executable well-founded backward induction.
+
+The action lists are ordered, complete enumerations.  Terminal objectives may
+be arbitrary predicates, so their winner and a representative of each
+represented information coordinate are supplied together with correctness
+proofs instead of being extracted from propositional existence. -/
+structure BackwardInductionData
+    (G : ControlledObservedGame (Fin 2))
+    (W : G.base.WinningCondition) : Type _ where
+  /-- Executable terminality test on reachable endpoints. -/
+  terminalDecidable :
+    (state : G.base.State) → Decidable (G.base.isTerminal state)
+  /-- Winner assigned to a certified terminal history. -/
+  terminalWinner :
+    (history : G.base.History) →
+      G.base.isTerminal history.1 → Fin 2
+  /-- The assigned terminal winner satisfies the path objective. -/
+  terminalWinner_mem :
+    ∀ (history : G.base.History)
+      (hterminal : G.base.isTerminal history.1),
+      terminalReplay G history hterminal ∈
+        W (terminalWinner history hterminal)
+  /-- Stable traversal order for every concrete action fiber. -/
+  actions :
+    (history : G.base.History) → List (G.base.Action history.1)
+  /-- The action traversal contains every legal action. -/
+  actions_complete :
+    ∀ (history : G.base.History) (action : G.base.Action history.1),
+      action ∈ actions history
+  /-- Concrete occurrence used for each represented information coordinate. -/
+  representative :
+    ∀ (i : Fin 2) (information : G.RepresentedInfo i),
+      G.DecisionInfoWitness i information.1
 
 /-- A finite perfect-information package specializes to the strictly weaker
 well-founded backward-induction package. -/
@@ -138,10 +174,6 @@ def FiniteTwoPlayerHypotheses.toWellFounded
   noChance := h.noChance
   perfectInformation := h.perfectInformation
   zeroSum := h.zeroSum
-  allDecisionInfoRepresented :=
-    h.finiteEFG.allDecisionInfoRepresented
-  decisionMoverCoherent :=
-    h.finiteEFG.decisionMoverCoherent
 
 /-! ### Finite perfect-information backward induction -/
 
@@ -166,40 +198,27 @@ theorem eq_otherPlayer_of_ne {i j : Fin 2}
     j = otherPlayer i := by
   fin_cases i <;> fin_cases j <;> simp_all
 
-/-- The canonical root play obtained by replaying one terminal complete
-history and then stuttering forever. -/
-def terminalReplay
-    (G : ControlledObservedGame (Fin 2))
-    (history : G.base.History)
-    (hterminal : G.base.isTerminal history.1) :
-    G.base.CompletePlay :=
-  Arena.CompletePlayFromHistory.prependHistory history.2
-    (Arena.CompletePlayFromHistory.stutter history hterminal)
-
-/-- The unique winner assigned by a total two-player objective to a canonical
-terminal replay. -/
-noncomputable def terminalWinner
+/-- Read the explicitly supplied winner of a canonical terminal replay. -/
+def terminalWinner
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
-    (hzeroSum : W.IsTwoPlayerZeroSum)
+    (data : G.BackwardInductionData W)
     (history : G.base.History)
     (hterminal : G.base.isTerminal history.1) :
     Fin 2 :=
-  Classical.choose
-    (hzeroSum.isTotal (terminalReplay G history hterminal))
+  data.terminalWinner history hterminal
 
 /-- The terminal winner really wins the canonical replay used to define it.
 -/
 theorem terminalReplay_mem_terminalWinner
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
-    (hzeroSum : W.IsTwoPlayerZeroSum)
+    (data : G.BackwardInductionData W)
     (history : G.base.History)
     (hterminal : G.base.isTerminal history.1) :
     terminalReplay G history hterminal ∈
-      W (terminalWinner hzeroSum history hterminal) :=
-  Classical.choose_spec
-    (hzeroSum.isTotal (terminalReplay G history hterminal))
+      W (terminalWinner data history hterminal) :=
+  data.terminalWinner_mem history hterminal
 
 /-- Backward-induction winner of every complete history.
 
@@ -207,124 +226,108 @@ At a decision history, the mover wins exactly when some child is winning for
 that mover; otherwise the other player wins. At terminal histories the winner
 is read from the arbitrary path objective on the canonical terminal replay.
 -/
-noncomputable def backwardWinner
+def backwardWinner
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
-    (h : G.WellFoundedTwoPlayerHypotheses W) :
+    (h : G.WellFoundedTwoPlayerHypotheses W)
+    (data : G.BackwardInductionData W) :
     G.base.History → Fin 2 :=
-  by
-    classical
-    exact
-      @WellFounded.fix G.base.History (fun _ => Fin 2)
-        (G.base.toArena.IsChildFrom
-          (start := G.base.init))
-        h.wellFounded.wellFounded_isChildFrom
-        (fun history recurse =>
-          if hterminal : G.base.isTerminal history.1 then
-            terminalWinner h.zeroSum history hterminal
-          else
-            let mover :=
-              Classical.choose
-                (h.noChance history hterminal)
-            if ∃ action : G.base.Action history.1,
-                recurse
-                    ⟨G.base.next history.1 action,
-                      history.2.snoc action⟩
-                    (Arena.IsChildFrom.snoc history action) =
-                  mover then
-              mover
-            else
-              otherPlayer mover)
+  @WellFounded.fix G.base.History (fun _ => Fin 2)
+    (G.base.toArena.IsChildFrom
+      (start := G.base.init))
+    h.wellFounded.wellFounded_isChildFrom
+    (fun history recurse =>
+      letI := data.terminalDecidable history.1
+      if hterminal : G.base.isTerminal history.1 then
+        terminalWinner data history hterminal
+      else
+        let mover := G.playerAt h.noChance history hterminal
+        if ∃ action ∈ data.actions history,
+            recurse
+                ⟨G.base.next history.1 action,
+                  history.2.snoc action⟩
+                (Arena.IsChildFrom.snoc history action) =
+              mover then
+          mover
+        else
+          otherPlayer mover)
 
-/-- Unfold one step of the finite backward-winner recursion. -/
+/-! ### Correctness of the executable winner and action selection -/
+
+/-- Unfold one step of the backward-winner recursion. -/
 theorem backwardWinner_eq
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
     (h : G.WellFoundedTwoPlayerHypotheses W)
+    (data : G.BackwardInductionData W)
     (history : G.base.History) :
-    backwardWinner h history =
+    backwardWinner h data history =
       (by
-        classical
+        letI := data.terminalDecidable history.1
         exact
           if hterminal : G.base.isTerminal history.1 then
-            terminalWinner h.zeroSum history hterminal
+            terminalWinner data history hterminal
           else
-            let mover :=
-              Classical.choose
-                (h.noChance history hterminal)
-            if ∃ action : G.base.Action history.1,
-                backwardWinner h
+            let mover := G.playerAt h.noChance history hterminal
+            if ∃ action ∈ data.actions history,
+                backwardWinner h data
                     ⟨G.base.next history.1 action,
-                      history.2.snoc action⟩ =
-                  mover then
+                      history.2.snoc action⟩ = mover then
               mover
             else
               otherPlayer mover) := by
-  classical
   unfold backwardWinner
   rw [WellFounded.fix_eq]
 
-/-- At a terminal history, backward induction agrees with the objective's
-winner of the canonical terminal replay. -/
+/-- At a terminal history, backward induction agrees with the supplied
+terminal winner. -/
 theorem backwardWinner_eq_of_terminal
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
     (h : G.WellFoundedTwoPlayerHypotheses W)
+    (data : G.BackwardInductionData W)
     (history : G.base.History)
     (hterminal : G.base.isTerminal history.1) :
-    backwardWinner h history =
-      terminalWinner h.zeroSum history hterminal := by
-  classical
-  rw [backwardWinner_eq]
+    backwardWinner h data history =
+      terminalWinner data history hterminal := by
+  rw [backwardWinner_eq h data]
   simp [hterminal]
 
-/-- When the current mover is the backward winner, some legal action keeps
-the same backward winner at the child. -/
+/-- When the current mover is the backward winner, some listed legal action
+keeps the same backward winner at the child. -/
 theorem exists_action_backwardWinner_eq
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
     (h : G.WellFoundedTwoPlayerHypotheses W)
+    (data : G.BackwardInductionData W)
     (history : G.base.History)
     (hmover :
       G.base.mover history.1 =
-        some (backwardWinner h history)) :
+        some (backwardWinner h data history))
+    (hdecision : G.base.toArena.IsDecision history.1) :
     ∃ action : G.base.Action history.1,
-      backwardWinner h
+      backwardWinner h data
           ⟨G.base.next history.1 action,
             history.2.snoc action⟩ =
-        backwardWinner h history := by
-  classical
-  have hnonterminal :
-      ¬ G.base.isTerminal history.1 := by
+        backwardWinner h data history := by
+  have hnonterminal : ¬ G.base.isTerminal history.1 := by
     intro hterminal
-    rcases
-        h.decisionMoverCoherent history
-          (backwardWinner h history) hmover with
-      ⟨action⟩
-    exact hterminal.false action
-  let mover :=
-    Classical.choose
-      (h.noChance history hnonterminal)
-  have hmoverChosen :
-      G.base.mover history.1 = some mover :=
-    Classical.choose_spec
-      (h.noChance history hnonterminal)
-  have hmover_eq :
-      mover = backwardWinner h history :=
+    exact (not_nonempty_iff.mpr hterminal) hdecision
+  let mover := G.playerAt h.noChance history hnonterminal
+  have hmoverChosen : G.base.mover history.1 = some mover :=
+    G.mover_playerAt h.noChance history hnonterminal
+  have hmover_eq : mover = backwardWinner h data history :=
     Option.some.inj (hmoverChosen.symm.trans hmover)
   have hexists :
-      ∃ action : G.base.Action history.1,
-        backwardWinner h
+      ∃ action ∈ data.actions history,
+        backwardWinner h data
             ⟨G.base.next history.1 action,
-              history.2.snoc action⟩ =
-          mover := by
+              history.2.snoc action⟩ = mover := by
     by_contra hnone
-    have hwinner := backwardWinner_eq h history
+    have hwinner := backwardWinner_eq h data history
     simp [hnonterminal, mover, hnone] at hwinner
-    exact
-      (otherPlayer_ne mover)
-        ((hmover_eq.trans hwinner).symm)
-  rcases hexists with ⟨action, haction⟩
+    exact (otherPlayer_ne mover) ((hmover_eq.trans hwinner).symm)
+  rcases hexists with ⟨action, _hlisted, haction⟩
   exact ⟨action, haction.trans hmover_eq⟩
 
 /-- At a node controlled by the player other than its backward winner, every
@@ -333,81 +336,100 @@ theorem backwardWinner_child_eq_of_ne
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
     (h : G.WellFoundedTwoPlayerHypotheses W)
+    (data : G.BackwardInductionData W)
     (history : G.base.History)
     (i : Fin 2)
     (hmover : G.base.mover history.1 = some i)
-    (hne : i ≠ backwardWinner h history)
+    (hne : i ≠ backwardWinner h data history)
     (action : G.base.Action history.1) :
-    backwardWinner h
+    backwardWinner h data
         ⟨G.base.next history.1 action,
           history.2.snoc action⟩ =
-      backwardWinner h history := by
-  classical
-  have hnonterminal :
-      ¬ G.base.isTerminal history.1 :=
+      backwardWinner h data history := by
+  have hnonterminal : ¬ G.base.isTerminal history.1 :=
     fun hterminal => hterminal.false action
-  let mover :=
-    Classical.choose
-      (h.noChance history hnonterminal)
-  have hmoverChosen :
-      G.base.mover history.1 = some mover :=
-    Classical.choose_spec
-      (h.noChance history hnonterminal)
+  let mover := G.playerAt h.noChance history hnonterminal
+  have hmoverChosen : G.base.mover history.1 = some mover :=
+    G.mover_playerAt h.noChance history hnonterminal
   have hmover_eq : mover = i :=
     Option.some.inj (hmoverChosen.symm.trans hmover)
   by_cases hexists :
-      ∃ nextAction : G.base.Action history.1,
-        backwardWinner h
+      ∃ nextAction ∈ data.actions history,
+        backwardWinner h data
             ⟨G.base.next history.1 nextAction,
-              history.2.snoc nextAction⟩ =
-          mover
-  · have hwinner := backwardWinner_eq h history
+              history.2.snoc nextAction⟩ = mover
+  · have hwinner := backwardWinner_eq h data history
     simp [hnonterminal, mover, hexists] at hwinner
-    exact
-      (hne (hmover_eq.symm.trans hwinner.symm)).elim
+    exact (hne (hmover_eq.symm.trans hwinner.symm)).elim
   · have hchild_ne :
-        backwardWinner h
+        backwardWinner h data
             ⟨G.base.next history.1 action,
-              history.2.snoc action⟩ ≠
-          mover := by
+              history.2.snoc action⟩ ≠ mover := by
       intro heq
-      exact hexists ⟨action, heq⟩
-    have hchild_other :=
-      eq_otherPlayer_of_ne hchild_ne
-    have hwinner := backwardWinner_eq h history
+      exact hexists
+        ⟨action, data.actions_complete history action, heq⟩
+    have hchild_other := eq_otherPlayer_of_ne hchild_ne
+    have hwinner := backwardWinner_eq h data history
     simp [hnonterminal, mover, hexists] at hwinner
     exact hchild_other.trans hwinner.symm
 
-/-- The concrete child selected at a node won by its mover. -/
-noncomputable def backwardAction
+/-- The first winner-preserving action in the supplied traversal order. -/
+def backwardAction
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
     (h : G.WellFoundedTwoPlayerHypotheses W)
+    (data : G.BackwardInductionData W)
     (history : G.base.History)
     (hmover :
       G.base.mover history.1 =
-        some (backwardWinner h history)) :
+        some (backwardWinner h data history))
+    (hdecision : G.base.toArena.IsDecision history.1) :
     G.base.Action history.1 :=
-  Classical.choose
-    (exists_action_backwardWinner_eq h history hmover)
+  let candidates :=
+    (data.actions history).filter fun action =>
+      backwardWinner h data
+          ⟨G.base.next history.1 action,
+            history.2.snoc action⟩ =
+        backwardWinner h data history
+  candidates.head (by
+    obtain ⟨action, haction⟩ :=
+      exists_action_backwardWinner_eq h data history hmover hdecision
+    exact List.ne_nil_of_mem
+      (List.mem_filter.mpr
+        ⟨data.actions_complete history action,
+          decide_eq_true haction⟩))
 
 /-- The selected backward action preserves the winner. -/
 theorem backwardWinner_backwardAction
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
     (h : G.WellFoundedTwoPlayerHypotheses W)
+    (data : G.BackwardInductionData W)
     (history : G.base.History)
     (hmover :
       G.base.mover history.1 =
-        some (backwardWinner h history)) :
-    backwardWinner h
+        some (backwardWinner h data history))
+    (hdecision : G.base.toArena.IsDecision history.1) :
+    backwardWinner h data
         ⟨G.base.next history.1
-            (backwardAction h history hmover),
+            (backwardAction h data history hmover hdecision),
           history.2.snoc
-            (backwardAction h history hmover)⟩ =
-      backwardWinner h history :=
-  Classical.choose_spec
-    (exists_action_backwardWinner_eq h history hmover)
+            (backwardAction h data history hmover hdecision)⟩ =
+      backwardWinner h data history := by
+  have hmem := List.head_mem
+    (l := (data.actions history).filter fun action =>
+      backwardWinner h data
+          ⟨G.base.next history.1 action,
+            history.2.snoc action⟩ =
+        backwardWinner h data history)
+    (by
+      obtain ⟨action, haction⟩ :=
+        exists_action_backwardWinner_eq h data history hmover hdecision
+      exact List.ne_nil_of_mem
+        (List.mem_filter.mpr
+          ⟨data.actions_complete history action,
+            decide_eq_true haction⟩))
+  exact of_decide_eq_true (List.mem_filter.mp hmem).2
 
 /-- Transporting an abstract action from an equal representative history and
 then realizing it returns the representative's concrete action, up to the
@@ -417,9 +439,9 @@ theorem actionEquiv_transport_symm_heq
     {i : Fin 2}
     (first second : G.base.History)
     (hfirst : G.base.mover first.1 = some i)
-    (hfirst_nonterminal : ¬ G.base.isTerminal first.1)
+    (hfirst_nonterminal : G.base.toArena.IsDecision first.1)
     (hsecond : G.base.mover second.1 = some i)
-    (hsecond_nonterminal : ¬ G.base.isTerminal second.1)
+    (hsecond_nonterminal : G.base.toArena.IsDecision second.1)
     (hhistory : first = second)
     (hinfo :
       G.infoAt second i hsecond hsecond_nonterminal =
@@ -454,16 +476,27 @@ theorem childHistory_eq_of_heq
   subst secondAction
   rfl
 
-/-- A chosen concrete representative of each declared decision-information
-state. -/
-noncomputable def backwardRepresentative
+/-- The first legal action in the supplied traversal order at a decision. -/
+private def firstBackwardAction
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
-    (h : G.WellFoundedTwoPlayerHypotheses W)
-    (i : Fin 2) (information : G.InfoState i) :
-    G.DecisionInfoWitness i information :=
-  Classical.choice
-    (h.allDecisionInfoRepresented i information)
+    (data : G.BackwardInductionData W)
+    (history : G.base.History)
+    (hdecision : G.base.toArena.IsDecision history.1) :
+    G.base.Action history.1 :=
+  (data.actions history).head (by
+    obtain ⟨action⟩ := hdecision
+    exact List.ne_nil_of_mem (data.actions_complete history action))
+
+/-- Read the supplied concrete representative of a represented information
+state. -/
+def backwardRepresentative
+    {G : ControlledObservedGame (Fin 2)}
+    {W : G.base.WinningCondition}
+    (data : G.BackwardInductionData W)
+    (i : Fin 2) (information : G.RepresentedInfo i) :
+    G.DecisionInfoWitness i information.1 :=
+  data.representative i information
 
 /-- The information-consistent pure strategy extracted by backward induction.
 
@@ -471,40 +504,41 @@ At information states in the winning region it transports the selected
 concrete backward action through `actionEquiv`. Off the winning region its
 value is arbitrary; those coordinates cannot be reached while the invariant
 that the root winner is preserved holds. -/
-noncomputable def backwardStrategy
+def backwardStrategy
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
-    (h : G.WellFoundedTwoPlayerHypotheses W) :
+    (h : G.WellFoundedTwoPlayerHypotheses W)
+    (data : G.BackwardInductionData W) :
     G.PureStrategy
-      (backwardWinner h
+      (backwardWinner h data
         (Arena.HistoryFrom.nil
           G.base.toArena G.base.init)) :=
   by
-    classical
     let rootWinner :=
-      backwardWinner h
+      backwardWinner h data
         (Arena.HistoryFrom.nil
           G.base.toArena G.base.init)
     intro information
     let witness :=
-      backwardRepresentative h rootWinner information
+      backwardRepresentative data rootWinner information
     if hinvariant :
-        backwardWinner h witness.history = rootWinner then
-      change G.InfoAction rootWinner information
+        backwardWinner h data witness.history = rootWinner then
+      change G.InfoAction rootWinner information.1
       exact
         witness.infoAt_eq ▸
           (G.actionEquiv witness.history rootWinner
-              witness.mover witness.nonterminal).symm
-            (backwardAction h witness.history
+              witness.mover witness.decision).symm
+            (backwardAction h data witness.history
               (witness.mover.trans
-                (congrArg some hinvariant.symm)))
+                (congrArg some hinvariant.symm))
+              witness.decision)
     else
+      change G.InfoAction rootWinner information.1
       exact
-        Classical.choice
-          (AllDecisionInfoRepresented.nonempty_infoAction
-            h.allDecisionInfoRepresented
-            h.decisionMoverCoherent
-            rootWinner information)
+        witness.infoAt_eq ▸
+          (G.actionEquiv witness.history rootWinner
+              witness.mover witness.decision).symm
+            (firstBackwardAction data witness.history witness.decision)
 
 /-- Along the root winner's extracted strategy, a decision by that player
 keeps the backward winner invariant. Singleton information is the step that
@@ -514,111 +548,120 @@ theorem backwardWinner_child_of_backwardStrategy
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
     (h : G.WellFoundedTwoPlayerHypotheses W)
+    (data : G.BackwardInductionData W)
     (history : G.base.History)
     (hmover :
       G.base.mover history.1 =
         some
-          (backwardWinner h
+          (backwardWinner h data
             (Arena.HistoryFrom.nil
               G.base.toArena G.base.init)))
     (hnonterminal : ¬ G.base.isTerminal history.1)
     (hinvariant :
-      backwardWinner h history =
-        backwardWinner h
+      backwardWinner h data history =
+        backwardWinner h data
           (Arena.HistoryFrom.nil
             G.base.toArena G.base.init)) :
-    backwardWinner h
+    backwardWinner h data
         ⟨G.base.next history.1
-            ((backwardStrategy h).actionAt
-              G history hmover hnonterminal),
+            ((backwardStrategy h data).actionAt
+              G history hmover
+              (G.base.toArena.isDecision_of_not_isTerminal _
+                hnonterminal)),
           history.2.snoc
-            ((backwardStrategy h).actionAt
-              G history hmover hnonterminal)⟩ =
-      backwardWinner h
+            ((backwardStrategy h data).actionAt
+              G history hmover
+              (G.base.toArena.isDecision_of_not_isTerminal _
+                hnonterminal))⟩ =
+      backwardWinner h data
         (Arena.HistoryFrom.nil
           G.base.toArena G.base.init) := by
   classical
   let rootWinner :=
-    backwardWinner h
+    backwardWinner h data
       (Arena.HistoryFrom.nil
         G.base.toArena G.base.init)
+  let hdecision :=
+    G.base.toArena.isDecision_of_not_isTerminal
+      history.1 hnonterminal
   let information :=
-    G.infoAt history rootWinner hmover hnonterminal
+    G.representedInfoAt history rootWinner hmover hdecision
   let witness :=
-    backwardRepresentative h rootWinner information
+    backwardRepresentative data rootWinner information
   have hhistory : history = witness.history := by
     apply h.perfectInformation rootWinner
-      history witness.history hmover hnonterminal
-      witness.mover witness.nonterminal
+      history witness.history hmover hdecision
+      witness.mover witness.decision
     exact witness.infoAt_eq.symm
   have hwitness :
-      backwardWinner h witness.history = rootWinner := by
+      backwardWinner h data witness.history = rootWinner := by
     rw [← hhistory]
     simpa [rootWinner] using hinvariant
   let witnessWinnerMover :
       G.base.mover witness.history.1 =
-        some (backwardWinner h witness.history) :=
+        some (backwardWinner h data witness.history) :=
     witness.mover.trans
       (congrArg some hwitness.symm)
   have hstrategyInformation :
-      backwardStrategy h information =
+      backwardStrategy h data information =
         (witness.infoAt_eq ▸
           (G.actionEquiv witness.history rootWinner
-              witness.mover witness.nonterminal).symm
-            (backwardAction h witness.history
+              witness.mover witness.decision).symm
+            (backwardAction h data witness.history
               (witness.mover.trans
-                (congrArg some hwitness.symm)))) := by
+                (congrArg some hwitness.symm))
+              witness.decision)) := by
     simp [backwardStrategy, rootWinner, information,
       witness, hwitness]
   have hinfo :
       G.infoAt witness.history rootWinner witness.mover
-          witness.nonterminal =
-        G.infoAt history rootWinner hmover hnonterminal := by
+          witness.decision =
+        G.infoAt history rootWinner hmover hdecision := by
     simpa [information] using witness.infoAt_eq
   have haction :
       HEq
-        ((backwardStrategy h).actionAt
-          G history hmover hnonterminal)
-        (backwardAction h witness.history
-          witnessWinnerMover) := by
+        ((backwardStrategy h data).actionAt
+          G history hmover hdecision)
+        (backwardAction h data witness.history
+          witnessWinnerMover witness.decision) := by
     change
       HEq
-        (G.actionEquiv history rootWinner hmover hnonterminal
-          (backwardStrategy h information))
-        (backwardAction h witness.history
-          witnessWinnerMover)
+        (G.actionEquiv history rootWinner hmover hdecision
+          (backwardStrategy h data information))
+        (backwardAction h data witness.history
+          witnessWinnerMover witness.decision)
     rw [hstrategyInformation]
     exact actionEquiv_transport_symm_heq
-      history witness.history hmover hnonterminal
-        witness.mover witness.nonterminal
+      history witness.history hmover hdecision
+        witness.mover witness.decision
         hhistory hinfo
-        (backwardAction h witness.history
-          witnessWinnerMover)
+        (backwardAction h data witness.history
+          witnessWinnerMover witness.decision)
   have hchild :
       (⟨G.base.next history.1
-            ((backwardStrategy h).actionAt
-              G history hmover hnonterminal),
+            ((backwardStrategy h data).actionAt
+              G history hmover hdecision),
           history.2.snoc
-            ((backwardStrategy h).actionAt
-              G history hmover hnonterminal)⟩ :
+            ((backwardStrategy h data).actionAt
+              G history hmover hdecision)⟩ :
           G.base.History) =
         ⟨G.base.next witness.history.1
-            (backwardAction h witness.history
-              witnessWinnerMover),
+            (backwardAction h data witness.history
+              witnessWinnerMover witness.decision),
           witness.history.2.snoc
-            (backwardAction h witness.history
-              witnessWinnerMover)⟩ :=
+            (backwardAction h data witness.history
+              witnessWinnerMover witness.decision)⟩ :=
     childHistory_eq_of_heq
       history witness.history hhistory
-      ((backwardStrategy h).actionAt
-        G history hmover hnonterminal)
-      (backwardAction h witness.history
-        witnessWinnerMover)
+      ((backwardStrategy h data).actionAt
+        G history hmover hdecision)
+      (backwardAction h data witness.history
+        witnessWinnerMover witness.decision)
       haction
   rw [hchild]
   have hselected :=
     backwardWinner_backwardAction
-      h witness.history witnessWinnerMover
+      h data witness.history witnessWinnerMover witness.decision
   exact hselected.trans hwitness
 
 /-- Every play compatible with the extracted strategy stays inside the root
@@ -627,16 +670,17 @@ theorem backwardWinner_historyAt_eq_root
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
     (h : G.WellFoundedTwoPlayerHypotheses W)
+    (data : G.BackwardInductionData W)
     (play : G.base.CompletePlay)
     (hcompatible :
       G.IsCompatibleWithPlayerStrategy
-        (backwardWinner h
+        (backwardWinner h data
           (Arena.HistoryFrom.nil
             G.base.toArena G.base.init))
-        (backwardStrategy h) play) :
+        (backwardStrategy h data) play) :
     ∀ n,
-      backwardWinner h (play.historyAt n) =
-        backwardWinner h
+      backwardWinner h data (play.historyAt n) =
+        backwardWinner h data
           (Arena.HistoryFrom.nil
             G.base.toArena G.base.init)
   | 0 => by
@@ -644,7 +688,7 @@ theorem backwardWinner_historyAt_eq_root
   | n + 1 => by
       have ih :=
         backwardWinner_historyAt_eq_root
-          h play hcompatible n
+          h data play hcompatible n
       by_cases hterminal :
           G.base.isTerminal (play.historyAt n).1
       · rw [play.at_succ_eq_of_terminal n hterminal]
@@ -654,16 +698,16 @@ theorem backwardWinner_historyAt_eq_root
         ⟨i, hmover⟩
         by_cases hi :
             i =
-              backwardWinner h
+              backwardWinner h data
                 (Arena.HistoryFrom.nil
                   G.base.toArena G.base.init)
         · subst i
           rw [hcompatible n hterminal hmover]
           exact
             backwardWinner_child_of_backwardStrategy
-              h (play.historyAt n) hmover hterminal ih
+              h data (play.historyAt n) hmover hterminal ih
         · have hne :
-              i ≠ backwardWinner h (play.historyAt n) := by
+              i ≠ backwardWinner h data (play.historyAt n) := by
             intro heq
             exact hi (heq.trans ih)
           rcases
@@ -673,7 +717,7 @@ theorem backwardWinner_historyAt_eq_root
           rw [hnext]
           exact
             (backwardWinner_child_eq_of_ne
-              h (play.historyAt n) i hmover hne
+              h data (play.historyAt n) i hmover hne
                 action).trans ih
 
 /-- The backward-induction strategy is pathwise winning for the winner of the
@@ -681,34 +725,35 @@ root history. -/
 theorem backwardStrategy_hasPathwiseWinningStrategy
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
-    (h : G.WellFoundedTwoPlayerHypotheses W) :
+    (h : G.WellFoundedTwoPlayerHypotheses W)
+    (data : G.BackwardInductionData W) :
     G.HasPathwiseWinningStrategy W
-      (backwardWinner h
+      (backwardWinner h data
         (Arena.HistoryFrom.nil
           G.base.toArena G.base.init))
-      (backwardStrategy h) := by
+      (backwardStrategy h data) := by
   intro play hcompatible
   rcases h.wellFounded.eventuallyTerminates play with
     ⟨bound, hterminal⟩
   have hinvariant :
-      backwardWinner h (play.historyAt bound) =
-        backwardWinner h
+      backwardWinner h data (play.historyAt bound) =
+        backwardWinner h data
           (Arena.HistoryFrom.nil
             G.base.toArena G.base.init) :=
     backwardWinner_historyAt_eq_root
-      h play hcompatible bound
+      h data play hcompatible bound
   have hterminalWinner :
-      terminalWinner h.zeroSum
+      terminalWinner data
           (play.historyAt bound) hterminal =
-        backwardWinner h
+        backwardWinner h data
           (Arena.HistoryFrom.nil
             G.base.toArena G.base.init) :=
     (backwardWinner_eq_of_terminal
-      h (play.historyAt bound) hterminal).symm.trans
+      h data (play.historyAt bound) hterminal).symm.trans
         hinvariant
   have hwins :=
     terminalReplay_mem_terminalWinner
-      h.zeroSum (play.historyAt bound) hterminal
+      data (play.historyAt bound) hterminal
   have hreplay :
       terminalReplay G (play.historyAt bound) hterminal =
         play := by
@@ -719,31 +764,27 @@ theorem backwardStrategy_hasPathwiseWinningStrategy
   exact hwins
 
 /-- Well-founded, no-chance, perfect-information, two-player zero-sum observed
-games with total pure-strategy coordinates are determined by a pure
-information-consistent strategy.
-
-The result returns an explicit winning-strategy witness in `Prop`, but the
-backward winner and action selections used here are `noncomputable` and rely
-on classical choice. It is therefore a classical existence theorem, not an
-executable strategy-extraction result. -/
+games equipped with explicit terminal, action-order, and representative data
+are determined by the executable information-consistent strategy above. -/
 theorem WellFoundedTwoPlayerHypotheses.isTwoPlayerDetermined
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
-    (h : G.WellFoundedTwoPlayerHypotheses W) :
+    (h : G.WellFoundedTwoPlayerHypotheses W)
+    (data : G.BackwardInductionData W) :
     G.IsTwoPlayerDetermined W := by
   let rootWinner :=
-    backwardWinner h
+    backwardWinner h data
       (Arena.HistoryFrom.nil
         G.base.toArena G.base.init)
   have hwinning :
       G.HasPathwiseWinningStrategy W rootWinner
-        (backwardStrategy h) :=
-    backwardStrategy_hasPathwiseWinningStrategy h
+        (backwardStrategy h data) :=
+    backwardStrategy_hasPathwiseWinningStrategy h data
   have hpackage :
       ∃ strategy : G.PureStrategy rootWinner,
         G.HasPathwiseWinningStrategy W
           rootWinner strategy :=
-    ⟨backwardStrategy h, hwinning⟩
+    ⟨backwardStrategy h data, hwinning⟩
   by_cases hzero : rootWinner = 0
   · exact Or.inl (hzero ▸ hpackage)
   · have hone : rootWinner = 1 :=
@@ -756,8 +797,26 @@ theorem FiniteTwoPlayerHypotheses.isTwoPlayerDetermined
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
     (h : G.FiniteTwoPlayerHypotheses W) :
-    G.IsTwoPlayerDetermined W :=
-  h.toWellFounded.isTwoPlayerDetermined
+    G.IsTwoPlayerDetermined W := by
+  classical
+  let data : G.BackwardInductionData W :=
+    { terminalDecidable := fun state => Classical.dec _
+      terminalWinner := fun history hterminal =>
+        Classical.choose
+          (h.zeroSum.isTotal (terminalReplay G history hterminal))
+      terminalWinner_mem := fun history hterminal =>
+        Classical.choose_spec
+          (h.zeroSum.isTotal (terminalReplay G history hterminal))
+      actions := fun history => by
+        letI := h.finiteEFG.finiteAction history
+        exact Finset.univ.toList
+      actions_complete := by
+        intro history action
+        letI := h.finiteEFG.finiteAction history
+        simp
+      representative := fun _ information =>
+        Classical.choice information.2 }
+  exact h.toWellFounded.isTwoPlayerDetermined data
 
 /-- Structural assumptions for well-founded prefix determinacy on the
 payoff-free carrier. -/
@@ -773,13 +832,6 @@ structure WellFoundedPrefixHypotheses
   perfectInformation : G.PerfectInformation
   /-- Exactly one player wins each complete play. -/
   zeroSum : W.IsTwoPlayerZeroSum
-  /-- Every declared decision information state has a concrete occurrence.
-  -/
-  allDecisionInfoRepresented :
-    G.AllDecisionInfoRepresented
-  /-- Player-labelled histories expose at least one legal action. -/
-  decisionMoverCoherent :
-    G.DecisionMoverCoherent
   /-- Every play reaches a persistent finite decision prefix. -/
   prefixDecision :
     Arena.WinningConditionFrom.PrefixDecision W
@@ -795,10 +847,6 @@ def WellFoundedPrefixHypotheses.toWellFounded
   noChance := h.noChance
   perfectInformation := h.perfectInformation
   zeroSum := h.zeroSum
-  allDecisionInfoRepresented :=
-    h.allDecisionInfoRepresented
-  decisionMoverCoherent :=
-    h.decisionMoverCoherent
 
 /-- Well-founded prefix games satisfying the explicit no-chance,
 perfect-information, zero-sum, and strategy-availability hypotheses are
@@ -811,9 +859,10 @@ every complete play to terminate. -/
 theorem WellFoundedPrefixHypotheses.isTwoPlayerDetermined
     {G : ControlledObservedGame (Fin 2)}
     {W : G.base.WinningCondition}
-    (h : G.WellFoundedPrefixHypotheses W) :
+    (h : G.WellFoundedPrefixHypotheses W)
+    (data : G.BackwardInductionData W) :
     G.IsTwoPlayerDetermined W :=
-  h.toWellFounded.isTwoPlayerDetermined
+  h.toWellFounded.isTwoPlayerDetermined data
 
 /-- In a payoff-free no-chance game with exclusive objectives, the two
 players cannot both have robust pathwise winning strategies. -/
