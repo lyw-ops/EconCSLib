@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 
 import EconCSLib.GameTheory.ExtensiveGame.Observed.BehaviorRefinement.Execution
 import EconCSLib.GameTheory.ExtensiveGame.Observed.KuhnConditioning.Realization
+import Mathlib.Logic.Equiv.Fin.Basic
 
 /-!
 # EconCSLib.Examples.ExtensiveGame.RootScopedKuhn
@@ -43,7 +44,18 @@ inductive Stage
   | start
   | after (first : Bool)
   | done (first second : Bool)
-  deriving DecidableEq, Fintype
+  deriving DecidableEq
+
+instance : Fintype Stage where
+  elems := {.start, .after false, .after true,
+    .done false false, .done false true,
+    .done true false, .done true true}
+  complete := by
+    intro stage
+    cases stage with
+    | start => simp
+    | after first => cases first <;> simp
+    | done first second => cases first <;> cases second <;> simp
 
 /-- Both decision stages offer a Boolean action; completed stages are
 terminal. -/
@@ -85,7 +97,13 @@ the first action. -/
 inductive DecisionInfo
   | first
   | second (firstAction : Bool)
-  deriving DecidableEq, Fintype
+  deriving DecidableEq
+
+instance : Fintype DecisionInfo where
+  elems := {.first, .second false, .second true}
+  complete := by
+    intro information
+    cases information <;> simp
 
 /-- The observation associated with each game stage. -/
 def observe : Stage → Option DecisionInfo
@@ -137,6 +155,11 @@ def observed : ObservedGame Unit (Bool × Bool) where
   actionEquiv := fun history _ hmover _ =>
     actionEquiv history.1 hmover
 
+/-- The represented strategy coordinate at the initial decision. -/
+private def firstInformation : observed.RepresentedInfo () :=
+  observed.representedInfoAt
+    ⟨Stage.start, Arena.History.nil⟩ () rfl ⟨false⟩
+
 private theorem ownDecisionHistory_at_mover
     (history :
       observed.base.toArena.HistoryFrom
@@ -147,7 +170,7 @@ private theorem ownDecisionHistory_at_mover
       match history.1 with
       | .start => []
       | .after first =>
-          [⟨DecisionInfo.first, first⟩]
+          [⟨firstInformation, first⟩]
       | .done _ _ => [] := by
   rcases history with ⟨finish, path⟩
   induction path with
@@ -216,11 +239,87 @@ theorem observed_perfectRecall :
 concrete game. -/
 def hypotheses :
     observed.FiniteKuhnHypotheses where
-  perfectRecall := observed_perfectRecall
-  finiteInfoState := by
-    intro i
-    change Finite DecisionInfo
-    infer_instance
+  recallCertificate := {
+    remembered := fun _player information =>
+      match information.1 with
+      | .first => []
+      | .second firstAction => [⟨firstInformation, firstAction⟩]
+    remembered_infoAt := by
+      intro player history hmover _hdecision
+      cases player
+      rcases history with ⟨state, path⟩
+      cases state with
+      | start =>
+          simpa [ControlledDecisionGame.representedInfoAt,
+            observed, infoAtState] using
+            (ownDecisionHistory_at_mover
+              ⟨Stage.start, path⟩ hmover).symm
+      | after firstAction =>
+          simpa [ControlledDecisionGame.representedInfoAt,
+            observed, infoAtState] using
+            (ownDecisionHistory_at_mover
+              ⟨Stage.after firstAction, path⟩ hmover).symm
+      | done firstAction secondAction =>
+          simp [observed, base, stageMover] at hmover }
+  finiteDecisionPresentation := by
+    intro player
+    cases player
+    let secondInformation (firstAction : Bool) :
+        observed.RepresentedInfo () :=
+      observed.representedInfoAt
+        ⟨Stage.after firstAction,
+          (Arena.History.nil :
+            observed.base.toArena.History Stage.start Stage.start).snoc
+              firstAction⟩
+        () rfl ⟨false⟩
+    let representedInformationEquiv :
+        observed.RepresentedInfo () ≃ DecisionInfo :=
+      { toFun := fun information => information.1
+        invFun := fun information =>
+          match information with
+          | .first => firstInformation
+          | .second firstAction => secondInformation firstAction
+        left_inv := by
+          rintro ⟨information, witness⟩
+          apply Subtype.ext
+          cases information with
+          | first => rfl
+          | second firstAction => cases firstAction <;> rfl
+        right_inv := by
+          intro information
+          cases information with
+          | first => rfl
+          | second firstAction => cases firstAction <;> rfl }
+    let decisionInformationEquiv : DecisionInfo ≃ Fin 1 ⊕ Fin 2 :=
+      { toFun := fun information =>
+          match information with
+          | .first => Sum.inl 0
+          | .second firstAction =>
+              Sum.inr (finTwoEquiv.symm firstAction)
+        invFun := fun index =>
+          match index with
+          | .inl _ => .first
+          | .inr secondIndex => .second (finTwoEquiv secondIndex)
+        left_inv := by
+          intro information
+          cases information with
+          | first => rfl
+          | second firstAction => simp
+        right_inv := by
+          intro index
+          cases index with
+          | inl firstIndex =>
+              apply congrArg Sum.inl
+              exact Subsingleton.elim _ _
+          | inr secondIndex => simp }
+    let informationEquiv : observed.RepresentedInfo () ≃ Fin 3 :=
+      representedInformationEquiv.trans
+        (decisionInformationEquiv.trans finSumFinEquiv)
+    exact
+      ⟨⟨3, informationEquiv⟩,
+        fun _information => by
+          change DecidableEq Bool
+          infer_instance⟩
 
 /-- The concrete game contains no chance-controlled decision stage. -/
 theorem base_noChance : observed.base.NoChanceOnHistories := by
@@ -272,8 +371,9 @@ def afterFalseRoot :
     Arena.History.nil.snoc chooseFalse⟩
 
 /-- Fair Boolean law used to select a complete correlated plan. -/
-noncomputable def fairCoin : PMF Bool :=
-  PMF.bernoulli (1 / 2) (by norm_num)
+def fairCoin : FiniteLaw Bool where
+  atoms := [(false, 1 / 2), (true, 1 / 2)]
+  normalized := by norm_num
 
 /-- A complete pure plan choosing the same Boolean action at every information
 state. -/
@@ -283,12 +383,12 @@ def constantPlan (choice : Bool) :
 
 /-- A mixed strategy supported on the always-false and always-true plans.
 Choices at distinct information states are therefore perfectly correlated. -/
-noncomputable def correlatedStrategy :
+def correlatedStrategy :
     observed.MixedStrategy () :=
   fairCoin.map constantPlan
 
 /-- The one-player mixed profile carrying the correlated complete-plan law. -/
-noncomputable def correlatedProfile :
+def correlatedProfile :
     observed.MixedProfile :=
   fun _ => correlatedStrategy
 
@@ -312,6 +412,13 @@ private theorem afterStage_not_terminal (first : Bool) :
 private theorem afterRoot_not_terminal (first : Bool) :
     ¬ chanceGame.observed.base.isTerminal (afterRoot first).1 :=
   afterStage_not_terminal first
+
+/-- The represented strategy coordinate at the second decision after
+`first`. -/
+private def secondInformation (first : Bool) :
+    observed.RepresentedInfo () :=
+  observed.representedInfoAt
+    (afterRoot first) () rfl ⟨false⟩
 
 private theorem done_terminal (first second : Bool) :
     base.isTerminal (.done first second) :=
@@ -340,12 +447,12 @@ private theorem actionLaw_afterRoot
     ObservedGame.BehavioralStrategy.actionLawAt
         observed (behavioral ()) (afterRoot first) rfl
         (afterRoot_not_terminal first) =
-      behavioral () (.second first) := by
+      behavioral () (secondInformation first) := by
   unfold ObservedGame.BehavioralStrategy.actionLawAt
   change
-    (behavioral () (.second first)).map id =
-      behavioral () (.second first)
-  exact PMF.map_id _
+    (behavioral () (secondInformation first)).map id =
+      behavioral () (secondInformation first)
+  exact FiniteLaw.map_id _
 
 private theorem chanceActionLaw_afterRoot
     (behavioral : observed.BehavioralProfile)
@@ -354,7 +461,7 @@ private theorem chanceActionLaw_afterRoot
         chanceGame.observed (behavioral ())
         (afterRoot first) rfl
         (afterRoot_not_terminal first) =
-      behavioral () (.second first) :=
+      behavioral () (secondInformation first) :=
   actionLaw_afterRoot behavioral first
 
 private theorem behavioralLaw_afterRoot
@@ -362,58 +469,58 @@ private theorem behavioralLaw_afterRoot
     (first : Bool) :
     chanceGame.behavioralStoppedPayoffLawFrom
         behavioral (afterRoot first) 1 =
-      (behavioral () (.second first)).map
+      (behavioral () (secondInformation first)).map
         (fun second => payoffOutcome first second) := by
   unfold ObservedChanceGame.behavioralStoppedPayoffLawFrom
-  rw [Arena.stochasticHistoryPMFFrom]
+  rw [Arena.stochasticHistoryLawFrom]
   simp only [afterStage_not_terminal, ↓reduceDIte]
   rw [ObservedChanceGame.BehavioralProfile.toHistoryPolicy_of_mover
     _ _ _ (afterRoot_not_terminal first) () rfl]
   unfold ObservedGame.BehavioralProfile.actionLawAt
   rw [chanceActionLaw_afterRoot]
-  rw [PMF.map_bind]
+  rw [FiniteLaw.map_bind]
   change
-    (behavioral () (.second first)).bind
+    (behavioral () (secondInformation first)).bind
         (fun second =>
-          (PMF.pure (terminalRoot first second)).map
+          (FiniteLaw.pure (terminalRoot first second)).map
             chanceGame.stoppedPayoffAtHistory) =
       _
   have hinner :
       (fun second =>
-        (PMF.pure (terminalRoot first second)).map
+        (FiniteLaw.pure (terminalRoot first second)).map
           chanceGame.stoppedPayoffAtHistory) =
-        (PMF.pure ∘
+        (FiniteLaw.pure ∘
           fun second => payoffOutcome first second) := by
     funext second
     calc
-      (PMF.pure (terminalRoot first second)).map
+      (FiniteLaw.pure (terminalRoot first second)).map
           chanceGame.stoppedPayoffAtHistory =
-        PMF.pure
+        FiniteLaw.pure
           (chanceGame.stoppedPayoffAtHistory
             (terminalRoot first second)) :=
-        PMF.pure_map _ _
-      _ = PMF.pure (payoffOutcome first second) :=
-        congrArg PMF.pure
+        FiniteLaw.pure_map _ _
+      _ = FiniteLaw.pure (payoffOutcome first second) :=
+        congrArg FiniteLaw.pure
           (stoppedPayoff_terminalRoot first second)
   change
-    (behavioral () (.second first)).bind
+    (behavioral () (secondInformation first)).bind
         (fun second =>
-          (PMF.pure (terminalRoot first second)).map
+          (FiniteLaw.pure (terminalRoot first second)).map
             chanceGame.stoppedPayoffAtHistory) =
       _
   calc
     _ =
-        (behavioral () (.second first)).bind
-          (PMF.pure ∘
+        (behavioral () (secondInformation first)).bind
+          (FiniteLaw.pure ∘
             fun second => payoffOutcome first second) :=
       congrArg
         (fun continuation =>
-          (behavioral () (.second first)).bind continuation)
+          (behavioral () (secondInformation first)).bind continuation)
         hinner
     _ = _ :=
-      PMF.bind_pure_comp
+      (FiniteLaw.map_eq_bind_pure_comp
         (fun second => payoffOutcome first second)
-        (behavioral () (.second first))
+        (behavioral () (secondInformation first))).symm
 
 private theorem afterFalseRoot_eq :
     afterFalseRoot = afterRoot false :=
@@ -429,37 +536,37 @@ private theorem actionLaw_initial
     ObservedGame.BehavioralStrategy.actionLawAt
         chanceGame.observed (behavioral ())
         initialRoot rfl initial_not_terminal =
-      behavioral () .first := by
+      behavioral () firstInformation := by
   unfold ObservedGame.BehavioralStrategy.actionLawAt
   change
-    (behavioral () .first).map id =
-      behavioral () .first
-  exact PMF.map_id _
+    (behavioral () firstInformation).map id =
+      behavioral () firstInformation
+  exact FiniteLaw.map_id _
 
 private theorem behavioralLaw_initial
     (behavioral : observed.BehavioralProfile) :
     chanceGame.behavioralStoppedPayoffLawFrom
         behavioral initialRoot 2 =
-      (behavioral () .first).bind fun first =>
-        (behavioral () (.second first)).map
+      (behavioral () firstInformation).bind fun first =>
+        (behavioral () (secondInformation first)).map
           (fun second => payoffOutcome first second) := by
   unfold ObservedChanceGame.behavioralStoppedPayoffLawFrom
-  rw [Arena.stochasticHistoryPMFFrom]
+  rw [Arena.stochasticHistoryLawFrom]
   simp only [initial_not_terminal, ↓reduceDIte]
   rw [ObservedChanceGame.BehavioralProfile.toHistoryPolicy_of_mover
     _ _ _ initial_not_terminal () rfl]
   unfold ObservedGame.BehavioralProfile.actionLawAt
   rw [actionLaw_initial]
-  rw [PMF.map_bind]
+  rw [FiniteLaw.map_bind]
   have hinner :
       (fun first =>
-        (chanceGame.observed.base.toArena.stochasticHistoryPMFFrom
+        (chanceGame.observed.base.toArena.stochasticHistoryLawFrom
           (ObservedChanceGame.BehavioralProfile.toHistoryPolicy
             chanceGame behavioral)
           (afterRoot first) 1).map
             chanceGame.stoppedPayoffAtHistory) =
         (fun first =>
-          (behavioral () (.second first)).map
+          (behavioral () (secondInformation first)).map
             (fun second => payoffOutcome first second)) := by
     funext first
     change
@@ -468,9 +575,9 @@ private theorem behavioralLaw_initial
         _
     exact behavioralLaw_afterRoot behavioral first
   change
-    (behavioral () .first).bind
+    (behavioral () firstInformation).bind
         (fun first =>
-          (chanceGame.observed.base.toArena.stochasticHistoryPMFFrom
+          (chanceGame.observed.base.toArena.stochasticHistoryLawFrom
             (ObservedChanceGame.BehavioralProfile.toHistoryPolicy
               chanceGame behavioral)
             (afterRoot first) 1).map
@@ -478,7 +585,7 @@ private theorem behavioralLaw_initial
       _
   exact congrArg
     (fun continuation =>
-      (behavioral () .first).bind continuation)
+      (behavioral () firstInformation).bind continuation)
     hinner
 
 private theorem payoffOutcome_injective (first : Bool) :
@@ -504,48 +611,107 @@ private theorem payoffOutcome_ne_of_first_ne
       h
   exact hne (by simpa [payoffOutcome] using hfirst)
 
+private theorem FiniteLaw.mass_map_of_injective
+    {α β : Type*} [DecidableEq α] [DecidableEq β]
+    (law : FiniteLaw α) (f : α → β)
+    (hf : Function.Injective f) (outcome : α) :
+    (law.map f).mass (f outcome) = law.mass outcome := by
+  unfold FiniteLaw.mass FiniteLaw.eventMass
+  rw [FiniteLaw.map_atoms, List.map_map]
+  apply congrArg List.sum
+  apply List.map_congr_left
+  intro atom _
+  simp [hf.eq_iff]
+
+private theorem FiniteLaw.mass_bind_bool
+    {α : Type*} [DecidableEq α]
+    (law : FiniteLaw Bool) (next : Bool → FiniteLaw α)
+    (outcome : α) :
+    (law.bind next).mass outcome =
+      law.mass false * (next false).mass outcome +
+        law.mass true * (next true).mass outcome := by
+  rw [FiniteLaw.mass_bind]
+  unfold FiniteLaw.mass FiniteLaw.eventMass
+  induction law.atoms with
+  | nil => simp
+  | cons atom atoms ih =>
+      rcases atom with ⟨choice, weight⟩
+      cases choice <;>
+        simp only [List.map_cons, List.sum_cons, Bool.false_eq_true,
+          Bool.true_eq_false, decide_false, decide_true, if_false, if_true]
+      · rw [ih]
+        ring
+      · rw [ih]
+        ring
+
+private theorem FiniteLaw.Equivalent.mass
+    {α : Type*} [DecidableEq α]
+    {left right : FiniteLaw α} (h : left.Equivalent right)
+    (outcome : α) :
+    left.mass outcome = right.mass outcome := by
+  exact h.eventMass (fun candidate => decide (candidate = outcome))
+
 private theorem behavioralLaw_initial_apply_false
     (behavioral : observed.BehavioralProfile)
     (second : Bool) :
-    chanceGame.behavioralStoppedPayoffLawFrom
-        behavioral initialRoot 2
-        (payoffOutcome false second) =
-      behavioral () .first false *
-        behavioral () (.second false) second := by
+    (chanceGame.behavioralStoppedPayoffLawFrom
+        behavioral initialRoot 2).mass (payoffOutcome false second) =
+      (show FiniteLaw Bool from
+        behavioral () firstInformation).mass false *
+        (show FiniteLaw Bool from
+          behavioral () (secondInformation false)).mass second := by
   rw [behavioralLaw_initial]
-  rw [PMF.bind_apply]
   change
-    (∑' first : Bool,
-      behavioral () .first first *
-        (behavioral () (.second first)).map
-          (payoffOutcome first)
-          (payoffOutcome false second)) =
-      _
-  rw [tsum_bool]
+    ((show FiniteLaw Bool from
+      behavioral () firstInformation).bind fun first : Bool =>
+        (show FiniteLaw Bool from
+          behavioral () (secondInformation first)).map
+            (payoffOutcome first)).mass (payoffOutcome false second) = _
+  rw [FiniteLaw.mass_bind_bool]
   have hfalse :
-      (behavioral () (.second false)).map
-          (payoffOutcome false)
-          (payoffOutcome false second) =
-        behavioral () (.second false) second :=
-    PMF.map_apply_of_injective
-      (behavioral () (.second false))
+      ((behavioral () (secondInformation false)).map
+          (payoffOutcome false)).mass (payoffOutcome false second) =
+        (show FiniteLaw Bool from
+          behavioral () (secondInformation false)).mass second :=
+    FiniteLaw.mass_map_of_injective
+      (show FiniteLaw Bool from
+        behavioral () (secondInformation false))
       (payoffOutcome false)
       (payoffOutcome_injective false)
       second
-  simp only [hfalse]
-  simp [PMF.map_apply, payoffOutcome_ne_of_first_ne]
+  rw [hfalse]
+  have htrue :
+      ((show FiniteLaw Bool from
+        behavioral () (secondInformation true)).map
+          (payoffOutcome true)).mass (payoffOutcome false second) = 0 := by
+    unfold FiniteLaw.mass FiniteLaw.eventMass
+    rw [FiniteLaw.map_atoms, List.map_map]
+    apply List.sum_eq_zero
+    intro weight hweight
+    rw [List.mem_map] at hweight
+    obtain ⟨atom, _, rfl⟩ := hweight
+    rcases atom with ⟨choice, atomWeight⟩
+    simp only [Function.comp_apply]
+    simp [payoffOutcome_ne_of_first_ne
+      (by decide : true ≠ false) choice second]
+  rw [htrue, mul_zero, add_zero]
 
 private theorem behavioralLaw_afterFalse_apply
     (behavioral : observed.BehavioralProfile)
     (second : Bool) :
-    chanceGame.behavioralStoppedPayoffLawFrom
-        behavioral afterFalseRoot 1
-        (payoffOutcome false second) =
-      behavioral () (.second false) second := by
+    (chanceGame.behavioralStoppedPayoffLawFrom
+        behavioral afterFalseRoot 1).mass (payoffOutcome false second) =
+      (show FiniteLaw Bool from
+        behavioral () (secondInformation false)).mass second := by
   rw [afterFalseRoot_eq, behavioralLaw_afterRoot]
+  change
+    ((show FiniteLaw Bool from
+      behavioral () (secondInformation false)).map
+        (payoffOutcome false)).mass (payoffOutcome false second) = _
   exact
-    PMF.map_apply_of_injective
-      (behavioral () (.second false))
+    FiniteLaw.mass_map_of_injective
+      (show FiniteLaw Bool from
+        behavioral () (secondInformation false))
       (payoffOutcome false)
       (payoffOutcome_injective false)
       second
@@ -562,24 +728,34 @@ private def singletonProfileEquiv :
     rfl
 
 private theorem correlatedProfile_pureProfileLaw :
-    correlatedProfile.pureProfileLaw observed =
-      correlatedStrategy.map singletonProfileEquiv := by
-  ext profile
-  unfold ObservedGame.MixedProfile.pureProfileLaw
-  calc
-    PMF.fintypePi correlatedProfile profile =
-        ∏ i : Unit, correlatedProfile i (profile i) :=
-      PMF.fintypePi_apply correlatedProfile profile
-    _ = correlatedStrategy (profile ()) := by
-      simp [correlatedProfile]
-    _ =
-        (correlatedStrategy.map singletonProfileEquiv) profile := by
-      rw [PMF.map_equiv_apply]
-      rfl
+    (correlatedProfile.pureProfileLaw observed).Equivalent
+      (correlatedStrategy.map singletonProfileEquiv) := by
+  have hmarginal :=
+    (FiniteLaw.fintypePi_map_apply correlatedProfile ()).map
+      singletonProfileEquiv
+  rw [FiniteLaw.map_comp] at hmarginal
+  have hidentity :
+      (singletonProfileEquiv ∘ fun profile : observed.PureProfile =>
+        profile ()) = id := by
+    funext profile
+    funext i
+    cases i
+    rfl
+  have hlaw :
+      (FiniteLaw.fintypePi correlatedProfile).map
+          (singletonProfileEquiv ∘
+            fun profile : observed.PureProfile => profile ()) =
+        FiniteLaw.fintypePi correlatedProfile := by
+    rw [hidentity, FiniteLaw.map_id]
+  have hresult :
+      (FiniteLaw.fintypePi correlatedProfile).Equivalent
+        (correlatedStrategy.map singletonProfileEquiv) :=
+    (FiniteLaw.Equivalent.of_eq hlaw.symm).trans hmarginal
+  exact hresult
 
 private theorem correlatedProfile_pureProfileLaw_chance :
-    correlatedProfile.pureProfileLaw chanceGame.observed =
-      correlatedStrategy.map singletonProfileEquiv :=
+    (correlatedProfile.pureProfileLaw chanceGame.observed).Equivalent
+      (correlatedStrategy.map singletonProfileEquiv) :=
   correlatedProfile_pureProfileLaw
 
 private theorem constantProfile_behavioralLaw_initial (choice : Bool) :
@@ -587,95 +763,99 @@ private theorem constantProfile_behavioralLaw_initial (choice : Bool) :
         ((singletonProfileEquiv
           (constantPlan choice)).toBehavioral observed)
         initialRoot 2 =
-      PMF.pure (payoffOutcome choice choice) := by
+      FiniteLaw.pure (payoffOutcome choice choice) := by
   rw [behavioralLaw_initial]
   simp [singletonProfileEquiv,
     ObservedGame.PureProfile.toBehavioral,
     ObservedGame.PureStrategy.toBehavioral,
-    constantPlan, PMF.pure_bind]
-  exact PMF.pure_map _ _
+    constantPlan, FiniteLaw.pure_bind]
+  exact FiniteLaw.pure_map _ _
 
 private theorem constantProfile_behavioralLaw_afterFalse (choice : Bool) :
     chanceGame.behavioralStoppedPayoffLawFrom
         ((singletonProfileEquiv
           (constantPlan choice)).toBehavioral observed)
         afterFalseRoot 1 =
-      PMF.pure (payoffOutcome false choice) := by
+      FiniteLaw.pure (payoffOutcome false choice) := by
   rw [afterFalseRoot_eq, behavioralLaw_afterRoot]
   simp [singletonProfileEquiv,
     ObservedGame.PureProfile.toBehavioral,
     ObservedGame.PureStrategy.toBehavioral,
     constantPlan]
-  exact PMF.pure_map _ _
+  exact FiniteLaw.pure_map _ _
 
 private theorem mixedLaw_initial :
-    chanceGame.mixedStoppedPayoffLawFrom
-        correlatedProfile initialRoot 2 =
-      fairCoin.map (fun choice => payoffOutcome choice choice) := by
+    (chanceGame.mixedStoppedPayoffLawFrom
+        correlatedProfile initialRoot 2).Equivalent
+      (fairCoin.map (fun choice => payoffOutcome choice choice)) := by
   unfold ObservedChanceGame.mixedStoppedPayoffLawFrom
-  rw [correlatedProfile_pureProfileLaw_chance]
   let continuation :=
     fun pureProfile : observed.PureProfile =>
       chanceGame.behavioralStoppedPayoffLawFrom
         (pureProfile.toBehavioral chanceGame.observed)
         initialRoot 2
+  apply (correlatedProfile_pureProfileLaw_chance.bind fun _ =>
+    FiniteLaw.Equivalent.refl _).trans
+  apply FiniteLaw.Equivalent.of_eq
   calc
     (correlatedStrategy.map singletonProfileEquiv).bind continuation =
         correlatedStrategy.bind
           (continuation ∘ singletonProfileEquiv) :=
-      PMF.bind_map correlatedStrategy singletonProfileEquiv continuation
+      FiniteLaw.bind_map correlatedStrategy singletonProfileEquiv continuation
     _ =
         (fairCoin.map constantPlan).bind
           (continuation ∘ singletonProfileEquiv) := rfl
     _ =
         fairCoin.bind
           ((continuation ∘ singletonProfileEquiv) ∘ constantPlan) :=
-      PMF.bind_map fairCoin constantPlan
+      FiniteLaw.bind_map fairCoin constantPlan
         (continuation ∘ singletonProfileEquiv)
     _ =
         fairCoin.bind
-          (PMF.pure ∘
+          (FiniteLaw.pure ∘
             fun choice => payoffOutcome choice choice) := by
-      apply congrArg (PMF.bind fairCoin)
+      apply congrArg (FiniteLaw.bind fairCoin)
       funext choice
       exact constantProfile_behavioralLaw_initial choice
     _ = _ :=
-      PMF.bind_pure_comp
-        (fun choice => payoffOutcome choice choice)
-        fairCoin
+      (FiniteLaw.map_eq_bind_pure_comp
+        (fun choice => payoffOutcome choice choice) fairCoin).symm
 
 private theorem mixedLaw_afterFalse :
-    chanceGame.mixedStoppedPayoffLawFrom
-        correlatedProfile afterFalseRoot 1 =
-      fairCoin.map (payoffOutcome false) := by
+    (chanceGame.mixedStoppedPayoffLawFrom
+        correlatedProfile afterFalseRoot 1).Equivalent
+      (fairCoin.map (payoffOutcome false)) := by
   unfold ObservedChanceGame.mixedStoppedPayoffLawFrom
-  rw [correlatedProfile_pureProfileLaw_chance]
   let continuation :=
     fun pureProfile : observed.PureProfile =>
       chanceGame.behavioralStoppedPayoffLawFrom
         (pureProfile.toBehavioral chanceGame.observed)
         afterFalseRoot 1
+  apply (correlatedProfile_pureProfileLaw_chance.bind fun _ =>
+    FiniteLaw.Equivalent.refl _).trans
+  apply FiniteLaw.Equivalent.of_eq
   calc
     (correlatedStrategy.map singletonProfileEquiv).bind continuation =
         correlatedStrategy.bind
           (continuation ∘ singletonProfileEquiv) :=
-      PMF.bind_map correlatedStrategy singletonProfileEquiv continuation
+      FiniteLaw.bind_map correlatedStrategy singletonProfileEquiv continuation
     _ =
         (fairCoin.map constantPlan).bind
           (continuation ∘ singletonProfileEquiv) := rfl
     _ =
         fairCoin.bind
           ((continuation ∘ singletonProfileEquiv) ∘ constantPlan) :=
-      PMF.bind_map fairCoin constantPlan
+      FiniteLaw.bind_map fairCoin constantPlan
         (continuation ∘ singletonProfileEquiv)
     _ =
         fairCoin.bind
-          (PMF.pure ∘ payoffOutcome false) := by
-      apply congrArg (PMF.bind fairCoin)
+          (FiniteLaw.pure ∘ payoffOutcome false) := by
+      apply congrArg (FiniteLaw.bind fairCoin)
       funext choice
       exact constantProfile_behavioralLaw_afterFalse choice
     _ = _ :=
-      PMF.bind_pure_comp (payoffOutcome false) fairCoin
+      (FiniteLaw.map_eq_bind_pure_comp
+        (payoffOutcome false) fairCoin).symm
 
 private theorem diagonalPayoffOutcome_injective :
     Function.Injective
@@ -689,25 +869,22 @@ private theorem diagonalPayoffOutcome_injective :
   simpa [payoffOutcome] using hfirst
 
 private theorem mixedLaw_initial_falseFalse :
-    chanceGame.mixedStoppedPayoffLawFrom
-        correlatedProfile initialRoot 2
+    (chanceGame.mixedStoppedPayoffLawFrom
+        correlatedProfile initialRoot 2).mass
         (payoffOutcome false false) =
-      (2⁻¹ : ENNReal) := by
-  rw [mixedLaw_initial]
-  rw [PMF.map_apply_of_injective
-    fairCoin
+      (1 / 2 : ℚ≥0) := by
+  rw [FiniteLaw.Equivalent.mass mixedLaw_initial]
+  rw [FiniteLaw.mass_map_of_injective fairCoin
     (fun choice => payoffOutcome choice choice)
-    diagonalPayoffOutcome_injective
-    false]
-  simp [fairCoin, PMF.bernoulli_apply]
+    diagonalPayoffOutcome_injective false]
+  norm_num [fairCoin, FiniteLaw.mass, FiniteLaw.eventMass]
 
 private theorem mixedLaw_initial_falseTrue :
-    chanceGame.mixedStoppedPayoffLawFrom
-        correlatedProfile initialRoot 2
+    (chanceGame.mixedStoppedPayoffLawFrom
+        correlatedProfile initialRoot 2).mass
         (payoffOutcome false true) =
       0 := by
-  rw [mixedLaw_initial, PMF.map_apply]
-  rw [tsum_bool]
+  rw [FiniteLaw.Equivalent.mass mixedLaw_initial]
   have hfalse :
       payoffOutcome false true ≠
         payoffOutcome false false :=
@@ -718,35 +895,35 @@ private theorem mixedLaw_initial_falseTrue :
       payoffOutcome false true ≠
         payoffOutcome true true :=
     payoffOutcome_ne_of_first_ne Bool.false_ne_true _ _
-  simp [hfalse, htrue]
+  unfold FiniteLaw.mass FiniteLaw.eventMass
+  rw [FiniteLaw.map_atoms, List.map_map]
+  norm_num [fairCoin, Ne.symm hfalse, Ne.symm htrue]
 
 private theorem mixedLaw_afterFalse_apply (second : Bool) :
-    chanceGame.mixedStoppedPayoffLawFrom
-        correlatedProfile afterFalseRoot 1
+    (chanceGame.mixedStoppedPayoffLawFrom
+        correlatedProfile afterFalseRoot 1).mass
         (payoffOutcome false second) =
-      (2⁻¹ : ENNReal) := by
-  rw [mixedLaw_afterFalse]
-  rw [PMF.map_apply_of_injective
-    fairCoin
-    (payoffOutcome false)
-    (payoffOutcome_injective false)
-    second]
+      (1 / 2 : ℚ≥0) := by
+  rw [FiniteLaw.Equivalent.mass mixedLaw_afterFalse]
+  rw [FiniteLaw.mass_map_of_injective fairCoin
+    (payoffOutcome false) (payoffOutcome_injective false) second]
   cases second <;>
-    simp [fairCoin, PMF.bernoulli_apply]
+    norm_num [fairCoin, FiniteLaw.mass, FiniteLaw.eventMass]
 
 /-! ### Root-independent separation -/
 
 /-- A behavioral profile realizes the correlated mixed plan at one selected
-continuation when their bounded optional-payoff laws are literally equal. -/
+continuation when their bounded optional-payoff laws are semantically
+equivalent. -/
 def RealizesAt
     (current :
       observed.base.toArena.HistoryFrom observed.base.init)
     (fuel : ℕ)
     (behavioral : observed.BehavioralProfile) : Prop :=
-  chanceGame.behavioralStoppedPayoffLawFrom
-      behavioral current fuel =
-    chanceGame.mixedStoppedPayoffLawFrom
-      correlatedProfile current fuel
+  (chanceGame.behavioralStoppedPayoffLawFrom
+      behavioral current fuel).Equivalent
+    (chanceGame.mixedStoppedPayoffLawFrom
+      correlatedProfile current fuel)
 
 /-- **N-2, universal separation.** No single root-independent behavioral
 profile realizes both the initial-root law and the freshly resampled
@@ -768,46 +945,39 @@ theorem no_rootIndependent_behavioralProfile :
   intro behavioral hrealizes
   rcases hrealizes with ⟨hinitial, hcontinuation⟩
   have hcontinuationFalse :=
-    congrArg
-      (fun law : PMF (Option (Unit → Bool × Bool)) =>
-        law (payoffOutcome false false))
-      hcontinuation
+    FiniteLaw.Equivalent.mass hcontinuation
+      (payoffOutcome false false)
   have hcontinuationTrue :=
-    congrArg
-      (fun law : PMF (Option (Unit → Bool × Bool)) =>
-        law (payoffOutcome false true))
-      hcontinuation
-  dsimp only at hcontinuationFalse hcontinuationTrue
+    FiniteLaw.Equivalent.mass hcontinuation
+      (payoffOutcome false true)
   rw [behavioralLaw_afterFalse_apply,
     mixedLaw_afterFalse_apply] at hcontinuationFalse
   rw [behavioralLaw_afterFalse_apply,
     mixedLaw_afterFalse_apply] at hcontinuationTrue
   have hsecond :
-      behavioral () (.second false) false =
-        behavioral () (.second false) true :=
+      (show FiniteLaw Bool from
+        behavioral () (secondInformation false)).mass false =
+        (show FiniteLaw Bool from
+          behavioral () (secondInformation false)).mass true :=
     hcontinuationFalse.trans hcontinuationTrue.symm
   have hinitialFalse :=
-    congrArg
-      (fun law : PMF (Option (Unit → Bool × Bool)) =>
-        law (payoffOutcome false false))
-      hinitial
+    FiniteLaw.Equivalent.mass hinitial
+      (payoffOutcome false false)
   have hinitialTrue :=
-    congrArg
-      (fun law : PMF (Option (Unit → Bool × Bool)) =>
-        law (payoffOutcome false true))
-      hinitial
-  dsimp only at hinitialFalse hinitialTrue
+    FiniteLaw.Equivalent.mass hinitial
+      (payoffOutcome false true)
   rw [behavioralLaw_initial_apply_false,
     mixedLaw_initial_falseFalse] at hinitialFalse
   rw [behavioralLaw_initial_apply_false,
     mixedLaw_initial_falseTrue] at hinitialTrue
-  have hhalfZero : (2⁻¹ : ENNReal) = 0 :=
+  have hhalfZero : (1 / 2 : ℚ≥0) = 0 :=
     hinitialFalse.symm.trans <|
       (congrArg
         (fun probability =>
-          behavioral () .first false * probability)
+          (show FiniteLaw Bool from
+            behavioral () firstInformation).mass false * probability)
         hsecond).trans hinitialTrue
-  exact (by norm_num : (2⁻¹ : ENNReal) ≠ 0) hhalfZero
+  exact (by norm_num : (1 / 2 : ℚ≥0) ≠ 0) hhalfZero
 
 /-- **N-2.** At every explicitly selected continuation root, the existing
 root-scoped behavioralization of the correlated mixed plan has exactly the
@@ -820,29 +990,52 @@ theorem correlatedPlan_realizedAtSelectedRoot
     (current :
       observed.base.toArena.HistoryFrom
         observed.base.init)
+    (offPath : observed.BehavioralProfile)
     (fuel : ℕ) :
-    chanceGame.mixedStoppedPayoffLawFrom
-        correlatedProfile current fuel =
-      chanceGame.behavioralStoppedPayoffLawFrom
+    (chanceGame.mixedStoppedPayoffLawFrom
+        correlatedProfile current fuel).Equivalent
+      (chanceGame.behavioralStoppedPayoffLawFrom
         (hypotheses.mixedToBehavioralProfileAt
-          observed current correlatedProfile)
-        current fuel := by
+          observed current correlatedProfile offPath)
+        current fuel) := by
+  letI (i : Unit)
+      (information : chanceGame.observed.RepresentedInfo i) :
+      DecidableEq
+        (chanceGame.observed.InfoAction i information.1) :=
+    (hypotheses.finiteDecisionPresentation i).2 information
   exact
     chanceGame.mixedToBehavioral_stoppedPayoffLawFrom
       hypotheses.recallCertificate
-      correlatedProfile current fuel
+      correlatedProfile offPath current fuel
 
-/-- Root-scoped construction of the full finite-Kuhn realization certificate,
-including exact deviation coverage, at a selected continuation. -/
-noncomputable def realizationAt
+/-- Root-scoped finite-Kuhn realization, including semantic deviation
+coverage, at a selected continuation. -/
+theorem realizationAt
     (current :
       observed.base.toArena.HistoryFrom
         observed.base.init)
-    (fuel : ℕ) :
-    chanceGame.MixedBehavioralRealizationAt
-      current fuel :=
+    (offPath : observed.BehavioralProfile)
+    (fuel : ℕ)
+    (profile : observed.MixedProfile) :
+    (chanceGame.behavioralStoppedPayoffLawFrom
+        (hypotheses.mixedToBehavioralProfileAt
+          observed current profile offPath)
+        current fuel).Equivalent
+      (chanceGame.mixedStoppedPayoffLawFrom
+        profile current fuel) ∧
+    ∀ (i : Unit) (target : observed.BehavioralStrategy i),
+      ∃ source : observed.MixedStrategy i,
+        (chanceGame.behavioralStoppedPayoffLawFrom
+            (Function.update
+              (hypotheses.mixedToBehavioralProfileAt
+                observed current profile offPath)
+              i target)
+            current fuel).Equivalent
+          (chanceGame.mixedStoppedPayoffLawFrom
+            (Function.update profile i source)
+            current fuel) :=
   chanceGame.finiteKuhnMixedBehavioralRealizationAt
-    hypotheses current fuel
+    hypotheses current offPath fuel profile
 
 /-- **N-2 deviation guard.** Every unilateral behavioral deviation at the
 selected root has an exactly matching mixed-plan deviation law at that same
@@ -852,22 +1045,20 @@ theorem correlatedPlan_deviationCoveredAtSelectedRoot
     (current :
       observed.base.toArena.HistoryFrom
         observed.base.init)
+    (offPath : observed.BehavioralProfile)
     (fuel : ℕ)
     (target : observed.BehavioralStrategy ()) :
     ∃ source : observed.MixedStrategy (),
-      chanceGame.behavioralStoppedPayoffLawFrom
+      (chanceGame.behavioralStoppedPayoffLawFrom
           (Function.update
-            ((realizationAt current fuel).mapProfile
-              correlatedProfile)
+            (hypotheses.mixedToBehavioralProfileAt
+              observed current correlatedProfile offPath)
             () target)
-          current fuel =
-        chanceGame.mixedStoppedPayoffLawFrom
+          current fuel).Equivalent
+        (chanceGame.mixedStoppedPayoffLawFrom
           (Function.update
             correlatedProfile () source)
-          current fuel := by
-  simpa
-      [ObservedChanceGame.MixedBehavioralRealizationAt.mapProfile] using
-    (realizationAt current fuel).realize_deviation
-      correlatedProfile () target
+          current fuel) := by
+  exact (realizationAt current offPath fuel correlatedProfile).2 () target
 
 end Examples.RootScopedKuhn
