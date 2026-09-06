@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 
 
 import EconCSLib.GameTheory.ExtensiveGame.Simulation.Restart.Certificates
+import EconCSLib.GameTheory.ExtensiveGame.Simulation.Presentation.Kernel.EffectiveBehavioralProfile
 
 /-!
 # Restart.Observed — observed-profile compatibility
@@ -13,6 +14,9 @@ This implementation module lifts raw restart certificates to observed
 kernel behavioral profiles.  Its canonical semantic endpoint is
 `KernelBehavioralProfile.IsFreshRestartStateCompatibleAt`; event,
 trajectory, and certificate-specific predicates remain expert proof tools.
+It also connects A20 effective execution to every finite marginal of the
+absolute-clock continuation event/state laws, the time-zero fresh-restart
+state law, and the normalized continuation event law.
 -/
 
 open MeasureTheory ProbabilityTheory Preorder
@@ -25,6 +29,11 @@ variable {N : Type uN}
 variable {G : ObservedGame N ℝ}
 
 namespace MeasurableKernelPresentation.KernelBehavioralProfile
+
+local notation "μ[" atoms "]" =>
+  List.foldr (fun (atom : _ × ℚ≥0) rest =>
+    ((Prod.snd atom : ℚ≥0) : ENNReal) •
+      Measure.dirac (Prod.fst atom) + rest) 0 atoms
 
 variable
   {model : MeasurableHistoryModel G}
@@ -47,6 +56,290 @@ noncomputable def normalizedContinuationEventPathMeasure
     Measure (ℕ → model.toArena.PathEvent) :=
   (profile.continuationEventPathMeasure root).map
     MeasurableKernelArena.freshenInitialEvent
+
+/-- A20 effective execution from the complete canonical prefix gives exactly
+every finite-prefix marginal of the original high-level absolute-clock
+continuation event law.
+
+The finite executor keeps the complete action-recording prefix and calls the
+policy at the original absolute time.  Only the returned finite continuation
+is reindexed from zero.  The theorem identifies each finite marginal and does
+not replace the original infinite-path measure by executable data. -/
+theorem effective_measure_tailPrefixLawFrom_eq_continuationEventPathMeasure_map_frestrictLe
+    {effectivePresentation :
+      (finiteKernelHistoryArena G).EffectiveKernelPresentation}
+    {effectiveProfile :
+      KernelArena.EffectiveKernelBehavioralProfile effectivePresentation}
+    {analyticPresentation :
+      MeasurableKernelPresentation G (MeasurableHistoryModel.discrete G)}
+    {analyticProfile : analyticPresentation.KernelBehavioralProfile}
+    [abstractActionMeasurable :
+      ∀ time,
+        MeasurableSpace
+          (effectivePresentation.realization.AbstractAction time)]
+    (representation :
+      KernelArena.EffectiveKernelBehavioralProfile.AnalyticRepresentation
+        effectiveProfile analyticPresentation.information
+          analyticPresentation.realization analyticProfile.policy)
+    (root : CompleteHistory G)
+    (horizon : ℕ) :
+    letI (state : (finiteKernelHistoryArena G).State) :
+        Decidable
+          (IsEmpty ((finiteKernelHistoryArena G).Action state)) :=
+      effectivePresentation.terminalDecision state
+    let start := MeasurableHistoryModel.canonicalContinuationStart root
+    let initialPrefix :
+        (finiteKernelHistoryArena G).EventPrefix start :=
+      KernelArena.EventPrefix.ofAnalytic
+        ((MeasurableHistoryModel.discrete G).canonicalContinuationPrefix root)
+    μ[((effectiveProfile.compiledPolicy.tailPrefixLawFrom
+        start initialPrefix horizon).map fun history =>
+          KernelArena.EventPrefix.toAnalytic history).atoms] =
+      (analyticProfile.continuationEventPathMeasure root).map
+        (Preorder.frestrictLe horizon) := by
+  let A := finiteKernelHistoryArena G
+  let start := MeasurableHistoryModel.canonicalContinuationStart root
+  let initialPrefix : A.EventPrefix start :=
+    KernelArena.EventPrefix.ofAnalytic
+      ((MeasurableHistoryModel.discrete G).canonicalContinuationPrefix root)
+  letI (state : A.State) : Decidable (IsEmpty (A.Action state)) :=
+    effectivePresentation.terminalDecision state
+  have realizes :=
+    effective_compiledPolicy_analyticallyRealizedBy representation
+  have htail :=
+    effectiveProfile.compiledPolicy
+      |>.measure_tailPrefixLawFrom_eq_tailEventPathMeasureFromPrefix_map_frestrictLe
+        analyticProfile.compiledPolicy realizes start initialPrefix horizon
+  unfold continuationEventPathMeasure
+  simpa only [initialPrefix, start,
+    KernelArena.EventPrefix.toAnalytic_ofAnalytic] using htail
+
+/-- Projecting the A20 effective continuation execution to states gives
+exactly every finite-prefix marginal of the original high-level
+absolute-clock continuation state law.
+
+Actions are retained while future decisions are generated and are forgotten
+only in the final projection.  Thus history-dependent strategies still see
+the complete canonical prefix. -/
+theorem effective_measure_tailPrefixLawFrom_map_states_eq_continuationStatePathMeasure_map_frestrictLe
+    {effectivePresentation :
+      (finiteKernelHistoryArena G).EffectiveKernelPresentation}
+    {effectiveProfile :
+      KernelArena.EffectiveKernelBehavioralProfile effectivePresentation}
+    {analyticPresentation :
+      MeasurableKernelPresentation G (MeasurableHistoryModel.discrete G)}
+    {analyticProfile : analyticPresentation.KernelBehavioralProfile}
+    [abstractActionMeasurable :
+      ∀ time,
+        MeasurableSpace
+          (effectivePresentation.realization.AbstractAction time)]
+    (representation :
+      KernelArena.EffectiveKernelBehavioralProfile.AnalyticRepresentation
+        effectiveProfile analyticPresentation.information
+          analyticPresentation.realization analyticProfile.policy)
+    (root : CompleteHistory G)
+    (horizon : ℕ) :
+    letI (state : (finiteKernelHistoryArena G).State) :
+        Decidable
+          (IsEmpty ((finiteKernelHistoryArena G).Action state)) :=
+      effectivePresentation.terminalDecision state
+    let start := MeasurableHistoryModel.canonicalContinuationStart root
+    let initialPrefix :
+        (finiteKernelHistoryArena G).EventPrefix start :=
+      KernelArena.EventPrefix.ofAnalytic
+        ((MeasurableHistoryModel.discrete G).canonicalContinuationPrefix root)
+    μ[((effectiveProfile.compiledPolicy.tailPrefixLawFrom
+        start initialPrefix horizon).map fun history =>
+          history.states.toAnalytic).atoms] =
+      (analyticProfile.continuationStatePathMeasure root).map
+        (Preorder.frestrictLe horizon) := by
+  let A := finiteKernelHistoryArena G
+  let start := MeasurableHistoryModel.canonicalContinuationStart root
+  let initialPrefix : A.EventPrefix start :=
+    KernelArena.EventPrefix.ofAnalytic
+      ((MeasurableHistoryModel.discrete G).canonicalContinuationPrefix root)
+  letI (state : A.State) : Decidable (IsEmpty (A.Action state)) :=
+    effectivePresentation.terminalDecision state
+  have realizes :=
+    effective_compiledPolicy_analyticallyRealizedBy representation
+  have htail :=
+    effectiveProfile.compiledPolicy
+      |>.measure_tailPrefixLawFrom_map_states_eq_tailStatePathMeasureFromPrefix_map_frestrictLe
+        analyticProfile.compiledPolicy realizes start initialPrefix horizon
+  unfold continuationStatePathMeasure
+  simpa only [initialPrefix, start,
+    KernelArena.EventPrefix.toAnalytic_ofAnalytic] using htail
+
+/-- Starting the A20 effective profile from `root` at time zero and projecting
+to states gives exactly every finite-prefix marginal of the original
+high-level fresh-restart state law.
+
+This computation deliberately uses the time-zero profile components.  It is
+not identified with the absolute-clock continuation law without an additional
+restart-compatibility hypothesis. -/
+theorem effective_measure_finitePrefixLawFrom_map_states_eq_freshRestartStatePathMeasure_map_frestrictLe
+    {effectivePresentation :
+      (finiteKernelHistoryArena G).EffectiveKernelPresentation}
+    {effectiveProfile :
+      KernelArena.EffectiveKernelBehavioralProfile effectivePresentation}
+    {analyticPresentation :
+      MeasurableKernelPresentation G (MeasurableHistoryModel.discrete G)}
+    {analyticProfile : analyticPresentation.KernelBehavioralProfile}
+    [abstractActionMeasurable :
+      ∀ time,
+        MeasurableSpace
+          (effectivePresentation.realization.AbstractAction time)]
+    (representation :
+      KernelArena.EffectiveKernelBehavioralProfile.AnalyticRepresentation
+        effectiveProfile analyticPresentation.information
+          analyticPresentation.realization analyticProfile.policy)
+    (root : CompleteHistory G)
+    (horizon : ℕ) :
+    letI : MeasurableSpace (finiteKernelHistoryArena G).State :=
+      (finiteKernelHistoryArena G).toMeasurable.stateMeasurable
+    μ[((effectiveProfile.finitePrefixLawFrom
+        0 (KernelArena.EventPrefix.initial root) horizon).map
+          fun history (index : Finset.Iic horizon) =>
+            history.states ⟨index.1, by
+              have hindex := Finset.mem_Iic.mp index.2
+              omega⟩).atoms] =
+      (analyticProfile.freshRestartStatePathMeasure root).map
+        (Preorder.frestrictLe horizon) := by
+  simpa only [freshRestartStatePathMeasure] using
+    effective_measure_finitePrefixLawFrom_map_states_eq_statePathMeasure_map_frestrictLe
+      representation root horizon
+
+/-- A20 effective absolute-clock execution, tail reindexing, and finite
+coordinate-zero normalization give exactly every finite-prefix marginal of
+the original high-level `normalizedContinuationEventPathMeasure`.
+
+Execution retains the complete canonical event prefix and its absolute clock.
+Only after execution is the tail reindexed, and only its coordinate-zero
+incoming-action occurrence is replaced by the initial marker at the same
+state.  This theorem identifies each finite marginal; it does not identify an
+executable object with the entire infinite-path measure. -/
+theorem effective_measure_normalizedTailPrefixLawFrom_eq_normalizedContinuationEventPathMeasure_map_frestrictLe
+    {effectivePresentation :
+      (finiteKernelHistoryArena G).EffectiveKernelPresentation}
+    {effectiveProfile :
+      KernelArena.EffectiveKernelBehavioralProfile effectivePresentation}
+    {analyticPresentation :
+      MeasurableKernelPresentation G (MeasurableHistoryModel.discrete G)}
+    {analyticProfile : analyticPresentation.KernelBehavioralProfile}
+    [abstractActionMeasurable :
+      ∀ time,
+        MeasurableSpace
+          (effectivePresentation.realization.AbstractAction time)]
+    (representation :
+      KernelArena.EffectiveKernelBehavioralProfile.AnalyticRepresentation
+        effectiveProfile analyticPresentation.information
+          analyticPresentation.realization analyticProfile.policy)
+    (root : CompleteHistory G)
+    (horizon : ℕ) :
+    letI (state : (finiteKernelHistoryArena G).State) :
+        Decidable
+          (IsEmpty ((finiteKernelHistoryArena G).Action state)) :=
+      effectivePresentation.terminalDecision state
+    let start := MeasurableHistoryModel.canonicalContinuationStart root
+    let initialPrefix :
+        (finiteKernelHistoryArena G).EventPrefix start :=
+      KernelArena.EventPrefix.ofAnalytic
+        ((MeasurableHistoryModel.discrete G).canonicalContinuationPrefix root)
+    μ[(((effectiveProfile.compiledPolicy.tailPrefixLawFrom
+        start initialPrefix horizon).map fun history index =>
+          if index.1 = 0 then
+            KernelArena.PathEvent.initial (history index).state
+          else
+            history index).map fun history =>
+              KernelArena.EventPrefix.toAnalytic history).atoms] =
+      (analyticProfile.normalizedContinuationEventPathMeasure root).map
+        (Preorder.frestrictLe horizon) := by
+  let A := finiteKernelHistoryArena G
+  let start := MeasurableHistoryModel.canonicalContinuationStart root
+  let initialPrefix : A.EventPrefix start :=
+    KernelArena.EventPrefix.ofAnalytic
+      ((MeasurableHistoryModel.discrete G).canonicalContinuationPrefix root)
+  letI (state : A.State) : Decidable (IsEmpty (A.Action state)) :=
+    effectivePresentation.terminalDecision state
+  let normalizeFinite : A.EventPrefix horizon → A.EventPrefix horizon :=
+    fun history index =>
+      if index.1 = 0 then
+        KernelArena.PathEvent.initial (history index).state
+      else
+        history index
+  let normalizePrefix :
+      ((MeasurableHistoryModel.discrete G).toArena.ContinuationPrefix horizon) →
+        ((MeasurableHistoryModel.discrete G).toArena.ContinuationPrefix horizon) :=
+    fun history index =>
+      if index.1 = 0 then
+        (MeasurableHistoryModel.discrete G).toArena.initialEvent
+          (history index).state
+      else
+        history index
+  have hnormalizePrefix_measurable : Measurable normalizePrefix := by
+    apply measurable_pi_lambda
+    intro index
+    by_cases hindex : index.1 = 0
+    · simp only [normalizePrefix, hindex, if_true]
+      exact
+        (MeasurableHistoryModel.discrete G).toArena.measurable_initialEvent.comp
+          (MeasurableKernelArena.PathEvent.measurable_state.comp
+            (measurable_pi_apply index))
+    · simpa only [normalizePrefix, hindex, if_false] using
+        (measurable_pi_apply index :
+          Measurable fun history :
+              (MeasurableHistoryModel.discrete G).toArena.ContinuationPrefix
+                horizon =>
+            history index)
+  have hlaw :
+      ((effectiveProfile.compiledPolicy.tailPrefixLawFrom
+          start initialPrefix horizon).map normalizeFinite).map
+            (fun history => history.toAnalytic) =
+        ((effectiveProfile.compiledPolicy.tailPrefixLawFrom
+          start initialPrefix horizon).map
+            (fun history => history.toAnalytic)).map normalizePrefix := by
+    simp only [FiniteLaw.map_comp]
+    congr 1
+  have realizes :=
+    effective_compiledPolicy_analyticallyRealizedBy representation
+  have htail :=
+    effectiveProfile.compiledPolicy
+      |>.measure_tailPrefixLawFrom_eq_tailEventPathMeasureFromPrefix_map_frestrictLe
+        analyticProfile.compiledPolicy realizes start initialPrefix horizon
+  have hcontinuation :
+      μ[((effectiveProfile.compiledPolicy.tailPrefixLawFrom
+          start initialPrefix horizon).map
+            fun history => history.toAnalytic).atoms] =
+        (analyticProfile.continuationEventPathMeasure root).map
+          (Preorder.frestrictLe horizon) := by
+    unfold continuationEventPathMeasure
+    simpa only [initialPrefix, start,
+      KernelArena.EventPrefix.toAnalytic_ofAnalytic] using htail
+  change
+    μ[(((effectiveProfile.compiledPolicy.tailPrefixLawFrom
+        start initialPrefix horizon).map normalizeFinite).map
+          fun history => history.toAnalytic).atoms] = _
+  rw [hlaw]
+  refine (FiniteLaw.measure_map
+    ((effectiveProfile.compiledPolicy.tailPrefixLawFrom
+      start initialPrefix horizon).map
+        fun history => history.toAnalytic)
+    normalizePrefix hnormalizePrefix_measurable).symm.trans ?_
+  refine (congrArg (Measure.map normalizePrefix) hcontinuation).trans ?_
+  unfold normalizedContinuationEventPathMeasure
+  rw [Measure.map_map hnormalizePrefix_measurable
+    (Preorder.measurable_frestrictLe horizon)]
+  rw [Measure.map_map
+    (Preorder.measurable_frestrictLe horizon)
+    MeasurableKernelArena.measurable_freshenInitialEvent]
+  congr 1
+  funext path index
+  by_cases hindex : index.1 = 0
+  · simp [normalizePrefix,
+      MeasurableKernelArena.freshenInitialEvent, hindex]
+    rw [hindex]
+  · simp [normalizePrefix,
+      MeasurableKernelArena.freshenInitialEvent, hindex]
 
 /-- Event-level compatibility of fresh restart with absolute continuation at
 one root, after normalizing the unavoidable coordinate-zero occurrence
