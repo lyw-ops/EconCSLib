@@ -13,170 +13,147 @@ Policy compilation, finite-horizon coupling, and payoff-law equality.
 
 namespace ExtensiveGame.FOSG.Sequentialization
 
-universe uU
+universe uU uSA uO uP
 
 variable {n : ℕ} {U : Type uU}
-  (G : FOSG (Fin (n + 1)) U)
+  (G : FOSG.{0, uU, uSA, uSA, uO, uP} (Fin (n + 1)) U)
+
+/-- The FOSG history kernel uses the model's executable world terminal test. -/
+local instance historyKernelActionEmptinessDecidable
+    [(world : G.WorldState) → Decidable (G.isTerminal world)] :
+    (history : G.historyKernelArena.State) →
+      Decidable (IsEmpty (G.historyKernelArena.Action history)) :=
+  fun history =>
+    decidable_of_iff
+      (G.isTerminal history.1)
+      (G.historyKernelArena_isTerminal_iff history).symm
 
 /-- The concrete weak serializer is an exact kernel simulation when observed
 at macro boundaries.
 
 This repackaging is what permits generic finite-horizon coupling theorems to
 iterate the compiler's one-step correctness proof. -/
-noncomputable def macroKernelSimulation
+def macroKernelSimulation
     [(world : G.WorldState) → Decidable (G.isTerminal world)]
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
     (sourceDeclaredRoot : G.HistoryState → Prop) :
+    MacroPolicyData G D rootPayoff sourceDeclaredRoot →
     G.historyKernelArena.Simulation
-      (macroExecutionKernelArena G D rootPayoff sourceDeclaredRoot) :=
-  (probabilisticWeakSimulation G D rootPayoff
+      (macroExecutionKernelArena G D rootPayoff sourceDeclaredRoot)
+  | data =>
+  (probabilisticWeakSimulation G D rootPayoff data.micro
     sourceDeclaredRoot).toKernelSimulation
-
-/-- A canonical serialized macro action has an endpoint law exactly coupled
-to the corresponding FOSG successor law. -/
-theorem macroExecutionAction_coupling
-    [(world : G.WorldState) → Decidable (G.isTerminal world)]
-    (D : G.DecisionModel)
-    (rootPayoff : Fin (n + 1) → U)
-    (sourceDeclaredRoot : G.HistoryState → Prop)
-    (source : G.HistoryState)
-    (jointAction : G.JointAction source.1)
-    (target :
-      (game G rootPayoff).toArena.HistoryFrom
-        (game G rootPayoff).init)
-    (htarget :
-      ¬ (game G rootPayoff).isTerminal target.1)
-    (hrelated : Rel G source target) :
-    PMF.RelCoupling (Rel G)
-      (G.historyKernelArena.next source jointAction)
-      ((macroExecutionKernelArena G D rootPayoff
-        sourceDeclaredRoot).next target
-          (macroExecutionAction G D rootPayoff sourceDeclaredRoot
-            source jointAction target htarget)) := by
-  obtain ⟨targetEndpoint, htargetLaw, htargetBoundary⟩ :=
-    exists_macroExecutionLaw G rootPayoff source jointAction
-      target hrelated
-  let sourceEndpoint : G.WorldState → G.HistoryState :=
-    fun nextWorld =>
-      ⟨nextWorld,
-        FOSG.History.snoc source.2 jointAction nextWorld⟩
-  let coupling :
-      PMF
-        (G.HistoryState ×
-          (game G rootPayoff).toArena.HistoryFrom
-            (game G rootPayoff).init) :=
-    (G.transition source.1 jointAction).map fun nextWorld =>
-      (sourceEndpoint nextWorld, targetEndpoint nextWorld)
-  refine ⟨coupling, ?_, ?_, ?_⟩
-  · calc
-      coupling.map Prod.fst =
-          (G.transition source.1 jointAction).map
-            sourceEndpoint := by
-              rw [PMF.map_comp]
-              rfl
-      _ = G.historyKernelArena.next source jointAction := rfl
-  · calc
-      coupling.map Prod.snd =
-          (G.transition source.1 jointAction).map
-            targetEndpoint := by
-              rw [PMF.map_comp]
-              rfl
-      _ = (game G rootPayoff).toArena.stochasticHistoryPMFFrom
-          (macroPolicy G rootPayoff source jointAction)
-          target (n + 2) :=
-        htargetLaw.symm
-      _ = (macroExecutionKernelArena G D rootPayoff
-          sourceDeclaredRoot).next target
-            (macroExecutionAction G D rootPayoff sourceDeclaredRoot
-              source jointAction target htarget) := rfl
-  · intro pair hpair
-    obtain ⟨nextWorld, _, hmap⟩ :=
-      (PMF.mem_support_map_iff
-        (p := G.transition source.1 jointAction)
-        (f := fun nextWorld =>
-          (sourceEndpoint nextWorld, targetEndpoint nextWorld))
-        (b := pair)).mp hpair
-    subst pair
-    exact htargetBoundary nextWorld
 
 /-- The concrete policy compiler supplies the `PolicyMatch` required by the
 generic finite-horizon trajectory theorems. -/
-theorem serializedMacroPolicy_match
+def serializedMacroPolicy_match
     [(world : G.WorldState) → Decidable (G.isTerminal world)]
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
     (sourceDeclaredRoot : G.HistoryState → Prop)
+    (data : MacroPolicyData G D rootPayoff sourceDeclaredRoot)
     (sourcePolicy : G.historyKernelArena.Policy) :
-    (macroKernelSimulation G D rootPayoff sourceDeclaredRoot).PolicyMatch
+    (macroKernelSimulation G D rootPayoff sourceDeclaredRoot data).PolicyMatch
       sourcePolicy
-      (serializedMacroPolicy G D rootPayoff sourceDeclaredRoot
+      (serializedMacroPolicy G D rootPayoff sourceDeclaredRoot data
         sourcePolicy) where
   terminal_iff := by
     intro source target hrelated
     exact
-      (probabilisticWeakSimulation G D rootPayoff
+      (probabilisticWeakSimulation G D rootPayoff data.micro
         sourceDeclaredRoot).toKernelSimulation_terminal_iff hrelated
+  actionRel := by
+    intro source target hrelated sourceAction targetAction
+    have hsource :
+        ¬ IsEmpty (G.historyKernelArena.Action source) := by
+      intro hempty
+      exact hempty.false sourceAction
+    have htarget :
+        ¬ (game G rootPayoff).isTerminal target.1 := by
+      intro hterminal
+      exact hsource
+        (((probabilisticWeakSimulation G D rootPayoff data.micro
+          sourceDeclaredRoot).terminal_iff hrelated).mpr hterminal)
+    exact targetAction =
+      macroExecutionAction G D rootPayoff data.micro sourceDeclaredRoot
+        source sourceAction target htarget
   actionCoupling := by
     intro source target hrelated hsource htarget
+    classical
     rw [serializedMacroPolicy_eq_map G D rootPayoff
-      sourceDeclaredRoot sourcePolicy hrelated hsource htarget]
-    let targetNonterminal :=
-      macroTargetNonterminal G D rootPayoff sourceDeclaredRoot
-        target htarget
+      sourceDeclaredRoot data sourcePolicy hrelated hsource htarget]
     let actionMap :
         G.historyKernelArena.Action source →
           (macroExecutionKernelArena G D rootPayoff
             sourceDeclaredRoot).Action target :=
-      fun jointAction =>
-        macroExecutionAction G D rootPayoff sourceDeclaredRoot
-          source jointAction target targetNonterminal
-    let coupling :=
-      (sourcePolicy source hsource).map fun jointAction =>
-        (jointAction, actionMap jointAction)
-    refine ⟨coupling, ?_, ?_, ?_⟩
-    · calc
-        coupling.map Prod.fst =
-            (sourcePolicy source hsource).map id := by
-              rw [PMF.map_comp]
-              rfl
-        _ = sourcePolicy source hsource :=
-          PMF.map_id _
-    · calc
-        coupling.map Prod.snd =
-            (sourcePolicy source hsource).map actionMap := by
-              rw [PMF.map_comp]
-              rfl
-        _ = (sourcePolicy source hsource).map
-            (fun jointAction =>
-              macroExecutionAction G D rootPayoff
-                sourceDeclaredRoot source jointAction target
-                  (macroTargetNonterminal G D rootPayoff
-                    sourceDeclaredRoot target htarget)) := rfl
-    · intro pair hpair
-      obtain ⟨jointAction, _, hmap⟩ :=
-        (PMF.mem_support_map_iff
-          (p := sourcePolicy source hsource)
-          (f := fun jointAction =>
-            (jointAction, actionMap jointAction))
-          (b := pair)).mp hpair
-      subst pair
-      exact
-        macroExecutionAction_coupling G D rootPayoff
-          sourceDeclaredRoot source jointAction target
-            targetNonterminal hrelated
+      fun sourceAction =>
+        macroExecutionAction G D rootPayoff data.micro sourceDeclaredRoot
+          source sourceAction target
+            (macroTargetNonterminal G D rootPayoff
+              sourceDeclaredRoot target htarget)
+    change
+      FiniteLaw.RelCoupling
+        (fun sourceAction targetAction => targetAction = actionMap sourceAction)
+        (sourcePolicy source hsource)
+        ((sourcePolicy source hsource).map fun jointAction =>
+          macroExecutionAction G D rootPayoff data.micro sourceDeclaredRoot
+            source jointAction target
+              (macroTargetNonterminal G D rootPayoff
+                sourceDeclaredRoot target htarget))
+    have hmap :
+        (fun jointAction =>
+          macroExecutionAction G D rootPayoff data.micro sourceDeclaredRoot
+            source jointAction target
+              (macroTargetNonterminal G D rootPayoff
+                sourceDeclaredRoot target htarget)) = actionMap := by
+      funext sourceAction
+      rfl
+    rw [hmap]
+    let base :=
+      (FiniteLaw.relCoupling_refl
+        (sourcePolicy source hsource)).map
+          (S := fun sourceAction targetAction =>
+            targetAction = actionMap sourceAction)
+          (f := id) (g := actionMap)
+          (by
+            intro left right hsame
+            subst right
+            rfl)
+    have hid := FiniteLaw.map_id (sourcePolicy source hsource)
+    exact
+      { joint := base.joint
+        leftEquivalent :=
+          base.leftEquivalent.trans (FiniteLaw.Equivalent.of_eq hid)
+        rightEquivalent := base.rightEquivalent
+        leftPositive := fun outcome => by
+          calc
+            (base.joint.map fun pair => pair.1.1).HasPositiveAtom
+                outcome ↔
+                ((sourcePolicy source hsource).map id).HasPositiveAtom
+                  outcome := base.leftPositive outcome
+            _ ↔ (sourcePolicy source hsource).HasPositiveAtom outcome := by
+              rw [hid]
+        rightPositive := base.rightPositive }
+  kernelCoupling := by
+    intro source target hrelated sourceAction targetAction haction
+    subst targetAction
+    simpa only [macroKernelSimulation] using
+      ((macroKernelSimulation G D rootPayoff
+        sourceDeclaredRoot data).match_action hrelated sourceAction).2
 
 /-- Compile an information-indexed behavioral profile all the way to the
 serialized EFG's terminal-aware macro policy. -/
-noncomputable def serializedBehavioralMacroPolicy
+def serializedBehavioralMacroPolicy
     [(world : G.WorldState) → Decidable (G.isTerminal world)]
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
     (sourceDeclaredRoot : G.HistoryState → Prop)
+    (data : MacroPolicyData G D rootPayoff sourceDeclaredRoot)
     (profile : D.BehavioralProfile) :
     (macroExecutionKernelArena G D rootPayoff
       sourceDeclaredRoot).Policy :=
-  serializedMacroPolicy G D rootPayoff sourceDeclaredRoot
+  serializedMacroPolicy G D rootPayoff sourceDeclaredRoot data
     (D.behavioralHistoryPolicy profile)
 
 /-- The genuine target observed-EFG behavioral policy realizes exactly one
@@ -186,6 +163,7 @@ theorem serializedBehavioralExecution_eq_macroStepLaw
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
     (sourceDeclaredRoot : G.HistoryState → Prop)
+    (data : MacroPolicyData G D rootPayoff sourceDeclaredRoot)
     (profile : D.BehavioralProfile)
     (source : G.HistoryState)
     (hsource : ¬ G.isTerminal source.1)
@@ -197,49 +175,35 @@ theorem serializedBehavioralExecution_eq_macroStepLaw
       ¬ IsEmpty
         ((macroExecutionKernelArena G D rootPayoff
           sourceDeclaredRoot).Action target)) :
-    (game G rootPayoff).toArena.stochasticHistoryPMFFrom
+    ((game G rootPayoff).toArena.stochasticHistoryLawFrom
         (serializedBehavioralHistoryPolicy G D rootPayoff
           sourceDeclaredRoot profile)
-        target (n + 2) =
-      (macroExecutionKernelArena G D rootPayoff
+        target (n + 2)).Equivalent
+      ((macroExecutionKernelArena G D rootPayoff
         sourceDeclaredRoot).stepLaw
           (serializedBehavioralMacroPolicy G D rootPayoff
-            sourceDeclaredRoot profile)
-          target htarget := by
-  rw [serializedBehavioralExecution_eq_jointActionLaw_bind_macro
-    G D rootPayoff sourceDeclaredRoot profile source hsource target
-    hrelated]
+            sourceDeclaredRoot data profile)
+          target htarget) := by
+  refine
+    (serializedBehavioralExecution_eq_jointActionLaw_bind_macro
+      G D rootPayoff data.micro sourceDeclaredRoot profile source hsource target
+      hrelated).trans (FiniteLaw.Equivalent.of_eq ?_)
   have hsourceActions :
       ¬ IsEmpty (G.historyKernelArena.Action source) := by
     rw [G.historyKernelArena_isTerminal_iff]
     exact hsource
   rw [KernelArena.stepLaw, serializedBehavioralMacroPolicy]
   rw [serializedMacroPolicy_eq_map G D rootPayoff sourceDeclaredRoot
-    (D.behavioralHistoryPolicy profile) hrelated hsourceActions
+    data (D.behavioralHistoryPolicy profile) hrelated hsourceActions
     htarget]
-  rw [PMF.bind_map]
+  rw [FiniteLaw.bind_map]
   change
     (D.jointActionLaw profile source hsource).bind _ =
       (D.jointActionLaw profile source hsource).bind _
   apply congrArg
-    (PMF.bind (D.jointActionLaw profile source hsource))
+    (FiniteLaw.bind (D.jointActionLaw profile source hsource))
   funext jointAction
   rfl
-
-/-- The behavioral-profile compiler satisfies exact terminal-aware policy
-matching. -/
-theorem serializedBehavioralMacroPolicy_match
-    [(world : G.WorldState) → Decidable (G.isTerminal world)]
-    (D : G.DecisionModel)
-    (rootPayoff : Fin (n + 1) → U)
-    (sourceDeclaredRoot : G.HistoryState → Prop)
-    (profile : D.BehavioralProfile) :
-    (macroKernelSimulation G D rootPayoff sourceDeclaredRoot).PolicyMatch
-      (D.behavioralHistoryPolicy profile)
-      (serializedBehavioralMacroPolicy G D rootPayoff
-        sourceDeclaredRoot profile) :=
-  serializedMacroPolicy_match G D rootPayoff sourceDeclaredRoot
-    (D.behavioralHistoryPolicy profile)
 
 /-- Continuous execution of the genuine serialized observed-EFG behavioral
 policy for `horizon * (n + 2)` micro steps is exactly the stopped
@@ -253,6 +217,14 @@ theorem serializedBehavioralMicroStateLaw_eq_macro
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
     (sourceDeclaredRoot : G.HistoryState → Prop)
+    (data : MacroPolicyData G D rootPayoff sourceDeclaredRoot)
+    [(target :
+        (macroExecutionKernelArena G D rootPayoff
+          sourceDeclaredRoot).State) →
+      Decidable
+        (IsEmpty
+          ((macroExecutionKernelArena G D rootPayoff
+            sourceDeclaredRoot).Action target))]
     (profile : D.BehavioralProfile)
     {source : G.HistoryState}
     {target :
@@ -260,18 +232,19 @@ theorem serializedBehavioralMicroStateLaw_eq_macro
         (game G rootPayoff).init}
     (hrelated : Rel G source target) :
     ∀ horizon : ℕ,
-      (game G rootPayoff).toArena.stochasticHistoryPMFFrom
+      ((game G rootPayoff).toArena.stochasticHistoryLawFrom
           (serializedBehavioralHistoryPolicy G D rootPayoff
             sourceDeclaredRoot profile)
-          target (horizon * (n + 2)) =
-        (macroExecutionKernelArena G D rootPayoff
+          target (horizon * (n + 2))).Equivalent
+        ((macroExecutionKernelArena G D rootPayoff
           sourceDeclaredRoot).stateLawFrom
             (serializedBehavioralMacroPolicy G D rootPayoff
-              sourceDeclaredRoot profile)
-            horizon target := by
+              sourceDeclaredRoot data profile)
+            horizon target) := by
   intro horizon
   induction horizon generalizing source target with
   | zero =>
+      apply FiniteLaw.Equivalent.of_eq
       simp [KernelArena.stateLawFrom]
       rfl
   | succ horizon ih =>
@@ -284,8 +257,9 @@ theorem serializedBehavioralMicroStateLaw_eq_macro
             IsEmpty
               ((macroExecutionKernelArena G D rootPayoff
                 sourceDeclaredRoot).Action target) :=
-          ((serializedBehavioralMacroPolicy_match G D rootPayoff
-            sourceDeclaredRoot profile).terminal_iff hrelated).mp
+          ((serializedMacroPolicy_match G D rootPayoff
+              sourceDeclaredRoot data
+              (D.behavioralHistoryPolicy profile)).terminal_iff hrelated).mp
               hsourceActions
         have htargetTerminal :
             (game G rootPayoff).isTerminal target.1 := by
@@ -293,7 +267,8 @@ theorem serializedBehavioralMicroStateLaw_eq_macro
           exact
             (boundary_isTerminal_iff G rootPayoff source).mpr
               hsourceTerminal
-        rw [Arena.stochasticHistoryPMFFrom_of_terminal
+        apply FiniteLaw.Equivalent.of_eq
+        rw [Arena.stochasticHistoryLawFrom_of_terminal
           (serializedBehavioralHistoryPolicy G D rootPayoff
             sourceDeclaredRoot profile)
           target htargetTerminal]
@@ -308,46 +283,62 @@ theorem serializedBehavioralMicroStateLaw_eq_macro
               ((macroExecutionKernelArena G D rootPayoff
                 sourceDeclaredRoot).Action target) :=
           (not_congr
-            ((serializedBehavioralMacroPolicy_match G D rootPayoff
-              sourceDeclaredRoot profile).terminal_iff hrelated)).mp
+            ((serializedMacroPolicy_match G D rootPayoff
+              sourceDeclaredRoot data
+              (D.behavioralHistoryPolicy profile)).terminal_iff hrelated)).mp
                 hsourceActions
         have hfuel :
             (Nat.succ horizon) * (n + 2) =
               (n + 2) + horizon * (n + 2) := by
           rw [Nat.succ_mul, Nat.add_comm]
-        rw [hfuel]
-        rw [Arena.stochasticHistoryPMFFrom_add]
-        rw [serializedBehavioralExecution_eq_macroStepLaw
-          G D rootPayoff sourceDeclaredRoot profile source
-          hsourceTerminal target hrelated htargetActions]
+        rw [hfuel, Arena.stochasticHistoryLawFrom_add]
+        have hblock :=
+          serializedBehavioralExecution_eq_macroStepLaw
+            G D rootPayoff sourceDeclaredRoot data profile source
+            hsourceTerminal target hrelated htargetActions
+        refine (hblock.bind (fun middle =>
+          FiniteLaw.Equivalent.refl
+            ((game G rootPayoff).toArena.stochasticHistoryLawFrom
+              (serializedBehavioralHistoryPolicy G D rootPayoff
+                sourceDeclaredRoot profile)
+              middle (horizon * (n + 2))))).trans ?_
         simp only [KernelArena.stateLawFrom, dif_neg htargetActions]
-        apply PMF.bind_congr_support
+        apply FiniteLaw.bind_congr_positive
         intro nextTarget hnextTarget
         have hstepCoupling :=
-          (serializedBehavioralMacroPolicy_match G D rootPayoff
-            sourceDeclaredRoot profile).stepCoupling
+          (serializedMacroPolicy_match G D rootPayoff
+              sourceDeclaredRoot data
+              (D.behavioralHistoryPolicy profile)).stepCoupling
               hrelated hsourceActions htargetActions
         obtain ⟨nextSource, _, hnextRelated⟩ :=
-          hstepCoupling.exists_left_of_mem_support_right
+          hstepCoupling.exists_left_of_hasPositiveAtom_right
             hnextTarget
         exact ih hnextRelated
 
 /-- Under coupling-compatible randomized policies, the source FOSG and its
 serialized EFG have an exact coupling of every finite macro trace.
 
-Both marginals are the actual trace PMFs.  Every positive-mass pair is related
+Both marginals are the finite laws of the actual traces.  Every positive-mass pair is related
 at each macro boundary by `Rel G`. -/
 theorem macroTraceLawCoupling
     [(world : G.WorldState) → Decidable (G.isTerminal world)]
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
     (sourceDeclaredRoot : G.HistoryState → Prop)
+    (data : MacroPolicyData G D rootPayoff sourceDeclaredRoot)
+    [(target :
+        (macroExecutionKernelArena G D rootPayoff
+          sourceDeclaredRoot).State) →
+      Decidable
+        (IsEmpty
+          ((macroExecutionKernelArena G D rootPayoff
+            sourceDeclaredRoot).Action target))]
     (sourcePolicy : G.historyKernelArena.Policy)
     (targetPolicy :
       (macroExecutionKernelArena G D rootPayoff
         sourceDeclaredRoot).Policy)
     (matchPolicy :
-      (macroKernelSimulation G D rootPayoff sourceDeclaredRoot).PolicyMatch
+      (macroKernelSimulation G D rootPayoff sourceDeclaredRoot data).PolicyMatch
         sourcePolicy targetPolicy)
     {source : G.HistoryState}
     {target :
@@ -355,13 +346,13 @@ theorem macroTraceLawCoupling
         (game G rootPayoff).init}
     (hrelated : Rel G source target)
     (horizon : Nat) :
-    PMF.RelCoupling (List.Forall₂ (Rel G))
+    Nonempty (FiniteLaw.RelCoupling (List.Forall₂ (Rel G))
       (G.historyKernelArena.traceLawFrom
         sourcePolicy horizon source)
       ((macroExecutionKernelArena G D rootPayoff
           sourceDeclaredRoot).traceLawFrom
-        targetPolicy horizon target) := by
-  exact matchPolicy.traceLawCoupling hrelated horizon
+        targetPolicy horizon target)) :=
+  ⟨matchPolicy.traceLawCoupling hrelated horizon⟩
 
 /-- The concrete policy compiler gives exact finite-horizon endpoint coupling
 without requiring a caller-supplied target policy or matching witness. -/
@@ -370,6 +361,14 @@ theorem serializedMacroStateLawCoupling
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
     (sourceDeclaredRoot : G.HistoryState → Prop)
+    (data : MacroPolicyData G D rootPayoff sourceDeclaredRoot)
+    [(target :
+        (macroExecutionKernelArena G D rootPayoff
+          sourceDeclaredRoot).State) →
+      Decidable
+        (IsEmpty
+          ((macroExecutionKernelArena G D rootPayoff
+            sourceDeclaredRoot).Action target))]
     (sourcePolicy : G.historyKernelArena.Policy)
     {source : G.HistoryState}
     {target :
@@ -377,16 +376,16 @@ theorem serializedMacroStateLawCoupling
         (game G rootPayoff).init}
     (hrelated : Rel G source target)
     (horizon : Nat) :
-    PMF.RelCoupling (Rel G)
+    Nonempty (FiniteLaw.RelCoupling (Rel G)
       (G.historyKernelArena.stateLawFrom
         sourcePolicy horizon source)
       ((macroExecutionKernelArena G D rootPayoff
           sourceDeclaredRoot).stateLawFrom
         (serializedMacroPolicy G D rootPayoff sourceDeclaredRoot
-          sourcePolicy)
-        horizon target) :=
-  (serializedMacroPolicy_match G D rootPayoff sourceDeclaredRoot
-    sourcePolicy).stateLawCoupling hrelated horizon
+          data sourcePolicy)
+        horizon target)) :=
+  ⟨(serializedMacroPolicy_match G D rootPayoff sourceDeclaredRoot
+    data sourcePolicy).stateLawCoupling hrelated horizon⟩
 
 /-- The concrete policy compiler gives exact complete-trace coupling without
 requiring a caller-supplied target policy or matching witness. -/
@@ -395,6 +394,14 @@ theorem serializedMacroTraceLawCoupling
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
     (sourceDeclaredRoot : G.HistoryState → Prop)
+    (data : MacroPolicyData G D rootPayoff sourceDeclaredRoot)
+    [(target :
+        (macroExecutionKernelArena G D rootPayoff
+          sourceDeclaredRoot).State) →
+      Decidable
+        (IsEmpty
+          ((macroExecutionKernelArena G D rootPayoff
+            sourceDeclaredRoot).Action target))]
     (sourcePolicy : G.historyKernelArena.Policy)
     {source : G.HistoryState}
     {target :
@@ -402,20 +409,20 @@ theorem serializedMacroTraceLawCoupling
         (game G rootPayoff).init}
     (hrelated : Rel G source target)
     (horizon : Nat) :
-    PMF.RelCoupling (List.Forall₂ (Rel G))
+    Nonempty (FiniteLaw.RelCoupling (List.Forall₂ (Rel G))
       (G.historyKernelArena.traceLawFrom
         sourcePolicy horizon source)
       ((macroExecutionKernelArena G D rootPayoff
           sourceDeclaredRoot).traceLawFrom
         (serializedMacroPolicy G D rootPayoff sourceDeclaredRoot
-          sourcePolicy)
-        horizon target) :=
-  macroTraceLawCoupling G D rootPayoff sourceDeclaredRoot
+          data sourcePolicy)
+        horizon target)) :=
+  macroTraceLawCoupling G D rootPayoff sourceDeclaredRoot data
     sourcePolicy
     (serializedMacroPolicy G D rootPayoff sourceDeclaredRoot
-      sourcePolicy)
+      data sourcePolicy)
     (serializedMacroPolicy_match G D rootPayoff sourceDeclaredRoot
-      sourcePolicy)
+      data sourcePolicy)
     hrelated horizon
 
 /-- Information-indexed behavioral profiles have exactly coupled stopped
@@ -425,6 +432,14 @@ theorem serializedBehavioralTraceLawCoupling
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
     (sourceDeclaredRoot : G.HistoryState → Prop)
+    (data : MacroPolicyData G D rootPayoff sourceDeclaredRoot)
+    [(target :
+        (macroExecutionKernelArena G D rootPayoff
+          sourceDeclaredRoot).State) →
+      Decidable
+        (IsEmpty
+          ((macroExecutionKernelArena G D rootPayoff
+            sourceDeclaredRoot).Action target))]
     (profile : D.BehavioralProfile)
     {source : G.HistoryState}
     {target :
@@ -432,15 +447,15 @@ theorem serializedBehavioralTraceLawCoupling
         (game G rootPayoff).init}
     (hrelated : Rel G source target)
     (horizon : Nat) :
-    PMF.RelCoupling (List.Forall₂ (Rel G))
+    Nonempty (FiniteLaw.RelCoupling (List.Forall₂ (Rel G))
       (G.historyKernelArena.traceLawFrom
         (D.behavioralHistoryPolicy profile) horizon source)
       ((macroExecutionKernelArena G D rootPayoff
           sourceDeclaredRoot).traceLawFrom
         (serializedBehavioralMacroPolicy G D rootPayoff
-          sourceDeclaredRoot profile)
-        horizon target) :=
-  serializedMacroTraceLawCoupling G D rootPayoff sourceDeclaredRoot
+          sourceDeclaredRoot data profile)
+        horizon target)) :=
+  serializedMacroTraceLawCoupling G D rootPayoff sourceDeclaredRoot data
     (D.behavioralHistoryPolicy profile) hrelated horizon
 
 /-- The concrete serializer's payoff field agrees with the FOSG payoff vector
@@ -470,17 +485,16 @@ theorem payoff_eq_of_rel
 Nonterminal histories map to `none`; in particular, administrative states and
 fuel-exhausted macro boundaries do not expose their operational payoff field.
 -/
-noncomputable def serializedStoppedPayoffAtHistory
+def serializedStoppedPayoffAtHistory
     [(world : G.WorldState) → Decidable (G.isTerminal world)]
     (rootPayoff : Fin (n + 1) → U)
     (history :
       (game G rootPayoff).toArena.HistoryFrom
         (game G rootPayoff).init) :
     Option (Fin (n + 1) → U) :=
-  if (game G rootPayoff).isTerminal history.1 then
-    some ((game G rootPayoff).payoff history.1)
-  else
-    none
+  match history.1 with
+  | .terminal source _ => some (G.payoff source.1)
+  | _ => none
 
 /-- Related macro boundaries have exactly the same optional terminal payoff.
 -/
@@ -494,23 +508,19 @@ theorem stoppedPayoff_eq_of_rel
     (hrelated : Rel G source target) :
     serializedStoppedPayoffAtHistory G rootPayoff target =
       G.stoppedPayoffAtHistory source := by
-  have hterminal :
-      (game G rootPayoff).isTerminal target.1 ↔
-        G.isTerminal source.1 := by
-    rw [hrelated]
-    exact boundary_isTerminal_iff G rootPayoff source
-  unfold serializedStoppedPayoffAtHistory
-    FOSG.stoppedPayoffAtHistory
   by_cases hsourceTerminal : G.isTerminal source.1
-  · have htargetTerminal :=
-      hterminal.mpr hsourceTerminal
-    simp [hsourceTerminal, htargetTerminal,
-      payoff_eq_of_rel G rootPayoff source target hrelated]
-  · have htargetNonterminal :
-        ¬ (game G rootPayoff).isTerminal target.1 :=
-      fun htargetTerminal =>
-        hsourceTerminal (hterminal.mp htargetTerminal)
-    simp [hsourceTerminal, htargetNonterminal]
+  · change
+      (match target.1 with
+        | .terminal source _ => some (G.payoff source.1)
+        | _ => none) = G.stoppedPayoffAtHistory source
+    rw [hrelated, boundary_of_terminal G source hsourceTerminal]
+    simp [FOSG.stoppedPayoffAtHistory, hsourceTerminal]
+  · change
+      (match target.1 with
+        | .terminal source _ => some (G.payoff source.1)
+        | _ => none) = G.stoppedPayoffAtHistory source
+    rw [hrelated, boundary_of_not_terminal G source hsourceTerminal]
+    simp [FOSG.stoppedPayoffAtHistory, hsourceTerminal]
 
 /-- Exact equality of finite-horizon optional terminal-payoff laws under the
 concrete policy compiler. -/
@@ -519,6 +529,14 @@ theorem serializedMacroPayoffLaw_eq
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
     (sourceDeclaredRoot : G.HistoryState → Prop)
+    (data : MacroPolicyData G D rootPayoff sourceDeclaredRoot)
+    [(target :
+        (macroExecutionKernelArena G D rootPayoff
+          sourceDeclaredRoot).State) →
+      Decidable
+        (IsEmpty
+          ((macroExecutionKernelArena G D rootPayoff
+            sourceDeclaredRoot).Action target))]
     (sourcePolicy : G.historyKernelArena.Policy)
     {source : G.HistoryState}
     {target :
@@ -526,18 +544,20 @@ theorem serializedMacroPayoffLaw_eq
         (game G rootPayoff).init}
     (hrelated : Rel G source target)
     (horizon : Nat) :
-    (G.historyKernelArena.stateLawFrom
+    ((G.historyKernelArena.stateLawFrom
         sourcePolicy horizon source).map
-          G.stoppedPayoffAtHistory =
-      ((macroExecutionKernelArena G D rootPayoff
+          G.stoppedPayoffAtHistory).Equivalent
+      (((macroExecutionKernelArena G D rootPayoff
           sourceDeclaredRoot).stateLawFrom
         (serializedMacroPolicy G D rootPayoff sourceDeclaredRoot
-          sourcePolicy)
+          data sourcePolicy)
         horizon target).map
-          (serializedStoppedPayoffAtHistory G rootPayoff) := by
+          (serializedStoppedPayoffAtHistory G rootPayoff)) := by
+  obtain ⟨coupling⟩ :=
+    serializedMacroStateLawCoupling G D rootPayoff
+      sourceDeclaredRoot data sourcePolicy hrelated horizon
   exact
-    (serializedMacroStateLawCoupling G D rootPayoff
-      sourceDeclaredRoot sourcePolicy hrelated horizon).map_eq
+    coupling.map_eq
         (fun sourceState targetHistory hrel =>
           (stoppedPayoff_eq_of_rel G rootPayoff sourceState
             targetHistory hrel).symm)
