@@ -5,7 +5,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 
 import EconCSLib.GameTheory.ExtensiveGame.Basic
 import EconCSLib.GameTheory.ExtensiveGame.Execution.CompletePlay
-import Mathlib.Data.Nat.Find
 
 /-!
 # Terminal and complete-path objectives
@@ -17,8 +16,10 @@ This module separates EFG dynamics from outcome interpretation.
 * A path outcome is an arbitrary function of a complete legal play.
 * A terminal outcome induces an `Option`-valued path outcome without assigning
   an invented value to nonterminating plays.
-* Under an explicit all-play termination certificate, the same terminal
-  outcome induces a total path outcome.
+* A terminal outcome is evaluated only from an explicit terminal coordinate;
+  no witness is extracted from an existential proposition.
+* A computable terminal-coordinate finder induces an `Option`-valued or total
+  path outcome.
 
 Utilities and preferences are intentionally not stored here. They are attached
 later through `GameForm`, `LawGameForm`, or `ContinuationGameForm`.
@@ -118,39 +119,36 @@ namespace CompletePlayFromHistory
 
 variable {current : A.HistoryFrom start}
 
-/-- The least terminal coordinate of an eventually terminating complete
-play. -/
-noncomputable def terminalIndex
+/-- The terminal coordinate carried by an explicit computational witness. -/
+def terminalIndex
     (play : A.CompletePlayFromHistory current)
-    (hterminates : play.EventuallyTerminates) : ℕ :=
-  by
-    classical
-    exact Nat.find hterminates
+    (hit : {n : ℕ // A.IsTerminal (play.historyAt n).1}) : ℕ :=
+  hit.1
 
-/-- The selected terminal coordinate is terminal. -/
+/-- The supplied terminal coordinate is terminal. -/
 theorem terminalIndex_spec
     (play : A.CompletePlayFromHistory current)
-    (hterminates : play.EventuallyTerminates) :
+    (hit : {n : ℕ // A.IsTerminal (play.historyAt n).1}) :
     A.IsTerminal
-      (play.historyAt (play.terminalIndex hterminates)).1 :=
-  by
-    classical
-    exact Nat.find_spec hterminates
+      (play.historyAt (play.terminalIndex hit)).1 :=
+  hit.2
 
-/-- The first terminal complete history of an eventually terminating play. -/
-noncomputable def terminalHistory
+/-- The complete terminal history selected by an explicit terminal
+coordinate. Any two such coordinates carry the same history because complete
+plays stutter after termination. -/
+def terminalHistory
     (play : A.CompletePlayFromHistory current)
-    (hterminates : play.EventuallyTerminates) :
+    (hit : {n : ℕ // A.IsTerminal (play.historyAt n).1}) :
     A.TerminalHistoryFrom start :=
-  ⟨play.historyAt (play.terminalIndex hterminates),
-    play.terminalIndex_spec hterminates⟩
+  ⟨play.historyAt (play.terminalIndex hit),
+    play.terminalIndex_spec hit⟩
 
 @[simp]
 theorem terminalHistory_val
     (play : A.CompletePlayFromHistory current)
-    (hterminates : play.EventuallyTerminates) :
-    (play.terminalHistory hterminates).1 =
-      play.historyAt (play.terminalIndex hterminates) :=
+    (hit : {n : ℕ // A.IsTerminal (play.historyAt n).1}) :
+    (play.terminalHistory hit).1 =
+      play.historyAt (play.terminalIndex hit) :=
   rfl
 
 end CompletePlayFromHistory
@@ -159,56 +157,66 @@ namespace TerminalOutcome
 
 variable {Outcome : Type*}
 
-/-- Evaluate a terminal outcome on an eventually terminating play. -/
-noncomputable def evaluate
+/-- Evaluate a terminal outcome at an explicitly supplied terminal
+coordinate. -/
+def evaluate
     (outcome : A.TerminalOutcome start Outcome)
     (play : A.CompletePlayFrom start)
-    (hterminates : play.EventuallyTerminates) :
+    (hit : {n : ℕ // A.IsTerminal (play.historyAt n).1}) :
     Outcome :=
-  outcome (play.terminalHistory hterminates)
+  outcome (play.terminalHistory hit)
 
-/-- Regard a terminal outcome as an `Option`-valued path outcome.
+/-- Use a computable terminal-coordinate finder to regard a terminal outcome
+as an `Option`-valued path outcome.
 
-Nonterminating plays receive `none`; no artificial terminal utility is
-invented. -/
-noncomputable def toPartialPathOutcome
-    (outcome : A.TerminalOutcome start Outcome) :
-    A.PathOutcome start (Option Outcome) := by
-  classical
-  exact fun play =>
-    if hterminates : play.EventuallyTerminates then
-      some (outcome.evaluate play hterminates)
-    else
-      none
+The finder controls partiality: `none` means that it did not supply a terminal
+coordinate. No decision procedure for existential termination and no
+artificial terminal utility is hidden in this definition. -/
+def toPartialPathOutcome
+    (outcome : A.TerminalOutcome start Outcome)
+    (findTerminal :
+      ∀ play : A.CompletePlayFrom start,
+        Option {n : ℕ // A.IsTerminal (play.historyAt n).1}) :
+    A.PathOutcome start (Option Outcome) :=
+  fun play =>
+    (findTerminal play).map (outcome.evaluate play)
 
-/-- A terminating play receives its terminal outcome in the partial path
-semantics. -/
+/-- A terminal coordinate returned by the finder is evaluated in the partial
+path semantics. -/
 theorem toPartialPathOutcome_eq_some
     (outcome : A.TerminalOutcome start Outcome)
+    (findTerminal :
+      ∀ play : A.CompletePlayFrom start,
+        Option {n : ℕ // A.IsTerminal (play.historyAt n).1})
     (play : A.CompletePlayFrom start)
-    (hterminates : play.EventuallyTerminates) :
-    outcome.toPartialPathOutcome play =
-      some (outcome.evaluate play hterminates) := by
-  simp [toPartialPathOutcome, hterminates]
+    (hit : {n : ℕ // A.IsTerminal (play.historyAt n).1})
+    (hfind : findTerminal play = some hit) :
+    outcome.toPartialPathOutcome findTerminal play =
+      some (outcome.evaluate play hit) := by
+  simp [toPartialPathOutcome, hfind]
 
-/-- A nonterminating play receives no terminal outcome. -/
+/-- A failed terminal-coordinate search produces no terminal outcome. -/
 theorem toPartialPathOutcome_eq_none
     (outcome : A.TerminalOutcome start Outcome)
-    (play : A.CompletePlayFrom start)
-    (hnever : ¬ play.EventuallyTerminates) :
-    outcome.toPartialPathOutcome play = none := by
-  simp [toPartialPathOutcome, hnever]
-
-/-- Under an explicit all-play termination certificate, a terminal outcome is
-a total path outcome. -/
-noncomputable def toPathOutcome
-    (outcome : A.TerminalOutcome start Outcome)
-    (hterminates :
+    (findTerminal :
       ∀ play : A.CompletePlayFrom start,
-        play.EventuallyTerminates) :
+        Option {n : ℕ // A.IsTerminal (play.historyAt n).1})
+    (play : A.CompletePlayFrom start)
+    (hfind : findTerminal play = none) :
+    outcome.toPartialPathOutcome findTerminal play = none := by
+  simp [toPartialPathOutcome, hfind]
+
+/-- A terminal-coordinate producer makes a terminal outcome into a total path
+outcome. Unlike an existential all-play termination proof, the producer
+contains the runtime coordinate used for evaluation. -/
+def toPathOutcome
+    (outcome : A.TerminalOutcome start Outcome)
+    (terminalHit :
+      ∀ play : A.CompletePlayFrom start,
+        {n : ℕ // A.IsTerminal (play.historyAt n).1}) :
     A.PathOutcome start Outcome :=
   fun play =>
-    outcome.evaluate play (hterminates play)
+    outcome.evaluate play (terminalHit play)
 
 end TerminalOutcome
 
