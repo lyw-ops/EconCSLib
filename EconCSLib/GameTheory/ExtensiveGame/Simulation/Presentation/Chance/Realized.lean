@@ -36,7 +36,7 @@ branches, whole state-path equality, and every finite stopped-history law.
 
 No countability, terminal-decidability, standard-Borel, payoff, recall, or
 equilibrium assumption is added to the generic realized-information
-certificate. The finite stopped-PMF comparison theorem separately retains the
+certificate. The stopped-law comparison theorem separately retains the
 old bounded executor's terminal-decidability premise.
 
 ## Main definitions
@@ -55,10 +55,16 @@ old bounded executor's terminal-decidability premise.
 * `AnalyticPresentation.compiled_statePathMeasure` — exact complete analytic
   state-path law.
 * `AnalyticPresentation.compiled_finite_state_law` — exact finite
-  stopped-history PMF measure.
+  stopped-history finite-law measure.
 -/
 
 open MeasureTheory ProbabilityTheory
+
+local macro "finiteLawMeasureTop(" law:term ")" : term =>
+  `(($law).atoms.foldr
+      (fun atom rest =>
+        (atom.2 : ENNReal) • @Measure.dirac _ ⊤ atom.1 + rest)
+      0)
 
 namespace ExtensiveGame.ObservedChanceGame
 
@@ -91,7 +97,7 @@ information-indexed law and its compatibility proofs.
 
 `compiled` is an exact equality of raw joint event policies. It is the
 model-specific certificate that all tagged information/action maps,
-dependent transports, and PMF-to-measure families are measurable and have the
+dependent transports, and finite-law-to-measure families are measurable and have the
 claimed semantics. -/
 structure AnalyticPresentation
     (G : ObservedChanceGame N U) where
@@ -145,7 +151,9 @@ structure AnalyticPresentation
             G.observed.infoAt
               (MeasurableKernelArena.latestEventState
                 time events)
-              i hmover hnonterminal⟩
+              i hmover
+              (G.observed.base.toArena.isDecision_of_not_isTerminal _
+                hnonterminal)⟩
 
 namespace AnalyticPresentation
 
@@ -192,10 +200,14 @@ theorem abstractKernel_eq_of_player_infoAt_eq
     (hsame :
       G.observed.infoAt
           (MeasurableKernelArena.latestEventState time events₁)
-          i hmover₁ hnonterminal₁ =
+          i hmover₁
+          (G.observed.base.toArena.isDecision_of_not_isTerminal _
+            hnonterminal₁) =
         G.observed.infoAt
           (MeasurableKernelArena.latestEventState time events₂)
-          i hmover₂ hnonterminal₂) :
+          i hmover₂
+          (G.observed.base.toArena.isDecision_of_not_isTerminal _
+            hnonterminal₂)) :
     (presentation.toPolicy profile).abstractKernel time
         (presentation.information.informationAt time events₁) =
       (presentation.toPolicy profile).abstractKernel time
@@ -227,9 +239,8 @@ theorem compiled_kernel_of_mover
         some i) :
     (presentation.toPolicy profile).toEventHistoryActionPolicy.kernel
         time events =
-      @PMF.toMeasure
-        (AnalyticHistoryArena G).ActionBundle ⊤
-        ((profile.actionLawAt G.observed
+      finiteLawMeasureTop(
+        (profile.actionLawAt G.observed
             (MeasurableKernelArena.latestEventState time events)
             i hmover hnonterminal).map
           (fun action =>
@@ -254,7 +265,7 @@ theorem compiled_kernel_of_mover
   rfl
 
 /-- At a chance-controlled latest history, the realized presentation's
-concrete action-bundle law is exactly the declared chance PMF measure in the
+concrete action-bundle law is exactly the declared chance finite-law measure in the
 local history fiber. -/
 theorem compiled_kernel_of_chance
     (presentation : AnalyticPresentation G)
@@ -270,9 +281,8 @@ theorem compiled_kernel_of_chance
         none) :
     (presentation.toPolicy profile).toEventHistoryActionPolicy.kernel
         time events =
-      @PMF.toMeasure
-        (AnalyticHistoryArena G).ActionBundle ⊤
-        ((G.chanceKernel
+      finiteLawMeasureTop(
+        (G.chanceKernel
             (MeasurableKernelArena.latestEventState time events)
             ⟨hmover, hnonterminal⟩).map
           (fun action =>
@@ -322,6 +332,10 @@ the existing stationary complete-history analytic path law. -/
 theorem compiled_statePathMeasure
     (presentation : AnalyticPresentation G)
     (profile : G.observed.BehavioralProfile)
+    [MeasurableKernelArena.ActionPolicy.PathExecution
+      (BehavioralProfile.toHistoryKernelPolicy G profile).toMeasurable
+      (G.observed.base.toArena.historyKernelArena
+        G.observed.base.init).toMeasurable_measurableSet_terminalSet]
     (initialHistory :
       G.observed.base.toArena.HistoryFrom G.observed.base.init) :
     (presentation.toPolicy profile).toEventHistoryActionPolicy.statePathMeasure
@@ -339,8 +353,8 @@ theorem compiled_statePathMeasure
     MeasurableKernelArena.ActionPolicy.toHistoryActionPolicy_pathMeasure]
 
 /-- Every finite state-coordinate marginal of a realized presentation is
-exactly `PMF.toMeasure` of the original stopped behavioral/chance history
-executor. -/
+exactly the weighted-Dirac interpretation of the original stopped
+behavioral/chance history executor. -/
 theorem compiled_finite_state_law
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
@@ -356,13 +370,29 @@ theorem compiled_finite_state_law
             (G.observed.base.toArena.historyKernelArena
               G.observed.base.init).toMeasurable_measurableSet_terminalSet
             initialHistory) =
-      @PMF.toMeasure
-        (G.observed.base.toArena.HistoryFrom
-          G.observed.base.init) ⊤
-        (G.observed.base.toArena.stochasticHistoryPMFFrom
+      finiteLawMeasureTop(
+        G.observed.base.toArena.stochasticHistoryLawFrom
           (BehavioralProfile.toHistoryPolicy G profile)
           initialHistory horizon) := by
+  obtain ⟨paths⟩ :=
+    MeasurableKernelArena.ActionPolicy.PathExecution.nonempty
+      (BehavioralProfile.toHistoryKernelPolicy G profile).toMeasurable
+      (G.observed.base.toArena.historyKernelArena
+        G.observed.base.init).toMeasurable_measurableSet_terminalSet
+  letI := paths
+  obtain ⟨execution⟩ :=
+    MeasurableKernelArena.ActionPolicy.EndpointExecution.nonempty
+      (BehavioralProfile.toHistoryKernelPolicy G profile).toMeasurable
+      (G.observed.base.toArena.historyKernelArena
+        G.observed.base.init).toMeasurable_measurableSet_terminalSet
+  letI := execution
   rw [presentation.compiled_statePathMeasure profile initialHistory]
+  change (Measure.map (fun path => path horizon)
+    (MeasurableKernelArena.ActionPolicy.PathExecution.path
+      (BehavioralProfile.toHistoryKernelPolicy G profile).toMeasurable
+      (G.observed.base.toArena.historyKernelArena
+        G.observed.base.init).toMeasurable_measurableSet_terminalSet initialHistory)) = _
+  rw [← MeasurableKernelArena.ActionPolicy.PathExecution.coordinate_eq]
   change
     (BehavioralProfile.toHistoryKernelPolicy G profile).toMeasurable.coordinateMeasure
           (G.observed.base.toArena.historyKernelArena
