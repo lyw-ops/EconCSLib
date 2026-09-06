@@ -299,7 +299,7 @@ variable
 
 /-- Compile an information-indexed policy to the raw complete-event-prefix
 executor by measurable comap along the fixed information statistic. -/
-noncomputable def toEventHistoryActionPolicy
+def toEventHistoryActionPolicy
     (policy : ActionPolicy information) :
     A.EventHistoryActionPolicy where
   kernel := fun time =>
@@ -420,7 +420,7 @@ theorem latestEventState_eq_of_informationAt_eq
 
 /-- Pull a coarse-information policy back to a finer information structure.
 The pulled policy still depends only on the coarse statistic. -/
-noncomputable def pullback
+def pullback
     (policy : ActionPolicy coarse)
     (f : Hom fine coarse) :
     ActionPolicy fine where
@@ -539,7 +539,7 @@ end EventInformation
 namespace EventHistoryActionPolicy
 
 /-- Regard a raw event-history policy as a full-information policy. -/
-noncomputable def toFullInformationActionPolicy
+def toFullInformationActionPolicy
     (policy : A.EventHistoryActionPolicy) :
     EventInformation.ActionPolicy
       (EventInformation.full A) where
@@ -580,7 +580,7 @@ namespace HistoryActionPolicy
 
 /-- Regard a finite-state-prefix policy as a policy on the fixed state-prefix
 information structure. -/
-noncomputable def toStatePrefixInformationActionPolicy
+def toStatePrefixInformationActionPolicy
     (policy : A.HistoryActionPolicy) :
     EventInformation.ActionPolicy
       (EventInformation.statePrefix A) where
@@ -633,7 +633,7 @@ namespace ActionPolicy
 
 /-- Regard a stationary state-Markov policy as a policy on the fixed
 latest-state information structure. -/
-noncomputable def toLatestStateInformationActionPolicy
+def toLatestStateInformationActionPolicy
     (policy : A.ActionPolicy) :
     EventInformation.ActionPolicy
       (EventInformation.latestState A) where
@@ -669,6 +669,7 @@ stationary infinite state-path law after forgetting recorded actions. -/
 theorem toLatestStateInformationActionPolicy_statePathMeasure
     (policy : A.ActionPolicy)
     (hterminal : MeasurableSet A.terminalSet)
+    [PathExecution policy hterminal]
     (initialState : A.State) :
     (EventInformation.ActionPolicy.toEventHistoryActionPolicy
       policy.toLatestStateInformationActionPolicy).statePathMeasure
