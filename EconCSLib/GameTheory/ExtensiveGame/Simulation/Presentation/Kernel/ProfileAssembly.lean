@@ -55,6 +55,8 @@ prefixes. -/
 structure InformationRoles where
   /-- Measurable structure used for player tags. -/
   playerTagMeasurable : MeasurableSpace (Option N)
+  /-- Executable equality for player tags used by unilateral replacement. -/
+  playerTagDecidableEq : DecidableEq (Option N)
   /-- A tagged player singleton is measurable, as required by unilateral
   piecewise update. -/
   playerTagSingleton_measurable :
@@ -66,6 +68,9 @@ structure InformationRoles where
   terminalInformationSet :
     (time : ℕ) →
       Set (presentation.information.Information time)
+  /-- Executable classification of terminal information. -/
+  terminalInformationDecidable :
+    ∀ time, DecidablePred (· ∈ terminalInformationSet time)
   /-- Terminal information is measurable. -/
   terminalInformationSet_measurable :
     ∀ time, MeasurableSet (terminalInformationSet time)
@@ -73,6 +78,9 @@ structure InformationRoles where
   playerInformationSet :
     (time : ℕ) →
       Set (presentation.information.Information time)
+  /-- Executable classification of player-controlled information. -/
+  playerInformationDecidable :
+    ∀ time, DecidablePred (· ∈ playerInformationSet time)
   /-- Player-controlled information is measurable. -/
   playerInformationSet_measurable :
     ∀ time, MeasurableSet (playerInformationSet time)
@@ -252,7 +260,7 @@ def playerInputEquiv (time : ℕ) :
 
 /-- Measurable structure transported from the explicit player-tag space and
 the common information space. -/
-noncomputable instance instPlayerInputMeasurableSpace (time : ℕ) :
+instance instPlayerInputMeasurableSpace (time : ℕ) :
     MeasurableSpace (assembly.PlayerInput time) :=
   (assembly.playerTagMeasurable.prod inferInstance).comap
     (assembly.playerInputEquiv time)
@@ -467,7 +475,7 @@ theorem deviationSet_measurable (who : N) (time : ℕ) :
 
 /-- Regard one player's replacement law as a kernel on all tagged inputs by
 forgetting the tag. -/
-noncomputable def PlayerStrategy.onPlayerInput
+def PlayerStrategy.onPlayerInput
     {who : N}
     (strategy : assembly.PlayerStrategy who)
     (time : ℕ) :
@@ -491,12 +499,14 @@ instance PlayerStrategy.onPlayerInput_isSFinite
 
 /-- Replace exactly one player's tagged kernel by measurable piecewise
 branching. -/
-noncomputable def PlayerKernelProfile.deviate
+def PlayerKernelProfile.deviate
     (profile : assembly.PlayerKernelProfile)
     (who : N)
     (strategy : assembly.PlayerStrategy who) :
     assembly.PlayerKernelProfile := by
-  classical
+  letI : DecidableEq (Option N) := assembly.playerTagDecidableEq
+  letI (time : ℕ) : DecidablePred (· ∈ assembly.deviationSet who time) :=
+    fun input => assembly.playerTagDecidableEq input.player (some who)
   exact
     {
       kernel := fun time =>
@@ -565,6 +575,9 @@ theorem PlayerKernelProfile.deviate_kernel_same
         ⟨some who, information⟩ =
       strategy.kernel time information := by
   classical
+  letI : DecidableEq (Option N) := assembly.playerTagDecidableEq
+  letI (time : ℕ) : DecidablePred (· ∈ assembly.deviationSet who time) :=
+    fun input => assembly.playerTagDecidableEq input.player (some who)
   rw [PlayerKernelProfile.deviate, Kernel.piecewise_apply]
   simp [deviationSet, PlayerStrategy.onPlayerInput]
 
@@ -582,12 +595,15 @@ theorem PlayerKernelProfile.deviate_kernel_of_ne
         ⟨some other, information⟩ =
       profile.kernel time ⟨some other, information⟩ := by
   classical
+  letI : DecidableEq (Option N) := assembly.playerTagDecidableEq
+  letI (time : ℕ) : DecidablePred (· ∈ assembly.deviationSet who time) :=
+    fun input => assembly.playerTagDecidableEq input.player (some who)
   rw [PlayerKernelProfile.deviate, Kernel.piecewise_apply]
   simp [deviationSet, hne]
 
 /-- Player-law kernel on the common information carrier after measurable
 owner tagging. -/
-noncomputable def playerAbstractKernel
+def playerAbstractKernel
     (profile : assembly.PlayerKernelProfile)
     (time : ℕ) :
     Kernel
@@ -606,13 +622,13 @@ instance playerAbstractKernel_isSFinite
   infer_instance
 
 /-- Combine player and chance laws away from terminal information. -/
-noncomputable def nonterminalAbstractKernel
+def nonterminalAbstractKernel
     (profile : assembly.PlayerKernelProfile)
     (time : ℕ) :
     Kernel
       (presentation.information.Information time)
       (presentation.realization.AbstractAction time) := by
-  classical
+  letI := assembly.playerInformationDecidable time
   exact
     Kernel.piecewise
       (assembly.playerInformationSet_measurable time)
@@ -628,13 +644,13 @@ instance nonterminalAbstractKernel_isSFinite
   infer_instance
 
 /-- Full abstract policy kernel: terminal zero, otherwise player or chance. -/
-noncomputable def abstractKernel
+def abstractKernel
     (profile : assembly.PlayerKernelProfile)
     (time : ℕ) :
     Kernel
       (presentation.information.Information time)
       (presentation.realization.AbstractAction time) := by
-  classical
+  letI := assembly.terminalInformationDecidable time
   exact
     Kernel.piecewise
       (assembly.terminalInformationSet_measurable time)
@@ -659,6 +675,8 @@ theorem abstractKernel_apply_terminal
         (presentation.information.informationAt time events) =
       0 := by
   classical
+  letI := assembly.terminalInformationDecidable time
+  letI := assembly.playerInformationDecidable time
   rw [abstractKernel, Kernel.piecewise_apply]
   rw [if_pos (assembly.terminal_at time events hterminal)]
   rfl
@@ -681,6 +699,8 @@ theorem abstractKernel_apply_player
         ⟨some i,
           presentation.information.informationAt time events⟩ := by
   classical
+  letI := assembly.terminalInformationDecidable time
+  letI := assembly.playerInformationDecidable time
   rcases
       assembly.player_at time events i hnonterminal hmover with
     ⟨hnotTerminal, hplayer, htag⟩
@@ -709,6 +729,8 @@ theorem abstractKernel_apply_chance
       assembly.chanceAbstractKernel time
         (presentation.information.informationAt time events) := by
   classical
+  letI := assembly.terminalInformationDecidable time
+  letI := assembly.playerInformationDecidable time
   rcases assembly.chance_at time events hnonterminal hmover with
     ⟨hnotTerminal, hnotPlayer⟩
   rw [abstractKernel, Kernel.piecewise_apply, if_neg hnotTerminal]
@@ -719,7 +741,7 @@ theorem abstractKernel_apply_chance
 
 /-- Assemble all player kernels and the fixed chance lift into one admissible
 realized action policy. -/
-noncomputable def toRealizedActionPolicy
+def toRealizedActionPolicy
     (profile : assembly.PlayerKernelProfile) :
     MeasurableKernelArena.EventInformation.RealizedActionPolicy
       presentation.realization where
@@ -791,7 +813,7 @@ noncomputable def toRealizedActionPolicy
 
 /-- Assemble a player-kernel profile into the generic kernel-valued observed
 profile. -/
-noncomputable def toKernelBehavioralProfile
+def toKernelBehavioralProfile
     (profile : assembly.PlayerKernelProfile) :
     presentation.KernelBehavioralProfile where
   policy := assembly.toRealizedActionPolicy profile
@@ -816,7 +838,7 @@ noncomputable def toKernelBehavioralProfile
 /-- Construct assembly data from explicit roles and one reference admissible
 profile. The reference supplies an abstract lift of the already fixed concrete
 chance law. -/
-noncomputable def ofReference
+def ofReference
     (roles : InformationRoles presentation)
     (reference : presentation.KernelBehavioralProfile) :
     ProfileAssembly presentation where
@@ -848,7 +870,7 @@ noncomputable def ofReference
 /-- Split the player branches of an existing generic profile into one tagged
 player kernel. The tag is ignored because the original abstract law already
 depends only on common information. -/
-noncomputable def PlayerKernelProfile.ofKernelBehavioralProfile
+def PlayerKernelProfile.ofKernelBehavioralProfile
     (profile : presentation.KernelBehavioralProfile) :
     assembly.PlayerKernelProfile where
   kernel := fun time =>
