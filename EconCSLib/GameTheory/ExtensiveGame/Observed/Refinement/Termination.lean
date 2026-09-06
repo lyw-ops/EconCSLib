@@ -104,29 +104,19 @@ theorem map_terminalHistoryFrom
     (hNoChanceG : G.base.NoChanceOnHistories)
     (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init)
-    (hterminatesG :
-      G.PureTerminatesFrom
-        profile hNoChanceG current)
-    (hterminatesH :
-      H.PureTerminatesFrom
-        (r.mapProfile profile) hNoChanceH
-        (r.historyIso.stateEquiv current)) :
+    (sourceFuel targetFuel : ℕ)
+    (hsourceTerminal :
+      G.PureTerminatesAtFuel profile hNoChanceG current sourceFuel)
+    (htargetTerminal :
+      H.PureTerminatesAtFuel (r.mapProfile profile) hNoChanceH
+        (r.historyIso.stateEquiv current) targetFuel) :
     r.historyIso.stateEquiv
         (G.terminalHistoryFrom
-          profile hNoChanceG current hterminatesG) =
+          profile hNoChanceG current sourceFuel) =
       H.terminalHistoryFrom
         (r.mapProfile profile) hNoChanceH
         (r.historyIso.stateEquiv current)
-        hterminatesH := by
-  let sourceFuel :=
-    G.terminalFuel
-      profile hNoChanceG current hterminatesG
-  have hsourceTerminal :
-      G.base.isTerminal
-        (G.stoppedHistoryFrom
-          profile hNoChanceG current sourceFuel).1 :=
-    G.terminalFuel_spec
-      profile hNoChanceG current hterminatesG
+        targetFuel := by
   have hmappedTerminal :
       H.base.isTerminal
         (H.stoppedHistoryFrom
@@ -144,7 +134,7 @@ theorem map_terminalHistoryFrom
   calc
     r.historyIso.stateEquiv
         (G.terminalHistoryFrom
-          profile hNoChanceG current hterminatesG) =
+          profile hNoChanceG current sourceFuel) =
         H.stoppedHistoryFrom
           (r.mapProfile profile) hNoChanceH
           (r.historyIso.stateEquiv current)
@@ -156,11 +146,11 @@ theorem map_terminalHistoryFrom
     _ = H.terminalHistoryFrom
           (r.mapProfile profile) hNoChanceH
           (r.historyIso.stateEquiv current)
-          hterminatesH :=
+          targetFuel :=
       (H.terminalHistoryFrom_eq_of_terminal
         (r.mapProfile profile) hNoChanceH
         (r.historyIso.stateEquiv current)
-        hterminatesH sourceFuel
+        targetFuel htargetTerminal sourceFuel
         hmappedTerminal).symm
 
 /-- Total terminal payoffs of lifted fine profiles agree exactly with their
@@ -175,41 +165,40 @@ theorem map_terminalPayoffFrom
     (hNoChanceG : G.base.NoChanceOnHistories)
     (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init)
-    (hterminatesG :
-      G.PureTerminatesFrom
-        profile hNoChanceG current)
-    (hterminatesH :
-      H.PureTerminatesFrom
-        (r.mapProfile profile) hNoChanceH
-        (r.historyIso.stateEquiv current)) :
+    (sourceFuel targetFuel : ℕ)
+    (hsourceTerminal :
+      G.PureTerminatesAtFuel profile hNoChanceG current sourceFuel)
+    (htargetTerminal :
+      H.PureTerminatesAtFuel (r.mapProfile profile) hNoChanceH
+        (r.historyIso.stateEquiv current) targetFuel) :
     H.terminalPayoffFrom
         (r.mapProfile profile) hNoChanceH
         (r.historyIso.stateEquiv current)
-        hterminatesH =
+        targetFuel htargetTerminal =
       G.terminalPayoffFrom
-        profile hNoChanceG current hterminatesG := by
+        profile hNoChanceG current sourceFuel hsourceTerminal := by
   change
     H.base.payoff
         (H.terminalHistoryFrom
           (r.mapProfile profile) hNoChanceH
-          (r.historyIso.stateEquiv current) hterminatesH).1 =
+          (r.historyIso.stateEquiv current) targetFuel).1 =
       G.base.payoff
         (G.terminalHistoryFrom
-          profile hNoChanceG current hterminatesG).1
+          profile hNoChanceG current sourceFuel).1
   rw [
     ← r.map_terminalHistoryFrom
       profile hNoChanceG hNoChanceH current
-      hterminatesG hterminatesH]
+      sourceFuel targetFuel hsourceTerminal htargetTerminal]
   exact
     r.map_payoff
       (G.terminalHistoryFrom
-        profile hNoChanceG current hterminatesG)
+        profile hNoChanceG current sourceFuel)
       (G.terminalHistoryFrom_terminal
-        profile hNoChanceG current hterminatesG)
+        profile hNoChanceG current sourceFuel hsourceTerminal)
 
 /-- An information refinement induces a game-form morphism between total
 continuation games whenever termination is certified on both sides. -/
-noncomputable def terminalContinuationGameFormHom
+def terminalContinuationGameFormHom
     [(state : G.base.State) →
       Decidable (G.base.isTerminal state)]
     [(state : H.base.State) →
@@ -218,17 +207,16 @@ noncomputable def terminalContinuationGameFormHom
     (hNoChanceG : G.base.NoChanceOnHistories)
     (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init)
-    (hterminatesG :
-      G.PureTerminatingAt hNoChanceG current)
-    (hterminatesH :
-      H.PureTerminatingAt hNoChanceH
+    (terminationG : G.PureTerminationPlanAt hNoChanceG current)
+    (terminationH :
+      H.PureTerminationPlanAt hNoChanceH
         (r.historyIso.stateEquiv current)) :
     (G.terminalContinuationGameForm
-      hNoChanceG current hterminatesG).Hom
+      hNoChanceG current terminationG).Hom
       (H.terminalContinuationGameForm
         hNoChanceH
         (r.historyIso.stateEquiv current)
-        hterminatesH) where
+        terminationH) where
   strategyMap := r.mapStrategy
   outcomeMap := id
   map_outcome := by
@@ -236,8 +224,10 @@ noncomputable def terminalContinuationGameFormHom
     exact
       (r.map_terminalPayoffFrom
         profile hNoChanceG hNoChanceH current
-        (hterminatesG profile)
-        (hterminatesH (r.mapProfile profile))).symm
+        (terminationG.fuel profile)
+        (terminationH.fuel (r.mapProfile profile))
+        (terminationG.terminal profile)
+        (terminationH.terminal (r.mapProfile profile))).symm
 
 /-- The total continuation morphism preserves a shared payoff-utility
 interpretation. -/
@@ -252,15 +242,14 @@ theorem terminalContinuationGameFormHom_utilityCompatible
     (hNoChanceH : H.base.NoChanceOnHistories)
     (utility : (N → U) → N → V)
     (current : G.base.toArena.HistoryFrom G.base.init)
-    (hterminatesG :
-      G.PureTerminatingAt hNoChanceG current)
-    (hterminatesH :
-      H.PureTerminatingAt hNoChanceH
+    (terminationG : G.PureTerminationPlanAt hNoChanceG current)
+    (terminationH :
+      H.PureTerminationPlanAt hNoChanceH
         (r.historyIso.stateEquiv current)) :
     GameForm.Hom.UtilityCompatible
       (r.terminalContinuationGameFormHom
         hNoChanceG hNoChanceH current
-        hterminatesG hterminatesH)
+        terminationG terminationH)
       utility utility := by
   intro outcome i
   rfl
@@ -275,15 +264,14 @@ theorem terminalContinuationGameFormHom_strategySurjective
     (hNoChanceG : G.base.NoChanceOnHistories)
     (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.toArena.HistoryFrom G.base.init)
-    (hterminatesG :
-      G.PureTerminatingAt hNoChanceG current)
-    (hterminatesH :
-      H.PureTerminatingAt hNoChanceH
+    (terminationG : G.PureTerminationPlanAt hNoChanceG current)
+    (terminationH :
+      H.PureTerminationPlanAt hNoChanceH
         (r.historyIso.stateEquiv current))
     (hsurjective : r.StrategySurjective) :
     (r.terminalContinuationGameFormHom
       hNoChanceG hNoChanceH current
-      hterminatesG hterminatesH
+      terminationG terminationH
       ).StrategySurjective := by
   intro i targetStrategy
   exact hsurjective i targetStrategy
@@ -302,28 +290,27 @@ theorem terminalContinuationIsNash_of_map
     (utility : (N → U) → N → V)
     (profile : G.PureProfile)
     (current : G.base.toArena.HistoryFrom G.base.init)
-    (hterminatesG :
-      G.PureTerminatingAt hNoChanceG current)
-    (hterminatesH :
-      H.PureTerminatingAt hNoChanceH
+    (terminationG : G.PureTerminationPlanAt hNoChanceG current)
+    (terminationH :
+      H.PureTerminationPlanAt hNoChanceH
         (r.historyIso.stateEquiv current))
     (hNash :
       (H.terminalContinuationGameForm
         hNoChanceH
         (r.historyIso.stateEquiv current)
-        hterminatesH).IsNash
+        terminationH).IsNash
         utility (r.mapProfile profile)) :
     (G.terminalContinuationGameForm
-      hNoChanceG current hterminatesG).IsNash
+      hNoChanceG current terminationG).IsNash
       utility profile := by
   exact
     hNash.comap
       (r.terminalContinuationGameFormHom
         hNoChanceG hNoChanceH current
-        hterminatesG hterminatesH)
+        terminationG terminationH)
       (r.terminalContinuationGameFormHom_utilityCompatible
         hNoChanceG hNoChanceH utility current
-        hterminatesG hterminatesH)
+        terminationG terminationH)
 
 /-- Under explicit deviation lifting, corresponding total continuations have
 equivalent Nash predicates. -/
@@ -340,30 +327,29 @@ theorem terminalContinuationIsNash_iff_of_strategySurjective
     (utility : (N → U) → N → V)
     (profile : G.PureProfile)
     (current : G.base.toArena.HistoryFrom G.base.init)
-    (hterminatesG :
-      G.PureTerminatingAt hNoChanceG current)
-    (hterminatesH :
-      H.PureTerminatingAt hNoChanceH
+    (terminationG : G.PureTerminationPlanAt hNoChanceG current)
+    (terminationH :
+      H.PureTerminationPlanAt hNoChanceH
         (r.historyIso.stateEquiv current)) :
     (G.terminalContinuationGameForm
-      hNoChanceG current hterminatesG).IsNash
+      hNoChanceG current terminationG).IsNash
         utility profile ↔
       (H.terminalContinuationGameForm
         hNoChanceH
         (r.historyIso.stateEquiv current)
-        hterminatesH).IsNash
+        terminationH).IsNash
         utility (r.mapProfile profile) := by
   exact
     (r.terminalContinuationGameFormHom
       hNoChanceG hNoChanceH current
-      hterminatesG hterminatesH
+      terminationG terminationH
       ).isNash_iff_of_strategySurjective
         (r.terminalContinuationGameFormHom_utilityCompatible
           hNoChanceG hNoChanceH utility current
-          hterminatesG hterminatesH)
+          terminationG terminationH)
         (r.terminalContinuationGameFormHom_strategySurjective
           hNoChanceG hNoChanceH current
-          hterminatesG hterminatesH
+          terminationG terminationH
           hsurjective)
         profile
 
@@ -382,19 +368,21 @@ theorem isPureNashOnRoots_of_map
     (targetRoots : H.RootPresentation)
     (hroots :
       r.MapsRootPresentations sourceRoots targetRoots)
-    (hterminatesH :
-      H.PureTerminatingOnRoots hNoChanceH targetRoots)
+    (terminationG :
+      ∀ current, sourceRoots.IsRoot current →
+        G.PureTerminationPlanAt hNoChanceG current)
+    (terminationH :
+      ∀ current, targetRoots.IsRoot current →
+        H.PureTerminationPlanAt hNoChanceH current)
     (utility : (N → U) → N → V)
     (profile : G.PureProfile)
     (hSPE :
       H.IsPureNashOnRoots
-        hNoChanceH targetRoots hterminatesH utility
+        hNoChanceH targetRoots terminationH utility
         (r.mapProfile profile)) :
     G.IsPureNashOnRoots
       hNoChanceG sourceRoots
-      (r.reflect_pureTerminatingOnRoots
-        hNoChanceG hNoChanceH sourceRoots targetRoots
-        hroots hterminatesH)
+      terminationG
       utility profile := by
   intro sourceRoot hsourceRoot
   have htargetRoot :
@@ -404,11 +392,8 @@ theorem isPureNashOnRoots_of_map
     r.terminalContinuationIsNash_of_map
       hNoChanceG hNoChanceH utility profile
       sourceRoot
-      ((r.reflect_pureTerminatingOnRoots
-        hNoChanceG hNoChanceH sourceRoots targetRoots
-        hroots hterminatesH)
-        sourceRoot hsourceRoot)
-      (hterminatesH
+      (terminationG sourceRoot hsourceRoot)
+      (terminationH
         (r.historyIso.stateEquiv sourceRoot)
         htargetRoot)
       (hSPE
@@ -431,17 +416,19 @@ theorem isPureNashOnRoots_iff_of_strategySurjective
     (targetRoots : H.RootPresentation)
     (hroots :
       r.PreservesRootPresentations sourceRoots targetRoots)
-    (hterminatesG :
-      G.PureTerminatingOnRoots hNoChanceG sourceRoots)
-    (hterminatesH :
-      H.PureTerminatingOnRoots hNoChanceH targetRoots)
+    (terminationG :
+      ∀ current, sourceRoots.IsRoot current →
+        G.PureTerminationPlanAt hNoChanceG current)
+    (terminationH :
+      ∀ current, targetRoots.IsRoot current →
+        H.PureTerminationPlanAt hNoChanceH current)
     (hsurjective : r.StrategySurjective)
     (utility : (N → U) → N → V)
     (profile : G.PureProfile) :
     G.IsPureNashOnRoots
-        hNoChanceG sourceRoots hterminatesG utility profile ↔
+        hNoChanceG sourceRoots terminationG utility profile ↔
       H.IsPureNashOnRoots
-        hNoChanceH targetRoots hterminatesH utility
+        hNoChanceH targetRoots terminationH utility
         (r.mapProfile profile) := by
   constructor
   · intro hSPE targetRoot htargetRoot
@@ -457,8 +444,8 @@ theorem isPureNashOnRoots_iff_of_strategySurjective
       (r.terminalContinuationIsNash_iff_of_strategySurjective
         hNoChanceG hNoChanceH hsurjective
         utility profile sourceRoot
-        (hterminatesG sourceRoot hsourceRoot)
-        (hterminatesH
+        (terminationG sourceRoot hsourceRoot)
+        (terminationH
           (r.historyIso.stateEquiv sourceRoot)
           ((hroots sourceRoot).mp hsourceRoot))).mp hsourceNash
     exact hmapped
@@ -471,8 +458,8 @@ theorem isPureNashOnRoots_iff_of_strategySurjective
       (r.terminalContinuationIsNash_iff_of_strategySurjective
         hNoChanceG hNoChanceH hsurjective
         utility profile sourceRoot
-        (hterminatesG sourceRoot hsourceRoot)
-        (hterminatesH
+        (terminationG sourceRoot hsourceRoot)
+        (terminationH
           (r.historyIso.stateEquiv sourceRoot)
           htargetRoot)).mpr
         (hSPE
