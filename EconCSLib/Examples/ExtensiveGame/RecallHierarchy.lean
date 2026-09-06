@@ -141,6 +141,11 @@ theorem atDecision_nonterminal (bit : Bool) :
     ¬ base.isTerminal (atDecision bit).1 :=
   fun hterminal => hterminal.false ()
 
+theorem atDecision_decision (bit : Bool) :
+    base.toArena.IsDecision (atDecision bit).1 :=
+  base.toArena.isDecision_of_not_isTerminal _
+    (atDecision_nonterminal bit)
+
 @[simp]
 theorem signalHistory_false :
     game.signalHistory 0 (atDecision false) =
@@ -161,8 +166,8 @@ theorem not_hasEventClockSignalPerfectRecall :
   have heq :=
     hrecall
       (atDecision false) (atDecision true)
-      rfl (atDecision_nonterminal false)
-      rfl (atDecision_nonterminal true) rfl
+      rfl (atDecision_decision false)
+      rfl (atDecision_decision true) rfl
   have hmiddle :=
     congrArg (fun signals => signals[1]?) heq
   change some false = some true at hmiddle
@@ -372,8 +377,8 @@ theorem publicRecallGame_not_hasEventClockSignalPerfectRecall :
   have heq :=
     hrecall
       (atDecision false) (atDecision true)
-      rfl (atDecision_nonterminal false)
-      rfl (atDecision_nonterminal true) rfl
+      rfl (atDecision_decision false)
+      rfl (atDecision_decision true) rfl
   have hmiddle :=
     congrArg (fun signals => signals[1]?) heq
   change
@@ -468,10 +473,15 @@ theorem atSecond_nonterminal (first : Bool) :
     ¬ base.isTerminal (atSecond first).1 :=
   fun hterminal => hterminal.false ()
 
+theorem atSecond_decision (first : Bool) :
+    base.toArena.IsDecision (atSecond first).1 :=
+  base.toArena.isDecision_of_not_isTerminal _
+    (atSecond_nonterminal first)
+
 @[simp]
 theorem infoAt_second (first : Bool) :
     game.infoAt (atSecond first) () rfl
-        (atSecond_nonterminal first) =
+        (atSecond_decision first) =
       Stage.second :=
   rfl
 
@@ -482,19 +492,18 @@ theorem ownDecisionHistory_false_ne_true :
       game.ownDecisionHistory () (atSecond true) := by
   intro heq
   change
-    [(⟨Stage.first, false⟩ :
-        game.PersonalDecision ())] =
-      [(⟨Stage.first, true⟩ :
-        game.PersonalDecision ())] at heq
+    [game.personalDecisionAt () initial rfl false] =
+      [game.personalDecisionAt () initial rfl true] at heq
   injection heq with hchoice
   have :=
     congrArg
       (fun decision =>
         match decision with
-        | ⟨Stage.first, choice⟩ => choice
-        | ⟨Stage.second, _⟩ => false)
+        | ⟨⟨Stage.first, _⟩, choice⟩ => choice
+        | ⟨⟨Stage.second, _⟩, _⟩ => false)
       hchoice
-  simp at this
+  change false = true at this
+  exact Bool.noConfusion this
 
 /-- Forgetting one's own first action violates classic perfect recall even
 though the current decision stage is remembered. -/
@@ -504,15 +513,15 @@ theorem not_hasPerfectRecall :
   exact ownDecisionHistory_false_ne_true
     (hrecall
       (atSecond false) (atSecond true)
-      rfl (atSecond_nonterminal false)
-      rfl (atSecond_nonterminal true) rfl)
+      rfl (atSecond_decision false)
+      rfl (atSecond_decision true) rfl)
 
 /-- The private-signal sequence factors through the remembered decision
 stage, even though the first chosen action does not. -/
 def signalRecallCertificate :
     game.SignalRecallCertificate where
   rememberedSignals := fun _ stage =>
-    match stage with
+    match stage.1 with
     | .first => [()]
     | .second => [(), ()]
   rememberedSignals_infoAt := by
@@ -668,22 +677,21 @@ theorem publicRecallGame_not_hasPerfectRecall :
   have heq :=
     hrecall
       (atSecond false) (atSecond true)
-      rfl (atSecond_nonterminal false)
-      rfl (atSecond_nonterminal true) rfl
+      rfl (atSecond_decision false)
+      rfl (atSecond_decision true) rfl
   change
-    [(⟨Stage.first, false⟩ :
-        publicRecallGame.PersonalDecision ())] =
-      [(⟨Stage.first, true⟩ :
-        publicRecallGame.PersonalDecision ())] at heq
+    [publicRecallGame.personalDecisionAt () initial rfl false] =
+      [publicRecallGame.personalDecisionAt () initial rfl true] at heq
   injection heq with hchoice
   have hbit :=
     congrArg
       (fun decision =>
         match decision with
-        | ⟨Stage.first, choice⟩ => choice
-        | ⟨Stage.second, _⟩ => false)
+        | ⟨⟨Stage.first, _⟩, choice⟩ => choice
+        | ⟨⟨Stage.second, _⟩, _⟩ => false)
       hchoice
-  simp at hbit
+  change false = true at hbit
+  exact Bool.noConfusion hbit
 
 end ForgetOwn
 
