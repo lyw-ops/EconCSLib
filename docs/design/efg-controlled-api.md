@@ -1,9 +1,10 @@
 # Controlled EFG module map
 
 The payoff-free observed EFG stack is physically grouped under
-`Observed/Controlled/`. `Observed/Controlled.lean` remains the minimal carrier;
-all semantic, infrastructure, morphism, law, and payoff-aware adapter modules
-live below that carrier path.
+`Observed/Controlled/`. `Observed/Controlled.lean` owns the observation-free
+`ControlledDecisionGame` minimal carrier and its optional
+`ControlledObservedGame` observation extension; all semantic, infrastructure,
+morphism, law, and payoff-aware adapter modules live below that carrier path.
 
 This is a hard pre-stability module-path migration. The former flat
 `Observed/ControlledFoo.lean` paths are intentionally absent rather than kept
@@ -52,7 +53,7 @@ and are classified Internal.
 
 | Role | Modules | May own declarations? |
 |---|---|---:|
-| Minimal carrier | `Controlled` | Yes |
+| Carrier module | `Controlled` | Yes: decision core plus observation extension |
 | Semantic owners | `Controlled.Semantics`, `Controlled.Law`, `Controlled.Law.{Discrete,DiscretePath,Analytic}` | Yes |
 | Responsibility owners | `Controlled.Infrastructure.*`, `Controlled.Morphism.*` leaves | Yes |
 | Aggregate facades | `Controlled.Infrastructure`, `Controlled.Morphism` | No |
@@ -67,7 +68,7 @@ change those mathematical namespaces.
 
 | Need | Import |
 |---|---|
-| Base payoff-free observation/information record | `Observed.Controlled` |
+| Base payoff-free decision/observation records | `Observed.Controlled` |
 | Pure terminal/path-objective continuation and evaluator-relative semantics | `Observed.Controlled.Semantics` |
 | Finite discrete chance/history laws | `Observed.Controlled.Law.Discrete` |
 | Representation-independent complete-path laws | `Observed.Controlled.Law` |
@@ -86,21 +87,28 @@ not automatically preserve a caller-supplied history objective.
 
 ## Semantic contract boundaries
 
-- `ControlledObservedGame.infoAt`, `infoAt_observe`, and `actionEquiv` are
-  defined only at a nonterminal history whose mover is the named player.
-  Consequently a terminal endpoint carrying an unnormalized `some i` label
-  never creates a decision-information value or pure-strategy coordinate.
-  `DecisionMoverCoherent` remains the optional stronger certificate for
-  presentations that normalize reachable terminal mover labels to `none`.
+- `ControlledDecisionGame.infoAt` and `actionEquiv`, together with the
+  observational law `infoAt_observe`, require a history whose mover is the
+  named player and constructive `Arena.IsDecision` evidence. Consequently a
+  terminal endpoint carrying an unnormalized `some i` label never creates a
+  decision-information value. `DecisionMoverCoherent` remains the optional
+  stronger certificate for presentations that normalize reachable terminal
+  mover labels to `none`.
+- `PureStrategy`, `BehavioralStrategy`, and quasistrategies are indexed by
+  `RepresentedInfo`, not by every raw `InfoState` value. A represented
+  coordinate carries a concrete decision witness and therefore a nonempty
+  abstract action fiber without full-representation or mover-coherence
+  assumptions.
 - `ControlledGame.NoChance` quantifies over the whole ambient state carrier.
   `ControlledGame.NoChanceOnHistories` quantifies only over legal complete
   histories from `init`, and is the certificate used by canonical pure
   execution, total continuation, winning, and determinacy APIs. Global
   no-chance implies the reachable form.
-- `PureStrategyAvailabilityCertificate` packages only represented decision
-  information and mover coherence.
+- `PureStrategyAvailabilityCertificate` is the optional stronger assertion
+  that every raw `InfoState` value is represented.
   `ReachablePureStrategyModelCertificate` adds reachable no-chance. Neither
-  bundle contains finiteness, payoff, probability, recall, or termination.
+  is needed merely to inhabit pure strategies, and neither bundle contains
+  finiteness, payoff, probability, recall, or termination.
 - `terminalObjectiveContinuationGameForm` and
   `pathObjectiveContinuationGameForm` execute the canonical full pure
   strategy space and therefore support operationally named Nash/SPE
@@ -126,6 +134,29 @@ Application code should normally import a canonical pre-stability
 facades are governed recommendations, not current external
 source-compatibility guarantees.
 
+## Information construction guidance
+
+Use the smallest layer that matches the model:
+
+1. Put information-set identity and decision memory in `InfoState`, but let
+   strategies quantify over `RepresentedInfo`. A broad parser/compiler carrier
+   may safely contain unused raw values without creating artificial strategic
+   choices.
+2. Use `Observation` for what a player currently sees at every history and
+   `InfoState` for what an acting player remembers when choosing. The
+   projection `infoObserve` need not be injective: two memory states may share
+   the same current signal.
+3. Add `ControlledObservedGame` only when observation/public-signal theorems
+   are needed. Information sets and pure strategies live already in
+   `ControlledDecisionGame`.
+4. For asynchronous signals, use `SignalTraceBuilder` or
+   `PublicSignalTraceBuilder`, whose event map returns `Option`; `none` is a
+   silent transition. Event-clock recall is only the always-emitting special
+   case.
+5. State finiteness over `RepresentedInfo`. Require
+   `AllDecisionInfoRepresented` only when an external format promises that its
+   entire raw information catalog occurs in the game.
+
 ## Payoff-aware convergence audit
 
 The post-freeze ownership audit classifies the remaining parallel-looking
@@ -133,10 +164,11 @@ surface as follows:
 
 | Surface | Classification | Authoritative owner |
 |---|---|---|
-| observation, public observation, decision information, and information actions | necessary state-payoff carrier projection | `ControlledObservedGame`; `ObservedGame.toControlledObservedGame` forgets only payoff |
-| pure strategy and pure profile carriers | definitional payoff-aware spelling | `ControlledObservedGame.PureStrategy` / `PureProfile` |
-| decision-information witness | definitional payoff-aware spelling | `ControlledObservedGame.DecisionInfoWitness` |
-| represented-information and mover-coherence predicates | definitional payoff-aware spelling | `ControlledObservedGame.AllDecisionInfoRepresented` / `DecisionMoverCoherent` |
+| decision information and information actions | minimal payoff-free carrier | `ControlledDecisionGame`; the observed/payoff-aware layers extend or project it |
+| observation and public observation | optional observation extension | `ControlledObservedGame`; `ObservedGame.toControlledObservedGame` forgets only payoff |
+| pure strategy and pure profile carriers | observation-free ownership with compatibility spelling | `ControlledDecisionGame.PureStrategy` / `PureProfile`; observed namespaces abbreviate them |
+| decision-information witness and represented coordinates | observation-free ownership with compatibility spelling | `ControlledDecisionGame.DecisionInfoWitness` / `RepresentedInfo` |
+| full raw-information representation and mover-coherence predicates | optional stronger presentation certificates | `ControlledObservedGame.AllDecisionInfoRepresented` / `DecisionMoverCoherent` |
 | finite-EFG certificate | definitional payoff-aware spelling | `ControlledObservedGame.FiniteEFGHypotheses` |
 | discrete behavioral strategy/profile carriers | definitional payoff-aware spelling | `ControlledObservedGame.BehavioralStrategy` / `BehavioralProfile` in `Controlled.Law.Discrete` |
 | no-chance pure history execution | canonical semantics plus payoff-aware continuation wrapper | controlled infrastructure owns the history policy; `ObservedGame` adds stopped payoff interpretation |
