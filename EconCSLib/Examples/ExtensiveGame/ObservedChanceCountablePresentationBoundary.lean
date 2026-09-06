@@ -7,22 +7,14 @@ import EconCSLib.Examples.ExtensiveGame.ObservedChanceKernelBridgeBoundary
 import EconCSLib.GameTheory.ExtensiveGame.Simulation.Presentation.Chance.Countable
 
 /-!
-# Canonical countable observed-chance presentation regression
+# Effective countable observed-chance presentation regression
 
-This regression instantiates the canonical countable-discrete analytic
-presentation on the absent-minded three-rung game.
-
-Unlike the earlier explicit realized-presentation example, no model-specific
-information map, realization kernel, abstract kernel, or compilation proof is
-written here. The only nontrivial local obligation is countability of complete
-histories. It is proved by an exhaustive three-point cover of the acyclic
-game. Countability of tagged information, tagged abstract actions, concrete
-bundles, and every finite event prefix then follows from the reusable
-constructor.
-
-The resulting presentation still merges the recurring original player
-information state at the two distinct complete histories and compiles exactly
-to the established stopped-history law.
+This regression supplies actual history/action encodings and exercises the
+executable terminal/player tag selector on the absent-minded three-rung game.
+The analytic presentation is an explicit parameter: countability alone is not
+an algorithm for producing measurable kernels. Its existing certification
+theorems still preserve recurring information and the exact stopped-history
+law, without a second presentation constructor.
 -/
 
 open MeasureTheory ProbabilityTheory
@@ -33,6 +25,12 @@ open Examples.AbsentMinded
 open Examples.ObservedChanceKernelBridgeBoundary
 open ExtensiveGame
 open MeasurableKernelArena
+
+local macro "finiteLawMeasureTop(" law:term ")" : term =>
+  `(($law).atoms.foldr
+      (fun atom rest =>
+        (atom.2 : ENNReal) • @Measure.dirac _ ⊤ atom.1 + rest)
+      0)
 
 /-- The unique complete history ending at the terminal rung. -/
 def lastHistory :
@@ -68,8 +66,7 @@ theorem history_classify
     · cases hlast
       exact PEmpty.elim action
 
-/-- A finite cover used only to derive the complete-history countability
-instance. -/
+/-- An executable enumeration of the three complete histories. -/
 def historyCover :
     Fin 3 → base.toArena.HistoryFrom base.init
   | 0 => firstDecision
@@ -84,41 +81,64 @@ theorem historyCover_surjective :
   · exact ⟨1, hsecond.symm⟩
   · exact ⟨2, hlast.symm⟩
 
-noncomputable instance baseHistoryCountable :
-    Countable (base.toArena.HistoryFrom base.init) :=
-  historyCover_surjective.countable
+/-- A concrete encoder and partial decoder, not an encoding selected from a
+countability proof. -/
+instance baseHistoryEncoding :
+    Encodable (base.toArena.HistoryFrom base.init) where
+  encode history := match history.1 with
+    | .s0 => 0
+    | .s1 => 1
+    | .s2 => 2
+  decode
+    | 0 => some firstDecision
+    | 1 => some secondDecision
+    | 2 => some lastHistory
+    | _ => none
+  encodek history := by
+    rcases history_classify history with hfirst | hsecond | hlast
+    · subst history; rfl
+    · subst history; rfl
+    · subst history; rfl
 
-noncomputable instance gameHistoryCountable :
-    Countable
+instance gameHistoryEncoding :
+    Encodable
       (game.observed.base.toArena.HistoryFrom
         game.observed.base.init) := by
-  change Countable (base.toArena.HistoryFrom base.init)
+  change Encodable (base.toArena.HistoryFrom base.init)
   infer_instance
 
-noncomputable instance gameLocalActionCountable
+instance gameLocalActionEncoding
     (history :
       game.observed.base.toArena.HistoryFrom
         game.observed.base.init) :
-    Countable (game.observed.base.Action history.1) := by
-  change Countable (rungAction history.1)
+    Encodable (game.observed.base.Action history.1) := by
+  change Encodable (rungAction history.1)
   cases history.1 <;> simp only [rungAction] <;> infer_instance
 
-noncomputable instance gameInfoStateCountable (i : Fin 1) :
-    Countable (game.observed.InfoState i) := by
-  change Countable Unit
-  infer_instance
+private def informationTag :
+    ObservedChanceGame.CountableInformation game → Nat
+  | .terminal => 0
+  | .player _ => 1
+  | .chance _ _ => 2
 
-noncomputable instance gameInfoActionCountable
-    (i : Fin 1) (information : game.observed.InfoState i) :
-    Countable (game.observed.InfoAction i information) := by
-  change Countable Unit
-  infer_instance
+/-- Native execution sees the two recurring decisions and then termination. -/
+example :
+    (informationTag (ObservedChanceGame.CountablePresentation.informationAtHistory
+        game firstDecision),
+      informationTag (ObservedChanceGame.CountablePresentation.informationAtHistory
+        game secondDecision),
+      informationTag (ObservedChanceGame.CountablePresentation.informationAtHistory
+        game lastHistory)) = (1, 1, 0) := by
+  native_decide
 
-/-- The fully automatic countable-discrete analytic presentation of the
-absent-minded observed chance game. -/
-noncomputable def presentation :
-    game.AnalyticPresentation :=
-  ExtensiveGame.ObservedChanceGame.CountablePresentation.presentation game
+/-- The explicit decoder fails outside its finite domain. -/
+example :
+    (Encodable.decode
+      (α := game.observed.base.toArena.HistoryFrom game.observed.base.init)
+      3).isNone = true := by
+  native_decide
+
+variable (presentation : game.AnalyticPresentation)
 
 /-- The two recurring player histories use exactly the same canonical
 abstract action law because their original information states agree. -/
@@ -134,7 +154,7 @@ theorem recurring_player_abstract_law_eq :
       rfl secondPrefix_nonterminal
       infoState_recurs
 
-/-- The automatic presentation compiles exactly to the original concrete
+/-- The supplied certified presentation compiles exactly to the concrete
 history action kernel at every finite event prefix. -/
 theorem compiled_kernel_exact
     (time : ℕ)
@@ -146,7 +166,7 @@ theorem compiled_kernel_exact
         (MeasurableKernelArena.latestEventState time events) :=
   presentation.compiled_kernel profile time events
 
-/-- The automatic presentation recovers the exact old two-step stopped
+/-- The supplied presentation recovers the exact two-step stopped
 complete-history law. -/
 theorem two_step_state_law_exact :
     Measure.map
@@ -156,10 +176,8 @@ theorem two_step_state_law_exact :
             (game.observed.base.toArena.historyKernelArena
               game.observed.base.init).toMeasurable_measurableSet_terminalSet
             firstDecision) =
-      @PMF.toMeasure
-        (game.observed.base.toArena.HistoryFrom
-          game.observed.base.init) ⊤
-        (game.observed.base.toArena.stochasticHistoryPMFFrom
+      finiteLawMeasureTop(
+        game.observed.base.toArena.stochasticHistoryLawFrom
           (ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryPolicy
             game profile)
           firstDecision 2) :=
