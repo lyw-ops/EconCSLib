@@ -40,6 +40,68 @@ variable
   {model : MeasurableHistoryModel G}
   {presentation : G.MeasurableKernelPresentation model}
 
+/-- Supplied masses and conditional laws at canonical histories.
+
+Conditioning is partial: event and state laws can be projected only with a
+certificate that the conditioning prefix has nonzero mass. Null prefixes
+receive no default posterior. -/
+class ConditionalContinuation (profile : presentation.KernelBehavioralProfile) where
+  /-- Supplied marginal mass of each canonical prefix. -/
+  prefixMass : CompleteHistory G → CompleteHistory G → ℝ≥0∞
+  /-- The supplied masses agree exactly with the execution prefix laws. -/
+  prefixMass_eq : ∀ initialHistory root,
+    prefixMass initialHistory root =
+      profile.compiledPolicy.prefixMeasure model.toArena_terminalSet_measurable
+        initialHistory (MeasurableHistoryModel.canonicalContinuationStart root)
+        {model.canonicalContinuationPrefix root}
+  /-- Supplied conditional event law on the positive-mass domain. -/
+  eventLaw : [StandardBorelSpace (ℕ → model.toArena.PathEvent)] →
+    [Nonempty (ℕ → model.toArena.PathEvent)] →
+    (initialHistory root : CompleteHistory G) →
+    prefixMass initialHistory root ≠ 0 → Measure (ℕ → model.toArena.PathEvent)
+  /-- Agreement with the regular conditional kernel on the admitted domain. -/
+  eventLaw_eq : ∀ [StandardBorelSpace (ℕ → model.toArena.PathEvent)]
+    [Nonempty (ℕ → model.toArena.PathEvent)] initialHistory root hpositive,
+    eventLaw initialHistory root hpositive =
+      profile.compiledPolicy.conditionalTailKernel model.toArena_terminalSet_measurable
+        initialHistory (MeasurableHistoryModel.canonicalContinuationStart root)
+        (model.canonicalContinuationPrefix root)
+  /-- Supplied conditional state law on the same positive-mass domain. -/
+  stateLaw : [StandardBorelSpace (ℕ → model.toArena.PathEvent)] →
+    [Nonempty (ℕ → model.toArena.PathEvent)] →
+    (initialHistory root : CompleteHistory G) →
+    prefixMass initialHistory root ≠ 0 → Measure (ℕ → model.toArena.State)
+  /-- Exact state projection of the supplied conditional event law. -/
+  stateLaw_eq : ∀ [StandardBorelSpace (ℕ → model.toArena.PathEvent)]
+    [Nonempty (ℕ → model.toArena.PathEvent)] initialHistory root hpositive,
+    stateLaw initialHistory root hpositive =
+      (eventLaw initialHistory root hpositive).map MeasurableKernelArena.eventPathStates
+
+/-- Conditional laws exist as mathematical data; this proof does not install
+an executable or default conditional-law instance. -/
+theorem ConditionalContinuation.nonempty
+    (profile : presentation.KernelBehavioralProfile) :
+    Nonempty (ConditionalContinuation profile) := by
+  let mass := fun initialHistory root =>
+    profile.compiledPolicy.prefixMeasure model.toArena_terminalSet_measurable
+      initialHistory (MeasurableHistoryModel.canonicalContinuationStart root)
+      {model.canonicalContinuationPrefix root}
+  refine ⟨{
+    prefixMass := mass
+    prefixMass_eq := fun _ _ => rfl
+    eventLaw := by
+      intro _ _ initialHistory root _
+      exact profile.compiledPolicy.conditionalTailKernel model.toArena_terminalSet_measurable
+        initialHistory (MeasurableHistoryModel.canonicalContinuationStart root)
+        (model.canonicalContinuationPrefix root)
+    eventLaw_eq := by intros; rfl
+    stateLaw := by
+      intro _ _ initialHistory root _
+      exact (profile.compiledPolicy.conditionalTailKernel model.toArena_terminalSet_measurable
+        initialHistory (MeasurableHistoryModel.canonicalContinuationStart root)
+        (model.canonicalContinuationPrefix root)).map MeasurableKernelArena.eventPathStates
+    stateLaw_eq := by intros; rfl }⟩
+
 /-- Marginal probability mass of the canonical complete event prefix
 represented by `root`, under execution from `initialHistory`. -/
 noncomputable def canonicalContinuationPrefixMass
