@@ -18,17 +18,22 @@ variable {N U : Type*} (G : ObservedGame N U)
 namespace MixedProfile
 
 /-- Update every player's mixed plan to the sequential posterior induced by
-the supplied own-decision sequence. -/
-noncomputable def posteriorAfterDecisions
+the supplied own-decision sequence.  Each component remains partial because a
+zero-mass decision history has no posterior. -/
+def posteriorAfterDecisions
+    [∀ (i : N) (information : G.RepresentedInfo i),
+      DecidableEq (G.InfoAction i information.1)]
     (profile : G.MixedProfile)
     (decisions : G.PersonalDecisionHistories) :
-    G.MixedProfile :=
+    (i : N) → Option (G.MixedStrategy i) :=
   fun i =>
     (profile i).posteriorAfterDecisions
       G (decisions i)
 
 @[simp]
 theorem posteriorAfterDecisions_apply
+    [∀ (i : N) (information : G.RepresentedInfo i),
+      DecidableEq (G.InfoAction i information.1)]
     (profile : G.MixedProfile)
     (decisions : G.PersonalDecisionHistories)
     (i : N) :
@@ -42,10 +47,12 @@ theorem posteriorAfterDecisions_apply
 mixed plans. -/
 @[simp]
 theorem posteriorAfterDecisions_empty
+    [∀ (i : N) (information : G.RepresentedInfo i),
+      DecidableEq (G.InfoAction i information.1)]
     (profile : G.MixedProfile) :
     profile.posteriorAfterDecisions
         G (fun _ => []) =
-      profile := by
+      fun i => some (profile i) := by
   funext i
   rfl
 
@@ -54,6 +61,8 @@ profile updates exactly the acting player's plan law on the observed abstract
 action fiber. -/
 theorem posteriorAfterDecisions_relative_snoc_of_mover
     [DecidableEq N]
+    [∀ (j : N) (information : G.RepresentedInfo j),
+      DecidableEq (G.InfoAction j information.1)]
     (profile : G.MixedProfile)
     (root :
       G.base.toArena.HistoryFrom G.base.init)
@@ -63,46 +72,49 @@ theorem posteriorAfterDecisions_relative_snoc_of_mover
     (i : N)
     (hmover :
       G.base.mover state = some i)
-    (hnonterminal :
-      ¬ G.base.isTerminal state)
+    (hdecision :
+      G.base.toArena.IsDecision state)
     (abstractAction :
       G.InfoAction i
         (G.infoAt
           ⟨state, root.2.append suffix⟩
-          i hmover hnonterminal)) :
-    profile.posteriorAfterDecisions
+          i hmover hdecision)) :
+    ∀ j,
+    (profile.posteriorAfterDecisions
         G
         (G.relativeOwnDecisionHistories
           root
           ⟨G.base.next state
               (G.actionEquiv
                 ⟨state, root.2.append suffix⟩
-                i hmover hnonterminal abstractAction),
+                i hmover hdecision abstractAction),
             root.2.append
               (suffix.snoc
                 (G.actionEquiv
                   ⟨state, root.2.append suffix⟩
-                  i hmover hnonterminal abstractAction))⟩) =
+                  i hmover hdecision abstractAction))⟩) j) =
       Function.update
-        (profile.posteriorAfterDecisions
-          G
-          (G.relativeOwnDecisionHistories
-            root
-            ⟨state, root.2.append suffix⟩))
-        i
-        (((profile i).posteriorAfterDecisions
+          (profile.posteriorAfterDecisions
             G
             (G.relativeOwnDecisionHistories
               root
-              ⟨state, root.2.append suffix⟩
-              i)).conditionOnFiber
-          (fun pureStrategy =>
-            pureStrategy
-              (G.infoAt
+              ⟨state, root.2.append suffix⟩))
+          i
+          ((profile i).posteriorAfterDecisions
+              G
+              (G.relativeOwnDecisionHistories
+                root
                 ⟨state, root.2.append suffix⟩
-                i hmover hnonterminal))
-          abstractAction) := by
-  funext j
+                i) |>.bind (fun posterior =>
+              posterior.conditionOnFiber
+                (fun pureStrategy =>
+                  pureStrategy
+                    (G.representedInfoAt
+                      ⟨state, root.2.append suffix⟩
+                      i hmover hdecision))
+                abstractAction))
+        j := by
+  intro j
   by_cases hji : j = i
   · subst j
     simp only [Function.update]
@@ -114,35 +126,43 @@ theorem posteriorAfterDecisions_relative_snoc_of_mover
             ⟨G.base.next state
                 (G.actionEquiv
                   ⟨state, root.2.append suffix⟩
-                  i hmover hnonterminal abstractAction),
+                  i hmover hdecision abstractAction),
               root.2.append
                 (suffix.snoc
                   (G.actionEquiv
                     ⟨state, root.2.append suffix⟩
-                    i hmover hnonterminal abstractAction))⟩
+                    i hmover hdecision abstractAction))⟩
             i) =
         ((profile i).posteriorAfterDecisions
-          G
-          (G.relativeOwnDecisionHistories
-            root
-            ⟨state, root.2.append suffix⟩
-            i)).conditionOnFiber
-              (fun pureStrategy =>
-                pureStrategy
-                  (G.infoAt
-                    ⟨state, root.2.append suffix⟩
-                    i hmover hnonterminal))
-              abstractAction
+            G
+            (G.relativeOwnDecisionHistories
+              root
+              ⟨state, root.2.append suffix⟩
+              i) |>.bind (fun posterior =>
+          posterior.conditionOnFiber
+            (fun pureStrategy =>
+              pureStrategy
+                (G.representedInfoAt
+                  ⟨state, root.2.append suffix⟩
+                  i hmover hdecision))
+            abstractAction))
     rw [G.relativeOwnDecisionHistories_snoc_of_mover
       root suffix
       (G.actionEquiv
         ⟨state, root.2.append suffix⟩
-        i hmover hnonterminal abstractAction)
+        i hmover hdecision abstractAction)
       i hmover]
-    rw [MixedStrategy.posteriorAfterDecisions_append_singleton]
     rw [G.personalDecisionAt_actionEquiv
       i ⟨state, root.2.append suffix⟩
-      hmover hnonterminal abstractAction]
+      hmover hdecision abstractAction]
+    exact
+      MixedStrategy.posteriorAfterDecisions_append_singleton
+        G (profile i)
+        (G.relativeOwnDecisionHistories root
+          ⟨state, root.2.append suffix⟩ i)
+        ⟨G.representedInfoAt ⟨state, root.2.append suffix⟩
+            i hmover hdecision,
+          abstractAction⟩
   · simp only [Function.update, hji]
     change
       (profile j).posteriorAfterDecisions
@@ -152,12 +172,12 @@ theorem posteriorAfterDecisions_relative_snoc_of_mover
             ⟨G.base.next state
                 (G.actionEquiv
                   ⟨state, root.2.append suffix⟩
-                  i hmover hnonterminal abstractAction),
+                  i hmover hdecision abstractAction),
               root.2.append
                 (suffix.snoc
                   (G.actionEquiv
                     ⟨state, root.2.append suffix⟩
-                    i hmover hnonterminal abstractAction))⟩
+                    i hmover hdecision abstractAction))⟩
             j) =
         (profile j).posteriorAfterDecisions
           G
@@ -188,7 +208,7 @@ def rememberedFrom
     (current :
       G.base.toArena.HistoryFrom G.base.init)
     (i : N)
-    (information : G.InfoState i) :
+    (information : G.RepresentedInfo i) :
     List (G.PersonalDecision i) :=
   (certificate.remembered i information).drop
     (G.ownDecisionHistory i current).length
@@ -203,14 +223,14 @@ theorem rememberedFrom_infoAt_current
     (i : N)
     (hmover :
       G.base.mover current.1 = some i)
-    (hnonterminal :
-      ¬ G.base.isTerminal current.1) :
+    (hdecision :
+      G.base.toArena.IsDecision current.1) :
     certificate.rememberedFrom
         G current i
-        (G.infoAt current i hmover hnonterminal) =
+        (G.representedInfoAt current i hmover hdecision) =
       [] := by
   simp [rememberedFrom,
-    certificate.remembered_infoAt _ _ _ hnonterminal]
+    certificate.remembered_infoAt _ _ _ hdecision]
 
 /-- At a represented decision reachable from `current`, the relative
 remembered sequence is the suffix of the extracted own-decision history after
@@ -225,18 +245,18 @@ theorem rememberedFrom_infoAt_append
     (i : N)
     (hmover :
       G.base.mover finish = some i)
-    (hnonterminal :
-      ¬ G.base.isTerminal finish) :
+    (hdecision :
+      G.base.toArena.IsDecision finish) :
     certificate.rememberedFrom
         G current i
-        (G.infoAt
+        (G.representedInfoAt
           ⟨finish, current.2.append suffix⟩
-          i hmover hnonterminal) =
+          i hmover hdecision) =
       (G.ownDecisionHistory i
         ⟨finish, current.2.append suffix⟩).drop
           (G.ownDecisionHistory i current).length := by
   rw [rememberedFrom,
-    certificate.remembered_infoAt _ _ _ hnonterminal]
+    certificate.remembered_infoAt _ _ _ hdecision]
 
 /-- At a reachable continuation decision, the pre-root personal history
 followed by the relative remembered suffix reconstructs the complete personal
@@ -251,38 +271,43 @@ theorem ownDecisionHistory_append_rememberedFrom_infoAt
     (i : N)
     (hmover :
       G.base.mover finish = some i)
-    (hnonterminal :
-      ¬ G.base.isTerminal finish) :
+    (hdecision :
+      G.base.toArena.IsDecision finish) :
     G.ownDecisionHistory i current ++
         certificate.rememberedFrom
           G current i
-          (G.infoAt
+          (G.representedInfoAt
             ⟨finish, current.2.append suffix⟩
-            i hmover hnonterminal) =
+            i hmover hdecision) =
       G.ownDecisionHistory i
         ⟨finish, current.2.append suffix⟩ := by
   rw [certificate.rememberedFrom_infoAt_append
-    G current suffix i hmover hnonterminal]
+    G current suffix i hmover hdecision]
   exact
     (List.prefix_append_drop
       (G.ownDecisionHistory_prefix_append
         i current.2 suffix)).symm
 
 /-- Behavioralize one arbitrary mixed plan from a selected continuation root
-by conditioning only on the player's own decisions made since that root. -/
-noncomputable def behavioralizeMixedFrom
+by conditioning only on the player's own decisions made since that root.
+When the remembered sequence has zero mass, use exactly the behavioral
+assessment supplied by the caller. -/
+def behavioralizeMixedFrom
     (certificate : G.RecallCertificate)
     (current :
       G.base.toArena.HistoryFrom G.base.init)
     (i : N)
-    (strategy : G.MixedStrategy i) :
+    [∀ (information : G.RepresentedInfo i),
+      DecidableEq (G.InfoAction i information.1)]
+    (strategy : G.MixedStrategy i)
+    (offPath : G.BehavioralStrategy i) :
     G.BehavioralStrategy i :=
   fun information =>
-    strategy.sequentialConditionalActionLaw
-      G
-      (certificate.rememberedFrom
-        G current i information)
-      information
+    (strategy.sequentialConditionalActionLaw
+        G
+        (certificate.rememberedFrom
+          G current i information)
+        information).getD (offPath information)
 
 /-- At a player-controlled continuation root, root-scoped
 behavioralization uses exactly the unconditional mixed action marginal. -/
@@ -291,22 +316,26 @@ theorem behavioralizeMixedFrom_at_root
     (current :
       G.base.toArena.HistoryFrom G.base.init)
     (i : N)
+    [∀ (information : G.RepresentedInfo i),
+      DecidableEq (G.InfoAction i information.1)]
     (hmover :
       G.base.mover current.1 = some i)
-    (hnonterminal :
-      ¬ G.base.isTerminal current.1)
-    (strategy : G.MixedStrategy i) :
+    (hdecision :
+      G.base.toArena.IsDecision current.1)
+    (strategy : G.MixedStrategy i)
+    (offPath : G.BehavioralStrategy i) :
     certificate.behavioralizeMixedFrom
-        G current i strategy
-        (G.infoAt current i hmover hnonterminal) =
+        G current i strategy offPath
+        (G.representedInfoAt current i hmover hdecision) =
       strategy.map
         (fun pureStrategy =>
           pureStrategy
-            (G.infoAt current i hmover hnonterminal)) := by
+            (G.representedInfoAt current i hmover hdecision)) := by
   unfold behavioralizeMixedFrom
   rw [certificate.rememberedFrom_infoAt_current
-    G current i hmover hnonterminal]
-  rfl
+    G current i hmover hdecision]
+  simp [MixedStrategy.sequentialConditionalActionLaw,
+    MixedStrategy.posteriorAfterDecisions]
 
 /-- At a represented continuation decision, root-scoped behavioralization is
 the mixed action law conditioned on exactly the own-decision suffix accumulated
@@ -319,27 +348,34 @@ theorem behavioralizeMixedFrom_at_append
     (suffix :
       G.base.toArena.History current.1 finish)
     (i : N)
+    [∀ (information : G.RepresentedInfo i),
+      DecidableEq (G.InfoAction i information.1)]
     (hmover :
       G.base.mover finish = some i)
-    (hnonterminal :
-      ¬ G.base.isTerminal finish)
-    (strategy : G.MixedStrategy i) :
+    (hdecision :
+      G.base.toArena.IsDecision finish)
+    (strategy : G.MixedStrategy i)
+    (offPath : G.BehavioralStrategy i) :
     certificate.behavioralizeMixedFrom
-        G current i strategy
-        (G.infoAt
+        G current i strategy offPath
+        (G.representedInfoAt
           ⟨finish, current.2.append suffix⟩
-          i hmover hnonterminal) =
-      strategy.sequentialConditionalActionLaw
-        G
-        ((G.ownDecisionHistory i
-          ⟨finish, current.2.append suffix⟩).drop
-            (G.ownDecisionHistory i current).length)
-        (G.infoAt
-          ⟨finish, current.2.append suffix⟩
-          i hmover hnonterminal) := by
+          i hmover hdecision) =
+      (strategy.sequentialConditionalActionLaw
+          G
+          ((G.ownDecisionHistory i
+            ⟨finish, current.2.append suffix⟩).drop
+              (G.ownDecisionHistory i current).length)
+          (G.representedInfoAt
+            ⟨finish, current.2.append suffix⟩
+            i hmover hdecision)).getD
+        (offPath
+          (G.representedInfoAt
+            ⟨finish, current.2.append suffix⟩
+            i hmover hdecision)) := by
   unfold behavioralizeMixedFrom
   rw [certificate.rememberedFrom_infoAt_append
-    G current suffix i hmover hnonterminal]
+    G current suffix i hmover hdecision]
 
 /-- The concrete root action law of root-scoped behavioralization is exactly
 the concrete action marginal of the source mixed plan. -/
@@ -348,53 +384,69 @@ theorem behavioralizeMixedFrom_actionLawAt_root
     (current :
       G.base.toArena.HistoryFrom G.base.init)
     (i : N)
+    [∀ (information : G.RepresentedInfo i),
+      DecidableEq (G.InfoAction i information.1)]
     (hmover :
       G.base.mover current.1 = some i)
     (hnonterminal :
       ¬ G.base.isTerminal current.1)
-    (strategy : G.MixedStrategy i) :
+    (strategy : G.MixedStrategy i)
+    (offPath : G.BehavioralStrategy i) :
     (certificate.behavioralizeMixedFrom
-        G current i strategy).actionLawAt
+        G current i strategy offPath).actionLawAt
           G current hmover hnonterminal =
       strategy.map
         (fun pureStrategy =>
           pureStrategy.actionAt
-            G current hmover hnonterminal) := by
+            G current hmover
+              (G.base.toArena.isDecision_of_not_isTerminal
+                current.1 hnonterminal)) := by
+  let hdecision :=
+    G.base.toArena.isDecision_of_not_isTerminal
+      current.1 hnonterminal
   unfold BehavioralStrategy.actionLawAt
+    ControlledObservedGame.BehavioralStrategy.actionLawAt
+  dsimp only
   rw [certificate.behavioralizeMixedFrom_at_root
-    G current i hmover hnonterminal strategy]
+    G current i hmover hdecision strategy offPath]
   simpa [PureStrategy.actionAt,
     Function.comp_def] using
-      PMF.map_comp
+      FiniteLaw.map_comp
         (fun pureStrategy =>
           pureStrategy
-            (G.infoAt current i hmover hnonterminal))
+            (G.representedInfoAt current i hmover hdecision))
         strategy
-        (G.actionEquiv current i hmover hnonterminal)
+        (G.actionEquiv current i hmover hdecision)
 
 /-- Behavioralize every component of a mixed profile from the same
-continuation root. -/
-noncomputable def behavioralizeMixedProfileFrom
-    (certificate : G.RecallCertificate)
-    (current :
-      G.base.toArena.HistoryFrom G.base.init)
-    (profile : G.MixedProfile) :
-    G.BehavioralProfile :=
-  fun i =>
-    certificate.behavioralizeMixedFrom
-      G current i (profile i)
-
-@[simp]
-theorem behavioralizeMixedProfileFrom_apply
+continuation root, using the caller's profile only at zero-mass histories. -/
+def behavioralizeMixedProfileFrom
+    [∀ (i : N) (information : G.RepresentedInfo i),
+      DecidableEq (G.InfoAction i information.1)]
     (certificate : G.RecallCertificate)
     (current :
       G.base.toArena.HistoryFrom G.base.init)
     (profile : G.MixedProfile)
+    (offPath : G.BehavioralProfile) :
+    G.BehavioralProfile :=
+  fun i =>
+    certificate.behavioralizeMixedFrom
+      G current i (profile i) (offPath i)
+
+@[simp]
+theorem behavioralizeMixedProfileFrom_apply
+    [∀ (i : N) (information : G.RepresentedInfo i),
+      DecidableEq (G.InfoAction i information.1)]
+    (certificate : G.RecallCertificate)
+    (current :
+      G.base.toArena.HistoryFrom G.base.init)
+    (profile : G.MixedProfile)
+    (offPath : G.BehavioralProfile)
     (i : N) :
     certificate.behavioralizeMixedProfileFrom
-        G current profile i =
+        G current profile offPath i =
       certificate.behavioralizeMixedFrom
-        G current i (profile i) :=
+        G current i (profile i) (offPath i) :=
   rfl
 
 end RecallCertificate
@@ -403,23 +455,21 @@ namespace FiniteKuhnHypotheses
 
 variable [DecidableEq N]
 
-/-- The canonical recall certificate selected from the perfect-recall field of
-the finite Kuhn hypotheses. -/
-noncomputable def recallCertificate
-    (h : G.FiniteKuhnHypotheses) :
-    G.RecallCertificate :=
-  h.perfectRecall.toRecallCertificate
-
-/-- Root-scoped conditional behavioralization selected canonically from the
-finite Kuhn hypotheses. -/
-noncomputable def mixedToBehavioralProfileAt
+/-- Root-scoped conditional behavioralization from the certificate stored in
+the finite Kuhn hypotheses, with an explicit caller-supplied off-path
+assessment. -/
+def mixedToBehavioralProfileAt
     (h : G.FiniteKuhnHypotheses)
     (current :
       G.base.toArena.HistoryFrom G.base.init)
-    (profile : G.MixedProfile) :
+    (profile : G.MixedProfile)
+    (offPath : G.BehavioralProfile) :
     G.BehavioralProfile :=
+  letI (i : N) (information : G.RepresentedInfo i) :
+      DecidableEq (G.InfoAction i information.1) :=
+    (h.finiteDecisionPresentation i).2 information
   h.recallCertificate.behavioralizeMixedProfileFrom
-    G current profile
+    G current profile offPath
 
 /-- At every decision reachable from the selected continuation root,
 root-scoped behavioralization of an independently sampled behavioral table
@@ -432,63 +482,74 @@ theorem behavioralize_behavioralToMixed_at_append
     (suffix :
       G.base.toArena.History root.1 finish)
     (i : N)
+    [∀ (information : G.RepresentedInfo i),
+      DecidableEq (G.InfoAction i information.1)]
     (hmover :
       G.base.mover finish = some i)
     (hnonterminal :
       ¬ G.base.isTerminal finish)
     (strategy : G.BehavioralStrategy i) :
-    h.recallCertificate.behavioralizeMixedFrom
+    (h.recallCertificate.behavioralizeMixedFrom
         G root i
         (h.behavioralToMixedStrategy
           i strategy)
-        (G.infoAt
+        strategy
+        (G.representedInfoAt
           ⟨finish, root.2.append suffix⟩
-          i hmover hnonterminal) =
-      strategy
-        (G.infoAt
+          i hmover
+            (G.base.toArena.isDecision_of_not_isTerminal
+              finish hnonterminal))).Equivalent
+      (strategy
+        (G.representedInfoAt
           ⟨finish, root.2.append suffix⟩
-          i hmover hnonterminal) := by
+          i hmover
+            (G.base.toArena.isDecision_of_not_isTerminal
+              finish hnonterminal))) := by
   classical
-  letI : Finite (G.InfoState i) :=
-    h.finiteInfoState i
-  letI : Fintype (G.InfoState i) :=
-    Fintype.ofFinite (G.InfoState i)
+  let hdecision :=
+    G.base.toArena.isDecision_of_not_isTerminal
+      finish hnonterminal
+  let presentation := (h.finiteDecisionPresentation i).1
+  letI : Fintype (G.RepresentedInfo i) :=
+    Fintype.ofEquiv (Fin presentation.1) presentation.2.symm
+  letI : LinearOrder (G.RepresentedInfo i) :=
+    LinearOrder.lift' presentation.2 presentation.2.injective
   rw [h.recallCertificate.behavioralizeMixedFrom_at_append
-    G root suffix i hmover hnonterminal
-    (h.behavioralToMixedStrategy i strategy)]
+    G root suffix i hmover hdecision
+    (h.behavioralToMixedStrategy i strategy) strategy]
   unfold MixedStrategy.sequentialConditionalActionLaw
-  change
-    ((strategy.toMixed G).posteriorAfterDecisions
-      G
-      (G.relativeOwnDecisionHistories
-        root
-        ⟨finish, root.2.append suffix⟩
-        i)).map
-          (fun pureStrategy =>
-            pureStrategy
-              (G.infoAt
-                ⟨finish, root.2.append suffix⟩
-                i hmover hnonterminal)) =
-      strategy
-        (G.infoAt
-          ⟨finish, root.2.append suffix⟩
-          i hmover hnonterminal)
-  apply
-    strategy.toMixed_posteriorAfterDecisions_actionMarginal
-      G
-      (G.relativeOwnDecisionHistories
-        root
-        ⟨finish, root.2.append suffix⟩
-        i)
-      (G.infoAt
-        ⟨finish, root.2.append suffix⟩
-        i hmover hnonterminal)
-  intro decision hmem
-  exact
-    HasNoAbsentMindedness.info_ne_of_mem_relativeOwnDecisionHistories
-      (G := G) (h.noAbsentMindedness i) root
+  let decisions :=
+    G.relativeOwnDecisionHistories
+      root ⟨finish, root.2.append suffix⟩ i
+  let information :=
+    G.representedInfoAt
       ⟨finish, root.2.append suffix⟩
-      hmover hnonterminal decision hmem
+      i hmover hdecision
+  change
+    (((h.behavioralToMixedStrategy i strategy).posteriorAfterDecisions
+          G decisions).map
+        (fun posterior =>
+          posterior.map fun pureStrategy =>
+            pureStrategy information)).getD
+      (strategy information) |>.Equivalent
+        (strategy information)
+  cases hposterior :
+      ((h.behavioralToMixedStrategy i strategy).posteriorAfterDecisions
+        G decisions) with
+  | none => exact FiniteLaw.Equivalent.refl _
+  | some posterior =>
+      simp only [Option.map_some, Option.getD_some]
+      apply
+        strategy.toMixed_posteriorAfterDecisions_actionMarginal
+          G decisions information posterior
+      · simpa [FiniteKuhnHypotheses.behavioralToMixedStrategy] using
+          hposterior
+      · intro decision hmem
+        exact
+          HasNoAbsentMindedness.info_ne_of_mem_relativeOwnDecisionHistories
+            (G := G) (h.noAbsentMindedness i) root
+            ⟨finish, root.2.append suffix⟩
+            hmover hnonterminal decision hmem
 
 end FiniteKuhnHypotheses
 
