@@ -38,7 +38,7 @@ variable {α : Type uα} {β : Type uβ}
 
 The joint law ranges over the subtype of related pairs, so every sampled
 joint outcome carries its relation witness constructively. -/
-structure RelCoupling {α : Type uα} {β : Type uβ}
+structure RelCoupling
     (R : α → β → Prop) (left : FiniteLaw α) (right : FiniteLaw β) where
   /-- Executable finite joint law of related pairs. -/
   joint : FiniteLaw {pair : α × β // R pair.1 pair.2}
@@ -82,10 +82,13 @@ def relCoupling_refl (law : FiniteLaw α) :
 
 namespace RelCoupling
 
+variable {R : α → β → Prop} {left : FiniteLaw α} {right : FiniteLaw β}
+variable (coupling : RelCoupling R left right)
+
+include coupling
+
 /-- Transpose a relational coupling. -/
-def symm {α : Type uα} {β : Type uβ}
-    {R : α → β → Prop} {left : FiniteLaw α} {right : FiniteLaw β}
-    (coupling : RelCoupling R left right) :
+def symm :
     RelCoupling (fun rightValue leftValue => R leftValue rightValue)
       right left := by
   let swap : {pair : α × β // R pair.1 pair.2} →
@@ -120,9 +123,6 @@ def symm {α : Type uα} {β : Type uβ}
 /-- Every positive atom of the right marginal has a related positive witness
 in the left marginal. -/
 lemma exists_left_of_hasPositiveAtom_right
-    {α : Type uα} {β : Type uβ}
-    {R : α → β → Prop} {left : FiniteLaw α} {right : FiniteLaw β}
-    (coupling : RelCoupling R left right)
     {rightValue : β} (hright : right.HasPositiveAtom rightValue) :
     ∃ leftValue, left.HasPositiveAtom leftValue ∧
       R leftValue rightValue := by
@@ -140,9 +140,6 @@ lemma exists_left_of_hasPositiveAtom_right
 /-- Every positive atom of the left marginal has a related positive witness
 in the right marginal. -/
 lemma exists_right_of_hasPositiveAtom_left
-    {α : Type uα} {β : Type uβ}
-    {R : α → β → Prop} {left : FiniteLaw α} {right : FiniteLaw β}
-    (coupling : RelCoupling R left right)
     {leftValue : α} (hleft : left.HasPositiveAtom leftValue) :
     ∃ rightValue, right.HasPositiveAtom rightValue ∧
       R leftValue rightValue :=
@@ -158,13 +155,12 @@ namespace RelCoupling
 
 section Mapping
 
-variable {α : Type uα} {β : Type uβ}
+variable {α : Type uα} {β : Type uβ} {γ δ : Type*}
+variable {R : α → β → Prop} {S : γ → δ → Prop}
+variable {left : FiniteLaw α} {right : FiniteLaw β}
 
 /-- Push a relational coupling through related deterministic maps. -/
 def map
-    {α : Type uα} {β : Type uβ} {γ : Type*} {δ : Type*}
-    {R : α → β → Prop} {S : γ → δ → Prop}
-    {left : FiniteLaw α} {right : FiniteLaw β}
     {f : α → γ} {g : β → δ}
     (coupling : RelCoupling R left right)
     (hmap : ∀ leftValue rightValue,
@@ -213,9 +209,6 @@ def map
 
 /-- Related observables have equivalent exact finite laws. -/
 theorem map_eq
-    {α : Type uα} {β : Type uβ} {γ : Type*}
-    {R : α → β → Prop}
-    {left : FiniteLaw α} {right : FiniteLaw β}
     {f : α → γ} {g : β → γ}
     (coupling : RelCoupling R left right)
     (hmap : ∀ leftValue rightValue,
@@ -254,8 +247,10 @@ end RelCoupling
 
 section Composition
 
+variable {α : Type uα} {β : Type uβ}
+
 /-- Couple two point laws whenever their outcomes are related. -/
-def relCoupling_pure {α : Type uα} {β : Type uβ}
+def relCoupling_pure
     {R : α → β → Prop} {left : α} {right : β}
     (hrelated : R left right) :
     RelCoupling R (pure left) (pure right) := by
@@ -277,12 +272,66 @@ def relCoupling_pure {α : Type uα} {β : Type uβ}
 
 namespace RelCoupling
 
+section MarginalComposition
+
+variable {A B C D : Type*}
+variable (joint : FiniteLaw A) (marginal : FiniteLaw B)
+variable (next : A → FiniteLaw C) (marginalNext : B → FiniteLaw D)
+variable (project : A → B) (projectNext : C → D)
+
+section Expectations
+
+variable (houter : (joint.map project).Equivalent marginal)
+variable (hinner : ∀ source,
+  ((next source).map projectNext).Equivalent (marginalNext (project source)))
+
+include houter hinner
+
+-- Projection commutes with composition when both marginal laws agree.
+private lemma bind_marginal_equivalent :
+    ((joint.bind next).map projectNext).Equivalent (marginal.bind marginalNext) := by
+  rw [map_bind]
+  apply ((Equivalent.refl joint).bind hinner).trans
+  simpa only [bind_map, Function.comp_def] using
+    houter.bind (fun _ => Equivalent.refl _)
+
+end Expectations
+
+section PositiveAtoms
+
+variable (houter : ∀ outcome,
+  (joint.map project).HasPositiveAtom outcome ↔ marginal.HasPositiveAtom outcome)
+variable (hinner : ∀ source outcome,
+  ((next source).map projectNext).HasPositiveAtom outcome ↔
+    (marginalNext (project source)).HasPositiveAtom outcome)
+
+include houter hinner
+
+-- The same projection argument transports positive-atom witnesses.
+private lemma bind_marginal_positive (outcome : D) :
+    ((joint.bind next).map projectNext).HasPositiveAtom outcome ↔
+      (marginal.bind marginalNext).HasPositiveAtom outcome := by
+  rw [map_bind, hasPositiveAtom_bind_iff, hasPositiveAtom_bind_iff]
+  simp_rw [hinner]
+  constructor
+  · rintro ⟨source, hsource, hnext⟩
+    exact ⟨project source,
+      (houter _).mp ((hasPositiveAtom_map_iff _ _ _).mpr ⟨source, hsource, rfl⟩), hnext⟩
+  · rintro ⟨projected, hprojected, hnext⟩
+    obtain ⟨source, hsource, rfl⟩ :=
+      (hasPositiveAtom_map_iff _ _ _).mp ((houter _).mpr hprojected)
+    exact ⟨source, hsource, hnext⟩
+
+end PositiveAtoms
+
+end MarginalComposition
+
+variable {γ δ : Type*} {R : α → β → Prop} {S : γ → δ → Prop}
+variable {left : FiniteLaw α} {right : FiniteLaw β}
+variable {leftNext : α → FiniteLaw γ} {rightNext : β → FiniteLaw δ}
+
 /-- Compose a coupling with constructively supplied related continuations. -/
 def bind
-    {α : Type uα} {β : Type uβ} {γ : Type*} {δ : Type*}
-    {R : α → β → Prop} {S : γ → δ → Prop}
-    {left : FiniteLaw α} {right : FiniteLaw β}
-    {leftNext : α → FiniteLaw γ} {rightNext : β → FiniteLaw δ}
     (coupling : RelCoupling R left right)
     (nextCoupling : ∀ leftValue rightValue,
       R leftValue rightValue →
@@ -291,138 +340,24 @@ def bind
   let nextForPair := fun pair : {pair : α × β // R pair.1 pair.2} =>
     nextCoupling pair.1.1 pair.1.2 pair.2
   let joint := coupling.joint.bind fun pair => (nextForPair pair).joint
-  refine
+  exact
     { joint := joint
-      leftEquivalent := ?_
-      rightEquivalent := ?_
-      leftPositive := ?_
-      rightPositive := ?_ }
-  · intro value
-    change
-      (joint.map fun pair => pair.1.1).expectRat value =
-        (left.bind leftNext).expectRat value
-    rw [expectRat_map]
-    simp only [joint]
-    rw [expectRat_bind, expectRat_bind]
-    calc
-      coupling.joint.expectRat
-          (fun pair =>
-            ((nextForPair pair).joint).expectRat
-              (value ∘ fun related => related.1.1)) =
-          coupling.joint.expectRat
-            (fun pair => (leftNext pair.1.1).expectRat value) := by
-        congr 1
-        funext pair
-        have hinner :=
-          (equivalent_iff_expectRat.mp
-            (nextForPair pair).leftEquivalent) value
-        rw [expectRat_map] at hinner
-        exact hinner
-      _ = (coupling.joint.map fun pair => pair.1.1).expectRat
-          (fun outcome => (leftNext outcome).expectRat value) := by
-        rw [expectRat_map]
-        rfl
-      _ = left.expectRat
-          (fun outcome => (leftNext outcome).expectRat value) :=
-        (equivalent_iff_expectRat.mp coupling.leftEquivalent) _
-  · intro value
-    change
-      (joint.map fun pair => pair.1.2).expectRat value =
-        (right.bind rightNext).expectRat value
-    rw [expectRat_map]
-    simp only [joint]
-    rw [expectRat_bind, expectRat_bind]
-    calc
-      coupling.joint.expectRat
-          (fun pair =>
-            ((nextForPair pair).joint).expectRat
-              (value ∘ fun related => related.1.2)) =
-          coupling.joint.expectRat
-            (fun pair => (rightNext pair.1.2).expectRat value) := by
-        congr 1
-        funext pair
-        have hinner :=
-          (equivalent_iff_expectRat.mp
-            (nextForPair pair).rightEquivalent) value
-        rw [expectRat_map] at hinner
-        exact hinner
-      _ = (coupling.joint.map fun pair => pair.1.2).expectRat
-          (fun outcome => (rightNext outcome).expectRat value) := by
-        rw [expectRat_map]
-        rfl
-      _ = right.expectRat
-          (fun outcome => (rightNext outcome).expectRat value) :=
-        (equivalent_iff_expectRat.mp coupling.rightEquivalent) _
-  · intro outcome
-    simp only [joint]
-    rw [hasPositiveAtom_bind_iff]
-    rw [hasPositiveAtom_map_iff]
-    simp_rw [hasPositiveAtom_bind_iff]
-    constructor
-    · rintro ⟨relatedOutcome, ⟨pair, hpair, hnext⟩, houtcome⟩
-      have hsourceProjected :
-          (coupling.joint.map fun pair => pair.1.1).HasPositiveAtom
-            pair.1.1 :=
-        (hasPositiveAtom_map_iff _ _ _).mpr ⟨pair, hpair, rfl⟩
-      have hnextProjected :
-          ((nextForPair pair).joint.map fun related =>
-            related.1.1).HasPositiveAtom relatedOutcome.1.1 :=
-        (hasPositiveAtom_map_iff _ _ _).mpr
-          ⟨relatedOutcome, hnext, rfl⟩
-      refine
-        ⟨pair.1.1,
-          (coupling.leftPositive pair.1.1).mp hsourceProjected, ?_⟩
-      have hpositive :=
-        ((nextForPair pair).leftPositive relatedOutcome.1.1).mp
-          hnextProjected
-      simpa [houtcome] using hpositive
-    · rintro ⟨source, hsource, hnext⟩
-      have hsourceProjected :=
-        (coupling.leftPositive source).mpr hsource
-      rw [hasPositiveAtom_map_iff] at hsourceProjected
-      obtain ⟨pair, hpair, hpairSource⟩ := hsourceProjected
-      subst source
-      have hnextProjected :=
-        ((nextForPair pair).leftPositive outcome).mpr hnext
-      rw [hasPositiveAtom_map_iff] at hnextProjected
-      obtain ⟨relatedOutcome, hrelatedOutcome, houtcome⟩ :=
-        hnextProjected
-      exact ⟨relatedOutcome, ⟨pair, hpair, hrelatedOutcome⟩, houtcome⟩
-  · intro outcome
-    simp only [joint]
-    rw [hasPositiveAtom_bind_iff]
-    rw [hasPositiveAtom_map_iff]
-    simp_rw [hasPositiveAtom_bind_iff]
-    constructor
-    · rintro ⟨relatedOutcome, ⟨pair, hpair, hnext⟩, houtcome⟩
-      have htargetProjected :
-          (coupling.joint.map fun pair => pair.1.2).HasPositiveAtom
-            pair.1.2 :=
-        (hasPositiveAtom_map_iff _ _ _).mpr ⟨pair, hpair, rfl⟩
-      have hnextProjected :
-          ((nextForPair pair).joint.map fun related =>
-            related.1.2).HasPositiveAtom relatedOutcome.1.2 :=
-        (hasPositiveAtom_map_iff _ _ _).mpr
-          ⟨relatedOutcome, hnext, rfl⟩
-      refine
-        ⟨pair.1.2,
-          (coupling.rightPositive pair.1.2).mp htargetProjected, ?_⟩
-      have hpositive :=
-        ((nextForPair pair).rightPositive relatedOutcome.1.2).mp
-          hnextProjected
-      simpa [houtcome] using hpositive
-    · rintro ⟨target, htarget, hnext⟩
-      have htargetProjected :=
-        (coupling.rightPositive target).mpr htarget
-      rw [hasPositiveAtom_map_iff] at htargetProjected
-      obtain ⟨pair, hpair, hpairTarget⟩ := htargetProjected
-      subst target
-      have hnextProjected :=
-        ((nextForPair pair).rightPositive outcome).mpr hnext
-      rw [hasPositiveAtom_map_iff] at hnextProjected
-      obtain ⟨relatedOutcome, hrelatedOutcome, houtcome⟩ :=
-        hnextProjected
-      exact ⟨relatedOutcome, ⟨pair, hpair, hrelatedOutcome⟩, houtcome⟩
+      leftEquivalent := bind_marginal_equivalent coupling.joint left
+        (fun pair => (nextForPair pair).joint) leftNext
+        (fun pair => pair.1.1) (fun pair => pair.1.1)
+        coupling.leftEquivalent (fun pair => (nextForPair pair).leftEquivalent)
+      rightEquivalent := bind_marginal_equivalent coupling.joint right
+        (fun pair => (nextForPair pair).joint) rightNext
+        (fun pair => pair.1.2) (fun pair => pair.1.2)
+        coupling.rightEquivalent (fun pair => (nextForPair pair).rightEquivalent)
+      leftPositive := bind_marginal_positive coupling.joint left
+        (fun pair => (nextForPair pair).joint) leftNext
+        (fun pair => pair.1.1) (fun pair => pair.1.1)
+        coupling.leftPositive (fun pair => (nextForPair pair).leftPositive)
+      rightPositive := bind_marginal_positive coupling.joint right
+        (fun pair => (nextForPair pair).joint) rightNext
+        (fun pair => pair.1.2) (fun pair => pair.1.2)
+        coupling.rightPositive (fun pair => (nextForPair pair).rightPositive) }
 
 end RelCoupling
 

@@ -118,6 +118,16 @@ private lemma conditionOnFiber_eq_none_iff [DecidableEq β]
         (fun sample => decide (observe sample = value)) = 0 := by
   exact condition?_eq_none_iff law _
 
+private lemma eventMass_ne_zero_of_conditionOnFiber_eq_some [DecidableEq β]
+    (law : FiniteLaw α) (observe : α → β) (value : β)
+    {conditioned : FiniteLaw α}
+    (hconditioned : law.conditionOnFiber observe value = some conditioned) :
+    law.eventMass (fun sample => decide (observe sample = value)) ≠ 0 := by
+  intro hzero
+  have hnone := (conditionOnFiber_eq_none_iff law observe value).mpr hzero
+  rw [hconditioned] at hnone
+  exact Option.some_ne_none _ hnone
+
 /-- A zero-mass fiber has no posterior. -/
 lemma conditionOnFiber_of_impossible [DecidableEq β]
     (law : FiniteLaw α) (observe : α → β) (value : β)
@@ -143,14 +153,8 @@ theorem mass_conditionOnFiber [DecidableEq α] [DecidableEq β]
           law.eventMass
             (fun sample => decide (observe sample = value))
       else 0 := by
-  have hnonzero :
-      law.eventMass
-        (fun sample => decide (observe sample = value)) ≠ 0 := by
-    intro hzero
-    have hnone :=
-      (conditionOnFiber_eq_none_iff law observe value).mpr hzero
-    rw [hconditioned] at hnone
-    exact Option.some_ne_none _ hnone
+  have hnonzero :=
+    eventMass_ne_zero_of_conditionOnFiber_eq_some law observe value hconditioned
   have htotal :
       totalWeight
           (restrictAtoms law
@@ -241,134 +245,107 @@ end Fibers
 
 section IndependentTables
 
+variable {I : Type*} [Fintype I] [LinearOrder I] {X : I → Type uα}
+
+-- An event on one coordinate has exactly its marginal probability.
+private lemma eventMass_fintypePi_apply
+    (laws : (i : I) → FiniteLaw (X i)) (selected : I)
+    (event : X selected → Bool) :
+    (fintypePi laws).eventMass (fun tuple => event (tuple selected)) =
+      (laws selected).eventMass event := by
+  have hmarginal := (fintypePi_map_apply laws selected).eventMass event
+  simpa only [eventMass_map, Function.comp_def] using hmarginal
+
+variable [∀ i, DecidableEq (X i)] [DecidableEq ((i : I) → X i)]
+variable (laws : (i : I) → FiniteLaw (X i)) (selected : I)
+
+-- Updating one factor leaves the product over all other coordinates unchanged.
+private lemma mass_fintypePi_update (selectedLaw : FiniteLaw (X selected))
+    (tuple : (i : I) → X i) :
+    (fintypePi (Function.update laws selected selectedLaw)).mass tuple =
+      selectedLaw.mass (tuple selected) *
+        ∏ i : {i : I // i ≠ selected}, (laws i.1).mass (tuple i.1) := by
+  rw [fintypePi_mass, Fintype.prod_eq_mul_prod_subtype_ne _ selected]
+  simp only [Function.update_self]
+  congr 1
+  apply Finset.prod_congr rfl
+  intro i _
+  rw [Function.update_of_ne i.2]
+
+section PosteriorMass
+
+variable (value : X selected) (selectedLaw : FiniteLaw (X selected))
+variable (productLaw : FiniteLaw ((i : I) → X i))
+variable (hselected : (laws selected).conditionOnFiber id value = some selectedLaw)
+variable (hproduct :
+  (fintypePi laws).conditionOnFiber (fun tuple => tuple selected) value = some productLaw)
+
+include hselected hproduct
+
+-- Successful conditioning replaces precisely the selected factor.
+private lemma conditioned_fintypePi_equivalent :
+    productLaw.Equivalent (fintypePi (Function.update laws selected selectedLaw)) := by
+  apply Equivalent.of_mass_eq
+  intro tuple
+  rw [mass_conditionOnFiber (fintypePi laws) (fun tuple => tuple selected)
+      value productLaw hproduct tuple,
+    fintypePi_mass,
+    eventMass_fintypePi_apply laws selected (fun outcome => decide (outcome = value)),
+    Fintype.prod_eq_mul_prod_subtype_ne _ selected,
+    mass_fintypePi_update,
+    mass_conditionOnFiber (laws selected) id value selectedLaw hselected]
+  change
+    (if tuple selected = value then
+        ((laws selected).mass (tuple selected) *
+          ∏ i : {i : I // i ≠ selected}, (laws i.1).mass (tuple i.1)) /
+            (laws selected).eventMass (fun outcome => decide (outcome = value))
+      else 0) =
+      (if tuple selected = value then
+          (laws selected).mass (tuple selected) /
+            (laws selected).eventMass (fun outcome => decide (outcome = value))
+        else 0) *
+          ∏ i : {i : I // i ≠ selected}, (laws i.1).mass (tuple i.1)
+  by_cases heq : tuple selected = value
+  · simp [heq, div_mul_eq_mul_div]
+  · simp [heq]
+
+end PosteriorMass
+
 /-- Conditioning one coordinate of an independent finite table preserves
 independence and updates exactly that coordinate, up to sparse-presentation
 equivalence. -/
-theorem fintypePi_conditionOnFiber_apply
-    {I : Type*} [Fintype I] [LinearOrder I]
-    {X : I → Type uα}
-    [∀ i, DecidableEq (X i)]
-    [DecidableEq ((i : I) → X i)]
-    (laws : (i : I) → FiniteLaw (X i))
-    (selected : I) (value : X selected) :
+theorem fintypePi_conditionOnFiber_apply (value : X selected) :
     Option.Rel Equivalent
       ((fintypePi laws).conditionOnFiber
         (fun tuple => tuple selected) value)
       ((laws selected).conditionOnFiber id value |>.map
         (fun selectedLaw =>
-          fintypePi
-            (Function.update laws selected selectedLaw))) := by
-  classical
-  let selectedEvent : X selected → Bool :=
-    fun outcome => decide (outcome = value)
-  have heventMass :
-      (fintypePi laws).eventMass
-          (fun tuple => decide (tuple selected = value)) =
-        (laws selected).eventMass selectedEvent := by
-    have hmarginal :=
-      (fintypePi_map_apply laws selected).eventMass selectedEvent
-    rw [eventMass_map] at hmarginal
-    simpa [selectedEvent, Function.comp_def] using hmarginal
+          fintypePi (Function.update laws selected selectedLaw))) := by
+  have heventMass := eventMass_fintypePi_apply laws selected
+    (fun outcome => decide (outcome = value))
   cases hselected : (laws selected).conditionOnFiber id value with
   | none =>
-      have hselectedZero :
-          (laws selected).eventMass selectedEvent = 0 := by
-        exact (conditionOnFiber_eq_none_iff
-          (laws selected) id value).1 hselected
-      have hproductZero :
-          (fintypePi laws).eventMass
-            (fun tuple => decide (tuple selected = value)) = 0 := by
-        rw [heventMass, hselectedZero]
       have hproduct :
-          (fintypePi laws).conditionOnFiber
-              (fun tuple => tuple selected) value = none :=
-        (conditionOnFiber_eq_none_iff
-          (fintypePi laws) (fun tuple => tuple selected) value).2
-          hproductZero
+          (fintypePi laws).conditionOnFiber (fun tuple => tuple selected) value = none := by
+        apply (conditionOnFiber_eq_none_iff _ _ _).2
+        rw [heventMass]
+        exact (conditionOnFiber_eq_none_iff (laws selected) id value).1 hselected
       rw [hproduct]
-      simp only [Option.map]
       exact Option.Rel.none
   | some selectedLaw =>
-      have hselectedNonzero :
-          (laws selected).eventMass selectedEvent ≠ 0 := by
-        intro hzero
-        have hnone := (conditionOnFiber_eq_none_iff
-          (laws selected) id value).2 hzero
-        rw [hselected] at hnone
-        exact Option.some_ne_none _ hnone
-      have hproductNonzero :
-          (fintypePi laws).eventMass
-              (fun tuple => decide (tuple selected = value)) ≠ 0 := by
-        rw [heventMass]
-        exact hselectedNonzero
+      have hnonzero :=
+        eventMass_ne_zero_of_conditionOnFiber_eq_some (laws selected) id value hselected
       have hproductSome :
-          (fintypePi laws).conditionOnFiber
-              (fun tuple => tuple selected) value ≠ none := by
+          (fintypePi laws).conditionOnFiber (fun tuple => tuple selected) value ≠ none := by
         intro hnone
-        exact hproductNonzero
-          ((conditionOnFiber_eq_none_iff
-            (fintypePi laws) (fun tuple => tuple selected) value).1
-            hnone)
-      obtain ⟨productLaw, hproduct⟩ :=
-        Option.ne_none_iff_exists'.mp hproductSome
+        apply hnonzero
+        simpa only [id_eq] using
+          heventMass.symm.trans ((conditionOnFiber_eq_none_iff _ _ _).1 hnone)
+      obtain ⟨productLaw, hproduct⟩ := Option.ne_none_iff_exists'.mp hproductSome
       rw [hproduct]
-      simp only [Option.map]
-      apply Option.Rel.some
-      apply Equivalent.of_mass_eq
-      intro tuple
-      rw [mass_conditionOnFiber
-          (fintypePi laws) (fun tuple => tuple selected) value
-          productLaw hproduct tuple,
-        fintypePi_mass, heventMass,
-        Fintype.prod_eq_mul_prod_subtype_ne _ selected]
-      have hrest :
-          (∏ i : {i : I // i ≠ selected},
-            (Function.update laws selected
-              selectedLaw i.1).mass
-                (tuple i.1)) =
-            ∏ i : {i : I // i ≠ selected},
-              (laws i.1).mass (tuple i.1) := by
-        apply Finset.prod_congr rfl
-        intro i _
-        unfold Function.update
-        split
-        · rename_i heq
-          exact (i.2 heq).elim
-        · rfl
-      have hupdatedProduct :
-          (∏ i : I,
-            (Function.update laws selected
-              selectedLaw i).mass
-                (tuple i)) =
-            selectedLaw.mass (tuple selected) *
-              ∏ i : {i : I // i ≠ selected},
-                (laws i.1).mass (tuple i.1) := by
-        rw [Fintype.prod_eq_mul_prod_subtype_ne _ selected]
-        rw [show
-          Function.update laws selected
-              selectedLaw selected = selectedLaw by
-              simp [Function.update], hrest]
-      rw [fintypePi_mass
-          (Function.update laws selected selectedLaw) tuple,
-        hupdatedProduct,
-        mass_conditionOnFiber (laws selected) id value
-          selectedLaw hselected]
-      change
-        (if tuple selected = value then
-            ((laws selected).mass (tuple selected) *
-              ∏ i : {i : I // i ≠ selected},
-                (laws i.1).mass (tuple i.1)) /
-                  (laws selected).eventMass selectedEvent
-          else 0) =
-          (if tuple selected = value then
-              (laws selected).mass (tuple selected) /
-                (laws selected).eventMass selectedEvent
-            else 0) *
-              ∏ i : {i : I // i ≠ selected},
-                (laws i.1).mass (tuple i.1)
-      by_cases heq : tuple selected = value
-      · simp [selectedEvent, heq, div_mul_eq_mul_div]
-      · simp [heq]
+      exact Option.Rel.some
+        (conditioned_fintypePi_equivalent laws selected value selectedLaw productLaw
+          hselected hproduct)
 
 end IndependentTables
 

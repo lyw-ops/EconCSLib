@@ -382,7 +382,7 @@ lemma mass_pure [DecidableEq α] (outcome target : α) :
 /-- Mapping along an equivalence transports point masses through its unique
 preimage. -/
 lemma mass_map_equiv [DecidableEq α] [DecidableEq β]
-  (law : FiniteLaw α) (equivalence : α ≃ β) (target : β) :
+    (law : FiniteLaw α) (equivalence : α ≃ β) (target : β) :
     (law.map equivalence).mass target =
       law.mass (equivalence.symm target) := by
   unfold mass eventMass
@@ -458,7 +458,7 @@ end Mass
 
 section Expectation
 
-variable {α β γ : Type*}
+variable {α β : Type*}
 
 private def atomsMass [DecidableEq α]
     (atoms : List (α × ℚ≥0)) (outcome : α) : ℚ≥0 :=
@@ -666,7 +666,7 @@ end Expectation
 
 section Equivalence
 
-variable {α β γ : Type*}
+variable {α β : Type*}
 
 lemma Equivalent.refl (law : FiniteLaw α) : law.Equivalent law :=
   fun _ => rfl
@@ -832,7 +832,7 @@ end Equivalence
 
 section Normalization
 
-variable {α β γ : Type*}
+variable {α : Type*}
 
 /-- Dividing all weights by a fixed scalar divides the total weight by that
 scalar. -/
@@ -868,6 +868,22 @@ def normalize (atoms : List (α × ℚ≥0))
           (atom.1, atom.2 / totalWeight atoms)) = 1
     exact totalWeight_div atoms hnonzero
 
+private lemma sum_indicator_div [DecidableEq α]
+    (raw : List (α × ℚ≥0)) (divisor : ℚ≥0) (outcome : α) :
+    (raw.map fun atom =>
+      if decide (atom.1 = outcome) then atom.2 / divisor else 0).sum =
+      (raw.map fun atom =>
+        if atom.1 = outcome then atom.2 else 0).sum / divisor := by
+  induction raw with
+  | nil => simp
+  | cons atom raw ih =>
+      rcases atom with ⟨candidate, weight⟩
+      simp only [List.map_cons, List.sum_cons]
+      rw [ih]
+      by_cases heq : candidate = outcome
+      · simp [heq, add_div]
+      · simp [heq]
+
 /-- Point mass after normalization is the raw point weight divided by the
 raw total weight. -/
 theorem mass_normalize [DecidableEq α]
@@ -879,22 +895,7 @@ theorem mass_normalize [DecidableEq α]
         totalWeight atoms := by
   unfold normalize mass eventMass
   simp only [List.map_map, Function.comp_def]
-  have sum_indicator_div
-      (raw : List (α × ℚ≥0)) (divisor : ℚ≥0) :
-      (raw.map fun atom =>
-        if decide (atom.1 = outcome) then atom.2 / divisor else 0).sum =
-        (raw.map fun atom =>
-          if atom.1 = outcome then atom.2 else 0).sum / divisor := by
-    induction raw with
-    | nil => simp
-    | cons atom raw ih =>
-        rcases atom with ⟨candidate, weight⟩
-        simp only [List.map_cons, List.sum_cons]
-        rw [ih]
-        by_cases heq : candidate = outcome
-        · simp [heq, add_div]
-        · simp [heq]
-  exact sum_indicator_div atoms (totalWeight atoms)
+  exact sum_indicator_div atoms (totalWeight atoms) outcome
 
 /-- Normalize a nonzero finite weighted list.
 

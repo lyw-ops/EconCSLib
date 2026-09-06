@@ -83,6 +83,16 @@ as proposition-valued parameters or `variable` declarations; no additional
 hypothesis abstraction is needed. Section boundaries do not add assumptions
 to the `FiniteLaw` structure.
 
+For a concrete reading example, the `MarginalComposition` section in
+`Coupling` fixes projection data, then states separate expectation and
+positive-atom hypotheses with `variable` and `include`. Two private lemmas
+discharge the corresponding obligations for both sides of `RelCoupling.bind`.
+`Conditioning` similarly separates marginal event mass, the updated product
+formula, and successful posterior equivalence before the main case split.
+In `DeferredSampling`, private lemmas for terminal, chance, and query nodes
+make the main theorem a short structural induction. These helpers organize
+proofs without adding public entry points or changing the sampled data.
+
 ## §5. Examples, verification, and scope
 
 [`tests/FiniteLawSmoke.lean`](../../tests/FiniteLawSmoke.lean) exercises exact

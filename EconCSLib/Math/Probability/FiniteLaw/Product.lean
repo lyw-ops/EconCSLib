@@ -252,24 +252,6 @@ end FinProducts
 
 /-! ## Products indexed by an ordered finite type -/
 
-section FintypeProducts
-
-/-- Independent product over an explicitly enumerable finite index type.
-
-The supplied linear order turns `Fintype.elems` into an executable sorted
-enumeration; no classical `Fintype.equivFin` choice is used. -/
-def fintypePi {I : Type*} [Fintype I] [LinearOrder I]
-    {X : I → Type uα}
-    (laws : (i : I) → FiniteLaw (X i)) :
-    FiniteLaw ((i : I) → X i) :=
-  let indices : List I := Finset.univ.sort (· ≤ ·)
-  let e : Fin indices.length ≃ I :=
-    List.Nodup.getEquivOfForallMemList indices
-      (by simp [indices])
-      (by intro i; simp [indices])
-  (finPi indices.length (fun j => laws (e j))).map
-    (e.piCongr fun _ => Equiv.refl _)
-
 private lemma piCongr_refl_apply
     {I J : Type*} (e : I ≃ J) (X : J → Type*)
     (tuple : (i : I) → X (e i)) (i : I) :
@@ -280,9 +262,27 @@ private lemma piCongr_refl_apply
       (fun j => Equiv.refl (X (e j)))).symm_apply_apply tuple) i
   simpa only [Equiv.piCongr_symm_apply] using h
 
+section FintypeProducts
+
+variable {I : Type*} [Fintype I] [LinearOrder I] {X : I → Type uα}
+
+/-- Independent product over an explicitly enumerable finite index type.
+
+The supplied linear order turns `Fintype.elems` into an executable sorted
+enumeration; no classical `Fintype.equivFin` choice is used. -/
+def fintypePi
+    (laws : (i : I) → FiniteLaw (X i)) :
+    FiniteLaw ((i : I) → X i) :=
+  let indices : List I := Finset.univ.sort (· ≤ ·)
+  let e : Fin indices.length ≃ I :=
+    List.Nodup.getEquivOfForallMemList indices
+      (by simp [indices])
+      (by intro i; simp [indices])
+  (finPi indices.length (fun j => laws (e j))).map
+    (e.piCongr fun _ => Equiv.refl _)
+
 /-- Arbitrary finite independent products commute with coordinatewise maps. -/
-lemma fintypePi_map {I : Type*} [Fintype I] [LinearOrder I]
-    {X : I → Type uα} {Y : I → Type uβ}
+lemma fintypePi_map {Y : I → Type uβ}
     (laws : (i : I) → FiniteLaw (X i))
     (f : (i : I) → X i → Y i) :
     (fintypePi laws).map (fun tuple i => f i (tuple i)) =
@@ -340,8 +340,7 @@ lemma fintypePi_map {I : Type*} [Fintype I] [LinearOrder I]
 
 /-- Arbitrary finite independent point masses give the point mass on the
 complete tuple. -/
-lemma fintypePi_pure {I : Type*} [Fintype I] [LinearOrder I]
-    {X : I → Type uα} (tuple : (i : I) → X i) :
+lemma fintypePi_pure (tuple : (i : I) → X i) :
     fintypePi (fun i => pure (tuple i)) = pure tuple := by
   let indices : List I := Finset.univ.sort (· ≤ ·)
   let e : Fin indices.length ≃ I :=
@@ -646,9 +645,12 @@ theorem fintypePi_reindex
   intro i
   congr 2
 
+section PrefixMarginals
+
+variable {k : ℕ} {X : Fin k → Type uα}
+variable (laws : (i : Fin k) → FiniteLaw (X i))
+
 private lemma expectRat_finPiFrom_lt
-    {k : ℕ} {X : Fin k → Type uα}
-    (laws : (i : Fin k) → FiniteLaw (X i))
     (remaining count : ℕ) (htotal : count + remaining = k)
     (acc : FinPrefix X count) (i : Fin k) (hi : i.val < count)
     (value : X i → ℚ) :
@@ -678,8 +680,6 @@ private lemma expectRat_finPiFrom_lt
         _ = value (acc i hi) := expectRat_const _ _
 
 private lemma expectRat_finPiFrom_ge
-    {k : ℕ} {X : Fin k → Type uα}
-    (laws : (i : Fin k) → FiniteLaw (X i))
     (remaining count : ℕ) (htotal : count + remaining = k)
     (acc : FinPrefix X count) (i : Fin k) (hi : count ≤ i.val)
     (value : X i → ℚ) :
@@ -723,6 +723,8 @@ private lemma expectRat_finPiFrom_ge
             exact ih (count := count + 1) (htotal := by omega)
               (acc := acc.snoc (by omega) sampled) (i := i) hnext value
           _ = (laws i).expectRat value := expectRat_const _ _
+
+end PrefixMarginals
 
 /-- Every coordinate of the finite dependent product has the declared exact
 marginal law. -/

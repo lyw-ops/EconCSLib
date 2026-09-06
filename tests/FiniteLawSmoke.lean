@@ -92,6 +92,17 @@ private def diagonal := FiniteLaw.relCoupling_refl fairCoin
 example : (diagonal.joint.map fun pair => pair.1.1).Equivalent fairCoin :=
   diagonal.leftEquivalent
 
+private def coinAfterTrue (outcome : Bool) : FiniteLaw Bool :=
+  if outcome then fairCoin else FiniteLaw.pure false
+
+private def composed :=
+  diagonal.bind (leftNext := coinAfterTrue) (rightNext := coinAfterTrue) fun left right h => by
+    cases h
+    exact FiniteLaw.relCoupling_refl (coinAfterTrue left)
+
+#guard composed.joint.eventMass (fun pair => pair.1.1 && pair.1.2) = 1 / 4
+#guard composed.joint.eventMass (fun pair => pair.1.1 != pair.1.2) = 0
+
 end Couplings
 
 section DeferredSampling

@@ -276,106 +276,68 @@ end Execution
 
 section DeferredDecisions
 
+variable (laws : (i : ι) → FiniteLaw (X i))
+
+private lemma runPresampled_done {remaining : Finset ι} (result : R) :
+    (runPresampled laws (.done (remaining := remaining) result)).Equivalent (pure result) := by
+  intro value
+  change
+    ((fintypePi fun i : ↥remaining => laws i.1).bind fun _ => pure result).expectRat value =
+      (pure result).expectRat value
+  rw [expectRat_bind, expectRat_pure, expectRat_const]
+
+-- Independent chance can be drawn before the pre-sampled table.
+private lemma runPresampled_chance {remaining : Finset ι} {C : Type uX}
+    (law : FiniteLaw C) (next : C → FreshQueryTree X R remaining) :
+    (runPresampled laws (.chance law next)).Equivalent
+      (law.bind fun outcome => runPresampled laws (next outcome)) :=
+  bind_comm_equivalent (fintypePi fun i : ↥remaining => laws i.1) law
+    (fun table outcome => runWithTable (next outcome) table)
+
+-- A fresh query splits the independent table into its answer and the unused coordinates.
+private lemma runPresampled_query {remaining : Finset ι}
+    (selected : ↥remaining)
+    (next : X selected.1 → FreshQueryTree X R (remaining.erase selected.1)) :
+    (runPresampled laws (.query selected next)).Equivalent
+      ((laws selected.1).bind fun value => runPresampled laws (next value)) := by
+  let split := finsetPiSplitAt (X := X) remaining selected
+  let remainingLaw := fintypePi fun i : ↥(remaining.erase selected.1) => laws i.1
+  apply Equivalent.trans
+    (second := ((fintypePi fun i : ↥remaining => laws i.1).map split).bind
+      (fun pair => runWithTable (.query selected next) (split.symm pair)))
+  · apply Equivalent.of_eq
+    simp only [bind_map, runPresampled, Function.comp_def, Equiv.symm_apply_apply]
+  · apply Equivalent.trans
+      (second := (independentPair (laws selected.1) remainingLaw).bind
+        (fun pair => runWithTable (.query selected next) (split.symm pair)))
+    · exact (fintypePi_finset_splitAt laws remaining selected).bind
+        (fun _ => Equivalent.refl _)
+    · apply Equivalent.of_eq
+      unfold independentPair
+      simp [bind_bind, bind_map, split, remainingLaw,
+        runWithTable, runPresampled, Function.comp_def]
+
 /-- Pre-sampling all independent query answers and sampling them only when
 first queried induce exactly the same result law.
 
 The result is exact equality of all rational observables, not structural
 equality of sparse atom-list presentations. -/
-theorem runPresampled_eq_runOnDemand
-    (laws : (i : ι) → FiniteLaw (X i)) :
-    ∀ {remaining : Finset ι}
-      (tree : FreshQueryTree X R remaining),
-      (runPresampled laws tree).Equivalent
-        (runOnDemand laws tree) := by
+theorem runPresampled_eq_runOnDemand :
+    ∀ {remaining : Finset ι} (tree : FreshQueryTree X R remaining),
+      (runPresampled laws tree).Equivalent (runOnDemand laws tree) := by
   intro remaining tree
   induction tree with
   | done result =>
-      simp only [runPresampled, runWithTable, runOnDemand]
-      intro value
-      change
-        (_root_.FiniteLaw.bind _ fun _ => pure result).expectRat value =
-          (pure result).expectRat value
-      rw [expectRat_bind, expectRat_pure, expectRat_const]
-  | @chance remaining C law next ih =>
-      change
-        ((fintypePi
-          (fun i : ↥remaining => laws i.1)).bind
-            (fun table =>
-              law.bind fun outcome =>
-                runWithTable (next outcome) table)).Equivalent
-          (law.bind fun outcome =>
-            runOnDemand laws (next outcome))
-      apply Equivalent.trans
-        (second :=
-          law.bind fun outcome =>
-            (fintypePi
-              (fun i : ↥remaining => laws i.1)).bind
-                (fun table => runWithTable (next outcome) table))
-      · exact bind_comm_equivalent
-          (fintypePi fun i : ↥remaining => laws i.1) law
-          (fun table outcome => runWithTable (next outcome) table)
-      · apply (Equivalent.refl law).bind
-        intro outcome
-        exact ih outcome
-  | @query remaining selected next ih =>
-      let split :=
-        finsetPiSplitAt (X := X)
-          remaining selected
-      let remainingLaw :=
-        fintypePi
-          (fun i : ↥(remaining.erase selected.1) =>
-            laws i.1)
-      apply Equivalent.trans
-        (second :=
-          ((fintypePi
-            (fun i : ↥remaining => laws i.1)).map split).bind
-            (fun pair =>
-              runWithTable (.query selected next) (split.symm pair)))
-      · apply Equivalent.of_eq
-        rw [bind_map]
-        unfold runPresampled
-        apply congrArg (fun continuation =>
-          (fintypePi
-            (fun i : ↥remaining => laws i.1)).bind continuation)
-        funext table
-        change
-          runWithTable (.query selected next) table =
-            runWithTable (.query selected next)
-              (split.symm (split table))
-        rw [Equiv.symm_apply_apply]
-      · apply Equivalent.trans
-          (second :=
-            (independentPair
-              (laws selected.1) remainingLaw).bind
-                (fun pair =>
-                  runWithTable (.query selected next) (split.symm pair)))
-        · exact
-            (fintypePi_finset_splitAt laws remaining selected).bind
-              (fun _ => Equivalent.refl _)
-        · apply Equivalent.trans
-            (second :=
-              (laws selected.1).bind fun value =>
-                remainingLaw.bind fun table =>
-                  runWithTable (next value) table)
-          · apply Equivalent.of_eq
-            unfold independentPair
-            rw [bind_bind]
-            apply congrArg (fun continuation =>
-              (laws selected.1).bind continuation)
-            funext value
-            rw [bind_map]
-            apply congrArg (fun continuation =>
-              remainingLaw.bind continuation)
-            funext table
-            simp [split, runWithTable]
-          · change
-              ((laws selected.1).bind fun value =>
-                runPresampled laws (next value)).Equivalent
-                ((laws selected.1).bind fun value =>
-                  runOnDemand laws (next value))
-            apply (Equivalent.refl (laws selected.1)).bind
-            intro value
-            exact ih value
+      simp only [runOnDemand]
+      exact runPresampled_done laws result
+  | chance law next ih =>
+      simp only [runOnDemand]
+      exact (runPresampled_chance laws law next).trans
+        ((Equivalent.refl law).bind ih)
+  | query selected next ih =>
+      simp only [runOnDemand]
+      exact (runPresampled_query laws selected next).trans
+        ((Equivalent.refl (laws selected.1)).bind ih)
 
 end DeferredDecisions
 
