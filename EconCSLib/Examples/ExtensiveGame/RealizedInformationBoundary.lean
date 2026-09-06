@@ -35,7 +35,7 @@ open Examples.AbsentMinded
 open Examples.ObservedChanceKernelBridgeBoundary
 open MeasurableKernelArena
 
-noncomputable local instance rungMeasurableSpace :
+local instance rungMeasurableSpace :
     MeasurableSpace Rung :=
   ⊤
 
