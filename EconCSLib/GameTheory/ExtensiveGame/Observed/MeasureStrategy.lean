@@ -15,19 +15,68 @@ on dependent function spaces.
 
 `ArbitraryMeasurePureProfileLaw` is a joint law on complete pure profiles and
 may correlate players. It is different from `MixedProfile`, whose finite-player
-PMF semantics samples player plans independently, and from
-`DiscreteGeneralProfile`, whose carrier is a playerwise PMF over behavioral
+FiniteLaw semantics samples player plans independently, and from
+`DiscreteGeneralProfile`, whose carrier is a playerwise FiniteLaw over behavioral
 strategies.
 
 The primitive semantics is measurable pushforward through a caller-certified
-profile evaluator. Pure and PMF laws embed exactly, and PMF pushforward agrees
+profile evaluator. Pure and FiniteLaw laws embed exactly, and FiniteLaw pushforward agrees
 as a complete measure. No unrestricted arbitrary-measure Kuhn equivalence is
 claimed: measurable evaluation, recall, standard-Borel disintegration,
 independence, and null-information conditioning remain explicit downstream
 obligations. See `docs/design/efg-arbitrary-measure-strategies.md`.
 -/
 
-open MeasureTheory
+open MeasureTheory ProbabilityTheory
+open scoped ENNReal
+
+local macro "finiteLawMeasure(" law:term ")" : term =>
+  `(($law).atoms.foldr
+      (fun atom rest =>
+        (atom.2 : ENNReal) • Measure.dirac atom.1 + rest)
+      0)
+
+private theorem finiteLawMeasure_isProbability
+    {X : Type*} [MeasurableSpace X] (law : FiniteLaw X) :
+    IsProbabilityMeasure finiteLawMeasure(law) := by
+  constructor
+  change finiteLawMeasure(law) Set.univ = 1
+  have hzero : ((0 : ℚ≥0) : ENNReal) = 0 := by
+    change (((0 : ℚ≥0) : NNReal) : ENNReal) = 0
+    simp
+  have hadd (p q : ℚ≥0) :
+      ((p + q : ℚ≥0) : ENNReal) =
+        (p : ENNReal) + (q : ENNReal) := by
+    change (((p + q : ℚ≥0) : NNReal) : ENNReal) =
+      ((p : NNReal) : ENNReal) + ((q : NNReal) : ENNReal)
+    simp
+  have hsum :
+      finiteLawMeasure(law) Set.univ =
+        ((FiniteLaw.totalWeight law.atoms : ℚ≥0) : ENNReal) := by
+    induction law.atoms with
+    | nil => simp [FiniteLaw.totalWeight, hzero]
+    | cons atom atoms ih =>
+        simp [FiniteLaw.totalWeight, ih, hadd]
+  rw [hsum, FiniteLaw.totalWeight_atoms]
+  change (((1 : ℚ≥0) : NNReal) : ENNReal) = 1
+  norm_num
+
+private theorem finiteLawMeasure_map
+    {X Y : Type*} [MeasurableSpace X] [MeasurableSpace Y]
+    (law : FiniteLaw X) (f : X → Y) (hf : Measurable f) :
+    (finiteLawMeasure(law)).map f =
+      finiteLawMeasure(law.map f) := by
+  rw [FiniteLaw.map_atoms]
+  ext event hevent
+  rw [Measure.map_apply hf hevent]
+  induction law.atoms with
+  | nil => simp
+  | cons atom atoms ih =>
+      rcases atom with ⟨outcome, weight⟩
+      simp only [List.map_cons, List.foldr_cons]
+      simp [Measure.dirac_apply' _ hevent,
+        Measure.dirac_apply' _ (hf hevent), ih]
+      rfl
 
 namespace ExtensiveGame.ObservedGame
 
@@ -83,13 +132,13 @@ noncomputable def ofPure (profile : G.PureProfile) :
     ⟨Measure.dirac profile,
       Measure.dirac.isProbabilityMeasure⟩
 
-/-- Embed a countably supported law on complete pure profiles as its Mathlib
+/-- Embed a finite exact law on complete pure profiles as its Mathlib
 probability measure. -/
-noncomputable def ofPMF (law : PMF G.PureProfile) :
+noncomputable def ofFiniteLaw (law : FiniteLaw G.PureProfile) :
     G.ArbitraryMeasurePureProfileLaw model := by
   letI : MeasurableSpace G.PureProfile :=
     model.profileMeasurableSpace
-  exact ⟨law.toMeasure, inferInstance⟩
+  exact ⟨finiteLawMeasure(law), finiteLawMeasure_isProbability law⟩
 
 /-- Push a joint pure-profile law through an explicitly measurable evaluator.
 -/
@@ -121,45 +170,50 @@ noncomputable def pathLaw
     model.profileMeasurableSpace
   exact law.outcomeLaw model execute hexecute
 
-/-- The underlying measure of a PMF embedding is definitionally
-`PMF.toMeasure`. -/
+/-- The underlying measure of a finite-law embedding is its weighted Dirac
+fold. -/
 @[simp]
-theorem toMeasure_ofPMF (law : PMF G.PureProfile) :
+theorem toMeasure_ofFiniteLaw (law : FiniteLaw G.PureProfile) :
     @ProbabilityMeasure.toMeasure G.PureProfile
-        model.profileMeasurableSpace (ofPMF model law) =
-      @PMF.toMeasure G.PureProfile model.profileMeasurableSpace law :=
+        model.profileMeasurableSpace (ofFiniteLaw model law) =
+      law.atoms.foldr
+        (fun atom rest =>
+          (atom.2 : ENNReal) •
+            @Measure.dirac _ model.profileMeasurableSpace atom.1 + rest)
+        0 :=
   rfl
 
-/-- Measurable semantics of a PMF embedding agrees with the existing PMF
+/-- Measurable semantics of a FiniteLaw embedding agrees with the existing FiniteLaw
 pushforward as a complete outcome measure. -/
-theorem outcomeLaw_ofPMF
-    (law : PMF G.PureProfile)
+theorem outcomeLaw_ofFiniteLaw
+    (law : FiniteLaw G.PureProfile)
     {Outcome : Type uOutcome} [MeasurableSpace Outcome]
     (evaluate : G.PureProfile → Outcome)
     (hevaluate :
       @Measurable G.PureProfile Outcome
         model.profileMeasurableSpace inferInstance evaluate) :
-    ((outcomeLaw model (ofPMF model law) evaluate hevaluate :
+    ((outcomeLaw model (ofFiniteLaw model law) evaluate hevaluate :
         ProbabilityMeasure Outcome) : Measure Outcome) =
-      (law.map evaluate).toMeasure := by
+      finiteLawMeasure(law.map evaluate) := by
   letI : MeasurableSpace G.PureProfile :=
     model.profileMeasurableSpace
-  change
-    (@PMF.toMeasure G.PureProfile model.profileMeasurableSpace law).map
-        evaluate =
-      (law.map evaluate).toMeasure
-  exact PMF.toMeasure_map evaluate law hevaluate
+  exact finiteLawMeasure_map law evaluate hevaluate
 
-/-- A pure profile embedded through the PMF route agrees with the direct
+/-- A pure profile embedded through the FiniteLaw route agrees with the direct
 Dirac embedding. -/
-theorem ofPMF_pure (profile : G.PureProfile) :
-    ofPMF model (PMF.pure profile) =
+theorem ofFiniteLaw_pure (profile : G.PureProfile) :
+    ofFiniteLaw model (FiniteLaw.pure profile) =
       ofPure model profile := by
   letI : MeasurableSpace G.PureProfile :=
     model.profileMeasurableSpace
   apply ProbabilityMeasure.toMeasure_injective
-  exact @PMF.toMeasure_pure
-    G.PureProfile profile model.profileMeasurableSpace
+  change finiteLawMeasure(FiniteLaw.pure profile) = Measure.dirac profile
+  rw [FiniteLaw.pure_atoms]
+  simp only [List.foldr_cons, List.foldr_nil, add_zero]
+  change
+    (((1 : ℚ≥0) : NNReal) : ENNReal) • Measure.dirac profile =
+      Measure.dirac profile
+  simp
 
 /-- The marginal law of one player is the measurable pushforward of the joint
 profile law through that coordinate. -/
@@ -182,27 +236,30 @@ namespace MixedProfile
 /-- Embed the existing finite-player independent mixed profile into the
 arbitrary-measure joint carrier.
 
-Independence is established first by `pureProfileLaw`; `ofPMF` then changes
+Independence is established first by `pureProfileLaw`; `ofFiniteLaw` then changes
 only the law representation. -/
 noncomputable def toArbitraryMeasurePureProfileLaw
-    [Fintype N]
+    [Fintype N] [LinearOrder N]
     (model : G.PureProfileMeasurableModel)
     (profile : G.MixedProfile) :
     G.ArbitraryMeasurePureProfileLaw model :=
-  ArbitraryMeasurePureProfileLaw.ofPMF model
+  ArbitraryMeasurePureProfileLaw.ofFiniteLaw model
     (profile.pureProfileLaw G)
 
 /-- The arbitrary-measure embedding of an existing mixed profile has exactly
-the `PMF.toMeasure` joint law. -/
+the weighted-Dirac measure of its finite joint law. -/
 theorem toMeasure_toArbitraryMeasurePureProfileLaw
-    [Fintype N]
+    [Fintype N] [LinearOrder N]
     (model : G.PureProfileMeasurableModel)
     (profile : G.MixedProfile) :
     @ProbabilityMeasure.toMeasure G.PureProfile
         model.profileMeasurableSpace
         (profile.toArbitraryMeasurePureProfileLaw model) =
-      @PMF.toMeasure G.PureProfile model.profileMeasurableSpace
-        (profile.pureProfileLaw G) :=
+      (profile.pureProfileLaw G).atoms.foldr
+        (fun atom rest =>
+          (atom.2 : ENNReal) •
+            @Measure.dirac _ model.profileMeasurableSpace atom.1 + rest)
+        0 :=
   rfl
 
 end MixedProfile
