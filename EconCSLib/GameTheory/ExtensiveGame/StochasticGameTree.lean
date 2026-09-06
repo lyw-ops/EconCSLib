@@ -4,7 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
 import EconCSLib.GameTheory.ExtensiveGame.GameTree
-import Mathlib.Probability.ProbabilityMassFunction.Basic
+import EconCSLib.Math.Probability.FiniteLaw
+import Mathlib.Data.Real.Basic
 import Lean.Elab.Tactic.Omega
 
 /-!
@@ -13,7 +14,7 @@ import Lean.Elab.Tactic.Omega
 Finite perfect-information game trees with normalized chance nodes.
 
 This module intentionally keeps stochastic trees separate from the existing
-no-chance `GameTree` type. A chance node contains a genuine `PMF` on the finite
+no-chance `GameTree` type. A chance node contains a `FiniteLaw` on the finite
 nonempty type of child occurrences. Nonnegativity and total mass one are
 therefore construction invariants rather than optional side conditions.
 
@@ -42,7 +43,7 @@ inductive StochasticGameTree (N : Type*) : Type _
       StochasticGameTree N
   | Chance (arity : ℕ)
       (child : Fin (arity + 1) → StochasticGameTree N)
-      (law : PMF (Fin (arity + 1))) :
+      (law : FiniteLaw (Fin (arity + 1))) :
       StochasticGameTree N
 
 namespace StochasticGameTree
@@ -74,28 +75,32 @@ def headPolicy : Policy N :=
   fun _path _mover arity _child =>
     ⟨0, Nat.zero_lt_succ arity⟩
 
+mutual
+  private def compileGameTree : GameTree N ℝ → StochasticGameTree N
+    | GameTree.Leaf payoff => StochasticGameTree.Leaf payoff
+    | GameTree.Node mover head tail =>
+        let compiledHead := compileGameTree head
+        let compiledTail := compileGameTreeList tail
+        StochasticGameTree.Player mover compiledTail.length
+          (childrenOfList compiledHead compiledTail)
+
+  private def compileGameTreeList : List (GameTree N ℝ) →
+      List (StochasticGameTree N)
+    | [] => []
+    | head :: tail => compileGameTree head :: compileGameTreeList tail
+end
+
 /-- Embed an ordinary no-chance real-payoff `GameTree` into the stochastic
 tree layer. -/
-noncomputable def ofGameTree : GameTree N ℝ → StochasticGameTree N
-  | tree =>
-      GameTree.rec
-        (motive_1 := fun _ => StochasticGameTree N)
-        (motive_2 := fun _ => List (StochasticGameTree N))
-        (fun payoff => StochasticGameTree.Leaf payoff)
-        (fun mover _head _tail compiledHead compiledTail =>
-          StochasticGameTree.Player mover compiledTail.length
-            (childrenOfList compiledHead compiledTail))
-        []
-        (fun _head _tail compiledHead compiledTail =>
-          compiledHead :: compiledTail)
-        tree
+def ofGameTree (tree : GameTree N ℝ) : StochasticGameTree N :=
+  compileGameTree tree
 
 /-- Fuel-bounded expected payoff under an occurrence-sensitive pure policy.
 
 If fuel runs out, the default payoff is zero. At chance nodes this is the
-finite expectation under the constructor's normalized `PMF`; callers choose
+finite expectation under the constructor's normalized law; callers choose
 the horizon explicitly through `expectedPayoffAtFuel`. -/
-noncomputable def expectedPayoffWithFuel (fuel : ℕ) (policy : Policy N)
+def expectedPayoffWithFuel (fuel : ℕ) (policy : Policy N)
     (path : List ℕ) (g : StochasticGameTree N) (i : N) : ℝ :=
   match fuel with
   | 0 => 0
@@ -106,19 +111,21 @@ noncomputable def expectedPayoffWithFuel (fuel : ℕ) (policy : Policy N)
           let choice := policy path mover arity child
           expectedPayoffWithFuel n policy
             (path ++ [choice.1]) (child choice) i
-      | Chance arity child law =>
-          ∑ choice : Fin (arity + 1),
-            (law choice).toReal *
+      | Chance _ child law =>
+          (law.atoms.map fun atom =>
+            (atom.2 : ℝ) *
               expectedPayoffWithFuel n policy
-                (path ++ [choice.1]) (child choice) i
+                (path ++ [atom.1.1]) (child atom.1) i).sum
 
 /-- Expected payoff from the root at an explicit finite horizon.
 
-The horizon remains explicit because a branching function is an opaque Lean
-function: the inductive value alone does not expose a computable maximum depth
-without an additional certificate. No claim is made that an arbitrary fuel
-value reaches every leaf. -/
-noncomputable def expectedPayoffAtFuel (fuel : ℕ) (policy : Policy N)
+The horizon specifies the truncation, including zero payoff when fuel is
+exhausted at a leaf. Since each child function has a finite enumerable domain,
+structural recursion can compute a sufficient horizon by taking the maximum
+over all children, with fuel one at leaves. An arbitrary supplied horizon need
+not reach every leaf. The total-evaluation prototype and its correspondence
+proof are in the opt-in `Examples/ExtensiveGame/StochasticTreeCompilation`. -/
+def expectedPayoffAtFuel (fuel : ℕ) (policy : Policy N)
     (g : StochasticGameTree N) (i : N) : ℝ :=
   expectedPayoffWithFuel fuel policy [] g i
 
