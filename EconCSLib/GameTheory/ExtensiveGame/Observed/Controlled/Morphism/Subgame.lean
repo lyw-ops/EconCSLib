@@ -90,20 +90,18 @@ def mapLawfulSubgameRoot
           some i := by
       rw [f.map_mover root, hmover]
     have hrootNonterminal :
-        ¬ G.base.isTerminal
+        G.base.toArena.IsDecision
           (f.historyIso.stateEquiv root).1 :=
-      (not_congr (f.historyIso.isTerminal_iff root)).mp
-        hnonterminal
+      (f.historyIso.isDecision_iff root).mp hnonterminal
     have hotherMover :
         G.base.mover
             (f.historyIso.stateEquiv other).1 =
           some i := by
       rw [f.map_mover other, hother]
     have hotherNonterminal :
-        ¬ G.base.isTerminal
+        G.base.toArena.IsDecision
           (f.historyIso.stateEquiv other).1 :=
-      (not_congr (f.historyIso.isTerminal_iff other)).mp
-        hother_nonterminal
+      (f.historyIso.isDecision_iff other).mp hother_nonterminal
     have hsourceInfo :
         G.infoAt
             (f.historyIso.stateEquiv root)
@@ -137,20 +135,18 @@ def mapLawfulSubgameRoot
           some i := by
       rw [f.map_mover current, hmover]
     have hcurrentNonterminal :
-        ¬ G.base.isTerminal
+        G.base.toArena.IsDecision
           (f.historyIso.stateEquiv current).1 :=
-      (not_congr (f.historyIso.isTerminal_iff current)).mp
-        hnonterminal
+      (f.historyIso.isDecision_iff current).mp hnonterminal
     have hotherMover :
         G.base.mover
             (f.historyIso.stateEquiv other).1 =
           some i := by
       rw [f.map_mover other, hother]
     have hotherNonterminal :
-        ¬ G.base.isTerminal
+        G.base.toArena.IsDecision
           (f.historyIso.stateEquiv other).1 :=
-      (not_congr (f.historyIso.isTerminal_iff other)).mp
-        hother_nonterminal
+      (f.historyIso.isDecision_iff other).mp hother_nonterminal
     have hsourceInfo :
         G.infoAt
             (f.historyIso.stateEquiv current)
