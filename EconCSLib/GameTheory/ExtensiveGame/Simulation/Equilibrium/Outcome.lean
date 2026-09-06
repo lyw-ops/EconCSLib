@@ -36,10 +36,6 @@ finite-horizon certificate or almost-sure eventual terminal absorption.
 
 open MeasureTheory ProbabilityTheory
 
-namespace MeasurableKernelArena
-
-end MeasurableKernelArena
-
 namespace ExtensiveGame.ObservedGame
 
 universe uN uU
@@ -293,23 +289,27 @@ variable
   {model : MeasurableHistoryModel G}
   (terminalPayoff : TerminalPayoffExtension G model)
 
+section StoppedUtility
+
 /-- Terminal payoff observed at one finite event horizon, with explicit value
-zero when the path has not terminated by that coordinate. -/
-noncomputable def stoppedUtility
+zero when the path has not terminated by that coordinate. Computation requires
+an executable terminal decision and the supplied path and payoff; selecting a
+real payoff does not provide arbitrary real evaluation or integration. -/
+def stoppedUtility
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
     (terminalPayoff : TerminalPayoffExtension G model)
     (horizon : ℕ)
     (i : N)
     (path : ℕ → model.toArena.State) :
-    ℝ := by
-  classical
-  exact
-    if G.base.isTerminal (path horizon).1 then
-      terminalPayoff.payoff i (path horizon)
-    else
-      0
+    ℝ :=
+  if G.base.isTerminal (path horizon).1 then
+    terminalPayoff.payoff i (path horizon)
+  else
+    0
 
 /-- Finite-horizon stopped utility is measurable. -/
 theorem stoppedUtility_measurable
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
     (horizon : ℕ)
     (i : N) :
     Measurable (terminalPayoff.stoppedUtility horizon i) := by
@@ -324,7 +324,8 @@ theorem stoppedUtility_measurable
   · exact measurable_const
 
 /-- The stopped utility as a reusable measurable path evaluation. -/
-noncomputable def stoppedPathUtility
+def stoppedPathUtility
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
     (terminalPayoff : TerminalPayoffExtension G model)
     (horizon : ℕ) :
     PathUtility model where
@@ -337,6 +338,7 @@ noncomputable def stoppedPathUtility
 /-- At a terminal horizon coordinate, stopped utility is exactly the base
 game's terminal payoff. -/
 theorem stoppedUtility_eq_base
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
     (horizon : ℕ)
     (i : N)
     (path : ℕ → model.toArena.State)
@@ -352,6 +354,7 @@ theorem stoppedUtility_eq_base
 
 /-- Before termination, stopped utility is explicitly zero. -/
 theorem stoppedUtility_eq_zero
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
     (horizon : ℕ)
     (i : N)
     (path : ℕ → model.toArena.State)
@@ -359,6 +362,8 @@ theorem stoppedUtility_eq_zero
       ¬ G.base.isTerminal (path horizon).1) :
     terminalPayoff.stoppedUtility horizon i path = 0 := by
   rw [stoppedUtility, if_neg hnonterminal]
+
+end StoppedUtility
 
 end TerminalPayoffExtension
 
@@ -372,7 +377,8 @@ variable
     BoundedTerminalPayoffExtension G model)
 
 /-- The bounded finite-horizon terminal payoff as a bounded path utility. -/
-noncomputable def stoppedBoundedPathUtility
+def stoppedBoundedPathUtility
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
     (terminalPayoff :
       BoundedTerminalPayoffExtension G model)
     (horizon : ℕ) :
@@ -473,7 +479,8 @@ end ProfileAssembly
 
 end MeasurableKernelPresentation
 
-namespace MeasurableHistoryModel.BoundedPathUtility
+namespace MeasurableHistoryModel
+namespace BoundedPathUtility
 
 variable
   {model : MeasurableHistoryModel G}
@@ -501,9 +508,11 @@ def IsNashAt
         (assembly.toKernelBehavioralProfile profile)
         initialHistory who
 
-end MeasurableHistoryModel.BoundedPathUtility
+end BoundedPathUtility
+end MeasurableHistoryModel
 
-namespace MeasurableKernelPresentation.KernelBehavioralProfile
+namespace MeasurableKernelPresentation
+namespace KernelBehavioralProfile
 
 variable
   {model : MeasurableHistoryModel G}
@@ -519,9 +528,11 @@ def TerminatesBy
   ∀ᵐ path ∂profile.statePathMeasure initialHistory,
     G.base.isTerminal (path horizon).1
 
-end MeasurableKernelPresentation.KernelBehavioralProfile
+end KernelBehavioralProfile
+end MeasurableKernelPresentation
 
-namespace MeasurableHistoryModel.TerminalPayoffExtension
+namespace MeasurableHistoryModel
+namespace TerminalPayoffExtension
 
 variable
   {N : Type uN}
@@ -533,6 +544,7 @@ variable
 stopped utility equals the expectation of the measurable terminal-payoff
 extension at that coordinate. -/
 theorem expectedUtility_eq_integral_payoff_of_terminatesBy
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
     {presentation : G.MeasurableKernelPresentation model}
     (profile : presentation.KernelBehavioralProfile)
     (initialHistory : CompleteHistory G)
@@ -557,9 +569,11 @@ theorem expectedUtility_eq_integral_payoff_of_terminatesBy
   unfold stoppedUtility
   rw [if_pos hterminal]
 
-end MeasurableHistoryModel.TerminalPayoffExtension
+end TerminalPayoffExtension
+end MeasurableHistoryModel
 
-namespace MeasurableHistoryModel.BoundedTerminalPayoffExtension
+namespace MeasurableHistoryModel
+namespace BoundedTerminalPayoffExtension
 
 variable
   {N : Type uN}
@@ -572,6 +586,7 @@ variable
 certificate, expected stopped utility is the terminal-payoff integral against
 the matching one-coordinate state law. -/
 theorem expectedUtility_eq_integral_stateCoordinate_of_terminatesBy
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
     {presentation : G.MeasurableKernelPresentation model}
     (profile : presentation.KernelBehavioralProfile)
     (initialHistory : CompleteHistory G)
@@ -615,9 +630,11 @@ theorem expectedUtility_eq_integral_stateCoordinate_of_terminatesBy
       (measurable_pi_apply horizon).aemeasurable
       (terminalPayoff.payoff_measurable i).aestronglyMeasurable
 
-end MeasurableHistoryModel.BoundedTerminalPayoffExtension
+end BoundedTerminalPayoffExtension
+end MeasurableHistoryModel
 
-namespace MeasurableKernelPresentation.KernelBehavioralProfile
+namespace MeasurableKernelPresentation
+namespace KernelBehavioralProfile
 
 variable
   {N : Type uN}
@@ -788,9 +805,11 @@ theorem terminatesAlmostSurely_of_reachesTerminalAlmostSurely
           habsorb (hit + offset) hterminalOffset
         _ = path hit := ih
 
-end MeasurableKernelPresentation.KernelBehavioralProfile
+end KernelBehavioralProfile
+end MeasurableKernelPresentation
 
-namespace MeasurableHistoryModel.BoundedTerminalPayoffExtension
+namespace MeasurableHistoryModel
+namespace BoundedTerminalPayoffExtension
 
 variable
   {N : Type uN}
@@ -814,9 +833,12 @@ noncomputable def eventualUtility
     else
       0
 
+section StoppedConvergence
+
 /-- On an eventually terminal-absorbing path, fixed-horizon stopped utility
 is eventually equal to the eventual terminal payoff. -/
 theorem stoppedUtility_eventuallyEq_eventualUtility
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
     (i : N)
     (path : ℕ → model.toArena.State)
     (habsorbs :
@@ -827,6 +849,10 @@ theorem stoppedUtility_eventuallyEq_eventualUtility
         horizon i path) =ᶠ[Filter.atTop]
       fun _ => terminalPayoff.eventualUtility i path := by
   classical
+  -- Select the same classical least hit as `eventualUtility`; this choice is
+  -- confined to the convergence proof, not the bounded evaluator.
+  letI (state : G.base.State) : Decidable (G.base.isTerminal state) :=
+    Classical.propDecidable _
   let hit := Nat.find habsorbs
   have hspec := Nat.find_spec habsorbs
   refine Filter.eventually_atTop.2 ⟨hit, ?_⟩
@@ -838,17 +864,7 @@ theorem stoppedUtility_eventuallyEq_eventualUtility
       G.base.isTerminal (path horizon).1 := by
     rw [hstate]
     exact hspec.1
-  change
-    (if G.base.isTerminal (path horizon).1 then
-      terminalPayoff.payoff i (path horizon)
-    else
-      0) =
-    (if h :
-        MeasurableKernelPresentation.KernelBehavioralProfile.EventuallyAbsorbsAtTerminal
-          (G := G) (model := model) path then
-      terminalPayoff.payoff i (path (Nat.find h))
-    else
-      0)
+  dsimp only [TerminalPayoffExtension.stoppedUtility, eventualUtility]
   rw [if_pos hterminal, dif_pos habsorbs]
   dsimp only [hit] at hstate
   exact congrArg (terminalPayoff.payoff i) hstate
@@ -856,6 +872,7 @@ theorem stoppedUtility_eventuallyEq_eventualUtility
 /-- Fixed-horizon stopped utility converges on every eventually
 terminal-absorbing path. -/
 theorem stoppedUtility_tendsto_eventualUtility
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
     (i : N)
     (path : ℕ → model.toArena.State)
     (habsorbs :
@@ -875,6 +892,7 @@ theorem stoppedUtility_tendsto_eventualUtility
 /-- Under almost-sure terminal absorption, stopped utility converges almost
 everywhere to eventual terminal utility. -/
 theorem stoppedUtility_tendsto_eventualUtility_ae
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
     {presentation : G.MeasurableKernelPresentation model}
     (profile : presentation.KernelBehavioralProfile)
     (initialHistory : CompleteHistory G)
@@ -893,6 +911,8 @@ theorem stoppedUtility_tendsto_eventualUtility_ae
     terminalPayoff.stoppedUtility_tendsto_eventualUtility
       i path habsorbs
 
+end StoppedConvergence
+
 /-- Eventual terminal utility is almost-everywhere strongly measurable under
 an almost-sure terminal-absorption certificate. -/
 theorem eventualUtility_aestronglyMeasurable
@@ -905,6 +925,7 @@ theorem eventualUtility_aestronglyMeasurable
     AEStronglyMeasurable
       (terminalPayoff.eventualUtility i)
       (profile.statePathMeasure initialHistory) := by
+  classical
   exact
     aestronglyMeasurable_of_tendsto_ae
       Filter.atTop
@@ -945,6 +966,7 @@ theorem eventualUtility_integrable
     Integrable
       (terminalPayoff.eventualUtility i)
       (profile.statePathMeasure initialHistory) := by
+  classical
   apply
     (integrable_const (terminalPayoff.bound : ℝ)).mono
       (terminalPayoff.eventualUtility_aestronglyMeasurable
@@ -969,6 +991,7 @@ noncomputable def expectedEventualUtility
 converges to expected eventual terminal utility under almost-sure terminal
 absorption. -/
 theorem expectedUtility_tendsto_expectedEventualUtility
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
     {presentation : G.MeasurableKernelPresentation model}
     (profile : presentation.KernelBehavioralProfile)
     (initialHistory : CompleteHistory G)
@@ -1004,6 +1027,7 @@ theorem expectedUtility_tendsto_expectedEventualUtility
       terminalPayoff.stoppedUtility_tendsto_eventualUtility_ae
         profile initialHistory hterminates i
 
-end MeasurableHistoryModel.BoundedTerminalPayoffExtension
+end BoundedTerminalPayoffExtension
+end MeasurableHistoryModel
 
 end ExtensiveGame.ObservedGame
