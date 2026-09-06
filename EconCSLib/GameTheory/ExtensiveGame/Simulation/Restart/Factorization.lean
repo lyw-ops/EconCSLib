@@ -211,7 +211,7 @@ theorem clockAndLatestState_valueAt
 /-- Lift a state-indexed action kernel to clock-and-state values while
 ignoring the clock coordinate.
 -/
-noncomputable def actionLawIgnoringClock
+def actionLawIgnoringClock
     (actionLaw : Kernel A.State A.ActionBundle) :
     Kernel (ℕ × A.State) A.ActionBundle :=
   Kernel.comap actionLaw Prod.snd measurable_snd
