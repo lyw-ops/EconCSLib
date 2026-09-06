@@ -60,8 +60,11 @@ theorem map_toHistoryPolicy
   rw [PureProfile.toHistoryPolicy_of_mover
     profile hNoChanceG history hsource player hsourceMover]
   exact
-    r.map_actionAt profile history player hsourceMover hsource
-      htargetMover htarget
+    r.map_actionAt profile history player hsourceMover
+      (G.base.toArena.isDecision_of_not_isTerminal history.1 hsource)
+      htargetMover
+      (H.base.toArena.isDecision_of_not_isTerminal
+        (r.historyIso.stateEquiv history).1 htarget)
 
 /-- Strict history mapping commutes exactly with continuation execution of a
 lifted no-chance pure profile. -/
@@ -132,6 +135,11 @@ theorem pureTerminatesFrom_iff_map
   constructor
   · rintro ⟨fuel, hterminal⟩
     refine ⟨fuel, ?_⟩
+    change
+      H.base.isTerminal
+        (H.base.toArena.stoppedHistoryFrom
+          ((r.mapProfile profile).toHistoryPolicy hNoChanceH)
+          (r.historyIso.stateEquiv current) fuel).1
     rw [← r.map_stoppedHistoryFrom
       profile hNoChanceG hNoChanceH current fuel]
     exact
@@ -166,26 +174,18 @@ theorem map_terminalHistoryFrom
     (hNoChanceG : G.base.NoChanceOnHistories)
     (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.History)
-    (hterminatesG :
-      G.PureTerminatesFrom profile hNoChanceG current)
-    (hterminatesH :
-      H.PureTerminatesFrom (r.mapProfile profile) hNoChanceH
-        (r.historyIso.stateEquiv current)) :
+    (sourceFuel targetFuel : ℕ)
+    (hsourceTerminal :
+      G.PureTerminatesAtFuel profile hNoChanceG current sourceFuel)
+    (htargetTerminal :
+      H.PureTerminatesAtFuel (r.mapProfile profile) hNoChanceH
+        (r.historyIso.stateEquiv current) targetFuel) :
     r.historyIso.stateEquiv
         (G.terminalHistoryFrom
-          profile hNoChanceG current hterminatesG) =
+          profile hNoChanceG current sourceFuel) =
       H.terminalHistoryFrom
         (r.mapProfile profile) hNoChanceH
-        (r.historyIso.stateEquiv current) hterminatesH := by
-  let sourceFuel := G.terminalFuel
-    profile hNoChanceG current hterminatesG
-  have hsourceTerminal :
-      G.base.isTerminal
-        (G.base.toArena.stoppedHistoryFrom
-          (profile.toHistoryPolicy hNoChanceG)
-          current sourceFuel).1 :=
-    G.terminalFuel_spec
-      profile hNoChanceG current hterminatesG
+        (r.historyIso.stateEquiv current) targetFuel := by
   have hmappedTerminal :
       H.base.isTerminal
         (H.base.toArena.stoppedHistoryFrom
@@ -201,7 +201,7 @@ theorem map_terminalHistoryFrom
   calc
     r.historyIso.stateEquiv
         (G.terminalHistoryFrom
-          profile hNoChanceG current hterminatesG) =
+          profile hNoChanceG current sourceFuel) =
       H.base.toArena.stoppedHistoryFrom
         ((r.mapProfile profile).toHistoryPolicy hNoChanceH)
         (r.historyIso.stateEquiv current) sourceFuel := by
@@ -210,10 +210,10 @@ theorem map_terminalHistoryFrom
     _ =
       H.terminalHistoryFrom
         (r.mapProfile profile) hNoChanceH
-        (r.historyIso.stateEquiv current) hterminatesH :=
+        (r.historyIso.stateEquiv current) targetFuel :=
       (H.terminalHistoryFrom_eq_of_terminal
         (r.mapProfile profile) hNoChanceH
-        (r.historyIso.stateEquiv current) hterminatesH
+        (r.historyIso.stateEquiv current) targetFuel htargetTerminal
         sourceFuel hmappedTerminal).symm
 
 /-- Exact compatibility of history-sensitive terminal objectives with a
@@ -248,29 +248,30 @@ theorem map_terminalOutcomeFrom
     (hNoChanceG : G.base.NoChanceOnHistories)
     (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.History)
-    (hterminatesG :
-      G.PureTerminatesFrom profile hNoChanceG current)
-    (hterminatesH :
-      H.PureTerminatesFrom (r.mapProfile profile) hNoChanceH
-        (r.historyIso.stateEquiv current)) :
+    (sourceFuel targetFuel : ℕ)
+    (hsourceTerminal :
+      G.PureTerminatesAtFuel profile hNoChanceG current sourceFuel)
+    (htargetTerminal :
+      H.PureTerminatesAtFuel (r.mapProfile profile) hNoChanceH
+        (r.historyIso.stateEquiv current) targetFuel) :
     H.terminalOutcomeFrom target (r.mapProfile profile) hNoChanceH
-        (r.historyIso.stateEquiv current) hterminatesH =
+        (r.historyIso.stateEquiv current) targetFuel htargetTerminal =
       G.terminalOutcomeFrom source profile hNoChanceG current
-        hterminatesG := by
+        sourceFuel hsourceTerminal := by
   let sourceTerminal :
       G.base.toArena.TerminalHistoryFrom G.base.init :=
     ⟨G.terminalHistoryFrom
-        profile hNoChanceG current hterminatesG,
+        profile hNoChanceG current sourceFuel,
       G.terminalHistoryFrom_terminal
-        profile hNoChanceG current hterminatesG⟩
+        profile hNoChanceG current sourceFuel hsourceTerminal⟩
   let targetTerminal :
       H.base.toArena.TerminalHistoryFrom H.base.init :=
     ⟨H.terminalHistoryFrom
         (r.mapProfile profile) hNoChanceH
-        (r.historyIso.stateEquiv current) hterminatesH,
+        (r.historyIso.stateEquiv current) targetFuel,
       H.terminalHistoryFrom_terminal
         (r.mapProfile profile) hNoChanceH
-        (r.historyIso.stateEquiv current) hterminatesH⟩
+        (r.historyIso.stateEquiv current) targetFuel htargetTerminal⟩
   have hterminal :
       targetTerminal =
         ⟨r.historyIso.stateEquiv sourceTerminal.1,
@@ -279,14 +280,14 @@ theorem map_terminalOutcomeFrom
     apply Subtype.ext
     exact
       (r.map_terminalHistoryFrom profile hNoChanceG hNoChanceH
-        current hterminatesG hterminatesH).symm
+        current sourceFuel targetFuel hsourceTerminal htargetTerminal).symm
   change target targetTerminal = source sourceTerminal
   rw [hterminal]
   exact hobjective sourceTerminal
 
 /-- Exact objective compatibility induces a directional morphism from the
 coarse total continuation game form to the fine one. -/
-noncomputable def terminalObjectiveContinuationGameFormHom
+def terminalObjectiveContinuationGameFormHom
     {Outcome : Type uOutcome}
     [(state : G.base.State) → Decidable (G.base.isTerminal state)]
     [(state : H.base.State) → Decidable (H.base.isTerminal state)]
@@ -299,15 +300,15 @@ noncomputable def terminalObjectiveContinuationGameFormHom
     (hNoChanceG : G.base.NoChanceOnHistories)
     (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.History)
-    (hterminatesG : G.PureTerminatingAt hNoChanceG current)
-    (hterminatesH :
-      H.PureTerminatingAt hNoChanceH
+    (terminationG : G.PureTerminationPlanAt hNoChanceG current)
+    (terminationH :
+      H.PureTerminationPlanAt hNoChanceH
         (r.historyIso.stateEquiv current)) :
     (G.terminalObjectiveContinuationGameForm
-      source hNoChanceG current hterminatesG).Hom
+      source hNoChanceG current terminationG).Hom
       (H.terminalObjectiveContinuationGameForm
         target hNoChanceH (r.historyIso.stateEquiv current)
-        hterminatesH) where
+        terminationH) where
   strategyMap := r.mapStrategy
   outcomeMap := id
   map_outcome := by
@@ -315,8 +316,10 @@ noncomputable def terminalObjectiveContinuationGameFormHom
     exact
       (r.map_terminalOutcomeFrom source target hobjective profile
         hNoChanceG hNoChanceH current
-        (hterminatesG profile)
-        (hterminatesH (r.mapProfile profile))).symm
+        (terminationG.fuel profile)
+        (terminationH.fuel (r.mapProfile profile))
+        (terminationG.terminal profile)
+        (terminationH.terminal (r.mapProfile profile))).symm
 
 /-- Fine Nash equilibrium of a lifted profile reflects to the coarse
 terminal-objective continuation under the exact objective square. -/
@@ -334,24 +337,24 @@ theorem terminalObjective_isNash_of_map
     (hNoChanceG : G.base.NoChanceOnHistories)
     (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.History)
-    (hterminatesG : G.PureTerminatingAt hNoChanceG current)
-    (hterminatesH :
-      H.PureTerminatingAt hNoChanceH
+    (terminationG : G.PureTerminationPlanAt hNoChanceG current)
+    (terminationH :
+      H.PureTerminationPlanAt hNoChanceH
         (r.historyIso.stateEquiv current))
     (utility : Outcome → N → V)
     (profile : G.PureProfile)
     (hNash :
       (H.terminalObjectiveContinuationGameForm
         target hNoChanceH (r.historyIso.stateEquiv current)
-        hterminatesH).IsNash utility (r.mapProfile profile)) :
+        terminationH).IsNash utility (r.mapProfile profile)) :
     (G.terminalObjectiveContinuationGameForm
-      source hNoChanceG current hterminatesG).IsNash
+      source hNoChanceG current terminationG).IsNash
         utility profile := by
   exact
     hNash.comap
       (r.terminalObjectiveContinuationGameFormHom
         source target hobjective hNoChanceG hNoChanceH current
-        hterminatesG hterminatesH)
+        terminationG terminationH)
       (by
         intro _outcome _player
         rfl)
@@ -392,8 +395,11 @@ theorem map_toHistoryPolicy
   rw [PureProfile.toHistoryPolicy_of_mover
     profile hNoChanceG history hsource player hsourceMover]
   exact
-    e.map_actionAt profile history player hsourceMover hsource
-      htargetMover htarget
+    e.map_actionAt profile history player hsourceMover
+      (G.base.toArena.isDecision_of_not_isTerminal history.1 hsource)
+      htargetMover
+      (H.base.toArena.isDecision_of_not_isTerminal
+        (e.historyIso.stateEquiv history).1 htarget)
 
 /-- Strict history mapping commutes exactly with continuation execution of a
 mapped no-chance pure profile. -/
@@ -464,6 +470,11 @@ theorem pureTerminatesFrom_iff
   constructor
   · rintro ⟨fuel, hterminal⟩
     refine ⟨fuel, ?_⟩
+    change
+      H.base.isTerminal
+        (H.base.toArena.stoppedHistoryFrom
+          ((e.mapProfile profile).toHistoryPolicy hNoChanceH)
+          (e.historyIso.stateEquiv current) fuel).1
     rw [← e.map_stoppedHistoryFrom
       profile hNoChanceG hNoChanceH current fuel]
     exact
@@ -521,26 +532,18 @@ theorem map_terminalHistoryFrom
     (hNoChanceG : G.base.NoChanceOnHistories)
     (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.History)
-    (hterminatesG :
-      G.PureTerminatesFrom profile hNoChanceG current)
-    (hterminatesH :
-      H.PureTerminatesFrom (e.mapProfile profile) hNoChanceH
-        (e.historyIso.stateEquiv current)) :
+    (sourceFuel targetFuel : ℕ)
+    (hsourceTerminal :
+      G.PureTerminatesAtFuel profile hNoChanceG current sourceFuel)
+    (htargetTerminal :
+      H.PureTerminatesAtFuel (e.mapProfile profile) hNoChanceH
+        (e.historyIso.stateEquiv current) targetFuel) :
     e.historyIso.stateEquiv
         (G.terminalHistoryFrom
-          profile hNoChanceG current hterminatesG) =
+          profile hNoChanceG current sourceFuel) =
       H.terminalHistoryFrom
         (e.mapProfile profile) hNoChanceH
-        (e.historyIso.stateEquiv current) hterminatesH := by
-  let sourceFuel := G.terminalFuel
-    profile hNoChanceG current hterminatesG
-  have hsourceTerminal :
-      G.base.isTerminal
-        (G.base.toArena.stoppedHistoryFrom
-          (profile.toHistoryPolicy hNoChanceG)
-          current sourceFuel).1 :=
-    G.terminalFuel_spec
-      profile hNoChanceG current hterminatesG
+        (e.historyIso.stateEquiv current) targetFuel := by
   have hmappedTerminal :
       H.base.isTerminal
         (H.base.toArena.stoppedHistoryFrom
@@ -556,7 +559,7 @@ theorem map_terminalHistoryFrom
   calc
     e.historyIso.stateEquiv
         (G.terminalHistoryFrom
-          profile hNoChanceG current hterminatesG) =
+          profile hNoChanceG current sourceFuel) =
       H.base.toArena.stoppedHistoryFrom
         ((e.mapProfile profile).toHistoryPolicy hNoChanceH)
         (e.historyIso.stateEquiv current) sourceFuel := by
@@ -565,10 +568,10 @@ theorem map_terminalHistoryFrom
     _ =
       H.terminalHistoryFrom
         (e.mapProfile profile) hNoChanceH
-        (e.historyIso.stateEquiv current) hterminatesH :=
+        (e.historyIso.stateEquiv current) targetFuel :=
       (H.terminalHistoryFrom_eq_of_terminal
         (e.mapProfile profile) hNoChanceH
-        (e.historyIso.stateEquiv current) hterminatesH
+        (e.historyIso.stateEquiv current) targetFuel htargetTerminal
         sourceFuel hmappedTerminal).symm
 
 /-- Exact compatibility of history-sensitive terminal objectives with a
@@ -603,29 +606,30 @@ theorem map_terminalOutcomeFrom
     (hNoChanceG : G.base.NoChanceOnHistories)
     (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.History)
-    (hterminatesG :
-      G.PureTerminatesFrom profile hNoChanceG current)
-    (hterminatesH :
-      H.PureTerminatesFrom (e.mapProfile profile) hNoChanceH
-        (e.historyIso.stateEquiv current)) :
+    (sourceFuel targetFuel : ℕ)
+    (hsourceTerminal :
+      G.PureTerminatesAtFuel profile hNoChanceG current sourceFuel)
+    (htargetTerminal :
+      H.PureTerminatesAtFuel (e.mapProfile profile) hNoChanceH
+        (e.historyIso.stateEquiv current) targetFuel) :
     H.terminalOutcomeFrom target (e.mapProfile profile) hNoChanceH
-        (e.historyIso.stateEquiv current) hterminatesH =
+        (e.historyIso.stateEquiv current) targetFuel htargetTerminal =
       G.terminalOutcomeFrom source profile hNoChanceG current
-        hterminatesG := by
+        sourceFuel hsourceTerminal := by
   let sourceTerminal :
       G.base.toArena.TerminalHistoryFrom G.base.init :=
     ⟨G.terminalHistoryFrom
-        profile hNoChanceG current hterminatesG,
+        profile hNoChanceG current sourceFuel,
       G.terminalHistoryFrom_terminal
-        profile hNoChanceG current hterminatesG⟩
+        profile hNoChanceG current sourceFuel hsourceTerminal⟩
   let targetTerminal :
       H.base.toArena.TerminalHistoryFrom H.base.init :=
     ⟨H.terminalHistoryFrom
         (e.mapProfile profile) hNoChanceH
-        (e.historyIso.stateEquiv current) hterminatesH,
+        (e.historyIso.stateEquiv current) targetFuel,
       H.terminalHistoryFrom_terminal
         (e.mapProfile profile) hNoChanceH
-        (e.historyIso.stateEquiv current) hterminatesH⟩
+        (e.historyIso.stateEquiv current) targetFuel htargetTerminal⟩
   have hterminal :
       targetTerminal =
         ⟨e.historyIso.stateEquiv sourceTerminal.1,
@@ -634,14 +638,14 @@ theorem map_terminalOutcomeFrom
     apply Subtype.ext
     exact
       (e.map_terminalHistoryFrom profile hNoChanceG hNoChanceH
-        current hterminatesG hterminatesH).symm
+        current sourceFuel targetFuel hsourceTerminal htargetTerminal).symm
   change target targetTerminal = source sourceTerminal
   rw [hterminal]
   exact hobjective sourceTerminal
 
 /-- Exact objective compatibility induces a strict isomorphism of the two
 total continuation game forms. -/
-noncomputable def terminalObjectiveContinuationGameFormIso
+def terminalObjectiveContinuationGameFormIso
     {Outcome : Type uOutcome}
     [(state : G.base.State) → Decidable (G.base.isTerminal state)]
     [(state : H.base.State) → Decidable (H.base.isTerminal state)]
@@ -654,15 +658,15 @@ noncomputable def terminalObjectiveContinuationGameFormIso
     (hNoChanceG : G.base.NoChanceOnHistories)
     (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.History)
-    (hterminatesG : G.PureTerminatingAt hNoChanceG current)
-    (hterminatesH :
-      H.PureTerminatingAt hNoChanceH
+    (terminationG : G.PureTerminationPlanAt hNoChanceG current)
+    (terminationH :
+      H.PureTerminationPlanAt hNoChanceH
         (e.historyIso.stateEquiv current)) :
     (G.terminalObjectiveContinuationGameForm
-      source hNoChanceG current hterminatesG).Iso
+      source hNoChanceG current terminationG).Iso
       (H.terminalObjectiveContinuationGameForm
         target hNoChanceH (e.historyIso.stateEquiv current)
-        hterminatesH) where
+        terminationH) where
   strategyEquiv := e.strategyEquiv
   outcomeEquiv := Equiv.refl _
   map_outcome := by
@@ -670,8 +674,10 @@ noncomputable def terminalObjectiveContinuationGameFormIso
     exact
       (e.map_terminalOutcomeFrom source target hobjective profile
         hNoChanceG hNoChanceH current
-        (hterminatesG profile)
-        (hterminatesH (e.mapProfile profile))).symm
+        (terminationG.fuel profile)
+        (terminationH.fuel (e.mapProfile profile))
+        (terminationG.terminal profile)
+        (terminationH.terminal (e.mapProfile profile))).symm
 
 /-- Under the exact objective square, strict observed-EFG isomorphism
 preserves and reflects pure Nash equilibrium at one continuation root. -/
@@ -689,23 +695,23 @@ theorem terminalObjective_isNash_iff
     (hNoChanceG : G.base.NoChanceOnHistories)
     (hNoChanceH : H.base.NoChanceOnHistories)
     (current : G.base.History)
-    (hterminatesG : G.PureTerminatingAt hNoChanceG current)
-    (hterminatesH :
-      H.PureTerminatingAt hNoChanceH
+    (terminationG : G.PureTerminationPlanAt hNoChanceG current)
+    (terminationH :
+      H.PureTerminationPlanAt hNoChanceH
         (e.historyIso.stateEquiv current))
     (utility : Outcome → N → V)
     (profile : G.PureProfile) :
     (G.terminalObjectiveContinuationGameForm
-      source hNoChanceG current hterminatesG).IsNash
+      source hNoChanceG current terminationG).IsNash
         utility profile ↔
       (H.terminalObjectiveContinuationGameForm
         target hNoChanceH (e.historyIso.stateEquiv current)
-        hterminatesH).IsNash utility (e.mapProfile profile) := by
+        terminationH).IsNash utility (e.mapProfile profile) := by
   exact
     GameForm.Iso.isNash_iff
       (e.terminalObjectiveContinuationGameFormIso
         source target hobjective hNoChanceG hNoChanceH current
-        hterminatesG hterminatesH)
+        terminationG terminationH)
       (by
         intro _outcome _player
         rfl)
