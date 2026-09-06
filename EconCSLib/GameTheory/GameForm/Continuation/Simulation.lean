@@ -8,7 +8,14 @@ import EconCSLib.GameTheory.GameForm.Continuation.Core
 /-!
 # EconCSLib.GameTheory.GameForm.Continuation.Simulation
 
-Relational-root continuation simulations and their generic Nash-on-declared-roots transfer laws.
+A relational continuation simulation compares every related pair of roots
+using one global strategy map and one outcome map. Start with `Simulation`,
+then its composition and root-coverage predicates, and finally the
+Nash-on-declared-roots transfer theorems.
+
+Keeping the correspondence relational lets weak operational simulations use
+their actual related roots without choosing a preferred representative. Root
+coverage and deviation coverage are explicit premises of the transfer result.
 -/
 
 universe uN uS uR uO uV
