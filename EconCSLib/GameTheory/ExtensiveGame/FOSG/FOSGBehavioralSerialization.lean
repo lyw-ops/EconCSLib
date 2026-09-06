@@ -70,60 +70,79 @@ variable {k : ℕ} {U : Type uU}
 
 /-- Canonical finite-horizon optional terminal-payoff law of a decision-model
 behavioral profile from one augmented FOSG history. -/
-noncomputable def behavioralPayoffLawFrom
+def behavioralPayoffLawFrom
     (G : FOSG (Fin k) U)
+    [(world : G.WorldState) → Decidable (G.isTerminal world)]
     (D : G.DecisionModel)
     (profile : D.BehavioralProfile)
     (source : G.HistoryState)
     (horizon : ℕ) :
-    PMF (Option (Fin k → U)) :=
-  (G.historyKernelArena.stateLawFrom
-      (D.behavioralHistoryPolicy profile)
-      horizon source).map
-    G.stoppedPayoffAtHistory
+    FiniteLaw (Option (Fin k → U)) := by
+  letI (history : G.HistoryState) :
+      Decidable
+        (IsEmpty (G.historyKernelArena.Action history)) :=
+    decidable_of_iff
+      (G.isTerminal history.1)
+      (G.historyKernelArena_isTerminal_iff history).symm
+  exact
+    (G.historyKernelArena.stateLawFrom
+        (D.behavioralHistoryPolicy profile)
+        horizon source).map
+      G.stoppedPayoffAtHistory
 
 /-- Canonical finite-horizon optional terminal-payoff law after random FOSG
 initialization. -/
-noncomputable def behavioralInitialPayoffLaw
+def behavioralInitialPayoffLaw
     (G : FOSG (Fin k) U)
+    [(world : G.WorldState) → Decidable (G.isTerminal world)]
     (D : G.DecisionModel)
     (profile : D.BehavioralProfile)
     (horizon : ℕ) :
-    PMF (Option (Fin k → U)) :=
-  (G.initialHistoryKernel.bind
-      (G.historyKernelArena.stateLawFrom
-        (D.behavioralHistoryPolicy profile)
-        horizon)).map
-    G.stoppedPayoffAtHistory
+    FiniteLaw (Option (Fin k → U)) := by
+  letI (history : G.HistoryState) :
+      Decidable
+        (IsEmpty (G.historyKernelArena.Action history)) :=
+    decidable_of_iff
+      (G.isTerminal history.1)
+      (G.historyKernelArena_isTerminal_iff history).symm
+  exact
+    (G.initialHistoryKernel.bind
+        (G.historyKernelArena.stateLawFrom
+          (D.behavioralHistoryPolicy profile)
+          horizon)).map
+      G.stoppedPayoffAtHistory
 
 @[simp]
 theorem behavioralPayoffLawFrom_zero
     (G : FOSG (Fin k) U)
+    [(world : G.WorldState) → Decidable (G.isTerminal world)]
     (D : G.DecisionModel)
     (profile : D.BehavioralProfile)
     (source : G.HistoryState) :
     G.behavioralPayoffLawFrom D profile source 0 =
-      PMF.pure (G.stoppedPayoffAtHistory source) := by
+      FiniteLaw.pure (G.stoppedPayoffAtHistory source) := by
   rw [behavioralPayoffLawFrom]
   change
-    PMF.map G.stoppedPayoffAtHistory (PMF.pure source) =
-      PMF.pure (G.stoppedPayoffAtHistory source)
-  exact PMF.pure_map _ _
+    FiniteLaw.map G.stoppedPayoffAtHistory (FiniteLaw.pure source) =
+      FiniteLaw.pure (G.stoppedPayoffAtHistory source)
+  exact FiniteLaw.pure_map _ _
 
 theorem behavioralPayoffLawFrom_zero_of_not_terminal
     (G : FOSG (Fin k) U)
+    [(world : G.WorldState) → Decidable (G.isTerminal world)]
     (D : G.DecisionModel)
     (profile : D.BehavioralProfile)
     (source : G.HistoryState)
     (hnonterminal : ¬ G.isTerminal source.1) :
     G.behavioralPayoffLawFrom D profile source 0 =
-      PMF.pure none := by
+      FiniteLaw.pure none := by
   rw [behavioralPayoffLawFrom_zero]
   simp [hnonterminal]
 
 namespace WeakSerialization
 
 variable {G : FOSG (Fin k) U}
+variable [(world : G.WorldState) → Decidable (G.isTerminal world)]
 variable {H : ObservedChanceGame (Fin k) U}
 variable
   [(state : H.observed.base.State) →
@@ -151,7 +170,7 @@ structure BehavioralBridge
     H.observed.BehavioralProfile →
       H.observed.base.toArena.HistoryFrom
         H.observed.base.init →
-      ℕ → PMF (Option (Fin k → U))
+      ℕ → FiniteLaw (Option (Fin k → U))
   /-- Exact payoff-law naturality at every related macro root. -/
   map_payoffLawFrom :
     ∀ (source : G.HistoryState)
@@ -161,12 +180,12 @@ structure BehavioralBridge
       S.simulation.Rel source target →
       ∀ (profile : D.BehavioralProfile)
         (horizon : ℕ),
-        targetPayoffLawFrom
+        (targetPayoffLawFrom
             (fun i =>
               strategyEquiv i (profile i))
-            target horizon =
-          G.behavioralPayoffLawFrom
-            D profile source horizon
+            target horizon).Equivalent
+          (G.behavioralPayoffLawFrom
+            D profile source horizon)
   /-- Every caller-declared source continuation root has at least one related
   target history. -/
   sourceRootTotal :
@@ -180,17 +199,17 @@ structure BehavioralBridge
   initialization. -/
   targetInitialPayoffLaw :
     H.observed.BehavioralProfile →
-      ℕ → PMF (Option (Fin k → U))
+      ℕ → FiniteLaw (Option (Fin k → U))
   /-- Exact payoff-law naturality at the random initialization root. -/
   map_initialPayoffLaw :
     ∀ (profile : D.BehavioralProfile)
       (horizon : ℕ),
-      targetInitialPayoffLaw
+      (targetInitialPayoffLaw
           (fun i =>
             strategyEquiv i (profile i))
-          horizon =
-        G.behavioralInitialPayoffLaw
-          D profile horizon
+          horizon).Equivalent
+        (G.behavioralInitialPayoffLaw
+          D profile horizon)
 
 namespace BehavioralBridge
 
@@ -246,20 +265,20 @@ theorem targetDeclaredMacroRoot_isTargetRoot
 
 /-- Source continuation-family payoff semantics supplied canonically by the
 FOSG decision model. -/
-noncomputable def sourceContinuationFamily
+def sourceContinuationFamily
     (_B : S.BehavioralBridge D)
     (horizon : ℕ) :
     ContinuationGameForm (Fin k) where
   Strategy := D.BehavioralStrategy
   Root := G.HistoryState
   IsDeclaredRoot := S.IsDeclaredMacroRoot
-  Outcome := PMF (Option (Fin k → U))
+  Outcome := (Option (Fin k → U) → ℚ) → ℚ
   outcome := fun source profile =>
-    G.behavioralPayoffLawFrom
-      D profile source horizon
+    (G.behavioralPayoffLawFrom
+      D profile source horizon).expectRat
 
 /-- Target continuation-family payoff semantics supplied by the bridge. -/
-noncomputable def targetContinuationFamily
+def targetContinuationFamily
     (B : S.BehavioralBridge D)
     (horizon : ℕ) :
     ContinuationGameForm (Fin k) where
@@ -269,14 +288,14 @@ noncomputable def targetContinuationFamily
       H.observed.base.init
   IsDeclaredRoot :=
     B.IsTargetDeclaredMacroRoot
-  Outcome := PMF (Option (Fin k → U))
+  Outcome := (Option (Fin k → U) → ℚ) → ℚ
   outcome := fun target profile =>
-    B.targetPayoffLawFrom
-      profile target horizon
+    (B.targetPayoffLawFrom
+      profile target horizon).expectRat
 
 /-- Every behavioral bridge induces an exact relational-root continuation
 simulation. -/
-noncomputable def continuationSimulation
+def continuationSimulation
     (B : S.BehavioralBridge D)
     (horizon : ℕ) :
     (B.sourceContinuationFamily
@@ -304,8 +323,9 @@ noncomputable def continuationSimulation
   map_outcome := by
     intro source target hrelated profile
     exact
-      (B.map_payoffLawFrom
-        source target hrelated profile horizon).symm
+      funext fun value =>
+        (B.map_payoffLawFrom
+          source target hrelated profile horizon value).symm
 
 /-- The continuation simulation covers every admissible source root. -/
 theorem continuationSimulation_sourceRootTotal
@@ -347,7 +367,7 @@ theorem continuationSimulation_utilityCompatible
     (B : S.BehavioralBridge D)
     (horizon : ℕ)
     (utility :
-      PMF (Option (Fin k → U)) → Fin k → V) :
+      ((Option (Fin k → U) → ℚ) → ℚ) → Fin k → V) :
     (B.continuationSimulation
       horizon).UtilityCompatible
         (fun _ => utility)
@@ -356,29 +376,29 @@ theorem continuationSimulation_utilityCompatible
   rfl
 
 /-- Source game form at the random initialization root. -/
-noncomputable def sourceInitialGameForm
+def sourceInitialGameForm
     (_B : S.BehavioralBridge D)
     (horizon : ℕ) :
     GameForm (Fin k) where
   Strategy := D.BehavioralStrategy
-  Outcome := PMF (Option (Fin k → U))
+  Outcome := (Option (Fin k → U) → ℚ) → ℚ
   outcome := fun profile =>
-    G.behavioralInitialPayoffLaw
-      D profile horizon
+    (G.behavioralInitialPayoffLaw
+      D profile horizon).expectRat
 
 /-- Target game form at its serializer-specific initialization root. -/
-noncomputable def targetInitialGameForm
+def targetInitialGameForm
     (B : S.BehavioralBridge D)
     (horizon : ℕ) :
     GameForm (Fin k) where
   Strategy := H.observed.BehavioralStrategy
-  Outcome := PMF (Option (Fin k → U))
+  Outcome := (Option (Fin k → U) → ℚ) → ℚ
   outcome := fun profile =>
-    B.targetInitialPayoffLaw
-      profile horizon
+    (B.targetInitialPayoffLaw
+      profile horizon).expectRat
 
 /-- Exact game-form isomorphism at random initialization. -/
-noncomputable def initialGameFormIso
+def initialGameFormIso
     (B : S.BehavioralBridge D)
     (horizon : ℕ) :
     (B.sourceInitialGameForm horizon).Iso
@@ -388,15 +408,16 @@ noncomputable def initialGameFormIso
   map_outcome := by
     intro profile
     exact
-      (B.map_initialPayoffLaw
-        profile horizon).symm
+      funext fun value =>
+        (B.map_initialPayoffLaw
+          profile horizon value).symm
 
 /-- Behavioral Nash equilibrium at every declared source macro root. -/
 def IsSourceMacroNashOnDeclaredRoots
     [DecidableEq (Fin k)] [Preorder V]
     (B : S.BehavioralBridge D)
     (utility :
-      PMF (Option (Fin k → U)) → Fin k → V)
+      ((Option (Fin k → U) → ℚ) → ℚ) → Fin k → V)
     (profile : D.BehavioralProfile)
     (horizon : ℕ) : Prop :=
   (B.sourceContinuationFamily
@@ -408,7 +429,7 @@ def IsTargetMacroNashOnDeclaredRoots
     [DecidableEq (Fin k)] [Preorder V]
     (B : S.BehavioralBridge D)
     (utility :
-      PMF (Option (Fin k → U)) → Fin k → V)
+      ((Option (Fin k → U) → ℚ) → ℚ) → Fin k → V)
     (profile : H.observed.BehavioralProfile)
     (horizon : ℕ) : Prop :=
   (B.targetContinuationFamily
@@ -420,7 +441,7 @@ theorem macroNashOnDeclaredRoots_iff
     [DecidableEq (Fin k)] [Preorder V]
     (B : S.BehavioralBridge D)
     (utility :
-      PMF (Option (Fin k → U)) → Fin k → V)
+      ((Option (Fin k → U) → ℚ) → ℚ) → Fin k → V)
     (profile : D.BehavioralProfile)
     (horizon : ℕ) :
     B.IsSourceMacroNashOnDeclaredRoots
@@ -446,7 +467,7 @@ theorem initialIsNash_iff
     [DecidableEq (Fin k)] [Preorder V]
     (B : S.BehavioralBridge D)
     (utility :
-      PMF (Option (Fin k → U)) → Fin k → V)
+      ((Option (Fin k → U) → ℚ) → ℚ) → Fin k → V)
     (profile : D.BehavioralProfile)
     (horizon : ℕ) :
     (B.sourceInitialGameForm
@@ -468,7 +489,7 @@ def IsSourceMacroNashOnDeclaredContinuations
     [DecidableEq (Fin k)] [Preorder V]
     (B : S.BehavioralBridge D)
     (utility :
-      PMF (Option (Fin k → U)) → Fin k → V)
+      ((Option (Fin k → U) → ℚ) → ℚ) → Fin k → V)
     (profile : D.BehavioralProfile)
     (horizon : ℕ) : Prop :=
   (B.sourceInitialGameForm
@@ -482,7 +503,7 @@ def IsTargetMacroNashOnDeclaredContinuations
     [DecidableEq (Fin k)] [Preorder V]
     (B : S.BehavioralBridge D)
     (utility :
-      PMF (Option (Fin k → U)) → Fin k → V)
+      ((Option (Fin k → U) → ℚ) → ℚ) → Fin k → V)
     (profile : H.observed.BehavioralProfile)
     (horizon : ℕ) : Prop :=
   (B.targetInitialGameForm
@@ -496,7 +517,7 @@ theorem macroNashOnDeclaredContinuations_iff
     [DecidableEq (Fin k)] [Preorder V]
     (B : S.BehavioralBridge D)
     (utility :
-      PMF (Option (Fin k → U)) → Fin k → V)
+      ((Option (Fin k → U) → ℚ) → ℚ) → Fin k → V)
     (profile : D.BehavioralProfile)
     (horizon : ℕ) :
     B.IsSourceMacroNashOnDeclaredContinuations
