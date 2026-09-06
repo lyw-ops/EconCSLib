@@ -254,4 +254,187 @@ theorem map_mass {SourceCode : Type uEvent} {TargetCode : Type vEvent}
 
 end EffectiveLaw
 
+/-- Effective Markov operator in expectation-transformer form.  Pulling an
+event indicator back through the kernel must remain in the selected finite
+source-observable language. -/
+structure EffectiveKernel (SourceCode : Type uEvent) (TargetCode : Type vEvent) where
+  /-- Pull a target-event indicator back to a source simple observable. -/
+  pullEvent : TargetCode → SimpleObservable SourceCode
+
+namespace EffectiveKernel
+
+variable {SourceCode : Type uEvent} {TargetCode : Type vEvent}
+
+/-- Extend event pullback structurally to every finite rational observable. -/
+def pullObservable (kernel : EffectiveKernel SourceCode TargetCode) :
+    SimpleObservable TargetCode → SimpleObservable SourceCode
+  | .const value => .const value
+  | .indicator event => kernel.pullEvent event
+  | .add left right =>
+      .add (kernel.pullObservable left) (kernel.pullObservable right)
+  | .scale coefficient observable =>
+      .scale coefficient (kernel.pullObservable observable)
+
+@[simp]
+theorem pullObservable_const
+    (kernel : EffectiveKernel SourceCode TargetCode) (value : ℚ) :
+    kernel.pullObservable (.const value) = .const value :=
+  rfl
+
+@[simp]
+theorem pullObservable_indicator
+    (kernel : EffectiveKernel SourceCode TargetCode) (event : TargetCode) :
+    kernel.pullObservable (.indicator event) = kernel.pullEvent event :=
+  rfl
+
+@[simp]
+theorem pullObservable_add
+    (kernel : EffectiveKernel SourceCode TargetCode)
+    (left right : SimpleObservable TargetCode) :
+    kernel.pullObservable (.add left right) =
+      .add (kernel.pullObservable left) (kernel.pullObservable right) :=
+  rfl
+
+@[simp]
+theorem pullObservable_scale
+    (kernel : EffectiveKernel SourceCode TargetCode) (coefficient : ℚ)
+    (observable : SimpleObservable TargetCode) :
+    kernel.pullObservable (.scale coefficient observable) =
+      .scale coefficient (kernel.pullObservable observable) :=
+  rfl
+
+/-- Identity Markov operator on one event language. -/
+def id (EventCode : Type uEvent) : EffectiveKernel EventCode EventCode where
+  pullEvent event := .indicator event
+
+@[simp]
+theorem id_pullObservable {EventCode : Type uEvent}
+    (observable : SimpleObservable EventCode) :
+    (id EventCode).pullObservable observable = observable := by
+  induction observable with
+  | const => rfl
+  | indicator => rfl
+  | add left right ihLeft ihRight => simp [pullObservable, ihLeft, ihRight]
+  | scale coefficient observable ih => simp [pullObservable, ih]
+
+/-- Compose Markov operators in execution order: first `outer`, then `inner`.
+The corresponding expectation transformers compose in the reverse direction.
+-/
+def comp {MiddleCode : Type vEvent} {TargetCode : Type wEvent}
+    (outer : EffectiveKernel SourceCode MiddleCode)
+    (inner : EffectiveKernel MiddleCode TargetCode) :
+    EffectiveKernel SourceCode TargetCode where
+  pullEvent event := outer.pullObservable (inner.pullEvent event)
+
+theorem pullObservable_comp {MiddleCode : Type vEvent} {TargetCode : Type wEvent}
+    (outer : EffectiveKernel SourceCode MiddleCode)
+    (inner : EffectiveKernel MiddleCode TargetCode)
+    (observable : SimpleObservable TargetCode) :
+    (outer.comp inner).pullObservable observable =
+      outer.pullObservable (inner.pullObservable observable) := by
+  induction observable with
+  | const => rfl
+  | indicator => rfl
+  | add left right ihLeft ihRight => simp [pullObservable, ihLeft, ihRight]
+  | scale coefficient observable ih => simp [pullObservable, ih]
+
+@[ext]
+theorem ext {left right : EffectiveKernel SourceCode TargetCode}
+    (hpull : ∀ event, left.pullEvent event = right.pullEvent event) :
+    left = right := by
+  cases left
+  cases right
+  congr
+  funext event
+  exact hpull event
+
+/-- The identity transformer is a left identity for composition. -/
+@[simp]
+theorem id_comp {MiddleCode : Type vEvent}
+    (kernel : EffectiveKernel SourceCode MiddleCode) :
+    (id SourceCode).comp kernel = kernel := by
+  apply EffectiveKernel.ext
+  intro event
+  exact id_pullObservable (kernel.pullEvent event)
+
+/-- The identity transformer is a right identity for composition. -/
+@[simp]
+theorem comp_id (kernel : EffectiveKernel SourceCode TargetCode) :
+    kernel.comp (id TargetCode) = kernel := by
+  apply EffectiveKernel.ext
+  intro event
+  rfl
+
+/-- Effective expectation-transformer composition is associative. -/
+theorem comp_assoc {MiddleCode : Type vEvent} {TargetCode : Type wEvent}
+    {FinalCode : Type*}
+    (first : EffectiveKernel SourceCode MiddleCode)
+    (second : EffectiveKernel MiddleCode TargetCode)
+    (third : EffectiveKernel TargetCode FinalCode) :
+    (first.comp second).comp third = first.comp (second.comp third) := by
+  apply EffectiveKernel.ext
+  intro event
+  exact pullObservable_comp first second (third.pullEvent event)
+
+/-- Deterministic map as a Markov operator. -/
+def deterministic (mapping : EffectiveMap SourceCode TargetCode) :
+    EffectiveKernel SourceCode TargetCode where
+  pullEvent event := .indicator (mapping.preimage event)
+
+end EffectiveKernel
+
+namespace EffectiveLaw
+
+/-- Bind an effective law through an effective Markov operator. -/
+def bind {SourceCode : Type uEvent} {TargetCode : Type vEvent}
+    (law : EffectiveLaw SourceCode)
+    (kernel : EffectiveKernel SourceCode TargetCode) :
+    EffectiveLaw TargetCode where
+  mass event := law.expect (kernel.pullEvent event)
+
+@[simp]
+theorem bind_mass {SourceCode : Type uEvent} {TargetCode : Type vEvent}
+    (law : EffectiveLaw SourceCode)
+    (kernel : EffectiveKernel SourceCode TargetCode) (event : TargetCode) :
+    (law.bind kernel).mass event = law.expect (kernel.pullEvent event) :=
+  rfl
+
+/-- Expectation under a bound law is source expectation after observable
+pullback. -/
+theorem bind_expect {SourceCode : Type uEvent} {TargetCode : Type vEvent}
+    (law : EffectiveLaw SourceCode)
+    (kernel : EffectiveKernel SourceCode TargetCode)
+    (observable : SimpleObservable TargetCode) :
+    (law.bind kernel).expect observable =
+      law.expect (kernel.pullObservable observable) := by
+  induction observable with
+  | const => rfl
+  | indicator => rfl
+  | add left right ihLeft ihRight => simp [expect, EffectiveKernel.pullObservable,
+      ihLeft, ihRight]
+  | scale coefficient observable ih =>
+      simp [expect, EffectiveKernel.pullObservable, ih]
+
+/-- Sequential bind agrees with effective-kernel composition. -/
+theorem bind_comp {SourceCode : Type uEvent} {MiddleCode : Type vEvent}
+    {TargetCode : Type wEvent}
+    (law : EffectiveLaw SourceCode)
+    (outer : EffectiveKernel SourceCode MiddleCode)
+    (inner : EffectiveKernel MiddleCode TargetCode) :
+    (law.bind outer).bind inner = law.bind (outer.comp inner) := by
+  apply EffectiveLaw.ext
+  intro event
+  exact bind_expect law outer (inner.pullEvent event)
+
+/-- Binding through a deterministic effective map is its event-query
+pushforward. -/
+theorem bind_deterministic_eq_map
+    {SourceCode : Type uEvent} {TargetCode : Type vEvent}
+    (law : EffectiveLaw SourceCode)
+    (mapping : EffectiveMap SourceCode TargetCode) :
+    law.bind (EffectiveKernel.deterministic mapping) = law.map mapping :=
+  rfl
+
+end EffectiveLaw
+
 end EffectiveProbability
