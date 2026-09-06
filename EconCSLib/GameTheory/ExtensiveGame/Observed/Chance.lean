@@ -4,18 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Morphism.Inverse
-import EconCSLib.Math.Probability.PMF.Equiv
 import EconCSLib.GameTheory.ExtensiveGame.Execution.StochasticExecution
-import Mathlib.Probability.ProbabilityMassFunction.Constructions
 
 /-!
 # EconCSLib.GameTheory.ExtensiveGame.Observed.Chance
 
 Normalized chance kernels for history-indexed observed extensive games.
 
-`ObservedChanceGame` wraps an `ObservedGame` with a `PMF` on the legal action
+`ObservedChanceGame` wraps an `ObservedGame` with a `FiniteLaw` on the legal action
 type at every nonterminal history whose mover is `none`.  Since the kernel is a
-`PMF`, total probability mass is one by construction.  This is the discrete,
+`FiniteLaw`, total probability mass is one by construction.  This is the discrete,
 countably supported probability layer; it does not represent non-atomic or
 uncountable-support randomization.  Those models use `MeasurableKernelArena`
 and a measurable presentation.
@@ -35,7 +33,7 @@ predicate.
   chance law to any observed presentation.
 * `ObservedChanceGame.completeInformation` — compose the root-free
   complete-information presentation with an explicit discrete chance law.
-* `ObservedChanceGame.chanceSuccessorKernel` — the induced distribution on
+* `ObservedChanceGame.chanceSuccessorLaw` — the induced distribution on
   complete successor histories.
 * `ObservedChanceGame.Iso` — strict observed-EFG isomorphism preserving chance
   laws.
@@ -44,7 +42,7 @@ predicate.
 
 ## Main results
 
-* `Iso.map_chanceSuccessorKernel` — strict naturality of the successor-history
+* `Iso.map_chanceSuccessorLaw` — strict naturality of the successor-history
   distribution.
 -/
 
@@ -62,12 +60,11 @@ structure ObservedChanceGame (N : Type uN) (U : Type uU) where
   chanceKernel :
     (h : observed.base.toArena.HistoryFrom observed.base.init) →
       observed.base.isChanceState h.1 →
-      PMF (observed.base.Action h.1)
+      FiniteLaw (observed.base.Action h.1)
 
-/-- Canonical descriptive name for the PMF-supported chance-game layer.
+/-- Canonical descriptive name for the FiniteLaw-supported chance-game layer.
 
-This alias makes the discrete boundary explicit without breaking the
-established `ObservedChanceGame` API. It does not include non-atomic
+This alias makes the discrete boundary explicit. It does not include non-atomic
 measurable kernels. -/
 abbrev DiscreteObservedChanceGame (N : Type uN) (U : Type uU) :=
   ObservedChanceGame N U
@@ -86,7 +83,7 @@ abbrev withChanceKernel
     (chanceKernel :
       (h : observed.base.toArena.HistoryFrom observed.base.init) →
         observed.base.isChanceState h.1 →
-        PMF (observed.base.Action h.1)) :
+        FiniteLaw (observed.base.Action h.1)) :
     ObservedChanceGame N U where
   observed := observed
   chanceKernel := chanceKernel
@@ -99,7 +96,7 @@ abbrev completeInformation
     (chanceKernel :
       (h : base.toArena.HistoryFrom base.init) →
         base.isChanceState h.1 →
-        PMF (base.Action h.1)) :
+        FiniteLaw (base.Action h.1)) :
     ObservedChanceGame N U :=
   withChanceKernel
     (ObservedGame.completeInformation base)
@@ -111,7 +108,7 @@ theorem withChanceKernel_observed
     (chanceKernel :
       (h : observed.base.toArena.HistoryFrom observed.base.init) →
         observed.base.isChanceState h.1 →
-        PMF (observed.base.Action h.1)) :
+        FiniteLaw (observed.base.Action h.1)) :
     (withChanceKernel observed chanceKernel).observed = observed :=
   rfl
 
@@ -121,7 +118,7 @@ theorem withChanceKernel_chanceKernel
     (chanceKernel :
       (h : observed.base.toArena.HistoryFrom observed.base.init) →
         observed.base.isChanceState h.1 →
-        PMF (observed.base.Action h.1))
+        FiniteLaw (observed.base.Action h.1))
     (history : observed.base.toArena.HistoryFrom observed.base.init)
     (hchance : observed.base.isChanceState history.1) :
     (withChanceKernel observed chanceKernel).chanceKernel history hchance =
@@ -130,35 +127,35 @@ theorem withChanceKernel_chanceKernel
 
 /-- The distribution of complete successor histories induced by a chance
 kernel. -/
-noncomputable def chanceSuccessorKernel (G : ObservedChanceGame N U)
+def chanceSuccessorLaw (G : ObservedChanceGame N U)
     (h : G.observed.base.toArena.HistoryFrom G.observed.base.init)
     (hchance : G.observed.base.isChanceState h.1) :
-    PMF (G.observed.base.toArena.HistoryFrom G.observed.base.init) :=
+    FiniteLaw (G.observed.base.toArena.HistoryFrom G.observed.base.init) :=
   (G.chanceKernel h hchance).map fun action =>
     ⟨G.observed.base.next h.1 action, h.2.snoc action⟩
 
-/-- A chance successor kernel has total probability mass one. -/
+/-- A chance successor law has total probability mass one. -/
 @[simp]
-theorem chanceSuccessorKernel_tsum (G : ObservedChanceGame N U)
+theorem chanceSuccessorLaw_normalized (G : ObservedChanceGame N U)
     (h : G.observed.base.toArena.HistoryFrom G.observed.base.init)
     (hchance : G.observed.base.isChanceState h.1) :
-    ∑' nextHistory, G.chanceSuccessorKernel h hchance nextHistory = 1 :=
-  PMF.tsum_coe (G.chanceSuccessorKernel h hchance)
+    FiniteLaw.totalWeight (G.chanceSuccessorLaw h hchance).atoms = 1 :=
+  FiniteLaw.totalWeight_atoms _
 
 /-- Characterization of the positive-probability successor histories. -/
-theorem mem_support_chanceSuccessorKernel_iff
+theorem hasPositiveAtom_chanceSuccessorLaw_iff
     (G : ObservedChanceGame N U)
     (h : G.observed.base.toArena.HistoryFrom G.observed.base.init)
     (hchance : G.observed.base.isChanceState h.1)
     (nextHistory :
       G.observed.base.toArena.HistoryFrom G.observed.base.init) :
-    nextHistory ∈ (G.chanceSuccessorKernel h hchance).support ↔
-      ∃ action ∈ (G.chanceKernel h hchance).support,
+    (G.chanceSuccessorLaw h hchance).HasPositiveAtom nextHistory ↔
+      ∃ action, (G.chanceKernel h hchance).HasPositiveAtom action ∧
         (⟨G.observed.base.next h.1 action, h.2.snoc action⟩ :
           G.observed.base.toArena.HistoryFrom G.observed.base.init) =
           nextHistory :=
   by
-    simp [chanceSuccessorKernel]
+    exact FiniteLaw.hasPositiveAtom_map_iff _ _ _
 
 /-- A stochastic history policy is chance-consistent when it uses the
 game-specified chance kernel at every chance history.  The policy remains free
@@ -234,14 +231,14 @@ private theorem chanceKernel_map_cast
   have hchance : hsecond = hfirst :=
     Subsingleton.elim _ _
   cases hchance
-  simpa using PMF.map_id (G.chanceKernel first hfirst)
+  simpa using FiniteLaw.map_id (G.chanceKernel first hfirst)
 
 /-- Identity strict isomorphism of an observed chance EFG. -/
 def refl (G : ObservedChanceGame N U) : G.Iso G where
   observedIso := ObservedGame.Iso.refl G.observed
   map_chanceKernel := by
     intro h hchance
-    simpa using PMF.map_id (G.chanceKernel h hchance)
+    simpa using FiniteLaw.map_id (G.chanceKernel h hchance)
 
 /-- Compose strict observed chance-EFG isomorphisms. -/
 def trans {K : ObservedChanceGame N U}
@@ -263,7 +260,7 @@ def trans {K : ObservedChanceGame N U}
           (f.observedIso.historyIso.stateEquiv
             (e.observedIso.historyIso.stateEquiv history))
           _
-    rw [← PMF.map_comp]
+    rw [← FiniteLaw.map_comp]
     rw [e.map_chanceKernel history hchance]
     exact
       f.map_chanceKernel
@@ -295,27 +292,27 @@ theorem trans_assoc {K L : ObservedChanceGame N U}
     e.observedIso f.observedIso g.observedIso
 
 /-- Reverse a strict observed chance-EFG isomorphism. -/
-noncomputable def symm (e : G.Iso H) : H.Iso G where
+def symm (e : G.Iso H) : H.Iso G where
   observedIso := e.observedIso.symm
   map_chanceKernel := by
     intro history hchance
     let inverseAction :=
       (e.observedIso.symm).historyIso.actionEquiv history
-    apply (PMF.mapEquiv inverseAction.symm).injective
+    apply (FiniteLaw.mapEquiv inverseAction.symm).injective
     change
       ((H.chanceKernel history hchance).map inverseAction).map
           inverseAction.symm =
         (G.chanceKernel
           ((e.observedIso.symm).historyIso.stateEquiv history)
           _).map inverseAction.symm
-    rw [PMF.map_comp]
+    rw [FiniteLaw.map_comp]
     have hinverse :
         (inverseAction.symm : _ → _) ∘
             (inverseAction : _ → _) =
           id := by
       funext action
       exact inverseAction.symm_apply_apply action
-    rw [hinverse, PMF.map_id]
+    rw [hinverse, FiniteLaw.map_id]
     let sourceHistory :=
       e.observedIso.historyIso.stateEquiv.symm history
     let hsourceChance :=
@@ -354,7 +351,7 @@ noncomputable def symm (e : G.Iso H) : H.Iso G where
           ((Equiv.cast
               (congrArg H.observed.base.unfold.Action hhistory)) ∘
             e.observedIso.historyIso.actionEquiv sourceHistory) := by
-        rw [PMF.map_comp]
+        rw [FiniteLaw.map_comp]
       _ = (G.chanceKernel sourceHistory hsourceChance).map
           inverseAction.symm := by
         rw [hinverseAction]
@@ -362,12 +359,12 @@ noncomputable def symm (e : G.Iso H) : H.Iso G where
 
 /-- Strict chance isomorphisms commute with the complete successor-history
 distribution. -/
-theorem map_chanceSuccessorKernel (e : G.Iso H)
+theorem map_chanceSuccessorLaw (e : G.Iso H)
     (h : G.observed.base.toArena.HistoryFrom G.observed.base.init)
     (hchance : G.observed.base.isChanceState h.1) :
-    (G.chanceSuccessorKernel h hchance).map
+    (G.chanceSuccessorLaw h hchance).map
         e.observedIso.historyIso.stateEquiv =
-      H.chanceSuccessorKernel
+      H.chanceSuccessorLaw
         (e.observedIso.historyIso.stateEquiv h)
         (mapChanceState e.observedIso h hchance) := by
   let sourceSuccessor :
@@ -384,12 +381,12 @@ theorem map_chanceSuccessorKernel (e : G.Iso H)
           (e.observedIso.historyIso.stateEquiv h).1 action,
         (e.observedIso.historyIso.stateEquiv h).2.snoc action⟩
   calc
-    (G.chanceSuccessorKernel h hchance).map
+    (G.chanceSuccessorLaw h hchance).map
         e.observedIso.historyIso.stateEquiv =
       (G.chanceKernel h hchance).map
         (e.observedIso.historyIso.stateEquiv ∘ sourceSuccessor) := by
-          simpa [chanceSuccessorKernel, sourceSuccessor] using
-            (PMF.map_comp sourceSuccessor
+          simpa [chanceSuccessorLaw, sourceSuccessor] using
+            (FiniteLaw.map_comp sourceSuccessor
               (G.chanceKernel h hchance)
               e.observedIso.historyIso.stateEquiv)
     _ = (G.chanceKernel h hchance).map
@@ -402,7 +399,7 @@ theorem map_chanceSuccessorKernel (e : G.Iso H)
           (e.observedIso.historyIso.actionEquiv h)).map
             targetSuccessor := by
           exact
-            (PMF.map_comp
+            (FiniteLaw.map_comp
               (e.observedIso.historyIso.actionEquiv h)
               (G.chanceKernel h hchance)
               targetSuccessor).symm
@@ -411,7 +408,7 @@ theorem map_chanceSuccessorKernel (e : G.Iso H)
           (mapChanceState e.observedIso h hchance)).map
             targetSuccessor := by
           rw [e.map_chanceKernel h hchance]
-    _ = H.chanceSuccessorKernel
+    _ = H.chanceSuccessorLaw
         (e.observedIso.historyIso.stateEquiv h)
         (mapChanceState e.observedIso h hchance) := rfl
 
