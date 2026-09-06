@@ -211,4 +211,167 @@ theorem Contains.scale {interval : RatEnclosure} {value factor : ℚ}
 
 end RatEnclosure
 
+/-- An executable oracle returning an interval of width at most every
+requested positive rational tolerance.  Which mathematical value the oracle
+represents is intentionally specified outside this data structure. -/
+structure RatOracle where
+  /-- Query the oracle at a positive rational tolerance. -/
+  query : (tolerance : ℚ) → 0 < tolerance → RatEnclosure
+  /-- Every returned interval is at most as wide as requested. -/
+  query_width_le : ∀ tolerance hpositive,
+    (query tolerance hpositive).width ≤ tolerance
+
+namespace RatOracle
+
+/-- A purely rational correctness predicate: every query contains `value`.
+The semantic compatibility layer supplies the analogous real-valued
+representation predicate. -/
+def Encloses (oracle : RatOracle) (value : ℚ) : Prop :=
+  ∀ tolerance hpositive, (oracle.query tolerance hpositive).Contains value
+
+/-- The constant oracle for an exact rational value. -/
+def exact (value : ℚ) : RatOracle where
+  query := fun _ _ => RatEnclosure.exact value
+  query_width_le := by
+    intro tolerance hpositive
+    simpa using hpositive.le
+
+/-- Negate every interval returned by an oracle. -/
+def neg (oracle : RatOracle) : RatOracle where
+  query := fun tolerance hpositive =>
+    (oracle.query tolerance hpositive).neg
+  query_width_le := by
+    intro tolerance hpositive
+    simpa using oracle.query_width_le tolerance hpositive
+
+private theorem half_pos {tolerance : ℚ} (hpositive : 0 < tolerance) :
+    0 < tolerance / 2 := by
+  linarith
+
+/-- Add two oracles, assigning half of the requested tolerance to each
+operand. -/
+def add (left right : RatOracle) : RatOracle where
+  query := fun tolerance hpositive =>
+    (left.query (tolerance / 2) (half_pos hpositive)).add
+      (right.query (tolerance / 2) (half_pos hpositive))
+  query_width_le := by
+    intro tolerance hpositive
+    rw [RatEnclosure.width_add]
+    have hleft := left.query_width_le (tolerance / 2) (half_pos hpositive)
+    have hright := right.query_width_le (tolerance / 2) (half_pos hpositive)
+    linarith
+
+/-- Subtract two oracles, assigning half of the requested tolerance to each
+operand. -/
+def sub (left right : RatOracle) : RatOracle :=
+  left.add right.neg
+
+private theorem div_abs_pos {tolerance factor : ℚ}
+    (hpositive : 0 < tolerance) (hfactor : factor ≠ 0) :
+    0 < tolerance / |factor| :=
+  div_pos hpositive (abs_pos.mpr hfactor)
+
+/-- Scale an oracle.  A nonzero factor rescales the input tolerance by its
+absolute value; a zero factor returns exact zero without querying the input. -/
+def scale (factor : ℚ) (oracle : RatOracle) : RatOracle := by
+  by_cases hfactor : factor = 0
+  · exact exact 0
+  · refine
+      { query := fun tolerance hpositive =>
+          (oracle.query (tolerance / |factor|)
+            (div_abs_pos hpositive hfactor)).scale factor
+        query_width_le := ?_ }
+    intro tolerance hpositive
+    rw [RatEnclosure.width_scale]
+    calc
+      |factor| *
+          (oracle.query (tolerance / |factor|)
+            (div_abs_pos hpositive hfactor)).width ≤
+          |factor| * (tolerance / |factor|) :=
+        mul_le_mul_of_nonneg_left
+          (oracle.query_width_le (tolerance / |factor|)
+            (div_abs_pos hpositive hfactor)) (abs_nonneg factor)
+      _ = tolerance := by
+        field_simp
+
+@[simp]
+theorem exact_query (value tolerance : ℚ) (hpositive : 0 < tolerance) :
+    (exact value).query tolerance hpositive = RatEnclosure.exact value :=
+  rfl
+
+@[simp]
+theorem neg_query (oracle : RatOracle) (tolerance : ℚ)
+    (hpositive : 0 < tolerance) :
+    oracle.neg.query tolerance hpositive =
+      (oracle.query tolerance hpositive).neg :=
+  rfl
+
+@[simp]
+theorem add_query (left right : RatOracle) (tolerance : ℚ)
+    (hpositive : 0 < tolerance) :
+    (left.add right).query tolerance hpositive =
+      (left.query (tolerance / 2) (half_pos hpositive)).add
+        (right.query (tolerance / 2) (half_pos hpositive)) :=
+  rfl
+
+@[simp]
+theorem sub_query (left right : RatOracle) (tolerance : ℚ)
+    (hpositive : 0 < tolerance) :
+    (left.sub right).query tolerance hpositive =
+      (left.query (tolerance / 2) (half_pos hpositive)).sub
+        (right.query (tolerance / 2) (half_pos hpositive)) := by
+  rfl
+
+@[simp]
+theorem scale_zero (oracle : RatOracle) : oracle.scale 0 = exact 0 := by
+  simp [RatOracle.scale]
+
+/-- A nonzero scale query uses the rescaled input tolerance. -/
+theorem scale_query_of_ne (oracle : RatOracle) {factor tolerance : ℚ}
+    (hfactor : factor ≠ 0) (hpositive : 0 < tolerance) :
+    (oracle.scale factor).query tolerance hpositive =
+      (oracle.query (tolerance / |factor|)
+        (div_abs_pos hpositive hfactor)).scale factor := by
+  simp [RatOracle.scale, hfactor]
+
+/-- The exact rational oracle encloses its value. -/
+theorem exact_encloses (value : ℚ) : (exact value).Encloses value := by
+  intro tolerance hpositive
+  exact RatEnclosure.contains_exact value
+
+/-- Correct rational enclosure is preserved by oracle negation. -/
+theorem Encloses.neg {oracle : RatOracle} {value : ℚ}
+    (hvalue : oracle.Encloses value) :
+    oracle.neg.Encloses (-value) := by
+  intro tolerance hpositive
+  exact (hvalue tolerance hpositive).neg
+
+/-- Correct rational enclosure is preserved by oracle addition. -/
+theorem Encloses.add {left right : RatOracle} {x y : ℚ}
+    (hx : left.Encloses x) (hy : right.Encloses y) :
+    (left.add right).Encloses (x + y) := by
+  intro tolerance hpositive
+  exact (hx (tolerance / 2) (half_pos hpositive)).add
+    (hy (tolerance / 2) (half_pos hpositive))
+
+/-- Correct rational enclosure is preserved by oracle subtraction. -/
+theorem Encloses.sub {left right : RatOracle} {x y : ℚ}
+    (hx : left.Encloses x) (hy : right.Encloses y) :
+    (left.sub right).Encloses (x - y) := by
+  simpa [sub_eq_add_neg] using hx.add hy.neg
+
+/-- Correct rational enclosure is preserved by oracle scaling. -/
+theorem Encloses.scale {oracle : RatOracle} {value : ℚ}
+    (hvalue : oracle.Encloses value) (factor : ℚ) :
+    (oracle.scale factor).Encloses (factor * value) := by
+  intro tolerance hpositive
+  by_cases hfactor : factor = 0
+  · subst factor
+    simp
+  · rw [scale_query_of_ne oracle hfactor hpositive]
+    exact (hvalue (tolerance / |factor|)
+      (div_abs_pos hpositive hfactor)).scale
+
+end RatOracle
+
 end EffectiveProbability
