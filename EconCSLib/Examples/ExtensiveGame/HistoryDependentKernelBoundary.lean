@@ -3,6 +3,7 @@ Copyright (c) 2026 EconCSLib contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
+import EconCSLib.Examples.ExtensiveGame.FiniteLawIntegral
 import EconCSLib.GameTheory.ExtensiveGame.Simulation.Kernel.HistoryPath
 
 /-!
@@ -17,6 +18,11 @@ The main reverse theorem proves that no stationary `ActionPolicy`, embedded
 through `toHistoryActionPolicy`, agrees with this policy on every prefix. This
 is an interface-expressiveness regression; it does not yet claim a
 state/action joint path law or observed information semantics.
+
+`transitionLaw`, `actionLaw`, and `stepLaw` compute the original transition,
+action selection, and history step as finite rational laws. Exact kernel
+equalities and `stepLaw_eventMass` connect every Boolean event query to the
+original analytic semantics, preserving the complete incoming state prefix.
 -/
 
 open MeasureTheory ProbabilityTheory
@@ -43,7 +49,7 @@ noncomputable def historyArena : MeasurableKernelArena where
   transition_isMarkov := by
     infer_instance
 
-noncomputable instance historyArena_stateFintype :
+instance historyArena_stateFintype :
     Fintype historyArena.State := by
   change Fintype Bool
   infer_instance
@@ -272,5 +278,92 @@ theorem no_stationary_policy_representation :
   rw [Measure.dirac_apply' _ hsingleton,
     Measure.dirac_apply' _ hsingleton] at happly
   simp at happly
+
+section FiniteExecution
+
+local notation "μ[" atoms "]" =>
+  List.foldr (fun (atom : _ × ℚ≥0) rest =>
+    ((Prod.snd atom : ℚ≥0) : ENNReal) • Measure.dirac (Prod.fst atom) + rest) 0 atoms
+
+local instance : MeasurableSpace Bool := ⊤
+local instance : MeasurableSpace historyArena.ActionBundle := ⊤
+local instance : DecidableEq historyArena.State := by
+  change DecidableEq Bool
+  infer_instance
+local instance : BEq historyArena.State := by
+  change BEq Bool
+  infer_instance
+
+/-- Executable successor law of the original deterministic transition. -/
+def transitionLaw (bundle : historyArena.ActionBundle) : FiniteLaw historyArena.State :=
+  FiniteLaw.pure bundle.2
+
+/-- Exact action law retaining the complete finite state prefix. -/
+def actionLaw (time : ℕ)
+    (history : Π _index : Finset.Iic time, historyArena.State) :
+    FiniteLaw historyArena.ActionBundle :=
+  FiniteLaw.pure ⟨history ⟨time, Finset.mem_Iic.mpr le_rfl⟩, chosenAction time history⟩
+
+/-- Execute the existing history-dependent policy and its transition using
+finite rational laws. -/
+def stepLaw (time : ℕ)
+    (history : Π _index : Finset.Iic time, historyArena.State) :
+    FiniteLaw historyArena.State :=
+  (actionLaw time history).bind transitionLaw
+
+/-- The finite successor law denotes exactly the original transition kernel. -/
+theorem transitionLaw_eq_kernel (bundle : historyArena.ActionBundle) :
+    μ[(transitionLaw bundle).atoms] = historyArena.transition bundle := by
+  simp only [transitionLaw, FiniteLaw.pure_atoms, List.foldr_cons, List.foldr_nil]
+  rw [show ((1 : ℚ≥0) : ENNReal) = 1 by
+    change (((1 : ℚ≥0) : NNReal) : ENNReal) = 1
+    norm_num, one_smul, add_zero]
+  rfl
+
+/-- The finite action law denotes exactly the original history policy. -/
+theorem actionLaw_eq_kernel (time : ℕ)
+    (history : Π _index : Finset.Iic time, historyArena.State) :
+    μ[(actionLaw time history).atoms] = historyPolicy.kernel time history := by
+  simp [actionLaw, FiniteLaw.pure_atoms, historyPolicy_kernel_apply, ← ENNReal.coe_nnratCast]
+  rfl
+
+/-- The executable one-step result equals the original analytic history step. -/
+theorem stepLaw_eq_kernel (time : ℕ)
+    (history : Π _index : Finset.Iic time, historyArena.State) :
+    μ[(stepLaw time history).atoms] =
+      historyPolicy.pathStepKernel historyArena_measurableSet_terminalSet time history := by
+  rw [historyPolicy_pathStepKernel_apply]
+  simp [stepLaw, actionLaw, transitionLaw, FiniteLaw.pure_bind,
+    FiniteLaw.pure_atoms, ← ENNReal.coe_nnratCast]
+  rfl
+
+/-- Any executable Boolean successor query computes the original kernel's
+probability of that event. -/
+theorem stepLaw_eventMass (time : ℕ)
+    (history : Π _index : Finset.Iic time, historyArena.State)
+    (test : historyArena.State → Bool) :
+    historyPolicy.pathStepKernel historyArena_measurableSet_terminalSet time history
+      {x | test x} = ((stepLaw time history).eventMass test : ENNReal) := by
+  rw [← stepLaw_eq_kernel]
+  exact _root_.Examples.ExtensiveGame.FiniteLawIntegral.measure_eventMass _ _
+    (MeasurableSpace.measurableSet_top)
+
+/-- A shared current state still gives distinct computed successor laws;
+the initial transition merges both initial states at false. -/
+theorem stepLaw_regression :
+    (stepLaw 0 (initialPrefix true)).atoms = [(false, 1)] ∧
+    (stepLaw 1 falseFalsePrefix).atoms = [(false, 1)] ∧
+    (stepLaw 1 trueFalsePrefix).atoms = [(true, 1)] := by
+  simp [stepLaw, actionLaw, transitionLaw, FiniteLaw.pure_bind,
+    FiniteLaw.pure_atoms, chosenAction, firstState, initialPrefix, trueFalsePrefix,
+    falseFalsePrefix]
+  exact ⟨rfl, rfl⟩
+
+#eval show IO Unit from do
+  unless (stepLaw 1 falseFalsePrefix).atoms == [(false, 1)] &&
+      (stepLaw 1 trueFalsePrefix).atoms == [(true, 1)] do
+    throw (IO.userError "history-dependent finite execution regression")
+
+end FiniteExecution
 
 end EconCSLib.Examples.ExtensiveGame.HistoryDependentKernelBoundary
