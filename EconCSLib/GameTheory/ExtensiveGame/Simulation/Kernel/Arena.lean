@@ -4,14 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
 import EconCSLib.GameTheory.ExtensiveGame.Execution.Discrete.KernelArena
+import Mathlib.Data.Rat.Cast.CharZero
 import Mathlib.Probability.Kernel.Basic
-import Mathlib.Probability.ProbabilityMassFunction.Constructions
+import Mathlib.MeasureTheory.Measure.Dirac
 
 /-!
 # Kernel.Arena — measurable probability-kernel arenas
 
 `KernelArena` is the executable discrete stochastic arena: its transitions are
-`PMF`s.  `MeasurableKernelArena` is the analytic extension boundary.  It stores
+`FiniteLaw` values with finite support and exact rational weights.
+`MeasurableKernelArena` is the analytic extension boundary. It stores
 a genuine Mathlib Markov kernel from the dependent state/action bundle to the
 state space, so successor laws may be non-atomic.
 
@@ -163,11 +165,13 @@ end MeasurableKernelArena
 
 namespace KernelArena
 
-/-- Regard a discrete `PMF` kernel arena as a measurable Markov-kernel arena.
+/-- Regard a finite-law kernel arena as a measurable Markov-kernel arena.
 
 Both source measurable spaces are discrete.  No countability assumption is
-needed: discreteness makes the `PMF.toMeasure` transition family measurable,
-and every resulting measure is normalized. -/
+needed: each transition is the finite weighted sum of its Dirac atom measures,
+and discreteness makes this family measurable. The finite-law normalization
+proof gives total mass one. This does not embed arbitrary countably supported
+real-weighted PMFs. -/
 noncomputable def toMeasurable (A : KernelArena) :
     MeasurableKernelArena :=
   letI : MeasurableSpace A.State := ⊤
@@ -181,22 +185,60 @@ noncomputable def toMeasurable (A : KernelArena) :
       exact fun _ _ => MeasurableSpace.measurableSet_top
     transition :=
       { toFun := fun stateAction =>
-          (A.next stateAction.1 stateAction.2).toMeasure
+          (A.next stateAction.1 stateAction.2).atoms.foldr
+            (fun atom rest =>
+              (atom.2 : ENNReal) • Measure.dirac atom.1 + rest)
+            0
         measurable' := Measurable.of_discrete }
     transition_isMarkov := by
       constructor
       intro stateAction
       change
         IsProbabilityMeasure
-          (A.next stateAction.1 stateAction.2).toMeasure
-      infer_instance
+          ((A.next stateAction.1 stateAction.2).atoms.foldr
+            (fun atom rest =>
+              (atom.2 : ENNReal) • Measure.dirac atom.1 + rest)
+            0)
+      constructor
+      change
+        ((A.next stateAction.1 stateAction.2).atoms.foldr
+          (fun atom rest =>
+            (atom.2 : ENNReal) • Measure.dirac atom.1 + rest)
+          0) Set.univ = 1
+      have hsum :
+          ((A.next stateAction.1 stateAction.2).atoms.foldr
+            (fun atom rest =>
+              (atom.2 : ENNReal) • Measure.dirac atom.1 + rest)
+            0) Set.univ =
+          ((FiniteLaw.totalWeight
+            (A.next stateAction.1 stateAction.2).atoms : ℚ≥0) : ENNReal) := by
+        have hzero : ((0 : ℚ≥0) : ENNReal) = 0 := by
+          change (((0 : ℚ≥0) : NNReal) : ENNReal) = 0
+          simp
+        have hadd (p q : ℚ≥0) :
+            ((p + q : ℚ≥0) : ENNReal) =
+              (p : ENNReal) + (q : ENNReal) := by
+          change (((p + q : ℚ≥0) : NNReal) : ENNReal) =
+            ((p : NNReal) : ENNReal) + ((q : NNReal) : ENNReal)
+          simp
+        induction (A.next stateAction.1 stateAction.2).atoms with
+        | nil => simp [FiniteLaw.totalWeight, hzero]
+        | cons atom atoms ih =>
+            simp [FiniteLaw.totalWeight, ih, hadd]
+      rw [hsum, FiniteLaw.totalWeight_atoms]
+      change (((1 : ℚ≥0) : NNReal) : ENNReal) = 1
+      norm_num
   }
 
 @[simp]
 theorem toMeasurable_nextMeasure (A : KernelArena)
     (state : A.State) (action : A.Action state) :
     A.toMeasurable.nextMeasure state action =
-      @PMF.toMeasure A.State ⊤ (A.next state action) :=
+      (A.next state action).atoms.foldr
+        (fun atom rest =>
+          (atom.2 : ENNReal) •
+            @Measure.dirac A.State ⊤ atom.1 + rest)
+        0 :=
   rfl
 
 namespace Hom
@@ -204,8 +246,8 @@ namespace Hom
 variable {A B : KernelArena}
 
 /-- A strict discrete kernel morphism is a strict measurable kernel morphism
-after the exact `PMF.toMeasure` embedding. -/
-noncomputable def toMeasurable (f : A.Hom B) :
+after the exact finite weighted-Dirac embedding. -/
+def toMeasurable (f : A.Hom B) :
     A.toMeasurable.Hom B.toMeasurable where
   state := f.state
   state_measurable := by
@@ -224,18 +266,39 @@ noncomputable def toMeasurable (f : A.Hom B) :
             Σ state, B.Action state))
     exact fun _ _ => MeasurableSpace.measurableSet_top
   map_transition := by
+    letI : MeasurableSpace A.State := ⊤
+    letI : MeasurableSpace B.State := ⊤
     intro state action
     change
       @Measure.map A.State B.State ⊤ ⊤
           f.state
-          (@PMF.toMeasure A.State ⊤ (A.next state action)) =
-        @PMF.toMeasure B.State ⊤
-          (B.next (f.state state) (f.action state action))
+          ((A.next state action).atoms.foldr
+            (fun atom rest =>
+              (atom.2 : ENNReal) • Measure.dirac atom.1 + rest)
+            0) =
+        (B.next (f.state state) (f.action state action)).atoms.foldr
+          (fun atom rest =>
+            (atom.2 : ENNReal) • Measure.dirac atom.1 + rest)
+          0
     have hstate :
         @Measurable A.State B.State ⊤ ⊤ f.state :=
       fun _ _ => MeasurableSpace.measurableSet_top
-    rw [PMF.toMeasure_map f.state (A.next state action) hstate]
-    rw [f.map_next]
+    rw [← f.map_next]
+    change
+      @Measure.map A.State B.State ⊤ ⊤ f.state
+          ((A.next state action).atoms.foldr
+            (fun atom rest =>
+              (atom.2 : ENNReal) • Measure.dirac atom.1 + rest) 0) =
+        ((A.next state action).atoms.map
+          (fun atom => (f.state atom.1, atom.2))).foldr
+            (fun atom rest =>
+              (atom.2 : ENNReal) • Measure.dirac atom.1 + rest) 0
+    induction (A.next state action).atoms with
+    | nil => simp
+    | cons atom atoms ih =>
+        simp only [List.foldr_cons, List.map_cons]
+        rw [Measure.map_add _ _ hstate, Measure.map_smul,
+          Measure.map_dirac' hstate, ih]
 
 end Hom
 
