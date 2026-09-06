@@ -6,6 +6,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import EconCSLib.Math.DependentFiber
 import EconCSLib.GameTheory.ExtensiveGame.Relations.Discrete.Morphism
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Game
+import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism.Core
 import EconCSLib.GameTheory.GameForm.Basic
 
 /-!
@@ -86,11 +87,11 @@ structure Iso (G H : ObservedGame N U) where
   map_infoAt :
     ∀ (h : G.base.toArena.HistoryFrom G.base.init) (i : N)
       (hsource : G.base.mover h.1 = some i)
-      (hsource_nonterminal : ¬ G.base.isTerminal h.1)
+      (hsource_nonterminal : G.base.toArena.IsDecision h.1)
       (htarget :
         H.base.mover (historyIso.stateEquiv h).1 = some i)
       (htarget_nonterminal :
-        ¬ H.base.isTerminal (historyIso.stateEquiv h).1),
+        H.base.toArena.IsDecision (historyIso.stateEquiv h).1),
       infoStateEquiv i
           (G.infoAt h i hsource hsource_nonterminal) =
         H.infoAt (historyIso.stateEquiv h) i htarget
@@ -101,16 +102,16 @@ structure Iso (G H : ObservedGame N U) where
 
   This is the local, strategy-independent coherence square.  It is stated
   separately from `map_actionAt` because behavioral strategies must transport
-  every action in the support of a local `PMF`, even when a complete pure
+  every action in the support of a local `FiniteLaw`, even when a complete pure
   strategy profile need not exist. -/
   map_infoActionAt :
     ∀ (h : G.base.toArena.HistoryFrom G.base.init) (i : N)
       (hsource : G.base.mover h.1 = some i)
-      (hsource_nonterminal : ¬ G.base.isTerminal h.1)
+      (hsource_nonterminal : G.base.toArena.IsDecision h.1)
       (htarget :
         H.base.mover (historyIso.stateEquiv h).1 = some i)
       (htarget_nonterminal :
-        ¬ H.base.isTerminal (historyIso.stateEquiv h).1)
+        H.base.toArena.IsDecision (historyIso.stateEquiv h).1)
       (action :
         G.InfoAction i (G.infoAt h i hsource
           hsource_nonterminal)),
@@ -128,6 +129,23 @@ structure Iso (G H : ObservedGame N U) where
 namespace Iso
 
 variable {G H : ObservedGame N U}
+
+/-- Erase payoffs from a strict observed-game isomorphism. -/
+def toControlledIso (e : G.Iso H) :
+    G.toControlledObservedGame.Iso H.toControlledObservedGame where
+  historyIso := e.historyIso
+  map_init := e.map_init
+  map_mover := e.map_mover
+  observationEquiv := e.observationEquiv
+  map_observe := e.map_observe
+  publicEquiv := e.publicEquiv
+  map_publicObserve := e.map_publicObserve
+  map_publicOf := e.map_publicOf
+  infoStateEquiv := e.infoStateEquiv
+  map_infoObserve := e.map_infoObserve
+  infoActionEquiv := e.infoActionEquiv
+  map_infoAt := e.map_infoAt
+  map_infoActionAt := e.map_infoActionAt
 
 /-- Explicit correspondence of two separately supplied continuation-root
 presentations under a strict observed-game isomorphism.
@@ -201,9 +219,25 @@ theorem map_isContinuationOf
 
 /-- The pure-strategy equivalence induced by the information-state and
 information-action equivalences. -/
+def representedInfoEquiv (e : G.Iso H) (i : N) :
+    G.RepresentedInfo i ≃ H.RepresentedInfo i :=
+  e.toControlledIso.representedInfoEquiv i
+
+/-- Information-action transport over a represented strategy coordinate. -/
+def representedInfoActionEquiv
+    (e : G.Iso H) (i : N) (information : G.RepresentedInfo i) :
+    G.InfoAction i information.1 ≃
+      H.InfoAction i (e.representedInfoEquiv i information).1 := by
+  simpa [representedInfoEquiv, toControlledIso,
+    ControlledObservedGame.Iso.representedInfoEquiv] using
+    e.infoActionEquiv i information.1
+
+/-- The pure-strategy equivalence induced by represented information-state and
+information-action equivalences. -/
 def strategyEquiv (e : G.Iso H) (i : N) :
     G.PureStrategy i ≃ H.PureStrategy i :=
-  (e.infoStateEquiv i).piCongr (e.infoActionEquiv i)
+  (e.representedInfoEquiv i).piCongr fun information =>
+    e.representedInfoActionEquiv i information
 
 /-- The information-action equivalence at a pair of corresponding player
 histories.
@@ -216,11 +250,11 @@ def infoActionEquivAt
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource : G.base.mover history.1 = some i)
-    (hsource_nonterminal : ¬ G.base.isTerminal history.1)
+    (hsource_nonterminal : G.base.toArena.IsDecision history.1)
     (htarget :
       H.base.mover (e.historyIso.stateEquiv history).1 = some i)
     (htarget_nonterminal :
-      ¬ H.base.isTerminal
+      H.base.toArena.IsDecision
         (e.historyIso.stateEquiv history).1) :
     G.InfoAction i
         (G.infoAt history i hsource hsource_nonterminal) ≃
@@ -242,11 +276,11 @@ theorem infoActionEquivAt_apply
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource : G.base.mover history.1 = some i)
-    (hsource_nonterminal : ¬ G.base.isTerminal history.1)
+    (hsource_nonterminal : G.base.toArena.IsDecision history.1)
     (htarget :
       H.base.mover (e.historyIso.stateEquiv history).1 = some i)
     (htarget_nonterminal :
-      ¬ H.base.isTerminal
+      H.base.toArena.IsDecision
         (e.historyIso.stateEquiv history).1)
     (action :
       G.InfoAction i
@@ -269,11 +303,11 @@ theorem map_infoActionEquivAt
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource : G.base.mover history.1 = some i)
-    (hsource_nonterminal : ¬ G.base.isTerminal history.1)
+    (hsource_nonterminal : G.base.toArena.IsDecision history.1)
     (htarget :
       H.base.mover (e.historyIso.stateEquiv history).1 = some i)
     (htarget_nonterminal :
-      ¬ H.base.isTerminal
+      H.base.toArena.IsDecision
         (e.historyIso.stateEquiv history).1)
     (action :
       G.InfoAction i
@@ -296,11 +330,11 @@ theorem infoActionEquivAt_symm_apply_apply
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource : G.base.mover history.1 = some i)
-    (hsource_nonterminal : ¬ G.base.isTerminal history.1)
+    (hsource_nonterminal : G.base.toArena.IsDecision history.1)
     (htarget :
       H.base.mover (e.historyIso.stateEquiv history).1 = some i)
     (htarget_nonterminal :
-      ¬ H.base.isTerminal
+      H.base.toArena.IsDecision
         (e.historyIso.stateEquiv history).1)
     (action :
       G.InfoAction i
@@ -321,11 +355,11 @@ theorem infoActionEquivAt_apply_symm_apply
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource : G.base.mover history.1 = some i)
-    (hsource_nonterminal : ¬ G.base.isTerminal history.1)
+    (hsource_nonterminal : G.base.toArena.IsDecision history.1)
     (htarget :
       H.base.mover (e.historyIso.stateEquiv history).1 = some i)
     (htarget_nonterminal :
-      ¬ H.base.isTerminal
+      H.base.toArena.IsDecision
         (e.historyIso.stateEquiv history).1)
     (action :
       H.InfoAction i
@@ -382,11 +416,11 @@ theorem map_actionAt
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource : G.base.mover history.1 = some i)
-    (hsource_nonterminal : ¬ G.base.isTerminal history.1)
+    (hsource_nonterminal : G.base.toArena.IsDecision history.1)
     (htarget :
       H.base.mover (e.historyIso.stateEquiv history).1 = some i)
     (htarget_nonterminal :
-      ¬ H.base.isTerminal
+      H.base.toArena.IsDecision
         (e.historyIso.stateEquiv history).1) :
     PureProfile.actionAt H
         (e.mapProfile profile)
@@ -395,42 +429,10 @@ theorem map_actionAt
       e.historyIso.actionEquiv history
         (PureProfile.actionAt G profile history i hsource
           hsource_nonterminal) := by
-  unfold PureProfile.actionAt PureStrategy.actionAt
-  have hinfo :
-      e.infoStateEquiv i
-          (G.infoAt history i hsource hsource_nonterminal) =
-        H.infoAt (e.historyIso.stateEquiv history) i htarget
-          htarget_nonterminal :=
-    e.map_infoAt history i hsource hsource_nonterminal
-      htarget htarget_nonterminal
-  have hchoice :
-      e.mapProfile profile i
-          (H.infoAt
-            (e.historyIso.stateEquiv history) i htarget
-            htarget_nonterminal) =
-        e.infoActionEquivAt history i hsource
-          hsource_nonterminal htarget htarget_nonterminal
-          (profile i
-            (G.infoAt history i hsource hsource_nonterminal)) := by
-    rw [infoActionEquivAt_apply]
-    exact
-      Equiv.piCongr_apply_of_eq
-        (W := G.InfoAction i)
-        (Z := H.InfoAction i)
-        (e.infoStateEquiv i)
-        (e.infoActionEquiv i)
-        (profile i)
-        (G.infoAt history i hsource hsource_nonterminal)
-        (H.infoAt
-          (e.historyIso.stateEquiv history) i htarget
-          htarget_nonterminal)
-        hinfo
-  rw [hchoice]
   exact
-    e.map_infoActionEquivAt history i hsource
-      hsource_nonterminal htarget htarget_nonterminal
-      (profile i
-        (G.infoAt history i hsource hsource_nonterminal))
+    ControlledObservedGame.Iso.map_actionAt e.toControlledIso
+      profile history i hsource hsource_nonterminal
+      htarget htarget_nonterminal
 
 /-- Identity strict structural isomorphism of an observed EFG. -/
 def refl (G : ObservedGame N U) : G.Iso G where
@@ -475,7 +477,7 @@ theorem refl_infoActionEquivAt
     (i : N)
     (hsource htarget : G.base.mover history.1 = some i)
     (hsource_nonterminal htarget_nonterminal :
-      ¬ G.base.isTerminal history.1)
+      G.base.toArena.IsDecision history.1)
     (action :
       G.InfoAction i
         (G.infoAt history i hsource hsource_nonterminal)) :
@@ -489,17 +491,39 @@ theorem refl_infoActionEquivAt
 @[simp]
 theorem refl_mapProfile (profile : G.PureProfile) :
     (refl G).mapProfile profile = profile := by
+  classical
+  have hrepresented (i : N) :
+      (refl G).representedInfoEquiv i =
+        Equiv.refl (G.RepresentedInfo i) := by
+    apply Equiv.ext
+    intro information
+    apply Subtype.ext
+    rfl
   funext i information
+  rw [mapProfile_apply]
+  unfold strategyEquiv
+  let base := (refl G).representedInfoEquiv i
+  let fiber : G.RepresentedInfo i → Type _ :=
+    fun state => G.InfoAction i state.1
+  let actionEquiv : ∀ state, fiber state ≃ fiber (base state) :=
+    fun state => (refl G).representedInfoActionEquiv i state
+  have hbase : base information = information := by
+    apply Subtype.ext
+    rfl
+  have happ :=
+    Equiv.piCongr_apply_of_eq
+      (W := fun state : G.RepresentedInfo i =>
+        G.InfoAction i state.1)
+      (Z := fun state : G.RepresentedInfo i =>
+        G.InfoAction i state.1)
+      base actionEquiv
+      (profile i) information information hbase
   change
-    ((Equiv.refl (G.InfoState i)).piCongr
-      (fun state => Equiv.refl (G.InfoAction i state)))
-        (profile i) information =
-      profile i information
-  simpa using
-    Equiv.piCongr_apply_apply
-      (Equiv.refl (G.InfoState i))
-      (fun state => Equiv.refl (G.InfoAction i state))
-      (profile i) information
+    (base.piCongr actionEquiv)
+        (profile i) information = profile i information
+  rw [happ]
+  cases hbase
+  rfl
 
 /-- The information-state equality used by composition of strict observed-EFG
 isomorphisms. -/
@@ -508,18 +532,18 @@ def transInfoAt {K : ObservedGame N U}
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource : G.base.mover history.1 = some i)
-    (hsource_nonterminal : ¬ G.base.isTerminal history.1)
+    (hsource_nonterminal : G.base.toArena.IsDecision history.1)
     (hmiddle :
       H.base.mover (e.historyIso.stateEquiv history).1 = some i)
     (hmiddle_nonterminal :
-      ¬ H.base.isTerminal (e.historyIso.stateEquiv history).1)
+      H.base.toArena.IsDecision (e.historyIso.stateEquiv history).1)
     (htarget :
       K.base.mover
         (f.historyIso.stateEquiv
           (e.historyIso.stateEquiv history)).1 =
         some i)
     (htarget_nonterminal :
-      ¬ K.base.isTerminal
+      K.base.toArena.IsDecision
         (f.historyIso.stateEquiv
           (e.historyIso.stateEquiv history)).1) :
     (e.infoStateEquiv i).trans (f.infoStateEquiv i)
@@ -635,11 +659,9 @@ def trans {K : ObservedGame N U}
       rw [e.map_mover history]
       exact hsource
     let hmiddle_nonterminal :
-        ¬ H.base.isTerminal
+        H.base.toArena.IsDecision
           (e.historyIso.stateEquiv history).1 :=
-      (not_congr
-        (e.historyIso.isTerminal_iff history)).mp
-          hsource_nonterminal
+      (e.historyIso.isDecision_iff history).mp hsource_nonterminal
     exact
       e.transInfoAt f history i
         hsource hsource_nonterminal
@@ -655,10 +677,8 @@ def trans {K : ObservedGame N U}
       rw [e.map_mover history]
       exact hsource
     let hmiddle_nonterminal :
-        ¬ H.base.isTerminal middleHistory.1 :=
-      (not_congr
-        (e.historyIso.isTerminal_iff history)).mp
-          hsource_nonterminal
+        H.base.toArena.IsDecision middleHistory.1 :=
+      (e.historyIso.isDecision_iff history).mp hsource_nonterminal
     let sourceInformation :=
       G.infoAt history i hsource hsource_nonterminal
     let middleInformation :=
@@ -757,11 +777,11 @@ theorem trans_infoActionEquivAt {K : ObservedGame N U}
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource : G.base.mover history.1 = some i)
-    (hsource_nonterminal : ¬ G.base.isTerminal history.1)
+    (hsource_nonterminal : G.base.toArena.IsDecision history.1)
     (hmiddle :
       H.base.mover (e.historyIso.stateEquiv history).1 = some i)
     (hmiddle_nonterminal :
-      ¬ H.base.isTerminal
+      H.base.toArena.IsDecision
         (e.historyIso.stateEquiv history).1)
     (htarget :
       K.base.mover
@@ -769,7 +789,7 @@ theorem trans_infoActionEquivAt {K : ObservedGame N U}
             (e.historyIso.stateEquiv history)).1 =
         some i)
     (htarget_nonterminal :
-      ¬ K.base.isTerminal
+      K.base.toArena.IsDecision
         (f.historyIso.stateEquiv
           (e.historyIso.stateEquiv history)).1)
     (action :
@@ -814,35 +834,61 @@ theorem trans_mapProfile {K : ObservedGame N U}
     (profile : G.PureProfile) :
     (e.trans f).mapProfile profile =
       f.mapProfile (e.mapProfile profile) := by
+  classical
   funext i targetInformation
-  obtain ⟨middleInformation, rfl⟩ :=
-    (f.infoStateEquiv i).surjective targetInformation
+  have hrepresented :
+      (e.trans f).representedInfoEquiv i =
+        (e.representedInfoEquiv i).trans
+          (f.representedInfoEquiv i) := by
+    apply Equiv.ext
+    intro information
+    apply Subtype.ext
+    rfl
   obtain ⟨sourceInformation, rfl⟩ :=
-    (e.infoStateEquiv i).surjective middleInformation
+    ((e.representedInfoEquiv i).trans
+      (f.representedInfoEquiv i)).surjective targetInformation
+  let sourceFiber : G.RepresentedInfo i → Type _ :=
+    fun information => G.InfoAction i information.1
+  let middleFiber : H.RepresentedInfo i → Type _ :=
+    fun information => H.InfoAction i information.1
+  let targetFiber : K.RepresentedInfo i → Type _ :=
+    fun information => K.InfoAction i information.1
+  let firstAction : ∀ information,
+      sourceFiber information ≃
+        middleFiber (e.representedInfoEquiv i information) :=
+    fun information => e.representedInfoActionEquiv i information
+  let secondAction : ∀ information,
+      middleFiber information ≃
+        targetFiber (f.representedInfoEquiv i information) :=
+    fun information => f.representedInfoActionEquiv i information
+  let compositeAction : ∀ information,
+      sourceFiber information ≃
+        targetFiber ((e.trans f).representedInfoEquiv i information) :=
+    fun information => (e.trans f).representedInfoActionEquiv i information
   change
-    (((e.infoStateEquiv i).trans (f.infoStateEquiv i)).piCongr
-      (fun information =>
-        (e.infoActionEquiv i information).trans
-          (f.infoActionEquiv i
-            (e.infoStateEquiv i information))))
-      (profile i)
-      (f.infoStateEquiv i
-        (e.infoStateEquiv i sourceInformation)) =
-    (f.infoStateEquiv i).piCongr (f.infoActionEquiv i)
-      ((e.infoStateEquiv i).piCongr
-        (e.infoActionEquiv i) (profile i))
-      (f.infoStateEquiv i
-        (e.infoStateEquiv i sourceInformation))
-  rw [Equiv.piCongr_apply_apply,
-    Equiv.piCongr_apply_apply]
-  simpa using
-    Equiv.piCongr_apply_apply
-      ((e.infoStateEquiv i).trans (f.infoStateEquiv i))
-      (fun information =>
-        (e.infoActionEquiv i information).trans
-          (f.infoActionEquiv i
-            (e.infoStateEquiv i information)))
-      (profile i) sourceInformation
+    ((e.trans f).representedInfoEquiv i).piCongr
+        compositeAction
+        (profile i)
+        (f.representedInfoEquiv i
+          (e.representedInfoEquiv i sourceInformation)) =
+      (f.representedInfoEquiv i).piCongr
+        secondAction
+        ((e.representedInfoEquiv i).piCongr
+          firstAction
+          (profile i))
+        (f.representedInfoEquiv i
+          (e.representedInfoEquiv i sourceInformation))
+  have hcomp :
+      (e.trans f).representedInfoEquiv i sourceInformation =
+        f.representedInfoEquiv i
+          (e.representedInfoEquiv i sourceInformation) :=
+    congrArg (fun equivalence => equivalence sourceInformation) hrepresented
+  rw [Equiv.piCongr_apply_of_eq
+    ((e.trans f).representedInfoEquiv i) compositeAction
+    (profile i) sourceInformation _ hcomp]
+  rw [Equiv.piCongr_apply_apply, Equiv.piCongr_apply_apply]
+  cases hcomp
+  rfl
 
 /-- Identity is a left unit for strict observed-game isomorphism composition. -/
 @[simp]
