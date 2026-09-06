@@ -53,6 +53,19 @@ variable {N : Type uN}
 
 variable {G : ControlledObservedGame N}
 
+/-- One explicit fuel reaches a terminal history from an accumulated absolute
+history under a pure profile. -/
+def PureTerminatesAtFuel
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (profile : G.PureProfile)
+    (hNoChance : G.base.NoChanceOnHistories)
+    (current : G.base.History)
+    (fuel : ℕ) : Prop :=
+  G.base.isTerminal
+    (G.base.toArena.stoppedHistoryFrom
+      (profile.toHistoryPolicy hNoChance) current fuel).1
+
 /-- A pure profile eventually reaches a terminal history from one accumulated
 absolute history. -/
 def PureTerminatesFrom
@@ -61,10 +74,21 @@ def PureTerminatesFrom
     (profile : G.PureProfile)
     (hNoChance : G.base.NoChanceOnHistories)
     (current : G.base.History) : Prop :=
-  ∃ fuel : ℕ,
-    G.base.isTerminal
-      (G.base.toArena.stoppedHistoryFrom
-        (profile.toHistoryPolicy hNoChance) current fuel).1
+  ∃ fuel : ℕ, G.PureTerminatesAtFuel profile hNoChance current fuel
+
+/-- Executable profile-indexed fuels together with a separate proof that each
+chosen fuel reaches a terminal endpoint. -/
+structure PureTerminationPlanAt
+    (G : ControlledObservedGame N)
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
+    (hNoChance : G.base.NoChanceOnHistories)
+    (current : G.base.History) where
+  /-- Runtime fuel used for one complete pure profile. -/
+  fuel : G.PureProfile → ℕ
+  /-- The runtime fuel reaches a terminal endpoint for every profile. -/
+  terminal :
+    ∀ profile,
+      G.PureTerminatesAtFuel profile hNoChance current (fuel profile)
 
 /-- Every pure profile terminates from one accumulated absolute history. -/
 def PureTerminatingAt
@@ -111,42 +135,17 @@ theorem PureTerminatingOnRoots.onSubgameSystem
   fun current hroot =>
     hterminates current (hvisible current hroot)
 
-/-- Choose a fuel at which one terminating pure continuation has stopped. -/
-noncomputable def terminalFuel
+/-- The absolute history reached at an explicit runtime fuel. -/
+def terminalHistoryFrom
     (G : ControlledObservedGame N)
     [(state : G.base.State) → Decidable (G.base.isTerminal state)]
     (profile : G.PureProfile)
     (hNoChance : G.base.NoChanceOnHistories)
     (current : G.base.History)
-    (hterminates : G.PureTerminatesFrom profile hNoChance current) : ℕ :=
-  hterminates.choose
-
-/-- The chosen terminal fuel reaches a terminal endpoint. -/
-theorem terminalFuel_spec
-    (G : ControlledObservedGame N)
-    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
-    (profile : G.PureProfile)
-    (hNoChance : G.base.NoChanceOnHistories)
-    (current : G.base.History)
-    (hterminates : G.PureTerminatesFrom profile hNoChance current) :
-    G.base.isTerminal
-      (G.base.toArena.stoppedHistoryFrom
-        (profile.toHistoryPolicy hNoChance) current
-        (G.terminalFuel profile hNoChance current hterminates)).1 :=
-  hterminates.choose_spec
-
-/-- The absolute terminal history selected by a pure-termination witness. -/
-noncomputable def terminalHistoryFrom
-    (G : ControlledObservedGame N)
-    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
-    (profile : G.PureProfile)
-    (hNoChance : G.base.NoChanceOnHistories)
-    (current : G.base.History)
-    (hterminates : G.PureTerminatesFrom profile hNoChance current) :
+    (fuel : ℕ) :
     G.base.History :=
   G.base.toArena.stoppedHistoryFrom
-    (profile.toHistoryPolicy hNoChance) current
-    (G.terminalFuel profile hNoChance current hterminates)
+    (profile.toHistoryPolicy hNoChance) current fuel
 
 /-- The selected eventual history is terminal. -/
 theorem terminalHistoryFrom_terminal
@@ -155,11 +154,13 @@ theorem terminalHistoryFrom_terminal
     (profile : G.PureProfile)
     (hNoChance : G.base.NoChanceOnHistories)
     (current : G.base.History)
-    (hterminates : G.PureTerminatesFrom profile hNoChance current) :
+    (fuel : ℕ)
+    (hterminal :
+      G.PureTerminatesAtFuel profile hNoChance current fuel) :
     G.base.isTerminal
       (G.terminalHistoryFrom
-        profile hNoChance current hterminates).1 :=
-  G.terminalFuel_spec profile hNoChance current hterminates
+        profile hNoChance current fuel).1 :=
+  hterminal
 
 /-- Any fuel that has already terminated yields the selected terminal
 history. -/
@@ -169,26 +170,25 @@ theorem terminalHistoryFrom_eq_of_terminal
     (profile : G.PureProfile)
     (hNoChance : G.base.NoChanceOnHistories)
     (current : G.base.History)
-    (hterminates : G.PureTerminatesFrom profile hNoChance current)
+    (selectedFuel : ℕ)
+    (hselectedTerminal :
+      G.PureTerminatesAtFuel profile hNoChance current selectedFuel)
     (fuel : ℕ)
-    (hterminal :
-      G.base.isTerminal
-        (G.base.toArena.stoppedHistoryFrom
-          (profile.toHistoryPolicy hNoChance) current fuel).1) :
-    G.terminalHistoryFrom profile hNoChance current hterminates =
+    (hterminal : G.PureTerminatesAtFuel profile hNoChance current fuel) :
+    G.terminalHistoryFrom profile hNoChance current selectedFuel =
       G.base.toArena.stoppedHistoryFrom
         (profile.toHistoryPolicy hNoChance) current fuel := by
   exact
     Arena.stoppedHistoryFrom_eq_of_terminal
       (profile.toHistoryPolicy hNoChance) current
-      (G.terminalFuel profile hNoChance current hterminates) fuel
+      selectedFuel fuel
       (G.terminalHistoryFrom_terminal
-        profile hNoChance current hterminates)
+        profile hNoChance current selectedFuel hselectedTerminal)
       hterminal
 
 /-- Evaluate a history-sensitive terminal objective on the absolute terminal
 history selected by pure execution. -/
-noncomputable def terminalOutcomeFrom
+def terminalOutcomeFrom
     {Outcome : Type uOutcome}
     (G : ControlledObservedGame N)
     [(state : G.base.State) → Decidable (G.base.isTerminal state)]
@@ -197,12 +197,14 @@ noncomputable def terminalOutcomeFrom
     (profile : G.PureProfile)
     (hNoChance : G.base.NoChanceOnHistories)
     (current : G.base.History)
-    (hterminates : G.PureTerminatesFrom profile hNoChance current) :
+    (fuel : ℕ)
+    (hterminal :
+      G.PureTerminatesAtFuel profile hNoChance current fuel) :
     Outcome :=
   objective
-    ⟨G.terminalHistoryFrom profile hNoChance current hterminates,
+    ⟨G.terminalHistoryFrom profile hNoChance current fuel,
       G.terminalHistoryFrom_terminal
-        profile hNoChance current hterminates⟩
+        profile hNoChance current fuel hterminal⟩
 
 /-- The root play obtained by executing from `current` and reattaching the
 complete accumulated prefix.
@@ -239,7 +241,7 @@ def pathOutcomeFrom
 The full pure strategy spaces are reused, so deviations are the canonical
 complete pure-strategy deviations. Totality comes only from the supplied
 profile-by-profile termination proof. -/
-noncomputable def terminalObjectiveContinuationGameForm
+def terminalObjectiveContinuationGameForm
     {Outcome : Type uOutcome}
     (G : ControlledObservedGame N)
     [(state : G.base.State) → Decidable (G.base.isTerminal state)]
@@ -247,13 +249,13 @@ noncomputable def terminalObjectiveContinuationGameForm
       G.base.toArena.TerminalOutcome G.base.init Outcome)
     (hNoChance : G.base.NoChanceOnHistories)
     (current : G.base.History)
-    (hterminates : G.PureTerminatingAt hNoChance current) :
+    (termination : G.PureTerminationPlanAt hNoChance current) :
     GameForm N where
   Strategy := G.PureStrategy
   Outcome := Outcome
   outcome profile :=
     G.terminalOutcomeFrom objective profile hNoChance current
-      (hterminates profile)
+      (termination.fuel profile) (termination.terminal profile)
 
 /-- Continuation game form for a root-relative complete-path objective.
 
@@ -275,7 +277,7 @@ def pathObjectiveContinuationGameForm
 
 /-- Pure Nash equilibrium at every presentation-designated root under a
 history-sensitive terminal objective. This is not, by itself, SPE. -/
-noncomputable def IsPureTerminalNashOnRoots
+def IsPureTerminalNashOnRoots
     {Outcome : Type uOutcome} {V : Type uV}
     [DecidableEq N] [Preorder V]
     (G : ControlledObservedGame N)
@@ -284,17 +286,19 @@ noncomputable def IsPureTerminalNashOnRoots
       G.base.toArena.TerminalOutcome G.base.init Outcome)
     (hNoChance : G.base.NoChanceOnHistories)
     (roots : G.ContinuationRootPresentation)
-    (hterminates : G.PureTerminatingOnRoots hNoChance roots)
+    (termination :
+      ∀ current, roots.IsRoot current →
+        G.PureTerminationPlanAt hNoChance current)
     (utility : Outcome → N → V)
     (profile : G.PureProfile) : Prop :=
   ∀ current : G.base.History,
     ∀ hroot : roots.IsRoot current,
       (G.terminalObjectiveContinuationGameForm objective hNoChance current
-        (hterminates current hroot)).IsNash utility profile
+        (termination current hroot)).IsNash utility profile
 
 /-- Pure subgame perfection on one explicit lawful subgame system under a
 history-sensitive terminal objective. -/
-noncomputable def IsPureTerminalSubgamePerfectOn
+def IsPureTerminalSubgamePerfectOn
     {Outcome : Type uOutcome} {V : Type uV}
     [DecidableEq N] [Preorder V]
     (G : ControlledObservedGame N)
@@ -303,17 +307,19 @@ noncomputable def IsPureTerminalSubgamePerfectOn
       G.base.toArena.TerminalOutcome G.base.init Outcome)
     (hNoChance : G.base.NoChanceOnHistories)
     (system : G.SubgameSystem)
-    (hterminates : G.PureTerminatingOn hNoChance system)
+    (termination :
+      ∀ current, system.IsRoot current →
+        G.PureTerminationPlanAt hNoChance current)
     (utility : Outcome → N → V)
     (profile : G.PureProfile) : Prop :=
   ∀ current : G.base.History,
     ∀ hroot : system.IsRoot current,
       (G.terminalObjectiveContinuationGameForm objective hNoChance current
-        (hterminates current hroot)).IsNash utility profile
+        (termination current hroot)).IsNash utility profile
 
 /-- Standard pure SPE for a history-sensitive terminal objective. The
 complete system tests every structurally lawful subgame root. -/
-noncomputable def IsPureTerminalStandardSubgamePerfect
+def IsPureTerminalStandardSubgamePerfect
     {Outcome : Type uOutcome} {V : Type uV}
     [DecidableEq N] [Preorder V]
     (G : ControlledObservedGame N)
@@ -322,12 +328,13 @@ noncomputable def IsPureTerminalStandardSubgamePerfect
       G.base.toArena.TerminalOutcome G.base.init Outcome)
     (hNoChance : G.base.NoChanceOnHistories)
     (system : G.CompleteSubgameSystem)
-    (hterminates :
-      G.PureTerminatingOn hNoChance system.toSubgameSystem)
+    (termination :
+      ∀ current, system.IsRoot current →
+        G.PureTerminationPlanAt hNoChance current)
     (utility : Outcome → N → V)
     (profile : G.PureProfile) : Prop :=
   G.IsPureTerminalSubgamePerfectOn objective hNoChance
-    system.toSubgameSystem hterminates utility profile
+    system.toSubgameSystem termination utility profile
 
 /-- Terminal-objective SPE on a lawful system is Nash at the initial root. -/
 theorem IsPureTerminalSubgamePerfectOn.isNashAtInit
@@ -339,15 +346,17 @@ theorem IsPureTerminalSubgamePerfectOn.isNashAtInit
       G.base.toArena.TerminalOutcome G.base.init Outcome)
     (hNoChance : G.base.NoChanceOnHistories)
     (system : G.SubgameSystem)
-    (hterminates : G.PureTerminatingOn hNoChance system)
+    (termination :
+      ∀ current, system.IsRoot current →
+        G.PureTerminationPlanAt hNoChance current)
     (utility : Outcome → N → V)
     (profile : G.PureProfile)
     (hspe :
       G.IsPureTerminalSubgamePerfectOn objective hNoChance
-        system hterminates utility profile) :
+        system termination utility profile) :
     (G.terminalObjectiveContinuationGameForm objective hNoChance
       (Arena.HistoryFrom.nil G.base.toArena G.base.init)
-      (hterminates
+      (termination
         (Arena.HistoryFrom.nil G.base.toArena G.base.init)
         system.init_isRoot)).IsNash utility profile :=
   hspe
@@ -364,15 +373,17 @@ theorem IsPureTerminalSubgamePerfectOn.toNashOnSystemRoots
       G.base.toArena.TerminalOutcome G.base.init Outcome)
     (hNoChance : G.base.NoChanceOnHistories)
     (system : G.SubgameSystem)
-    (hterminates : G.PureTerminatingOn hNoChance system)
+    (termination :
+      ∀ current, system.IsRoot current →
+        G.PureTerminationPlanAt hNoChance current)
     (utility : Outcome → N → V)
     (profile : G.PureProfile)
     (hspe :
       G.IsPureTerminalSubgamePerfectOn objective hNoChance
-        system hterminates utility profile) :
+        system termination utility profile) :
     ∀ current, ∀ hroot : system.IsRoot current,
       (G.terminalObjectiveContinuationGameForm objective hNoChance current
-        (hterminates current hroot)).IsNash utility profile :=
+        (termination current hroot)).IsNash utility profile :=
   hspe
 
 /-- Complete terminal-objective standard SPE is SPE on its underlying lawful
@@ -386,15 +397,16 @@ theorem IsPureTerminalStandardSubgamePerfect.toSubgamePerfectOn
       G.base.toArena.TerminalOutcome G.base.init Outcome)
     (hNoChance : G.base.NoChanceOnHistories)
     (system : G.CompleteSubgameSystem)
-    (hterminates :
-      G.PureTerminatingOn hNoChance system.toSubgameSystem)
+    (termination :
+      ∀ current, system.IsRoot current →
+        G.PureTerminationPlanAt hNoChance current)
     (utility : Outcome → N → V)
     (profile : G.PureProfile)
     (hspe :
       G.IsPureTerminalStandardSubgamePerfect objective hNoChance
-        system hterminates utility profile) :
+        system termination utility profile) :
     G.IsPureTerminalSubgamePerfectOn objective hNoChance
-      system.toSubgameSystem hterminates utility profile :=
+      system.toSubgameSystem termination utility profile :=
   hspe
 
 /-- Complete terminal-objective standard SPE is Nash at the initial root. -/
@@ -407,20 +419,21 @@ theorem IsPureTerminalStandardSubgamePerfect.isNashAtInit
       G.base.toArena.TerminalOutcome G.base.init Outcome)
     (hNoChance : G.base.NoChanceOnHistories)
     (system : G.CompleteSubgameSystem)
-    (hterminates :
-      G.PureTerminatingOn hNoChance system.toSubgameSystem)
+    (termination :
+      ∀ current, system.IsRoot current →
+        G.PureTerminationPlanAt hNoChance current)
     (utility : Outcome → N → V)
     (profile : G.PureProfile)
     (hspe :
       G.IsPureTerminalStandardSubgamePerfect objective hNoChance
-        system hterminates utility profile) :
+        system termination utility profile) :
     (G.terminalObjectiveContinuationGameForm objective hNoChance
       (Arena.HistoryFrom.nil G.base.toArena G.base.init)
-      (hterminates
+      (termination
         (Arena.HistoryFrom.nil G.base.toArena G.base.init)
         system.toSubgameSystem.init_isRoot)).IsNash utility profile :=
   IsPureTerminalSubgamePerfectOn.isNashAtInit G objective hNoChance
-    system.toSubgameSystem hterminates utility profile hspe
+    system.toSubgameSystem termination utility profile hspe
 
 /-- Complete terminal-objective standard SPE is Nash at every structurally
 lawful root. -/
@@ -433,16 +446,17 @@ theorem IsPureTerminalStandardSubgamePerfect.toNashOnLawfulRoots
       G.base.toArena.TerminalOutcome G.base.init Outcome)
     (hNoChance : G.base.NoChanceOnHistories)
     (system : G.CompleteSubgameSystem)
-    (hterminates :
-      G.PureTerminatingOn hNoChance system.toSubgameSystem)
+    (termination :
+      ∀ current, system.IsRoot current →
+        G.PureTerminationPlanAt hNoChance current)
     (utility : Outcome → N → V)
     (profile : G.PureProfile)
     (hspe :
       G.IsPureTerminalStandardSubgamePerfect objective hNoChance
-        system hterminates utility profile) :
+        system termination utility profile) :
     ∀ current, ∀ hlawful : G.IsLawfulSubgameRoot current,
       (G.terminalObjectiveContinuationGameForm objective hNoChance current
-        (hterminates current
+        (termination current
           (system.complete current hlawful))).IsNash utility profile := by
   intro current hlawful
   exact hspe current (system.complete current hlawful)
