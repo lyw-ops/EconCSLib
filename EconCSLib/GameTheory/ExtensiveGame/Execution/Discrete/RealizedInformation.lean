@@ -64,5 +64,20 @@ namespace EventInformation
 
 variable {A : KernelArena}
 
+/-- Fixed finite realization of abstract actions as concrete actions.
+
+The result type records the latest state of the supplied prefix.  Hence every
+atom is legal by construction and no decidable equality on states is needed. -/
+structure ActionRealization
+    (information : A.EventInformation) where
+  /-- Common abstract action carrier at each absolute event time. -/
+  AbstractAction : ℕ → Type uC
+  /-- Exact finite concrete-action law at a prefix and abstract action. -/
+  realizationLaw :
+    (time : ℕ) →
+      (history : A.EventPrefix time) →
+      AbstractAction time →
+      FiniteLaw (A.Action history.latestState)
+
 end EventInformation
 end KernelArena
