@@ -366,4 +366,130 @@ theorem map {law : EffectiveLaw SourceCode}
 
 end EffectiveLaw.Represents
 
+/-- Correctness of an effective expectation transformer with respect to a
+concrete Markov kernel.  Event pullback denotes the kernel probability of the
+target event at each source point. -/
+structure EffectiveKernel.Represents
+    {SourceCode : Type uEvent} {TargetCode : Type vEvent}
+    {α : Type uα} {β : Type uβ} [MeasurableSpace α] [MeasurableSpace β]
+    (effective : EffectiveKernel SourceCode TargetCode)
+    (sourceSemantics : EventSemantics SourceCode α)
+    (targetSemantics : EventSemantics TargetCode β)
+    (κ : ProbabilityTheory.Kernel α β) : Prop where
+  /-- The analytic kernel is probability-valued at every source point. -/
+  isMarkovKernel : ProbabilityTheory.IsMarkovKernel κ
+  /-- Effective event pullback denotes the analytic event-probability
+  function. -/
+  pullEvent : ∀ event,
+    (effective.pullEvent event).Denotes sourceSemantics
+      (fun x => (κ x).real (targetSemantics.denote event))
+
+namespace EffectiveKernel.Represents
+
+open ProbabilityTheory
+
+variable {SourceCode : Type uEvent} {TargetCode : Type vEvent}
+variable {α : Type uα} {β : Type uβ}
+variable [MeasurableSpace α] [MeasurableSpace β]
+
+/-- Pullback correctness extends from event indicators to every finite
+rational simple observable. -/
+theorem pullObservable_integral
+    {effective : EffectiveKernel SourceCode TargetCode}
+    {sourceSemantics : EventSemantics SourceCode α}
+    {targetSemantics : EventSemantics TargetCode β}
+    {κ : Kernel α β}
+    (represents : effective.Represents sourceSemantics targetSemantics κ)
+    {observable : SimpleObservable TargetCode} {f : β → ℝ}
+    (hdenotes : observable.Denotes targetSemantics f) :
+    (effective.pullObservable observable).Denotes sourceSemantics
+      (fun x => ∫ y, f y ∂κ x) := by
+  letI : IsMarkovKernel κ := represents.isMarkovKernel
+  induction hdenotes with
+  | const value =>
+      refine (SimpleObservable.Denotes.const value).congr ?_
+      funext x
+      simp [probReal_univ]
+  | indicator event =>
+      refine (represents.pullEvent event).congr ?_
+      funext x
+      exact (integral_indicator_one (μ := κ x)
+        (targetSemantics.measurable_denote event)).symm
+  | add hleft hright ihLeft ihRight =>
+      refine (ihLeft.add ihRight).congr ?_
+      funext x
+      exact (integral_add
+        (hleft.integrable (κ x)) (hright.integrable (κ x))).symm
+  | scale coefficient h ih =>
+      refine (ih.scale coefficient).congr ?_
+      funext x
+      exact (integral_const_mul (μ := κ x) (coefficient : ℝ)
+        _).symm
+
+/-- The real event mass of a measure–kernel composition is the integral of
+the kernel's real event-probability function. -/
+private theorem real_comp_apply
+    {μ : Measure α} {κ : Kernel α β}
+    [IsFiniteMeasure μ] [IsMarkovKernel κ]
+    (event : Set β) (hevent : MeasurableSet event) :
+    (κ ∘ₘ μ).real event = ∫ x, (κ x).real event ∂μ := by
+  rw [Measure.real, Measure.bind_apply hevent κ.aemeasurable]
+  symm
+  apply integral_toReal
+  · exact (κ.measurable_coe hevent).aemeasurable
+  · exact Filter.Eventually.of_forall fun x =>
+      (measure_lt_top (κ x) event)
+
+/-- Effective law bind represents analytic composition of the source
+probability measure with the represented Markov kernel. -/
+theorem bind
+    {law : EffectiveLaw SourceCode}
+    {effective : EffectiveKernel SourceCode TargetCode}
+    {sourceSemantics : EventSemantics SourceCode α}
+    {targetSemantics : EventSemantics TargetCode β}
+    {μ : Measure α} {κ : Kernel α β}
+    (hlaw : law.Represents sourceSemantics μ)
+    (hkernel : effective.Represents sourceSemantics targetSemantics κ) :
+    (law.bind effective).Represents targetSemantics (κ ∘ₘ μ) := by
+  letI : IsProbabilityMeasure μ := hlaw.isProbabilityMeasure
+  letI : IsMarkovKernel κ := hkernel.isMarkovKernel
+  refine
+    { isProbabilityMeasure := by infer_instance
+      mass := ?_ }
+  intro event
+  refine (hlaw.expect_integral (hkernel.pullEvent event)).congr ?_
+  exact (real_comp_apply (μ := μ) (κ := κ)
+    (targetSemantics.denote event)
+    (targetSemantics.measurable_denote event)).symm
+
+/-- Composition of represented effective transformers represents composition
+of the corresponding analytic Markov kernels. -/
+theorem comp
+    {MiddleCode : Type vEvent} {FinalCode : Type wEvent}
+    {γ : Type uγ} [MeasurableSpace γ]
+    {outer : EffectiveKernel SourceCode MiddleCode}
+    {inner : EffectiveKernel MiddleCode FinalCode}
+    {sourceSemantics : EventSemantics SourceCode α}
+    {middleSemantics : EventSemantics MiddleCode β}
+    {finalSemantics : EventSemantics FinalCode γ}
+    {κ : Kernel α β} {η : Kernel β γ}
+    (houter : outer.Represents sourceSemantics middleSemantics κ)
+    (hinner : inner.Represents middleSemantics finalSemantics η) :
+    (outer.comp inner).Represents sourceSemantics finalSemantics (η ∘ₖ κ) := by
+  letI : IsMarkovKernel κ := houter.isMarkovKernel
+  letI : IsMarkovKernel η := hinner.isMarkovKernel
+  refine
+    { isMarkovKernel := by infer_instance
+      pullEvent := ?_ }
+  intro event
+  refine
+    (houter.pullObservable_integral (hinner.pullEvent event)).congr ?_
+  funext x
+  rw [Kernel.comp_apply]
+  exact (real_comp_apply (μ := κ x) (κ := η)
+    (finalSemantics.denote event)
+    (finalSemantics.measurable_denote event)).symm
+
+end EffectiveKernel.Represents
+
 end EffectiveProbability
