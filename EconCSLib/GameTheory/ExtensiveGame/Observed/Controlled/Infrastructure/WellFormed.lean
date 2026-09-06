@@ -8,33 +8,20 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled
 /-!
 # General payoff-free controlled well-formedness
 
-Represented-information and mover-coherence certificates that require neither
+Represented-information and optional mover-normalization certificates that require neither
 finite action/information carriers nor a structural history-length bound.
 `Finite` and `Recall` depend on this leaf without acquiring each other's
 assumptions or execution infrastructure.
 
-`PureStrategyAvailabilityCertificate` bundles only represented information
-and mover coherence. `ReachablePureStrategyModelCertificate` adds
-`NoChanceOnHistories`. Neither optional layer adds finiteness, payoff,
-probability, recall, or termination.
+Pure strategies themselves need no availability assumption: their coordinates
+are `RepresentedInfo` values and therefore carry a concrete decision witness.
+`PureStrategyAvailabilityCertificate` is retained as the stronger assertion
+that every raw information value is represented.
 -/
 
 namespace ExtensiveGame.ControlledObservedGame
 
 variable {N : Type*} {G : ControlledObservedGame N}
-
-/-- A concrete decision history representing an abstract information state. -/
-structure DecisionInfoWitness
-    (G : ControlledObservedGame N) (i : N)
-    (information : G.InfoState i) where
-  /-- Representing complete history. -/
-  history : G.base.History
-  /-- The selected player moves at the endpoint. -/
-  mover : G.base.mover history.1 = some i
-  /-- The represented decision history is nonterminal. -/
-  nonterminal : ¬ G.base.isTerminal history.1
-  /-- The history represents the requested information state. -/
-  infoAt_eq : G.infoAt history i mover nonterminal = information
 
 /-- Every declared information state is represented by a player decision. -/
 def AllDecisionInfoRepresented
@@ -49,17 +36,16 @@ def DecisionMoverCoherent
     G.base.mover history.1 = some i →
       Nonempty (G.base.Action history.1)
 
-/-- Optional certificate for the two assumptions that make every declared
-pure-strategy coordinate inhabited.
+/-- Optional certificate asserting that every declared raw information value
+is represented by a decision.
 
-This bundle contains no no-chance, finiteness, payoff, probability, recall, or
-termination assumption. The independent predicates remain usable directly. -/
+Pure strategies are already inhabited without this certificate because their
+domain is `RepresentedInfo`. The certificate remains useful to APIs that need
+to quantify over the full raw `InfoState` carrier. -/
 structure PureStrategyAvailabilityCertificate
     (G : ControlledObservedGame N) : Prop where
   /-- Every declared decision-information state has a concrete witness. -/
   allDecisionInfoRepresented : G.AllDecisionInfoRepresented
-  /-- Every reachable player-labelled history has a legal action. -/
-  decisionMoverCoherent : G.DecisionMoverCoherent
 
 /-- Optional higher-level certificate for models that need both inhabited pure
 profiles and chance-free execution on reachable histories.
@@ -72,36 +58,32 @@ structure ReachablePureStrategyModelCertificate
   /-- Every reachable nonterminal history has a strategic mover. -/
   noChanceOnHistories : G.base.NoChanceOnHistories
 
-/-- The availability bundle is exactly the conjunction of its two independent
-predicates. -/
+/-- The legacy availability bundle is exactly full raw-information
+representation. -/
 theorem pureStrategyAvailabilityCertificate_iff
     (G : ControlledObservedGame N) :
     G.PureStrategyAvailabilityCertificate ↔
-      G.AllDecisionInfoRepresented ∧ G.DecisionMoverCoherent := by
+      G.AllDecisionInfoRepresented := by
   constructor
   · intro certificate
-    exact
-      ⟨certificate.allDecisionInfoRepresented,
-        certificate.decisionMoverCoherent⟩
-  · rintro ⟨hrepresented, hcoherent⟩
-    exact ⟨hrepresented, hcoherent⟩
+    exact certificate.allDecisionInfoRepresented
+  · intro hrepresented
+    exact ⟨hrepresented⟩
 
-/-- The reachable pure-model bundle projects to exactly the three independent
+/-- The reachable pure-model bundle projects to exactly the two independent
 predicates it packages. -/
 theorem reachablePureStrategyModelCertificate_iff
     (G : ControlledObservedGame N) :
     G.ReachablePureStrategyModelCertificate ↔
       G.AllDecisionInfoRepresented ∧
-        G.DecisionMoverCoherent ∧
-          G.base.NoChanceOnHistories := by
+        G.base.NoChanceOnHistories := by
   constructor
   · intro certificate
     exact
       ⟨certificate.allDecisionInfoRepresented,
-        certificate.decisionMoverCoherent,
         certificate.noChanceOnHistories⟩
-  · rintro ⟨hrepresented, hcoherent, hNoChance⟩
-    exact ⟨⟨hrepresented, hcoherent⟩, hNoChance⟩
+  · rintro ⟨hrepresented, hNoChance⟩
+    exact ⟨⟨hrepresented⟩, hNoChance⟩
 
 /-- Mover coherence is exactly terminal-mover normalization on complete
 histories reachable from `G.base.init`.
@@ -133,57 +115,40 @@ theorem decisionMoverCoherent_iff_terminal_mover_eq_none_on_histories
 
 namespace AllDecisionInfoRepresented
 
-/-- Represented coherent information has a legal abstract action. -/
+/-- Represented information has a legal abstract action. -/
 theorem nonempty_infoAction
     (hrepresented : G.AllDecisionInfoRepresented)
-    (hcoherent : G.DecisionMoverCoherent)
     (i : N) (information : G.InfoState i) :
     Nonempty (G.InfoAction i information) := by
   rcases hrepresented i information with ⟨witness⟩
-  have haction := hcoherent witness.history i witness.mover
   have habstract :=
-    haction.map
+    witness.decision.map
       (G.actionEquiv witness.history i witness.mover
-        witness.nonterminal).symm
+        witness.decision).symm
   simpa [witness.infoAt_eq] using habstract
 
-/-- Represented coherent information makes each pure-strategy carrier
-inhabited. -/
+end AllDecisionInfoRepresented
+
+/-- Each pure-strategy carrier is inhabited without a global mover-coherence
+or raw-information representation assumption. -/
 theorem nonempty_pureStrategy
-    (hrepresented : G.AllDecisionInfoRepresented)
-    (hcoherent : G.DecisionMoverCoherent)
     (i : N) :
     Nonempty (G.PureStrategy i) := by
   classical
   exact
     ⟨fun information =>
       Classical.choice
-        (hrepresented.nonempty_infoAction
-          hcoherent i information)⟩
+        (G.toControlledDecisionGame.representedInfo_nonempty_infoAction
+          i information)⟩
 
-/-- Represented coherent information makes the pure-profile carrier
-inhabited. -/
+/-- The pure-profile carrier is inhabited without extra well-formedness
+assumptions. -/
 theorem nonempty_pureProfile
-    (hrepresented : G.AllDecisionInfoRepresented)
-    (hcoherent : G.DecisionMoverCoherent) :
-    Nonempty G.PureProfile := by
+    : Nonempty G.PureProfile := by
   classical
   exact
     ⟨fun i =>
       Classical.choice
-        (hrepresented.nonempty_pureStrategy hcoherent i)⟩
-
-end AllDecisionInfoRepresented
-
-namespace PureStrategyAvailabilityCertificate
-
-/-- An availability certificate supplies an inhabited pure-profile carrier. -/
-theorem nonempty_pureProfile
-    (certificate : G.PureStrategyAvailabilityCertificate) :
-    Nonempty G.PureProfile :=
-  certificate.allDecisionInfoRepresented.nonempty_pureProfile
-    certificate.decisionMoverCoherent
-
-end PureStrategyAvailabilityCertificate
+        (nonempty_pureStrategy i)⟩
 
 end ExtensiveGame.ControlledObservedGame
