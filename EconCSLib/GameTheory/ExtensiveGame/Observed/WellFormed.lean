@@ -16,10 +16,10 @@ finite textbook EFG algorithms without adding a second semantic game record.
 
 `FiniteEFGHypotheses` is structural and representation-aware. It uses a
 uniform bound in the complete-history unfolding rather than finite compact
-state, and it requires every declared decision information state to be
-represented. Finiteness of players and executable decidability assumptions
-remain theorem-local because many structural results do not enumerate
-players or compute transitions.
+state, and it requires finiteness only of represented decision information.
+Finiteness of players and executable decidability assumptions remain
+theorem-local because many structural results do not enumerate players or
+compute transitions.
 
 ## Main definitions
 
@@ -29,8 +29,8 @@ players or compute transitions.
 
 ## Main results
 
-* represented coherent information has a nonempty abstract action type;
-* coherent fully represented games have inhabited pure contingent plans;
+* represented raw information has a nonempty abstract action type;
+* represented-coordinate pure contingent plans are always inhabited;
 * every play under `FiniteEFGHypotheses` terminates and the unfolding is
   structurally well-founded.
 -/
@@ -65,66 +65,53 @@ theorem completeInformation_allDecisionInfoRepresented
   refine ⟨
     { history := information.1
       mover := information.2.1
-      nonterminal := information.2.2
+      decision := information.2.2
       infoAt_eq := ?_ }⟩
   cases information
   rfl
 
 namespace AllDecisionInfoRepresented
 
-/-- A represented information state in a mover-coherent game has at least one
-abstract legal action. -/
+/-- A represented raw information state has at least one abstract legal
+action. -/
 theorem nonempty_infoAction
     (hrepresented : G.AllDecisionInfoRepresented)
-    (hcoherent : G.DecisionMoverCoherent)
     (i : N) (information : G.InfoState i) :
     Nonempty (G.InfoAction i information) :=
   ControlledObservedGame.AllDecisionInfoRepresented.nonempty_infoAction
-    hrepresented hcoherent i information
-
-/-- Full representation and mover coherence make every player's total pure
-contingent-plan type inhabited. -/
-theorem nonempty_pureStrategy
-    (hrepresented : G.AllDecisionInfoRepresented)
-    (hcoherent : G.DecisionMoverCoherent)
-    (i : N) :
-    Nonempty (G.PureStrategy i) :=
-  ControlledObservedGame.AllDecisionInfoRepresented.nonempty_pureStrategy
-    hrepresented hcoherent i
-
-/-- Full representation and mover coherence make the pure-profile type
-inhabited, without requiring a finite player type. -/
-theorem nonempty_pureProfile
-    (hrepresented : G.AllDecisionInfoRepresented)
-    (hcoherent : G.DecisionMoverCoherent) :
-    Nonempty G.PureProfile :=
-  ControlledObservedGame.AllDecisionInfoRepresented.nonempty_pureProfile
-    hrepresented hcoherent
+    hrepresented i information
 
 end AllDecisionInfoRepresented
 
-/-- A mover-coherent canonical complete-information presentation has an
-inhabited pure-profile carrier.
+/-- Every player's represented-coordinate pure contingent-plan type is
+inhabited without extra well-formedness assumptions. -/
+theorem nonempty_pureStrategy
+    (i : N) :
+    Nonempty (G.PureStrategy i) :=
+  ControlledObservedGame.nonempty_pureStrategy i
 
-The coherence premise is essential because the unconstrained base game may
-attach a player mover label to a terminal state, whose action type is empty.
--/
+/-- The represented-coordinate pure-profile type is inhabited without extra
+well-formedness assumptions or a finite player type. -/
+theorem nonempty_pureProfile
+    : Nonempty G.PureProfile :=
+  ControlledObservedGame.nonempty_pureProfile
+
+/-- A canonical complete-information presentation has an inhabited pure-profile
+carrier. Terminal mover labels do not create strategy coordinates. -/
 theorem completeInformation_nonempty_pureProfile
-    (base : ExtensiveGame N U)
-    (hcoherent :
-      (completeInformation base).DecisionMoverCoherent) :
+    (base : ExtensiveGame N U) :
     Nonempty
       (completeInformation base).PureProfile :=
-  (completeInformation_allDecisionInfoRepresented
-    base).nonempty_pureProfile hcoherent
+  nonempty_pureProfile
 
 /-- Reusable structural hypotheses for a finite textbook EFG presentation.
 
 The selected `lengthBound` bounds the legal complete-history unfolding, not
-the compact state space. `finiteAction` and `finiteInfoState` are typeclass
-certificates stored propositionally and can be installed locally by an
-algorithm. Player finiteness, perfect recall, chance laws, preference orders,
-and decidable comparisons are intentionally separate. -/
+the compact state space. `finiteAction` stores explicit, executable concrete
+action enumerations, while `finiteDecisionPresentation` fixes an executable
+order on represented decision information and equality on each abstract
+action fiber. Player finiteness, recall, chance laws, and preference orders
+are intentionally separate. -/
 abbrev FiniteEFGHypotheses
     (G : ObservedGame N U) :=
   G.toControlledObservedGame.FiniteEFGHypotheses
@@ -146,20 +133,6 @@ theorem eventuallyTerminates
       G.base.toArena.CompletePlayFrom G.base.init) :
     play.EventuallyTerminates :=
   ControlledObservedGame.FiniteEFGHypotheses.eventuallyTerminates h play
-
-/-- The certificate makes every player's total pure contingent-plan type
-inhabited. -/
-theorem nonempty_pureStrategy
-    (h : G.FiniteEFGHypotheses) (i : N) :
-    Nonempty (G.PureStrategy i) :=
-  h.allDecisionInfoRepresented.nonempty_pureStrategy
-    h.decisionMoverCoherent i
-
-/-- The certificate makes the full pure-profile type inhabited. -/
-theorem nonempty_pureProfile
-    (h : G.FiniteEFGHypotheses) :
-    Nonempty G.PureProfile :=
-  ControlledObservedGame.FiniteEFGHypotheses.nonempty_pureProfile h
 
 end FiniteEFGHypotheses
 
