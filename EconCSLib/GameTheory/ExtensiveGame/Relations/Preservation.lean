@@ -81,7 +81,7 @@ abbrev CrossGameCompletePathLawRealization
   ControlledObservedGame.CrossGameCompletePathLawRealization S T
 
 /-- One-way bounded complete-history-law realization with playerwise
-strategy maps and exact occurrence-sensitive PMF equality. -/
+strategy maps and exact occurrence-sensitive finite-law equality. -/
 abbrev CompleteHistoryLawRealization
     {N : Type uN}
     (G : DiscreteControlledObservedChanceGame N)
