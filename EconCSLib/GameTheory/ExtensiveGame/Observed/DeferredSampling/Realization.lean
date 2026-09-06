@@ -17,12 +17,12 @@ universe uN uU uAS uO uI uP
 
 variable {N : Type uN} {U : Type uU}
 
-/-- Under finite information and no absent-mindedness, independently sampling
+/-- Under finite represented information and no absent-mindedness, independently sampling
 a complete pure plan from a behavioral profile gives exactly the same bounded
 complete-history law as sampling locally during play. -/
 theorem behavioralToMixed_stoppedHistoryLawFrom_of_noAbsentMindedness
     (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteNoAbsentMindednessHypotheses)
@@ -31,19 +31,25 @@ theorem behavioralToMixed_stoppedHistoryLawFrom_of_noAbsentMindedness
       G.observed.base.toArena.HistoryFrom
         G.observed.base.init)
     (fuel : ℕ) :
-    G.mixedStoppedHistoryLawFrom
+    (G.mixedStoppedHistoryLawFrom
         (h.behavioralToMixedProfile profile)
-        current fuel =
-      G.observed.base.toArena.stochasticHistoryPMFFrom
+        current fuel).Equivalent
+      (G.observed.base.toArena.stochasticHistoryLawFrom
         (BehavioralProfile.toHistoryPolicy G profile)
-        current fuel := by
-  classical
-  letI (i : N) : Finite (G.observed.InfoState i) :=
-    h.finiteInfoState i
-  letI (i : N) : Fintype (G.observed.InfoState i) :=
-    Fintype.ofFinite (G.observed.InfoState i)
+        current fuel) := by
+  letI (i : N) : Fintype (G.observed.RepresentedInfo i) :=
+    let presentation := (h.finiteDecisionPresentation i).1
+    Fintype.ofEquiv (Fin presentation.1) presentation.2.symm
+  letI (i : N) : LinearOrder (G.observed.RepresentedInfo i) :=
+    let presentation := (h.finiteDecisionPresentation i).1
+    LinearOrder.lift' presentation.2 presentation.2.injective
+  letI (i : N) (information : G.observed.RepresentedInfo i) :
+      DecidableEq (G.observed.InfoAction i information.1) :=
+    (h.finiteDecisionPresentation i).2 information
   letI : Fintype G.observed.DecisionKey :=
     inferInstance
+  letI : LinearOrder G.observed.DecisionKey :=
+    LinearOrder.lift' toLex toLex.injective
   let hnoAbsent :=
     h.noAbsentMindedness
   let tree :=
@@ -52,36 +58,33 @@ theorem behavioralToMixed_stoppedHistoryLawFrom_of_noAbsentMindedness
       (ObservedGame.FutureDecisionKeysAvailable.univ
         current)
       fuel
-  calc
-    G.mixedStoppedHistoryLawFrom
-        (h.behavioralToMixedProfile profile)
-        current fuel =
-      ((PMF.fintypePi
-        (profile.decisionLaw G.observed)).map
-          G.observed.decisionTableEquiv).bind
-        (fun pureProfile =>
-          G.observed.base.toArena.stochasticHistoryPMFFrom
-            (BehavioralProfile.toHistoryPolicy G
-              (pureProfile.toBehavioral G.observed))
-            current fuel) := by
-      unfold mixedStoppedHistoryLawFrom
-      rw [h.map_fintypePi_decisionLaw profile]
-    _ = PMF.FreshQueryTree.runPresampled
-          (profile.decisionLaw G.observed)
-          tree :=
-      (G.boundedHistoryTree_runPresampled_eq_flatMixed
-        profile hnoAbsent current fuel).symm
-    _ = G.observed.base.toArena.stochasticHistoryPMFFrom
-          (BehavioralProfile.toHistoryPolicy G profile)
-          current fuel :=
-      G.boundedHistoryTree_runPresampled
-        profile hnoAbsent current fuel
+  let continuation := fun pureProfile : G.observed.PureProfile =>
+    G.observed.base.toArena.stochasticHistoryLawFrom
+      (BehavioralProfile.toHistoryPolicy G
+        (pureProfile.toBehavioral G.observed))
+      current fuel
+  have htable :
+      (((FiniteLaw.fintypePi
+          (profile.decisionLaw G.observed)).map
+            G.observed.decisionTableEquiv).bind continuation).Equivalent
+        (((h.behavioralToMixedProfile profile).pureProfileLaw
+          G.observed).bind continuation) :=
+    (h.map_fintypePi_decisionLaw profile).bind
+      (fun _ => FiniteLaw.Equivalent.refl _)
+  have hpresampled :=
+    G.boundedHistoryTree_runPresampled_eq_flatMixed
+      profile hnoAbsent current fuel
+  exact
+    htable.symm.trans
+      (hpresampled.symm.trans
+        (G.boundedHistoryTree_runPresampled
+          profile hnoAbsent current fuel))
 
 /-- Compatibility wrapper under the stronger traditional finite Kuhn
 hypotheses. -/
 theorem behavioralToMixed_stoppedHistoryLawFrom
     (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteKuhnHypotheses)
@@ -90,12 +93,12 @@ theorem behavioralToMixed_stoppedHistoryLawFrom
       G.observed.base.toArena.HistoryFrom
         G.observed.base.init)
     (fuel : ℕ) :
-    G.mixedStoppedHistoryLawFrom
+    (G.mixedStoppedHistoryLawFrom
         (h.behavioralToMixedProfile profile)
-        current fuel =
-      G.observed.base.toArena.stochasticHistoryPMFFrom
+        current fuel).Equivalent
+      (G.observed.base.toArena.stochasticHistoryLawFrom
         (BehavioralProfile.toHistoryPolicy G profile)
-        current fuel := by
+        current fuel) := by
   let hweak :=
     h.toFiniteNoAbsentMindednessHypotheses
   simpa [hweak,
@@ -108,11 +111,11 @@ theorem behavioralToMixed_stoppedHistoryLawFrom
         hweak profile current fuel
 
 /-- Behavioral-to-mixed conversion preserves the complete bounded optional
-payoff law at every continuation root under finite information and no
+payoff law at every continuation root under finite represented information and no
 absent-mindedness. -/
 theorem behavioralToMixed_stoppedPayoffLawFrom_of_noAbsentMindedness
     (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteNoAbsentMindednessHypotheses)
@@ -121,37 +124,28 @@ theorem behavioralToMixed_stoppedPayoffLawFrom_of_noAbsentMindedness
       G.observed.base.toArena.HistoryFrom
         G.observed.base.init)
     (fuel : ℕ) :
-    G.mixedStoppedPayoffLawFrom
+    (G.mixedStoppedPayoffLawFrom
         (h.behavioralToMixedProfile profile)
-        current fuel =
-      G.behavioralStoppedPayoffLawFrom
-        profile current fuel := by
-  calc
-    G.mixedStoppedPayoffLawFrom
-        (h.behavioralToMixedProfile profile)
-        current fuel =
+        current fuel).Equivalent
+      (G.behavioralStoppedPayoffLawFrom
+        profile current fuel) := by
+  apply FiniteLaw.Equivalent.trans
+    (second :=
       (G.mixedStoppedHistoryLawFrom
         (h.behavioralToMixedProfile profile)
-        current fuel).map
-          G.stoppedPayoffAtHistory :=
-      G.mixedStoppedPayoffLawFrom_eq_map_history
-        (h.behavioralToMixedProfile profile)
-        current fuel
-    _ = (G.observed.base.toArena.stochasticHistoryPMFFrom
-            (BehavioralProfile.toHistoryPolicy G profile)
-            current fuel).map
-          G.stoppedPayoffAtHistory := by
-      rw [G.behavioralToMixed_stoppedHistoryLawFrom_of_noAbsentMindedness
-        h profile current fuel]
-    _ = G.behavioralStoppedPayoffLawFrom
-        profile current fuel :=
-      rfl
+        current fuel).map G.stoppedPayoffAtHistory)
+  · exact FiniteLaw.Equivalent.of_eq
+      (G.mixedStoppedPayoffLawFrom_eq_map_history
+        (h.behavioralToMixedProfile profile) current fuel)
+  exact
+    (G.behavioralToMixed_stoppedHistoryLawFrom_of_noAbsentMindedness
+      h profile current fuel).map G.stoppedPayoffAtHistory
 
 /-- Compatibility wrapper for payoff-law preservation under the stronger
 traditional finite Kuhn hypotheses. -/
 theorem behavioralToMixed_stoppedPayoffLawFrom
     (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteKuhnHypotheses)
@@ -160,11 +154,11 @@ theorem behavioralToMixed_stoppedPayoffLawFrom
       G.observed.base.toArena.HistoryFrom
         G.observed.base.init)
     (fuel : ℕ) :
-    G.mixedStoppedPayoffLawFrom
+    (G.mixedStoppedPayoffLawFrom
         (h.behavioralToMixedProfile profile)
-        current fuel =
-      G.behavioralStoppedPayoffLawFrom
-        profile current fuel := by
+        current fuel).Equivalent
+      (G.behavioralStoppedPayoffLawFrom
+        profile current fuel) := by
   let hweak :=
     h.toFiniteNoAbsentMindednessHypotheses
   simpa [hweak,
@@ -176,235 +170,247 @@ theorem behavioralToMixed_stoppedPayoffLawFrom
       G.behavioralToMixed_stoppedPayoffLawFrom_of_noAbsentMindedness
         hweak profile current fuel
 
-/-- Finite, non-absent-minded behavioral strategies map to mixed contingent
-plans by one exact continuation-family morphism.  Perfect recall is not
-required for this direction. -/
-noncomputable def behavioralToMixedContinuationHom_of_noAbsentMindedness
+/-- Finite, non-absent-minded behavioral strategies and their independently
+pre-sampled mixed plans have equivalent payoff laws at every declared root. -/
+theorem behavioralToMixedContinuationHom_of_noAbsentMindedness
     (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteNoAbsentMindednessHypotheses)
     (roots : G.observed.RootPresentation)
     (fuel : ℕ) :
-    (G.behavioralContinuationFamilyOnRoots roots fuel).Hom
-      (G.mixedContinuationFamilyOnRoots roots fuel) where
-  rootMap := id
-  strategyMap :=
-    h.behavioralToMixedStrategy
-  outcomeMap := id
-  map_declaredRoot := by
-    intro current hroot
-    exact hroot
-  map_outcome := by
-    intro current profile
-    change
-      G.behavioralStoppedPayoffLawFrom
-          profile current fuel =
-        G.mixedStoppedPayoffLawFrom
-          (h.behavioralToMixedProfile profile)
-          current fuel
-    exact
-      (G.behavioralToMixed_stoppedPayoffLawFrom_of_noAbsentMindedness
-        h profile current fuel).symm
+    ∀ current, roots.IsRoot current → ∀ profile,
+      (G.behavioralStoppedPayoffLawFrom
+        profile current fuel).Equivalent
+      (G.mixedStoppedPayoffLawFrom
+        (h.behavioralToMixedProfile profile) current fuel) := by
+  intro current _ profile
+  exact
+    (G.behavioralToMixed_stoppedPayoffLawFrom_of_noAbsentMindedness
+      h profile current fuel).symm
 
-/-- The weak-hypothesis behavioral-to-mixed morphism covers every admissible
-root because its root map is the identity. -/
+/-- The semantic behavioral-to-mixed realization uses the identity root map. -/
 theorem behavioralToMixedContinuationHom_of_noAbsentMindedness_declaredRootSurjective
     (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
-    (h : G.observed.FiniteNoAbsentMindednessHypotheses)
+    (_h : G.observed.FiniteNoAbsentMindednessHypotheses)
     (roots : G.observed.RootPresentation)
-    (fuel : ℕ) :
-    (G.behavioralToMixedContinuationHom_of_noAbsentMindedness
-      h roots fuel).DeclaredRootSurjective := by
+    (_fuel : ℕ) :
+    ∀ targetRoot, roots.IsRoot targetRoot →
+      ∃ sourceRoot, roots.IsRoot sourceRoot ∧ sourceRoot = targetRoot := by
   intro targetRoot htargetRoot
   exact ⟨targetRoot, htargetRoot, rfl⟩
 
-/-- Identity outcome transport preserves every common law utility under the
-weak behavioral-sampling hypotheses. -/
+/-- A utility that respects finite-law equivalence agrees on behavioral play
+and its independently pre-sampled mixed realization. -/
 theorem behavioralToMixedContinuationHom_of_noAbsentMindedness_utilityCompatible
     (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteNoAbsentMindednessHypotheses)
     (roots : G.observed.RootPresentation)
     (fuel : ℕ)
     {V : Type*}
-    (utility : PMF (Option (N → U)) → N → V) :
+    (utility : FiniteLaw (Option (N → U)) → N → V)
+    (hutility : ∀ {left right}, left.Equivalent right →
+      ∀ i, utility left i = utility right i) :
+    ∀ current, roots.IsRoot current → ∀ profile i,
+      utility (G.behavioralStoppedPayoffLawFrom
+        profile current fuel) i =
+      utility (G.mixedStoppedPayoffLawFrom
+        (h.behavioralToMixedProfile profile) current fuel) i := by
+  intro current hroot profile i
+  exact hutility
     (G.behavioralToMixedContinuationHom_of_noAbsentMindedness
-      h roots fuel).UtilityCompatible
-        (fun _ => utility)
-        (fun _ => utility) := by
-  intro current outcome i
-  rfl
+      h roots fuel current hroot profile) i
 
-/-- Mixed bounded Nash on presentation-designated continuations of the independently pre-sampled plan reflects to
-behavioral bounded Nash on presentation-designated continuations under finite information and no absent-mindedness.
-Perfect recall is not required for this one-way result. -/
+/-- Mixed bounded Nash reflects to behavioral bounded Nash for every utility
+that respects semantic equality of finite laws. -/
 theorem isBehavioralNashOnRootsAtFuel_of_behavioralToMixed_of_noAbsentMindedness
     (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
-    [Fintype N] [DecidableEq N]
-    [Preorder V]
+    [Fintype N] [LinearOrder N] [Preorder V]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteNoAbsentMindednessHypotheses)
     (roots : G.observed.RootPresentation)
-    (utility :
-      PMF (Option (N → U)) → N → V)
+    (utility : FiniteLaw (Option (N → U)) → N → V)
+    (hutility : ∀ {left right}, left.Equivalent right →
+      ∀ i, utility left i = utility right i)
     (profile : G.observed.BehavioralProfile)
     (fuel : ℕ)
-    (hmixed :
-      G.IsMixedNashOnRootsAtFuel
-        roots utility
-        (h.behavioralToMixedProfile profile)
-        fuel) :
-    G.IsBehavioralNashOnRootsAtFuel
-      roots utility profile fuel := by
+    (hmixed : G.IsMixedNashOnRootsAtFuel roots utility
+      (h.behavioralToMixedProfile profile) fuel) :
+    G.IsBehavioralNashOnRootsAtFuel roots utility profile fuel := by
+  intro current hroot i deviation
+  have hupdate :
+      h.behavioralToMixedProfile
+          (Function.update profile i deviation) =
+        Function.update (h.behavioralToMixedProfile profile) i
+          (h.behavioralToMixedStrategy i deviation) := by
+    funext j
+    by_cases hji : j = i
+    · subst j
+      simp [ObservedGame.FiniteNoAbsentMindednessHypotheses.behavioralToMixedProfile,
+        ObservedGame.FiniteNoAbsentMindednessHypotheses.behavioralToMixedStrategy,
+        ObservedGame.FiniteInformationHypotheses.behavioralToMixedProfile]
+    · simp [ObservedGame.FiniteNoAbsentMindednessHypotheses.behavioralToMixedProfile,
+        ObservedGame.FiniteNoAbsentMindednessHypotheses.behavioralToMixedStrategy,
+        ObservedGame.FiniteInformationHypotheses.behavioralToMixedProfile,
+        hji]
+  have hmixedDeviation :=
+    hmixed current hroot i (h.behavioralToMixedStrategy i deviation)
   change
-    (G.behavioralContinuationFamilyOnRoots
-      roots fuel).IsNashOnRoots
-        (fun _ => utility) profile
-  have hmixed' :
-      (G.mixedContinuationFamilyOnRoots
-        roots fuel).IsNashOnRoots
-          (fun _ => utility)
-          (h.behavioralToMixedProfile profile) :=
-    hmixed
-  exact
-    hmixed'.comap
-      (G.behavioralToMixedContinuationHom_of_noAbsentMindedness
-        h roots fuel)
-      (G.behavioralToMixedContinuationHom_of_noAbsentMindedness_utilityCompatible
-        h roots fuel utility)
+    utility (G.mixedStoppedPayoffLawFrom
+      (Function.update (h.behavioralToMixedProfile profile) i
+        (h.behavioralToMixedStrategy i deviation)) current fuel) i ≤
+    utility (G.mixedStoppedPayoffLawFrom
+      (h.behavioralToMixedProfile profile) current fuel) i at hmixedDeviation
+  rw [← hupdate] at hmixedDeviation
+  have hdeviationLaw :=
+    G.behavioralToMixed_stoppedPayoffLawFrom_of_noAbsentMindedness
+      h (Function.update profile i deviation) current fuel
+  have hprofileLaw :=
+    G.behavioralToMixed_stoppedPayoffLawFrom_of_noAbsentMindedness
+      h profile current fuel
+  calc
+    utility (G.behavioralStoppedPayoffLawFrom
+        (Function.update profile i deviation) current fuel) i =
+        utility (G.mixedStoppedPayoffLawFrom
+          (h.behavioralToMixedProfile
+            (Function.update profile i deviation)) current fuel) i :=
+      (hutility hdeviationLaw i).symm
+    _ ≤ utility (G.mixedStoppedPayoffLawFrom
+          (h.behavioralToMixedProfile profile) current fuel) i :=
+      hmixedDeviation
+    _ = utility (G.behavioralStoppedPayoffLawFrom
+          profile current fuel) i :=
+      hutility hprofileLaw i
 
-/-- Compatibility wrapper for the behavioral-to-mixed continuation morphism
-under the traditional finite perfect-recall hypotheses. -/
-noncomputable def behavioralToMixedContinuationHom
+/-- Perfect-recall compatibility wrapper for semantic continuation
+realization. -/
+theorem behavioralToMixedContinuationHom
     (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteKuhnHypotheses)
     (roots : G.observed.RootPresentation)
     (fuel : ℕ) :
-    (G.behavioralContinuationFamilyOnRoots roots fuel).Hom
-      (G.mixedContinuationFamilyOnRoots roots fuel) :=
+    ∀ current, roots.IsRoot current → ∀ profile,
+      (G.behavioralStoppedPayoffLawFrom
+        profile current fuel).Equivalent
+      (G.mixedStoppedPayoffLawFrom
+        (h.behavioralToMixedProfile profile) current fuel) :=
   G.behavioralToMixedContinuationHom_of_noAbsentMindedness
     h.toFiniteNoAbsentMindednessHypotheses roots fuel
 
-/-- The behavioral-to-mixed continuation morphism covers every admissible
-root because its root map is the identity. -/
+/-- The perfect-recall semantic realization uses the identity root map. -/
 theorem behavioralToMixedContinuationHom_declaredRootSurjective
     (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteKuhnHypotheses)
     (roots : G.observed.RootPresentation)
     (fuel : ℕ) :
-    (G.behavioralToMixedContinuationHom
-      h roots fuel).DeclaredRootSurjective := by
-  intro targetRoot htargetRoot
-  exact ⟨targetRoot, htargetRoot, rfl⟩
+    ∀ targetRoot, roots.IsRoot targetRoot →
+      ∃ sourceRoot, roots.IsRoot sourceRoot ∧ sourceRoot = targetRoot :=
+  G.behavioralToMixedContinuationHom_of_noAbsentMindedness_declaredRootSurjective
+    h.toFiniteNoAbsentMindednessHypotheses roots fuel
 
-/-- Identity outcome transport preserves every common law utility. -/
+/-- Perfect-recall compatibility wrapper for equivalence-respecting utility
+compatibility. -/
 theorem behavioralToMixedContinuationHom_utilityCompatible
     (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteKuhnHypotheses)
     (roots : G.observed.RootPresentation)
     (fuel : ℕ)
     {V : Type*}
-    (utility : PMF (Option (N → U)) → N → V) :
-    (G.behavioralToMixedContinuationHom
-      h roots fuel).UtilityCompatible
-        (fun _ => utility)
-        (fun _ => utility) := by
-  intro current outcome i
-  rfl
+    (utility : FiniteLaw (Option (N → U)) → N → V)
+    (hutility : ∀ {left right}, left.Equivalent right →
+      ∀ i, utility left i = utility right i) :
+    ∀ current, roots.IsRoot current → ∀ profile i,
+      utility (G.behavioralStoppedPayoffLawFrom
+        profile current fuel) i =
+      utility (G.mixedStoppedPayoffLawFrom
+        (h.behavioralToMixedProfile profile) current fuel) i :=
+  G.behavioralToMixedContinuationHom_of_noAbsentMindedness_utilityCompatible
+    h.toFiniteNoAbsentMindednessHypotheses roots fuel utility hutility
 
-/-- If the independently sampled mixed profile is bounded Nash on presentation-designated continuations, then the
-source behavioral profile is bounded Nash on presentation-designated continuations.
-
-This reflection direction needs only exact realization.  The converse still
-requires semantic coverage of arbitrary mixed deviations. -/
+/-- Perfect-recall compatibility wrapper for one-way Nash reflection. -/
 theorem isBehavioralNashOnRootsAtFuel_of_behavioralToMixed
     (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
-    [Fintype N] [DecidableEq N]
-    [Preorder V]
+    [Fintype N] [LinearOrder N] [Preorder V]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteKuhnHypotheses)
     (roots : G.observed.RootPresentation)
-    (utility :
-      PMF (Option (N → U)) → N → V)
+    (utility : FiniteLaw (Option (N → U)) → N → V)
+    (hutility : ∀ {left right}, left.Equivalent right →
+      ∀ i, utility left i = utility right i)
     (profile : G.observed.BehavioralProfile)
     (fuel : ℕ)
-    (hmixed :
-      G.IsMixedNashOnRootsAtFuel
-        roots utility
-        (h.behavioralToMixedProfile profile)
-        fuel) :
-    G.IsBehavioralNashOnRootsAtFuel
-      roots utility profile fuel := by
-  change
-    (G.behavioralContinuationFamilyOnRoots
-      roots fuel).IsNashOnRoots
-        (fun _ => utility) profile
-  have hmixed' :
-      (G.mixedContinuationFamilyOnRoots
-        roots fuel).IsNashOnRoots
-          (fun _ => utility)
-          (h.behavioralToMixedProfile profile) :=
-    hmixed
-  exact
-    hmixed'.comap
-      (G.behavioralToMixedContinuationHom
-        h roots fuel)
-      (G.behavioralToMixedContinuationHom_utilityCompatible
-        h roots fuel utility)
+    (hmixed : G.IsMixedNashOnRootsAtFuel roots utility
+      (h.behavioralToMixedProfile profile) fuel) :
+    G.IsBehavioralNashOnRootsAtFuel roots utility profile fuel :=
+  G.isBehavioralNashOnRootsAtFuel_of_behavioralToMixed_of_noAbsentMindedness
+    h.toFiniteNoAbsentMindednessHypotheses roots utility hutility
+      profile fuel hmixed
 
-/-- Two-way bounded Nash on presentation-designated continuations transfer follows once arbitrary mixed deviations are
-semantically realized by behavioral deviations at the source profile.
-
-The premise is deliberately semantic and rootwise; no false literal
-surjectivity claim about the two strategy spaces is required. -/
+/-- Two-way bounded Nash transfer follows from rootwise semantic coverage of
+arbitrary mixed deviations and an equivalence-respecting utility. -/
 theorem isBehavioralNashOnRootsAtFuel_iff_mixed_of_deviationComplete
     (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
-    [Fintype N] [DecidableEq N]
-    [Preorder V]
+    [Fintype N] [LinearOrder N] [Preorder V]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteKuhnHypotheses)
     (roots : G.observed.RootPresentation)
-    (utility :
-      PMF (Option (N → U)) → N → V)
+    (utility : FiniteLaw (Option (N → U)) → N → V)
+    (hutility : ∀ {left right}, left.Equivalent right →
+      ∀ i, utility left i = utility right i)
     (profile : G.observed.BehavioralProfile)
     (fuel : ℕ)
-    (hdeviation :
-      (G.behavioralToMixedContinuationHom
-        h roots fuel).OutcomeDeviationCompleteAt
-          profile) :
-    G.IsBehavioralNashOnRootsAtFuel
-        roots utility profile fuel ↔
-      G.IsMixedNashOnRootsAtFuel
-        roots utility
-        (h.behavioralToMixedProfile profile)
-        fuel := by
-  exact
-    (G.behavioralToMixedContinuationHom
-      h roots fuel).isNashOnRoots_iff_of_outcomeDeviationCompleteAt
-        (G.behavioralToMixedContinuationHom_utilityCompatible
-          h roots fuel utility)
-        (G.behavioralToMixedContinuationHom_declaredRootSurjective
-          h roots fuel)
-        profile
-        hdeviation
+    (hdeviation : ∀ current, roots.IsRoot current →
+      ∀ (i : N) (targetStrategy : G.observed.MixedStrategy i),
+        ∃ sourceStrategy : G.observed.BehavioralStrategy i,
+          (G.mixedStoppedPayoffLawFrom
+            (Function.update (h.behavioralToMixedProfile profile)
+              i targetStrategy) current fuel).Equivalent
+          (G.behavioralStoppedPayoffLawFrom
+            (Function.update profile i sourceStrategy)
+            current fuel)) :
+    G.IsBehavioralNashOnRootsAtFuel roots utility profile fuel ↔
+      G.IsMixedNashOnRootsAtFuel roots utility
+        (h.behavioralToMixedProfile profile) fuel := by
+  constructor
+  · intro hbehavior current hroot i targetStrategy
+    obtain ⟨sourceStrategy, htarget⟩ :=
+      hdeviation current hroot i targetStrategy
+    have hsource := hbehavior current hroot i sourceStrategy
+    have hprofile :=
+      G.behavioralToMixed_stoppedPayoffLawFrom
+        h profile current fuel
+    calc
+      utility (G.mixedStoppedPayoffLawFrom
+          (Function.update (h.behavioralToMixedProfile profile)
+            i targetStrategy) current fuel) i =
+          utility (G.behavioralStoppedPayoffLawFrom
+            (Function.update profile i sourceStrategy) current fuel) i :=
+        hutility htarget i
+      _ ≤ utility (G.behavioralStoppedPayoffLawFrom
+            profile current fuel) i := hsource
+      _ = utility (G.mixedStoppedPayoffLawFrom
+            (h.behavioralToMixedProfile profile) current fuel) i :=
+        (hutility hprofile i).symm
+  · exact G.isBehavioralNashOnRootsAtFuel_of_behavioralToMixed
+      h roots utility hutility profile fuel
 
 end ExtensiveGame.ObservedChanceGame
