@@ -14,7 +14,7 @@ Behavioral-strategy and finite stochastic-outcome transfer along strict
 observed chance-EFG isomorphisms.
 
 The strict structural isomorphism transports information-indexed behavioral
-strategies by exact `PMF` pushforward.  Its local information-action coherence
+strategies by exact `FiniteLaw` pushforward.  Its local information-action coherence
 and chance-kernel coherence then imply that the induced stochastic history
 policies commute at every corresponding history.  Consequently, every bounded
 continuation history law and optional-terminal-payoff law is identical after
@@ -32,7 +32,7 @@ a `CompleteSubgameSystem`.
 * `ObservedGame.Iso.behavioralStrategyEquiv` and
   `behavioralProfileEquiv` — exact transport of behavioral plans.
 * `ObservedChanceGame.behavioralContinuationGameForm` — the bounded
-  continuation game form whose outcome is an optional-terminal-payoff PMF.
+  continuation game form whose outcome is an optional-terminal-payoff FiniteLaw.
 * `ObservedChanceGame.IsBehavioralNashOnRootsAtFuel` —
   behavioral Nash at every presentation-designated continuation root under
   bounded stochastic execution.
@@ -41,7 +41,7 @@ a `CompleteSubgameSystem`.
 
 * `ObservedChanceGame.Iso.map_behavioralHistoryPolicy` — local policy
   naturality.
-* `ObservedChanceGame.Iso.map_behavioralHistoryPMFFrom` and
+* `ObservedChanceGame.Iso.map_behavioralHistoryLawFrom` and
   `map_behavioralStoppedPayoffLawFrom` — exact bounded stochastic semantics.
 * `ObservedChanceGame.Iso.behavioralContinuationGameFormIso` — continuation
   game-form isomorphism.
@@ -50,24 +50,24 @@ a `CompleteSubgameSystem`.
   presentation-designated continuations.
 -/
 
-namespace PMF
+namespace FiniteLaw
 
 universe u v
 
 variable {α : Type u} {β₁ β₂ : Type v}
 
-/-- Casting the codomain of a pushed-forward PMF is the same as pushing
+/-- Casting the codomain of a pushed-forward FiniteLaw is the same as pushing
 forward through the pointwise cast. -/
 theorem cast_map
-    (probability : PMF α)
+    (probability : FiniteLaw α)
     (function : α → β₁)
     (htype : β₁ = β₂) :
-    cast (congrArg PMF htype) (probability.map function) =
+    cast (congrArg FiniteLaw htype) (probability.map function) =
       probability.map fun value => cast htype (function value) := by
   subst β₂
   rfl
 
-end PMF
+end FiniteLaw
 
 namespace ExtensiveGame.ObservedGame.Iso
 
@@ -76,47 +76,47 @@ variable {G H : ObservedGame N U}
 
 /-- Behavioral strategies transport by pushing every local action law through
 the corresponding information-action equivalence. -/
-noncomputable def behavioralStrategyEquiv (e : G.Iso H) (i : N) :
+def behavioralStrategyEquiv (e : G.Iso H) (i : N) :
     G.BehavioralStrategy i ≃ H.BehavioralStrategy i :=
-  (e.infoStateEquiv i).piCongr fun information =>
-    PMF.mapEquiv (e.infoActionEquiv i information)
+  (e.representedInfoEquiv i).piCongr fun information =>
+    FiniteLaw.mapEquiv (e.representedInfoActionEquiv i information)
 
 @[simp]
 theorem behavioralStrategyEquiv_apply (e : G.Iso H) (i : N)
     (strategy : G.BehavioralStrategy i)
-    (information : G.InfoState i) :
+    (information : G.RepresentedInfo i) :
     e.behavioralStrategyEquiv i strategy
-        (e.infoStateEquiv i information) =
+        (e.representedInfoEquiv i information) =
       (strategy information).map
-        (e.infoActionEquiv i information) := by
+        (e.representedInfoActionEquiv i information) := by
   exact
     Equiv.piCongr_apply_apply
-      (W := fun state : G.InfoState i =>
-        PMF (G.toControlledObservedGame.InfoAction i state))
-      (Z := fun state : H.InfoState i =>
-        PMF (H.toControlledObservedGame.InfoAction i state))
-      (e.infoStateEquiv i)
+      (W := fun state : G.RepresentedInfo i =>
+        FiniteLaw (G.InfoAction i state.1))
+      (Z := fun state : H.RepresentedInfo i =>
+        FiniteLaw (H.InfoAction i state.1))
+      (e.representedInfoEquiv i)
       (fun state =>
-        PMF.mapEquiv (e.infoActionEquiv i state))
+        FiniteLaw.mapEquiv (e.representedInfoActionEquiv i state))
       strategy information
 
 /-- Map a complete behavioral profile along a strict observed-EFG
 isomorphism. -/
-noncomputable def mapBehavioralProfile (e : G.Iso H)
+def mapBehavioralProfile (e : G.Iso H)
     (profile : G.BehavioralProfile) :
     H.BehavioralProfile :=
   fun i => e.behavioralStrategyEquiv i (profile i)
 
 /-- Map a target behavioral profile back through a strict observed-EFG
 isomorphism. -/
-noncomputable def unmapBehavioralProfile (e : G.Iso H)
+def unmapBehavioralProfile (e : G.Iso H)
     (profile : H.BehavioralProfile) :
     G.BehavioralProfile :=
   fun i => (e.behavioralStrategyEquiv i).symm (profile i)
 
 /-- Strict observed-EFG isomorphisms induce an equivalence of complete
 behavioral profiles. -/
-noncomputable def behavioralProfileEquiv (e : G.Iso H) :
+def behavioralProfileEquiv (e : G.Iso H) :
     G.BehavioralProfile ≃ H.BehavioralProfile where
   toFun := e.mapBehavioralProfile
   invFun := e.unmapBehavioralProfile
@@ -170,13 +170,13 @@ theorem refl_mapBehavioralProfile
     (ObservedGame.Iso.refl G).behavioralStrategyEquiv i
         (profile i) information =
       (profile i information).map
-        ((ObservedGame.Iso.refl G).infoActionEquiv
+        ((ObservedGame.Iso.refl G).representedInfoActionEquiv
           i information) by
       exact
         behavioralStrategyEquiv_apply
           (ObservedGame.Iso.refl G) i
           (profile i) information]
-  simpa using PMF.map_id (profile i information)
+  simpa using FiniteLaw.map_id (profile i information)
 
 /-- Mapping behavioral profiles is functorial under composition of strict
 observed-game isomorphisms. -/
@@ -186,35 +186,79 @@ theorem trans_mapBehavioralProfile {K : ObservedGame N U}
     (profile : G.BehavioralProfile) :
     (e.trans f).mapBehavioralProfile profile =
       f.mapBehavioralProfile (e.mapBehavioralProfile profile) := by
+  classical
   funext i targetInformation
-  obtain ⟨middleInformation, rfl⟩ :=
-    (f.infoStateEquiv i).surjective targetInformation
+  have hrepresented :
+      (e.trans f).representedInfoEquiv i =
+        (e.representedInfoEquiv i).trans
+          (f.representedInfoEquiv i) := by
+    apply Equiv.ext
+    intro information
+    apply Subtype.ext
+    rfl
   obtain ⟨sourceInformation, rfl⟩ :=
-    (e.infoStateEquiv i).surjective middleInformation
+    ((e.representedInfoEquiv i).trans
+      (f.representedInfoEquiv i)).surjective targetInformation
+  let sourceFiber : G.RepresentedInfo i → Type _ :=
+    fun information => FiniteLaw (G.InfoAction i information.1)
+  let middleFiber : H.RepresentedInfo i → Type _ :=
+    fun information => FiniteLaw (H.InfoAction i information.1)
+  let targetFiber : K.RepresentedInfo i → Type _ :=
+    fun information => FiniteLaw (K.InfoAction i information.1)
+  let firstAction : ∀ information,
+      sourceFiber information ≃
+        middleFiber (e.representedInfoEquiv i information) :=
+    fun information =>
+      FiniteLaw.mapEquiv (e.representedInfoActionEquiv i information)
+  let secondAction : ∀ information,
+      middleFiber information ≃
+        targetFiber (f.representedInfoEquiv i information) :=
+    fun information =>
+      FiniteLaw.mapEquiv (f.representedInfoActionEquiv i information)
+  let compositeAction : ∀ information,
+      sourceFiber information ≃
+        targetFiber ((e.trans f).representedInfoEquiv i information) :=
+    fun information =>
+      FiniteLaw.mapEquiv
+        ((e.trans f).representedInfoActionEquiv i information)
   change
-    (e.trans f).behavioralStrategyEquiv i
-        (profile i)
-        (f.infoStateEquiv i
-          (e.infoStateEquiv i sourceInformation)) =
-      f.behavioralStrategyEquiv i
-        (e.behavioralStrategyEquiv i (profile i))
-        (f.infoStateEquiv i
-          (e.infoStateEquiv i sourceInformation))
-  rw [show
-    (e.trans f).behavioralStrategyEquiv i
-        (profile i)
-        (f.infoStateEquiv i
-          (e.infoStateEquiv i sourceInformation)) =
-      (profile i sourceInformation).map
-        ((e.trans f).infoActionEquiv
-          i sourceInformation) by
-      exact
-        behavioralStrategyEquiv_apply
-          (e.trans f) i (profile i) sourceInformation]
-  rw [behavioralStrategyEquiv_apply,
-    behavioralStrategyEquiv_apply,
-    PMF.map_comp]
+    ((e.trans f).representedInfoEquiv i).piCongr
+        compositeAction (profile i)
+        (f.representedInfoEquiv i
+          (e.representedInfoEquiv i sourceInformation)) =
+      (f.representedInfoEquiv i).piCongr secondAction
+        ((e.representedInfoEquiv i).piCongr
+          firstAction (profile i))
+        (f.representedInfoEquiv i
+          (e.representedInfoEquiv i sourceInformation))
+  have hcomp :
+      (e.trans f).representedInfoEquiv i sourceInformation =
+        f.representedInfoEquiv i
+          (e.representedInfoEquiv i sourceInformation) :=
+    congrArg (fun equivalence => equivalence sourceInformation) hrepresented
+  rw [Equiv.piCongr_apply_of_eq
+    ((e.trans f).representedInfoEquiv i) compositeAction
+    (profile i) sourceInformation _ hcomp]
+  rw [Equiv.piCongr_apply_apply, Equiv.piCongr_apply_apply]
+  let htype :
+      K.InfoAction i
+          ((e.trans f).representedInfoEquiv i sourceInformation).1 =
+        K.InfoAction i
+          (f.representedInfoEquiv i
+            (e.representedInfoEquiv i sourceInformation)).1 :=
+    congrArg (fun information => K.InfoAction i information.1) hcomp
+  change
+    cast (congrArg FiniteLaw htype)
+        ((profile i sourceInformation).map
+          ((e.trans f).representedInfoActionEquiv
+            i sourceInformation)) =
+      ((profile i sourceInformation).map
+          (e.representedInfoActionEquiv i sourceInformation)).map
+        (f.representedInfoActionEquiv i
+          (e.representedInfoEquiv i sourceInformation))
+  rw [FiniteLaw.cast_map, FiniteLaw.map_comp]
   rfl
+  exact htype
 
 /-- A mapped behavioral profile's abstract action law at a corresponding
 player history is the source law pushed through `infoActionEquivAt`. -/
@@ -224,71 +268,55 @@ theorem mapBehavioralProfile_infoAt
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource : G.base.mover history.1 = some i)
-    (hsource_nonterminal : ¬ G.base.isTerminal history.1)
+    (hsource_nonterminal : G.base.toArena.IsDecision history.1)
     (htarget :
       H.base.mover (e.historyIso.stateEquiv history).1 = some i)
     (htarget_nonterminal :
-      ¬ H.base.isTerminal
+      H.base.toArena.IsDecision
         (e.historyIso.stateEquiv history).1) :
     e.mapBehavioralProfile profile i
-        (H.infoAt (e.historyIso.stateEquiv history) i htarget
+        (H.representedInfoAt (e.historyIso.stateEquiv history) i htarget
           htarget_nonterminal) =
-      (profile i (G.infoAt history i hsource
+      (profile i (G.representedInfoAt history i hsource
         hsource_nonterminal)).map
         (e.infoActionEquivAt history i hsource
           hsource_nonterminal htarget htarget_nonterminal) := by
   let sourceInformation :=
-    G.infoAt history i hsource hsource_nonterminal
-  have hinfo :
-      e.infoStateEquiv i sourceInformation =
-        H.infoAt (e.historyIso.stateEquiv history) i htarget
-          htarget_nonterminal :=
-    e.map_infoAt history i hsource hsource_nonterminal
+    G.representedInfoAt history i hsource hsource_nonterminal
+  let targetInformation :=
+    H.representedInfoAt (e.historyIso.stateEquiv history) i
       htarget htarget_nonterminal
-  calc
-    e.mapBehavioralProfile profile i
-        (H.infoAt (e.historyIso.stateEquiv history) i htarget
-          htarget_nonterminal) =
-      cast
-        (congrArg
-          (fun information => PMF (H.InfoAction i information))
-          hinfo)
-        (PMF.mapEquiv
-          (e.infoActionEquiv i sourceInformation)
-          (profile i sourceInformation)) := by
-            exact
-              Equiv.piCongr_apply_of_eq
-                (W := fun information =>
-                  PMF (G.InfoAction i information))
-                (Z := fun information =>
-                  PMF (H.InfoAction i information))
-                (e.infoStateEquiv i)
-                (fun information =>
-                  PMF.mapEquiv
-                    (e.infoActionEquiv i information))
-                (profile i) sourceInformation
-                (H.infoAt
-                  (e.historyIso.stateEquiv history) i htarget
-                  htarget_nonterminal)
-                hinfo
-    _ = (profile i sourceInformation).map
-        (e.infoActionEquivAt history i hsource
-          hsource_nonterminal htarget
-          htarget_nonterminal) := by
-          change
-            cast
-                (congrArg
-                  (fun information =>
-                    PMF (H.InfoAction i information))
-                  hinfo)
-                ((profile i sourceInformation).map
-                  (e.infoActionEquiv i sourceInformation)) =
-              (profile i sourceInformation).map
-                (e.infoActionEquivAt
-                  history i hsource hsource_nonterminal
-                  htarget htarget_nonterminal)
-          rw [PMF.cast_map]
-          rfl
+  have hrepresented :
+      e.representedInfoEquiv i sourceInformation =
+        targetInformation :=
+    Subtype.ext
+      (e.map_infoAt history i hsource hsource_nonterminal
+        htarget htarget_nonterminal)
+  have hpi :=
+    Equiv.piCongr_apply_of_eq
+      (W := fun information : G.RepresentedInfo i =>
+        FiniteLaw (G.InfoAction i information.1))
+      (Z := fun information : H.RepresentedInfo i =>
+        FiniteLaw (H.InfoAction i information.1))
+      (e.representedInfoEquiv i)
+      (fun information =>
+        FiniteLaw.mapEquiv
+          (e.representedInfoActionEquiv i information))
+      (profile i) sourceInformation targetInformation hrepresented
+  let htype :
+      H.InfoAction i (e.representedInfoEquiv i sourceInformation).1 =
+        H.InfoAction i targetInformation.1 :=
+    congrArg (fun information => H.InfoAction i information.1)
+      hrepresented
+  change
+    _ = cast (congrArg FiniteLaw htype)
+      ((profile i sourceInformation).map
+        (e.representedInfoActionEquiv i sourceInformation)) at hpi
+  rw [FiniteLaw.cast_map] at hpi
+  simpa [sourceInformation, targetInformation,
+    behavioralStrategyEquiv, mapBehavioralProfile,
+    representedInfoEquiv, representedInfoActionEquiv,
+    infoActionEquivAt] using hpi
 
 /-- At corresponding player histories, the concrete behavioral action law is
 the exact pushforward of the source law through the strict history-action
@@ -311,54 +339,74 @@ theorem map_behavioralActionLaw
       (e.mapBehavioralProfile profile).actionLawAt H
         (e.historyIso.stateEquiv history) i htarget
         htarget_nonterminal := by
+  let hsourceDecision :=
+    G.base.toArena.isDecision_of_not_isTerminal
+      history.1 hsource_nonterminal
+  let htargetDecision :=
+    H.base.toArena.isDecision_of_not_isTerminal
+      (e.historyIso.stateEquiv history).1 htarget_nonterminal
   unfold ObservedGame.BehavioralProfile.actionLawAt
     ObservedGame.BehavioralStrategy.actionLawAt
+    ControlledObservedGame.BehavioralStrategy.actionLawAt
+  change
+    ((profile i
+        (G.representedInfoAt history i hsource hsourceDecision)).map
+      (G.actionEquiv history i hsource hsourceDecision)).map
+        (e.historyIso.actionEquiv history) =
+      ((e.mapBehavioralProfile profile i
+          (H.representedInfoAt
+            (e.historyIso.stateEquiv history) i htarget
+            htargetDecision)).map
+        (H.actionEquiv
+          (e.historyIso.stateEquiv history) i htarget
+          htargetDecision))
   rw [mapBehavioralProfile_infoAt e profile history i
-    hsource hsource_nonterminal htarget htarget_nonterminal]
+    hsource hsourceDecision htarget htargetDecision]
   let probability :=
-    profile i (G.infoAt history i hsource hsource_nonterminal)
+    profile i
+      (G.representedInfoAt history i hsource hsourceDecision)
   calc
     (probability.map
         (G.actionEquiv history i hsource
-          hsource_nonterminal)).map
+          hsourceDecision)).map
         (e.historyIso.actionEquiv history) =
       probability.map
         ((e.historyIso.actionEquiv history) ∘
           (G.actionEquiv history i hsource
-            hsource_nonterminal)) :=
-      PMF.map_comp
+            hsourceDecision)) :=
+      FiniteLaw.map_comp
         (G.actionEquiv history i hsource
-          hsource_nonterminal)
+          hsourceDecision)
         probability
         (e.historyIso.actionEquiv history)
     _ = probability.map
         ((H.actionEquiv
             (e.historyIso.stateEquiv history) i htarget
-            htarget_nonterminal) ∘
+            htargetDecision) ∘
           (e.infoActionEquivAt history i hsource
-            hsource_nonterminal htarget
-            htarget_nonterminal)) := by
+            hsourceDecision htarget
+            htargetDecision)) := by
           apply congrArg (fun actionMap => probability.map actionMap)
           funext action
           exact
             (e.map_infoActionEquivAt
-              history i hsource hsource_nonterminal
-              htarget htarget_nonterminal action).symm
+              history i hsource hsourceDecision
+              htarget htargetDecision action).symm
     _ = (probability.map
           (e.infoActionEquivAt history i hsource
-            hsource_nonterminal htarget
-            htarget_nonterminal)).map
+            hsourceDecision htarget
+            htargetDecision)).map
         (H.actionEquiv
           (e.historyIso.stateEquiv history) i htarget
-          htarget_nonterminal) :=
-      (PMF.map_comp
+          htargetDecision) :=
+      (FiniteLaw.map_comp
         (e.infoActionEquivAt history i hsource
-          hsource_nonterminal htarget
-          htarget_nonterminal)
+          hsourceDecision htarget
+          htargetDecision)
         probability
         (H.actionEquiv
           (e.historyIso.stateEquiv history) i htarget
-          htarget_nonterminal)).symm
+          htargetDecision)).symm
 
 end ExtensiveGame.ObservedGame.Iso
 
@@ -424,7 +472,7 @@ theorem map_behavioralHistoryPolicy
 
 /-- Exact naturality of bounded stochastic continuation execution under a
 strict observed chance-EFG isomorphism. -/
-theorem map_behavioralHistoryPMFFrom
+theorem map_behavioralHistoryLawFrom
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     [(state : H.observed.base.State) →
@@ -434,11 +482,11 @@ theorem map_behavioralHistoryPMFFrom
     (current :
       G.observed.base.toArena.HistoryFrom G.observed.base.init) :
     ∀ fuel,
-      (G.observed.base.toArena.stochasticHistoryPMFFrom
+      (G.observed.base.toArena.stochasticHistoryLawFrom
           (BehavioralProfile.toHistoryPolicy G profile)
           current fuel).map
           e.observedIso.historyIso.stateEquiv =
-        H.observed.base.toArena.stochasticHistoryPMFFrom
+        H.observed.base.toArena.stochasticHistoryLawFrom
           (BehavioralProfile.toHistoryPolicy H
             (e.observedIso.mapBehavioralProfile profile))
           (e.observedIso.historyIso.stateEquiv current)
@@ -447,7 +495,7 @@ theorem map_behavioralHistoryPMFFrom
   induction fuel generalizing current with
   | zero =>
       exact
-        PMF.pure_map
+        FiniteLaw.pure_map
           e.observedIso.historyIso.stateEquiv current
   | succ fuel ih =>
       by_cases hsource :
@@ -456,26 +504,26 @@ theorem map_behavioralHistoryPMFFrom
             H.observed.base.isTerminal
               (e.observedIso.historyIso.stateEquiv current).1 :=
           (e.observedIso.isTerminal_iff current).mp hsource
-        rw [Arena.stochasticHistoryPMFFrom_succ_of_terminal
+        rw [Arena.stochasticHistoryLawFrom_succ_of_terminal
           (BehavioralProfile.toHistoryPolicy G profile)
           current fuel hsource]
-        rw [Arena.stochasticHistoryPMFFrom_succ_of_terminal
+        rw [Arena.stochasticHistoryLawFrom_succ_of_terminal
           (BehavioralProfile.toHistoryPolicy H
             (e.observedIso.mapBehavioralProfile profile))
           (e.observedIso.historyIso.stateEquiv current)
           fuel htarget]
         exact
-          PMF.pure_map
+          FiniteLaw.pure_map
             e.observedIso.historyIso.stateEquiv current
       · have htarget :
             ¬ H.observed.base.isTerminal
               (e.observedIso.historyIso.stateEquiv current).1 :=
           not_congr
             (e.observedIso.isTerminal_iff current) |>.mp hsource
-        rw [Arena.stochasticHistoryPMFFrom_succ_of_not_terminal
+        rw [Arena.stochasticHistoryLawFrom_succ_of_not_terminal
           (BehavioralProfile.toHistoryPolicy G profile)
           current fuel hsource]
-        rw [Arena.stochasticHistoryPMFFrom_succ_of_not_terminal
+        rw [Arena.stochasticHistoryLawFrom_succ_of_not_terminal
           (BehavioralProfile.toHistoryPolicy H
             (e.observedIso.mapBehavioralProfile profile))
           (e.observedIso.historyIso.stateEquiv current)
@@ -488,7 +536,7 @@ theorem map_behavioralHistoryPMFFrom
         let sourceLaw := sourcePolicy current hsource
         let targetContinuation :=
           fun action =>
-            H.observed.base.toArena.stochasticHistoryPMFFrom
+            H.observed.base.toArena.stochasticHistoryLawFrom
               targetPolicy
               ⟨H.observed.base.next
                   (e.observedIso.historyIso.stateEquiv current).1
@@ -499,7 +547,7 @@ theorem map_behavioralHistoryPMFFrom
         calc
           (sourceLaw.bind
               (fun action =>
-                G.observed.base.toArena.stochasticHistoryPMFFrom
+                G.observed.base.toArena.stochasticHistoryLawFrom
                   sourcePolicy
                   ⟨G.observed.base.next current.1 action,
                     current.2.snoc action⟩
@@ -507,15 +555,15 @@ theorem map_behavioralHistoryPMFFrom
                 e.observedIso.historyIso.stateEquiv =
             sourceLaw.bind
               (fun action =>
-                (G.observed.base.toArena.stochasticHistoryPMFFrom
+                (G.observed.base.toArena.stochasticHistoryLawFrom
                     sourcePolicy
                     ⟨G.observed.base.next current.1 action,
                       current.2.snoc action⟩
                     fuel).map
                   e.observedIso.historyIso.stateEquiv) :=
-                    PMF.map_bind sourceLaw
+                    FiniteLaw.map_bind sourceLaw
                       (fun action =>
-                        G.observed.base.toArena.stochasticHistoryPMFFrom
+                        G.observed.base.toArena.stochasticHistoryLawFrom
                           sourcePolicy
                           ⟨G.observed.base.next current.1 action,
                             current.2.snoc action⟩
@@ -524,7 +572,7 @@ theorem map_behavioralHistoryPMFFrom
           _ =
             sourceLaw.bind
               (fun action =>
-                H.observed.base.toArena.stochasticHistoryPMFFrom
+                H.observed.base.toArena.stochasticHistoryLawFrom
                   targetPolicy
                   (e.observedIso.historyIso.stateEquiv
                     ⟨G.observed.base.next current.1 action,
@@ -546,13 +594,13 @@ theorem map_behavioralHistoryPMFFrom
                   funext action
                   unfold targetContinuation
                   change
-                    H.observed.base.toArena.stochasticHistoryPMFFrom
+                    H.observed.base.toArena.stochasticHistoryLawFrom
                         targetPolicy
                         (e.observedIso.historyIso.stateEquiv
                           ⟨G.observed.base.next current.1 action,
                             current.2.snoc action⟩)
                         fuel =
-                      H.observed.base.toArena.stochasticHistoryPMFFrom
+                      H.observed.base.toArena.stochasticHistoryLawFrom
                         targetPolicy
                         ⟨H.observed.base.next
                             (e.observedIso.historyIso.stateEquiv
@@ -566,14 +614,14 @@ theorem map_behavioralHistoryPMFFrom
                         fuel
                   apply congrArg
                     (fun next =>
-                      H.observed.base.toArena.stochasticHistoryPMFFrom
+                      H.observed.base.toArena.stochasticHistoryLawFrom
                         targetPolicy next fuel)
                   exact
                     e.observedIso.historyIso.map_next current action
           _ = (sourceLaw.map
                 (e.observedIso.historyIso.actionEquiv current)).bind
               targetContinuation :=
-                (PMF.bind_map sourceLaw
+                (FiniteLaw.bind_map sourceLaw
                   (e.observedIso.historyIso.actionEquiv current)
                   targetContinuation).symm
           _ = (targetPolicy
@@ -608,7 +656,7 @@ def stoppedPayoffAtHistory (G : ObservedChanceGame N U)
 /-- The bounded law of an optional terminal payoff from an accumulated
 history under a behavioral profile.  Nonterminal exhaustion is represented
 by `none`. -/
-noncomputable def behavioralStoppedPayoffLawFrom
+def behavioralStoppedPayoffLawFrom
     (G : ObservedChanceGame N U)
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
@@ -616,8 +664,8 @@ noncomputable def behavioralStoppedPayoffLawFrom
     (current :
       G.observed.base.toArena.HistoryFrom G.observed.base.init)
     (fuel : ℕ) :
-    PMF (Option (N → U)) :=
-  (G.observed.base.toArena.stochasticHistoryPMFFrom
+    FiniteLaw (Option (N → U)) :=
+  (G.observed.base.toArena.stochasticHistoryLawFrom
       (BehavioralProfile.toHistoryPolicy G profile)
       current fuel).map
     G.stoppedPayoffAtHistory
@@ -627,7 +675,7 @@ noncomputable def behavioralStoppedPayoffLawFrom
 Its outcome retains the entire probability law on optional terminal payoff
 vectors.  Expected utility, risk-sensitive utility, or any other preference
 functional on that law can therefore be supplied externally. -/
-noncomputable def behavioralContinuationGameForm
+def behavioralContinuationGameForm
     (G : ObservedChanceGame N U)
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
@@ -636,7 +684,7 @@ noncomputable def behavioralContinuationGameForm
     (fuel : ℕ) :
     GameForm N where
   Strategy := G.observed.BehavioralStrategy
-  Outcome := PMF (Option (N → U))
+  Outcome := FiniteLaw (Option (N → U))
   outcome profile :=
     G.behavioralStoppedPayoffLawFrom profile current fuel
 
@@ -653,7 +701,7 @@ def IsBehavioralNashOnRootsAtFuel
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (roots : G.observed.RootPresentation)
-    (utility : PMF (Option (N → U)) → N → V)
+    (utility : FiniteLaw (Option (N → U)) → N → V)
     (profile : G.observed.BehavioralProfile)
     (fuel : ℕ) : Prop :=
   ∀ current :
@@ -670,7 +718,7 @@ def IsBehavioralSubgamePerfectOnAtFuel
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (system : G.observed.SubgameSystem)
-    (utility : PMF (Option (N → U)) → N → V)
+    (utility : FiniteLaw (Option (N → U)) → N → V)
     (profile : G.observed.BehavioralProfile)
     (fuel : ℕ) : Prop :=
   ∀ current :
@@ -687,7 +735,7 @@ def IsBehavioralStandardSubgamePerfectAtFuel
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (system : G.observed.CompleteSubgameSystem)
-    (utility : PMF (Option (N → U)) → N → V)
+    (utility : FiniteLaw (Option (N → U)) → N → V)
     (profile : G.observed.BehavioralProfile)
     (fuel : ℕ) : Prop :=
   G.IsBehavioralSubgamePerfectOnAtFuel system.toSubgameSystem
@@ -744,9 +792,9 @@ theorem map_behavioralStoppedPayoffLawFrom
         fuel =
       G.behavioralStoppedPayoffLawFrom profile current fuel := by
   unfold behavioralStoppedPayoffLawFrom
-  rw [← e.map_behavioralHistoryPMFFrom profile current fuel]
+  rw [← e.map_behavioralHistoryLawFrom profile current fuel]
   let sourceLaw :=
-    G.observed.base.toArena.stochasticHistoryPMFFrom
+    G.observed.base.toArena.stochasticHistoryLawFrom
       (BehavioralProfile.toHistoryPolicy G profile)
       current fuel
   calc
@@ -756,7 +804,7 @@ theorem map_behavioralStoppedPayoffLawFrom
       sourceLaw.map
         (H.stoppedPayoffAtHistory ∘
           e.observedIso.historyIso.stateEquiv) :=
-            PMF.map_comp
+            FiniteLaw.map_comp
               e.observedIso.historyIso.stateEquiv
               sourceLaw
               H.stoppedPayoffAtHistory
@@ -768,7 +816,7 @@ theorem map_behavioralStoppedPayoffLawFrom
 
 /-- Corresponding bounded behavioral continuation games are strictly
 isomorphic. -/
-noncomputable def behavioralContinuationGameFormIso
+def behavioralContinuationGameFormIso
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     [(state : H.observed.base.State) →
@@ -796,7 +844,7 @@ theorem behavioralContinuationGameFormIso_utilityCompatible
     [(state : H.observed.base.State) →
       Decidable (H.observed.base.isTerminal state)]
     (e : G.Iso H)
-    (utility : PMF (Option (N → U)) → N → V)
+    (utility : FiniteLaw (Option (N → U)) → N → V)
     (current :
       G.observed.base.toArena.HistoryFrom G.observed.base.init)
     (fuel : ℕ) :
@@ -815,7 +863,7 @@ theorem behavioralContinuationIsNash_iff
     [(state : H.observed.base.State) →
       Decidable (H.observed.base.isTerminal state)]
     (e : G.Iso H)
-    (utility : PMF (Option (N → U)) → N → V)
+    (utility : FiniteLaw (Option (N → U)) → N → V)
     (profile : G.observed.BehavioralProfile)
     (current :
       G.observed.base.toArena.HistoryFrom G.observed.base.init)
@@ -848,7 +896,7 @@ theorem isBehavioralNashOnRootsAtFuel_iff
     (hroots :
       e.observedIso.PreservesRootPresentations
         sourceRoots targetRoots)
-    (utility : PMF (Option (N → U)) → N → V)
+    (utility : FiniteLaw (Option (N → U)) → N → V)
     (profile : G.observed.BehavioralProfile)
     (fuel : ℕ) :
     G.IsBehavioralNashOnRootsAtFuel sourceRoots utility profile fuel ↔
