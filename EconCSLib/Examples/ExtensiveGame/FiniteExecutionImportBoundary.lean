@@ -6,14 +6,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import EconCSLib.GameTheory.ExtensiveGame.Interface.Execution.Finite
 
 /-!
-# Finite PMF execution import boundary
+# Finite-law execution import boundary
 
 The finite-fuel public entry exposes deterministic, observed behavioral, and
-PMF-kernel execution without the measure-valued infinite-path or non-atomic
+finite-kernel execution without the measure-valued infinite-path or non-atomic
 kernel layers.
 -/
 
-#check Arena.stochasticHistoryPMFFrom
+#check Arena.stochasticHistoryLawFrom
 #check ExtensiveGame.ObservedChanceGame.withChanceKernel
 #check ExtensiveGame.DiscreteObservedChanceGame
 #check ExtensiveGame.ObservedChanceGame.completeInformation
@@ -44,11 +44,12 @@ example
     (profile : G.BehavioralProfile)
     (current endpoint : G.observed.base.History)
     (fuel : ℕ)
-    (hsupport : endpoint ∈ (S.historyLaw profile current fuel).support) :
+    (hsupport :
+      (S.historyLaw profile current fuel).HasPositiveAtom endpoint) :
     ∃ suffix :
         G.observed.base.toArena.History current.1 endpoint.1,
       endpoint.2 = current.2.append suffix :=
-  S.exists_suffix_of_mem_support profile current endpoint fuel hsupport
+  S.exists_suffix_of_hasPositiveAtom profile current endpoint fuel hsupport
 
 /-- Terminal absorption can likewise be consumed through the certificate:
 every supported endpoint is the current history itself. -/
@@ -58,9 +59,10 @@ example
     (current endpoint : G.observed.base.History)
     (fuel : ℕ)
     (hterminal : G.observed.base.isTerminal current.1)
-    (hsupport : endpoint ∈ (S.historyLaw profile current fuel).support) :
+    (hsupport :
+      (S.historyLaw profile current fuel).HasPositiveAtom endpoint) :
     endpoint = current :=
-  S.eq_current_of_terminal_of_mem_support
+  S.eq_current_of_terminal_of_hasPositiveAtom
     profile current endpoint fuel hterminal hsupport
 
 end CertifiedContinuationSupportBoundary
