@@ -20,7 +20,7 @@ mass may be paired only between actions whose successor kernels themselves
 admit a state-relation coupling.
 
 The resulting transfer theorem is stronger than support-level reachability:
-it constructs a joint PMF of complete finite traces, has the two trace laws as
+it constructs a joint finite law of complete finite traces, has the two trace laws as
 its exact marginals, and is supported on pointwise-related traces.
 
 ## Main definitions
@@ -38,45 +38,34 @@ its exact marginals, and is supported on pointwise-related traces.
   finite-horizon endpoint transfer.
 * `KernelArena.Simulation.PolicyMatch.traceLawCoupling` — exact
   finite-horizon trajectory transfer.
-* `KernelArena.Simulation.PolicyMatch.traceObservableLaw_eq` — exact equality
-  of any related trace-observable laws.
+* `KernelArena.Simulation.PolicyMatch.traceObservableLaw_equivalent` — exact
+  semantic equivalence of any related trace-observable laws.
 -/
 
 namespace KernelArena
 
-/-- Classical fallback for deciding whether a kernel-Arena action type is
-empty.
-
-Concrete arenas may provide a computational instance at the default higher
-priority.  The fallback keeps stopped stochastic semantics representation
-neutral. -/
-noncomputable instance (priority := 100) instDecidableIsEmptyAction
-    (A : KernelArena) (s : A.State) :
-    Decidable (IsEmpty (A.Action s)) :=
-  Classical.propDecidable _
-
 /-- A terminal-aware randomized Markov policy for a stochastic arena.
 
 The nonterminal certificate prevents a policy from being required to produce
-a `PMF` on an empty action type at a terminal state. -/
+a `FiniteLaw` on an empty action type at a terminal state. -/
 abbrev Policy (A : KernelArena) :=
-  (s : A.State) → ¬ IsEmpty (A.Action s) → PMF (A.Action s)
+  (s : A.State) → ¬ IsEmpty (A.Action s) → FiniteLaw (A.Action s)
 
 /-- The successor-state law produced by one policy-controlled step. -/
-noncomputable def stepLaw (A : KernelArena) (policy : A.Policy)
+def stepLaw (A : KernelArena) (policy : A.Policy)
     (s : A.State) (hnonterminal : ¬ IsEmpty (A.Action s)) :
-    PMF A.State :=
+    FiniteLaw A.State :=
   (policy s hnonterminal).bind (A.next s)
 
 /-- The stopped state law after at most `horizon` policy-controlled steps. -/
-noncomputable def stateLawFrom (A : KernelArena)
+def stateLawFrom (A : KernelArena)
     [(s : A.State) → Decidable (IsEmpty (A.Action s))]
     (policy : A.Policy) :
-    Nat → A.State → PMF A.State
-  | 0, s => pure s
+    Nat → A.State → FiniteLaw A.State
+  | 0, s => FiniteLaw.pure s
   | horizon + 1, s =>
       if hterminal : IsEmpty (A.Action s) then
-        pure s
+        FiniteLaw.pure s
       else
         (A.stepLaw policy s hterminal).bind
           (A.stateLawFrom policy horizon)
@@ -85,14 +74,14 @@ noncomputable def stateLawFrom (A : KernelArena)
 
 The initial state is included.  A trace has `horizon + 1` entries unless it
 reaches a terminal state first. -/
-noncomputable def traceLawFrom (A : KernelArena)
+def traceLawFrom (A : KernelArena)
     [(s : A.State) → Decidable (IsEmpty (A.Action s))]
     (policy : A.Policy) :
-    Nat → A.State → PMF (List A.State)
-  | 0, s => pure [s]
+    Nat → A.State → FiniteLaw (List A.State)
+  | 0, s => FiniteLaw.pure [s]
   | horizon + 1, s =>
       if hterminal : IsEmpty (A.Action s) then
-        pure [s]
+        FiniteLaw.pure [s]
       else
         (A.stepLaw policy s hterminal).bind fun nextState =>
           (A.traceLawFrom policy horizon nextState).map fun tail =>
@@ -109,14 +98,18 @@ their action laws admit an exact coupling.  Every positive-mass action pair in
 that coupling must in turn have successor laws coupled along the simulation's
 state relation. -/
 structure PolicyMatch (simulation : A.Simulation B)
-    [(source : A.State) → Decidable (IsEmpty (A.Action source))]
-    [(target : B.State) → Decidable (IsEmpty (B.Action target))]
-    (sourcePolicy : A.Policy) (targetPolicy : B.Policy) : Prop where
+    (sourcePolicy : A.Policy) (targetPolicy : B.Policy) where
   /-- Matched execution stops on both sides at the same macro boundary. -/
   terminal_iff :
     ∀ {source target},
       simulation.Rel source target →
         (IsEmpty (A.Action source) ↔ IsEmpty (B.Action target))
+  /-- Relation describing which action pairs carry matched transition
+  kernels. -/
+  actionRel :
+    ∀ {source target},
+      simulation.Rel source target →
+        A.Action source → B.Action target → Prop
   /-- Coupling of action laws, carrying a successor-kernel coupling at every
   supported action pair. -/
   actionCoupling :
@@ -124,13 +117,21 @@ structure PolicyMatch (simulation : A.Simulation B)
       (_hrelated : simulation.Rel source target)
       (hsource : ¬ IsEmpty (A.Action source))
       (htarget : ¬ IsEmpty (B.Action target)),
-      PMF.RelCoupling
-        (fun sourceAction targetAction =>
-          PMF.RelCoupling simulation.Rel
-            (A.next source sourceAction)
-            (B.next target targetAction))
+      FiniteLaw.RelCoupling
+        (actionRel _hrelated)
         (sourcePolicy source hsource)
         (targetPolicy target htarget)
+  /-- Every related action pair has an explicit coupling of its successor
+  laws. -/
+  kernelCoupling :
+    ∀ {source target}
+      (hrelated : simulation.Rel source target)
+      (sourceAction : A.Action source)
+      (targetAction : B.Action target),
+      actionRel hrelated sourceAction targetAction →
+        FiniteLaw.RelCoupling simulation.Rel
+          (A.next source sourceAction)
+          (B.next target targetAction)
 
 namespace PolicyMatch
 
@@ -141,41 +142,44 @@ variable
 variable {sourcePolicy : A.Policy} {targetPolicy : B.Policy}
 
 /-- Matched policies produce exactly coupled one-step state laws. -/
-theorem stepCoupling
+def stepCoupling
     (matchPolicy : simulation.PolicyMatch sourcePolicy targetPolicy)
     {source : A.State} {target : B.State}
     (hrelated : simulation.Rel source target)
     (hsource : ¬ IsEmpty (A.Action source))
     (htarget : ¬ IsEmpty (B.Action target)) :
-    PMF.RelCoupling simulation.Rel
+    FiniteLaw.RelCoupling simulation.Rel
       (A.stepLaw sourcePolicy source hsource)
       (B.stepLaw targetPolicy target htarget) := by
   exact
     (matchPolicy.actionCoupling hrelated hsource htarget).bind
-      (fun _ _ hkernel => hkernel)
+      (fun sourceAction targetAction haction =>
+        matchPolicy.kernelCoupling hrelated sourceAction targetAction haction)
 
 /-- Matched policies produce exactly coupled finite-horizon state laws. -/
-theorem stateLawCoupling
+def stateLawCoupling
     (matchPolicy : simulation.PolicyMatch sourcePolicy targetPolicy)
     {source : A.State} {target : B.State}
     (hrelated : simulation.Rel source target) (horizon : Nat) :
-    PMF.RelCoupling simulation.Rel
+    FiniteLaw.RelCoupling simulation.Rel
       (A.stateLawFrom sourcePolicy horizon source)
       (B.stateLawFrom targetPolicy horizon target) := by
   induction horizon generalizing source target with
   | zero =>
-      simpa only [stateLawFrom] using PMF.relCoupling_pure hrelated
+      simpa only [stateLawFrom] using FiniteLaw.relCoupling_pure hrelated
   | succ horizon ih =>
       by_cases hsource : IsEmpty (A.Action source)
       · have htarget :
             IsEmpty (B.Action target) :=
           (matchPolicy.terminal_iff hrelated).mp hsource
-        simp only [stateLawFrom, dif_pos hsource, dif_pos htarget]
-        exact PMF.relCoupling_pure hrelated
+        simp only [stateLawFrom]
+        simp [hsource, htarget]
+        exact FiniteLaw.relCoupling_pure hrelated
       · have htarget :
             ¬ IsEmpty (B.Action target) :=
           (not_congr (matchPolicy.terminal_iff hrelated)).mp hsource
-        simp only [stateLawFrom, dif_neg hsource, dif_neg htarget]
+        simp only [stateLawFrom]
+        simp [hsource, htarget]
         exact
           (matchPolicy.stepCoupling hrelated hsource htarget).bind
             (fun _ _ hnext => ih hnext)
@@ -184,29 +188,31 @@ theorem stateLawCoupling
 
 The support relation is `List.Forall₂ simulation.Rel`: corresponding trace
 positions are related, not merely their terminal states. -/
-theorem traceLawCoupling
+def traceLawCoupling
     (matchPolicy : simulation.PolicyMatch sourcePolicy targetPolicy)
     {source : A.State} {target : B.State}
     (hrelated : simulation.Rel source target) (horizon : Nat) :
-    PMF.RelCoupling (List.Forall₂ simulation.Rel)
+    FiniteLaw.RelCoupling (List.Forall₂ simulation.Rel)
       (A.traceLawFrom sourcePolicy horizon source)
       (B.traceLawFrom targetPolicy horizon target) := by
   induction horizon generalizing source target with
   | zero =>
-      apply PMF.relCoupling_pure
+      apply FiniteLaw.relCoupling_pure
       exact List.Forall₂.cons hrelated List.Forall₂.nil
   | succ horizon ih =>
       by_cases hsource : IsEmpty (A.Action source)
       · have htarget :
             IsEmpty (B.Action target) :=
           (matchPolicy.terminal_iff hrelated).mp hsource
-        simp only [traceLawFrom, dif_pos hsource, dif_pos htarget]
-        apply PMF.relCoupling_pure
+        simp only [traceLawFrom]
+        simp [hsource, htarget]
+        apply FiniteLaw.relCoupling_pure
         exact List.Forall₂.cons hrelated List.Forall₂.nil
       · have htarget :
             ¬ IsEmpty (B.Action target) :=
           (not_congr (matchPolicy.terminal_iff hrelated)).mp hsource
-        simp only [traceLawFrom, dif_neg hsource, dif_neg htarget]
+        simp only [traceLawFrom]
+        simp [hsource, htarget]
         exact
           (matchPolicy.stepCoupling hrelated hsource htarget).bind
             (fun _ _ hnext =>
@@ -218,8 +224,9 @@ theorem traceLawCoupling
 /-- Any observables agreeing on related traces have exactly equal laws.
 
 Terminal outcomes and utilities are important instances: once their readings
-agree on `List.Forall₂ simulation.Rel`, the two pushforward PMFs are equal. -/
-theorem traceObservableLaw_eq
+agree on `List.Forall₂ simulation.Rel`, the two pushforward laws are
+semantically equivalent. -/
+theorem traceObservableLaw_equivalent
     (matchPolicy : simulation.PolicyMatch sourcePolicy targetPolicy)
     {source : A.State} {target : B.State}
     (hrelated : simulation.Rel source target) (horizon : Nat)
@@ -230,8 +237,8 @@ theorem traceObservableLaw_eq
       ∀ sourceTrace targetTrace,
         List.Forall₂ simulation.Rel sourceTrace targetTrace →
           sourceOutcome sourceTrace = targetOutcome targetTrace) :
-    (A.traceLawFrom sourcePolicy horizon source).map sourceOutcome =
-      (B.traceLawFrom targetPolicy horizon target).map targetOutcome :=
+    ((A.traceLawFrom sourcePolicy horizon source).map sourceOutcome).Equivalent
+      ((B.traceLawFrom targetPolicy horizon target).map targetOutcome) :=
   (matchPolicy.traceLawCoupling hrelated horizon).map_eq houtcome
 
 end PolicyMatch
