@@ -230,4 +230,28 @@ theorem toEffective_expect_encloses (law : ExactLaw EventCode)
 
 end ExactLaw
 
+/-- Executable preimage compilation for a measurable-map interpretation. -/
+structure EffectiveMap (SourceCode : Type uEvent) (TargetCode : Type vEvent) where
+  /-- Compile a target event into its source preimage code. -/
+  preimage : TargetCode → SourceCode
+
+namespace EffectiveLaw
+
+/-- Effective pushforward: answer a target event by compiling its preimage and
+querying the source law. -/
+def map {SourceCode : Type uEvent} {TargetCode : Type vEvent}
+    (law : EffectiveLaw SourceCode)
+    (mapping : EffectiveMap SourceCode TargetCode) :
+    EffectiveLaw TargetCode where
+  mass event := law.mass (mapping.preimage event)
+
+@[simp]
+theorem map_mass {SourceCode : Type uEvent} {TargetCode : Type vEvent}
+    (law : EffectiveLaw SourceCode)
+    (mapping : EffectiveMap SourceCode TargetCode) (event : TargetCode) :
+    (law.map mapping).mass event = law.mass (mapping.preimage event) :=
+  rfl
+
+end EffectiveLaw
+
 end EffectiveProbability
