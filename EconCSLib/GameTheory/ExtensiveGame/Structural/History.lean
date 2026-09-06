@@ -127,31 +127,6 @@ theorem reachable_iff_nonempty_history
   · rintro ⟨history⟩
     exact history.toReachable
 
-namespace Reachable
-
-/-- Choose one typed history witnessing reachability.
-
-This operation is deliberately noncomputable and supplies no inverse law for
-histories: in a merging Arena the chosen witness need not be any particular
-history supplied by a caller. -/
-noncomputable def someHistory
-    {A : Arena} {start finish : A.State}
-    (reachable : A.Reachable start finish) :
-    A.History start finish :=
-  Classical.choice
-    ((A.reachable_iff_nonempty_history start finish).mp reachable)
-
-/-- Forgetting the chosen history recovers the original reachability proof,
-up to proof irrelevance. -/
-@[simp]
-theorem someHistory_toReachable
-    {A : Arena} {start finish : A.State}
-    (reachable : A.Reachable start finish) :
-    reachable.someHistory.toReachable = reachable :=
-  Subsingleton.elim _ _
-
-end Reachable
-
 /-- A history from `start`, bundled with its endpoint. This is the state type
 of the history unfolding. -/
 abbrev HistoryFrom (A : Arena) (start : A.State) :=
