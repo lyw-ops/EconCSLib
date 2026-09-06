@@ -42,25 +42,6 @@ namespace Iso
 
 variable {G H : ObservedGame N U}
 
-/-- Forget payoff compatibility from the legacy strict observed-game
-isomorphism. -/
-def toControlledIso (e : G.Iso H) :
-    G.toControlledObservedGame.Iso
-      H.toControlledObservedGame where
-  historyIso := e.historyIso
-  map_init := e.map_init
-  map_mover := e.map_mover
-  observationEquiv := e.observationEquiv
-  map_observe := e.map_observe
-  publicEquiv := e.publicEquiv
-  map_publicObserve := e.map_publicObserve
-  map_publicOf := e.map_publicOf
-  infoStateEquiv := e.infoStateEquiv
-  map_infoObserve := e.map_infoObserve
-  infoActionEquiv := e.infoActionEquiv
-  map_infoAt := e.map_infoAt
-  map_infoActionAt := e.map_infoActionAt
-
 /-- Repackage the legacy strict isomorphism as a structural isomorphism plus
 orthogonal payoff compatibility. -/
 def toPayoffCompatibleIso (e : G.Iso H) :
