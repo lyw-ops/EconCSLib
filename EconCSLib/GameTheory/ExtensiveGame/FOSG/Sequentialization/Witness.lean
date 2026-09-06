@@ -13,31 +13,44 @@ Initialization laws and the complete weak-serialization witness.
 
 namespace ExtensiveGame.FOSG.Sequentialization
 
-universe uU
+universe uU uSA uO uP
 
 variable {n : ℕ} {U : Type uU}
-  (G : FOSG (Fin (n + 1)) U)
+  (G : FOSG.{0, uU, uSA, uSA, uO, uP} (Fin (n + 1)) U)
+
+local instance witnessHistoryKernelActionEmptinessDecidable
+    [(world : G.WorldState) → Decidable (G.isTerminal world)] :
+    (history : G.historyKernelArena.State) →
+      Decidable (IsEmpty (G.historyKernelArena.Action history)) :=
+  fun history =>
+    decidable_of_iff
+      (G.isTerminal history.1)
+      (G.historyKernelArena_isTerminal_iff history).symm
 
 /-! ### Initial distribution and complete serialization witness -/
 
-/-- Chance-consistent policy used only for the synthetic initial-root step. -/
-noncomputable def initialPolicy
+/-- Chance-consistent policy used only for the synthetic initial-root step.
+
+The explicit fallback supplies player actions at histories that are unreachable
+from the synthetic root during this one-step initialization. -/
+def initialPolicy
     [(world : G.WorldState) → Decidable (G.isTerminal world)]
-    (rootPayoff : Fin (n + 1) → U) :
+    (rootPayoff : Fin (n + 1) → U)
+    (fallback : FallbackHistoryPolicy G rootPayoff) :
     (game G rootPayoff).toArena.StochasticHistoryPolicy
       (game G rootPayoff).init :=
   fun history hnonterminal => by
-    rcases history with ⟨state, path⟩
-    cases state with
+    cases hstate : history.1 with
     | root =>
         exact G.init
     | terminal macroHistory hterminal =>
         exfalso
         apply hnonterminal
+        rw [hstate]
         exact ⟨fun action => nomatch action⟩
     | player macroHistory hmacroNonterminal count hcount collected =>
-        exact PMF.pure
-          (Classical.choice (not_isEmpty_iff.mp hnonterminal))
+        exact FiniteLaw.pure
+          (by simpa only [hstate] using fallback.policy history hnonterminal)
     | chance macroHistory hmacroNonterminal action =>
         exact G.transition macroHistory.1 action
 
@@ -47,9 +60,10 @@ theorem initialPolicy_chanceConsistent
     [(world : G.WorldState) → Decidable (G.isTerminal world)]
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
+    (fallback : FallbackHistoryPolicy G rootPayoff)
     (sourceDeclaredRoot : G.HistoryState → Prop) :
     (observedChanceGame G D rootPayoff sourceDeclaredRoot).ChanceConsistent
-      (initialPolicy G rootPayoff) := by
+      (initialPolicy G rootPayoff fallback) := by
   intro history hnonterminal hmover
   rcases history with ⟨state, path⟩
   cases state with
@@ -64,22 +78,23 @@ theorem initialPolicy_chanceConsistent
   | chance macroHistory hmacroNonterminal action =>
       rfl
 
-/-- The synthetic initial root is nonterminal because an initial `PMF` has
-nonempty support. -/
+/-- The synthetic initial root is nonterminal because the initial `FiniteLaw`
+has a positive atom. -/
 theorem root_not_terminal
     [(world : G.WorldState) → Decidable (G.isTerminal world)]
     (rootPayoff : Fin (n + 1) → U) :
     ¬ (game G rootPayoff).isTerminal .root := by
   intro hterminal
-  obtain ⟨world, _⟩ := G.init.support_nonempty
+  obtain ⟨world, _⟩ := G.init.exists_hasPositiveAtom
   exact hterminal.false world
 
 /-- Exact one-step target law from the synthetic initial root. -/
 theorem initialExecutionLaw
     [(world : G.WorldState) → Decidable (G.isTerminal world)]
-    (rootPayoff : Fin (n + 1) → U) :
-    (game G rootPayoff).toArena.stochasticHistoryPMFFrom
-        (initialPolicy G rootPayoff)
+    (rootPayoff : Fin (n + 1) → U)
+    (fallback : FallbackHistoryPolicy G rootPayoff) :
+    (game G rootPayoff).toArena.stochasticHistoryLawFrom
+        (initialPolicy G rootPayoff fallback)
         (Arena.HistoryFrom.nil
           (game G rootPayoff).toArena (game G rootPayoff).init)
         1 =
@@ -92,15 +107,15 @@ theorem initialExecutionLaw
               (game G rootPayoff).init).snoc world⟩ :
           (game G rootPayoff).toArena.HistoryFrom
             (game G rootPayoff).init)) := by
-  rw [Arena.stochasticHistoryPMFFrom_succ_of_not_terminal
-    (initialPolicy G rootPayoff)
+  rw [Arena.stochasticHistoryLawFrom_succ_of_not_terminal
+    (initialPolicy G rootPayoff fallback)
     (Arena.HistoryFrom.nil
       (game G rootPayoff).toArena (game G rootPayoff).init)
     0 (root_not_terminal G rootPayoff)]
   change
     G.init.bind
         (fun world =>
-          PMF.pure
+          FiniteLaw.pure
             (⟨boundary G
                 ⟨world, FOSG.History.initial world⟩,
               (Arena.History.nil :
@@ -118,6 +133,7 @@ theorem initialExecutionLaw
               (game G rootPayoff).init).snoc world⟩ :
           (game G rootPayoff).toArena.HistoryFrom
             (game G rootPayoff).init))
+  rw [FiniteLaw.map_eq_bind_pure_comp]
   rfl
 
 /-- The genuine serialized behavioral policy and the initialization-only
@@ -126,31 +142,32 @@ theorem behavioralInitialExecutionLaw
     [(world : G.WorldState) → Decidable (G.isTerminal world)]
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
+    (fallback : FallbackHistoryPolicy G rootPayoff)
     (sourceDeclaredRoot : G.HistoryState → Prop)
     (profile : D.BehavioralProfile) :
-    (game G rootPayoff).toArena.stochasticHistoryPMFFrom
+    (game G rootPayoff).toArena.stochasticHistoryLawFrom
         (serializedBehavioralHistoryPolicy G D rootPayoff
           sourceDeclaredRoot profile)
         (Arena.HistoryFrom.nil
           (game G rootPayoff).toArena
           (game G rootPayoff).init)
         1 =
-      (game G rootPayoff).toArena.stochasticHistoryPMFFrom
-        (initialPolicy G rootPayoff)
+      (game G rootPayoff).toArena.stochasticHistoryLawFrom
+        (initialPolicy G rootPayoff fallback)
         (Arena.HistoryFrom.nil
           (game G rootPayoff).toArena
           (game G rootPayoff).init)
         1 := by
   have hroot := root_not_terminal G rootPayoff
-  rw [Arena.stochasticHistoryPMFFrom_succ_of_not_terminal
+  rw [Arena.stochasticHistoryLawFrom_succ_of_not_terminal
     (serializedBehavioralHistoryPolicy G D rootPayoff
       sourceDeclaredRoot profile)
     (Arena.HistoryFrom.nil
       (game G rootPayoff).toArena
       (game G rootPayoff).init)
     0 hroot]
-  rw [Arena.stochasticHistoryPMFFrom_succ_of_not_terminal
-    (initialPolicy G rootPayoff)
+  rw [Arena.stochasticHistoryLawFrom_succ_of_not_terminal
+    (initialPolicy G rootPayoff fallback)
     (Arena.HistoryFrom.nil
       (game G rootPayoff).toArena
       (game G rootPayoff).init)
@@ -158,19 +175,20 @@ theorem behavioralInitialExecutionLaw
   rw [serializedBehavioralHistoryPolicy_root G D rootPayoff
     sourceDeclaredRoot profile hroot]
   change G.init.bind _ = G.init.bind _
-  apply congrArg (PMF.bind G.init)
+  apply congrArg (FiniteLaw.bind G.init)
   funext world
   rfl
 
 /-- Exact coupling of the random initial augmented FOSG history and the
 serialized EFG history after its synthetic root chance step. -/
-theorem initialBoundaryCoupling
+def initialBoundaryCoupling
     [(world : G.WorldState) → Decidable (G.isTerminal world)]
-    (rootPayoff : Fin (n + 1) → U) :
-    PMF.RelCoupling (Rel G)
+    (rootPayoff : Fin (n + 1) → U)
+    (fallback : FallbackHistoryPolicy G rootPayoff) :
+    FiniteLaw.RelCoupling (Rel G)
       G.initialHistoryKernel
-      ((game G rootPayoff).toArena.stochasticHistoryPMFFrom
-        (initialPolicy G rootPayoff)
+      ((game G rootPayoff).toArena.stochasticHistoryLawFrom
+        (initialPolicy G rootPayoff fallback)
         (Arena.HistoryFrom.nil
           (game G rootPayoff).toArena
           (game G rootPayoff).init)
@@ -187,66 +205,66 @@ theorem initialBoundaryCoupling
           (game G rootPayoff).toArena.History
             (game G rootPayoff).init
             (game G rootPayoff).init).snoc world⟩
-  let coupling :
-      PMF
-        (G.HistoryState ×
-          (game G rootPayoff).toArena.HistoryFrom
-            (game G rootPayoff).init) :=
-    G.init.map fun world =>
-      (sourceInitial world, targetInitial world)
-  refine ⟨coupling, ?_, ?_, ?_⟩
-  · calc
-      coupling.map Prod.fst =
-          G.init.map sourceInitial := by
-            rw [PMF.map_comp]
-            rfl
-      _ = G.initialHistoryKernel := rfl
-  · calc
-      coupling.map Prod.snd =
-          G.init.map targetInitial := by
-            rw [PMF.map_comp]
-            rfl
-      _ = (game G rootPayoff).toArena.stochasticHistoryPMFFrom
-          (initialPolicy G rootPayoff)
-          (Arena.HistoryFrom.nil
-            (game G rootPayoff).toArena
-            (game G rootPayoff).init)
-          1 :=
-        (initialExecutionLaw G rootPayoff).symm
-  · intro pair hpair
-    obtain ⟨world, _, hmap⟩ :=
-      (PMF.mem_support_map_iff
-        (p := G.init)
-        (f := fun world =>
-          (sourceInitial world, targetInitial world))
-        (b := pair)).mp hpair
-    subst pair
-    rfl
+  let base :
+      FiniteLaw.RelCoupling (Rel G)
+        (G.init.map sourceInitial) (G.init.map targetInitial) :=
+    (FiniteLaw.relCoupling_refl G.init).map
+      (f := sourceInitial) (g := targetInitial)
+      (S := Rel G)
+      (by
+        intro left right hsame
+        subst right
+        rfl)
+  change
+    FiniteLaw.RelCoupling (Rel G)
+      (G.init.map sourceInitial)
+      ((game G rootPayoff).toArena.stochasticHistoryLawFrom
+        (initialPolicy G rootPayoff fallback)
+        (Arena.HistoryFrom.nil
+          (game G rootPayoff).toArena
+          (game G rootPayoff).init)
+        1)
+  exact (initialExecutionLaw G rootPayoff fallback).symm ▸ base
 
 /-- Source endpoint law after random initialization and at most `horizon`
 FOSG macro transitions. -/
-noncomputable def initializedSourceStateLaw
+def initializedSourceStateLaw
     [(world : G.WorldState) → Decidable (G.isTerminal world)]
     (sourcePolicy : G.historyKernelArena.Policy)
     (horizon : Nat) :
-    PMF G.HistoryState :=
-  G.initialHistoryKernel.bind
-    (G.historyKernelArena.stateLawFrom sourcePolicy horizon)
+    FiniteLaw G.HistoryState := by
+  letI (history : G.HistoryState) :
+      Decidable
+        (IsEmpty (G.historyKernelArena.Action history)) :=
+    decidable_of_iff
+      (G.isTerminal history.1)
+      (G.historyKernelArena_isTerminal_iff history).symm
+  exact
+    G.initialHistoryKernel.bind
+      (G.historyKernelArena.stateLawFrom sourcePolicy horizon)
 
 /-- Serialized endpoint law after its synthetic root chance step and at most
 `horizon` compiled macro executions. -/
-noncomputable def initializedTargetStateLaw
+def initializedTargetStateLaw
     [(world : G.WorldState) → Decidable (G.isTerminal world)]
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
     (sourceDeclaredRoot : G.HistoryState → Prop)
+    (data : MacroPolicyData G D rootPayoff sourceDeclaredRoot)
+    [(target :
+        (macroExecutionKernelArena G D rootPayoff
+          sourceDeclaredRoot).State) →
+      Decidable
+        (IsEmpty
+          ((macroExecutionKernelArena G D rootPayoff
+            sourceDeclaredRoot).Action target))]
     (sourcePolicy : G.historyKernelArena.Policy)
     (horizon : Nat) :
-    PMF
+    FiniteLaw
       ((game G rootPayoff).toArena.HistoryFrom
         (game G rootPayoff).init) :=
-  ((game G rootPayoff).toArena.stochasticHistoryPMFFrom
-      (initialPolicy G rootPayoff)
+  ((game G rootPayoff).toArena.stochasticHistoryLawFrom
+      (initialPolicy G rootPayoff data.micro)
       (Arena.HistoryFrom.nil
         (game G rootPayoff).toArena
         (game G rootPayoff).init)
@@ -254,24 +272,24 @@ noncomputable def initializedTargetStateLaw
     ((macroExecutionKernelArena G D rootPayoff
       sourceDeclaredRoot).stateLawFrom
       (serializedMacroPolicy G D rootPayoff sourceDeclaredRoot
-        sourcePolicy)
+        data sourcePolicy)
       horizon)
 
 /-- Actual micro-step endpoint law of the genuine serialized observed-EFG
 behavioral profile, including the synthetic initial chance step.
 
 One source macro transition consumes `n + 2` target micro steps. -/
-noncomputable def initializedBehavioralTargetMicroStateLaw
+def initializedBehavioralTargetMicroStateLaw
     [(world : G.WorldState) → Decidable (G.isTerminal world)]
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
     (sourceDeclaredRoot : G.HistoryState → Prop)
     (profile : D.BehavioralProfile)
     (horizon : Nat) :
-    PMF
+    FiniteLaw
       ((game G rootPayoff).toArena.HistoryFrom
         (game G rootPayoff).init) :=
-  (game G rootPayoff).toArena.stochasticHistoryPMFFrom
+  (game G rootPayoff).toArena.stochasticHistoryLawFrom
     (serializedBehavioralHistoryPolicy G D rootPayoff
       sourceDeclaredRoot profile)
     (Arena.HistoryFrom.nil
@@ -286,25 +304,33 @@ theorem initializedBehavioralTargetMicroStateLaw_eq
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
     (sourceDeclaredRoot : G.HistoryState → Prop)
+    (data : MacroPolicyData G D rootPayoff sourceDeclaredRoot)
+    [(target :
+        (macroExecutionKernelArena G D rootPayoff
+          sourceDeclaredRoot).State) →
+      Decidable
+        (IsEmpty
+          ((macroExecutionKernelArena G D rootPayoff
+            sourceDeclaredRoot).Action target))]
     (profile : D.BehavioralProfile)
     (horizon : Nat) :
-    initializedBehavioralTargetMicroStateLaw G D rootPayoff
-        sourceDeclaredRoot profile horizon =
-      initializedTargetStateLaw G D rootPayoff sourceDeclaredRoot
-        (D.behavioralHistoryPolicy profile) horizon := by
+    (initializedBehavioralTargetMicroStateLaw G D rootPayoff
+        sourceDeclaredRoot profile horizon).Equivalent
+      (initializedTargetStateLaw G D rootPayoff sourceDeclaredRoot
+        data (D.behavioralHistoryPolicy profile) horizon) := by
   rw [initializedBehavioralTargetMicroStateLaw]
-  rw [Arena.stochasticHistoryPMFFrom_add]
+  rw [Arena.stochasticHistoryLawFrom_add]
   rw [behavioralInitialExecutionLaw G D rootPayoff
-    sourceDeclaredRoot profile]
+    data.micro sourceDeclaredRoot profile]
   rw [initializedTargetStateLaw]
-  apply PMF.bind_congr_support
+  apply FiniteLaw.bind_congr_positive
   intro target htarget
   obtain ⟨source, _, hrelated⟩ :=
-    PMF.RelCoupling.exists_left_of_mem_support_right
-      (initialBoundaryCoupling G rootPayoff) htarget
+    FiniteLaw.RelCoupling.exists_left_of_hasPositiveAtom_right
+      (initialBoundaryCoupling G rootPayoff data.micro) htarget
   exact
     serializedBehavioralMicroStateLaw_eq_macro G D rootPayoff
-      sourceDeclaredRoot profile hrelated horizon
+      sourceDeclaredRoot data profile hrelated horizon
 
 /-- Full finite-horizon endpoint coupling, including the random initial world
 and all compiled macro executions. -/
@@ -313,17 +339,26 @@ theorem initializedStateLawCoupling
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
     (sourceDeclaredRoot : G.HistoryState → Prop)
+    (data : MacroPolicyData G D rootPayoff sourceDeclaredRoot)
+    [(target :
+        (macroExecutionKernelArena G D rootPayoff
+          sourceDeclaredRoot).State) →
+      Decidable
+        (IsEmpty
+          ((macroExecutionKernelArena G D rootPayoff
+            sourceDeclaredRoot).Action target))]
     (sourcePolicy : G.historyKernelArena.Policy)
     (horizon : Nat) :
-    PMF.RelCoupling (Rel G)
+    Nonempty (FiniteLaw.RelCoupling (Rel G)
       (initializedSourceStateLaw G sourcePolicy horizon)
       (initializedTargetStateLaw G D rootPayoff sourceDeclaredRoot
-        sourcePolicy horizon) := by
-  exact
-    (initialBoundaryCoupling G rootPayoff).bind
+        data sourcePolicy horizon)) := by
+  unfold initializedSourceStateLaw
+  exact ⟨
+    (initialBoundaryCoupling G rootPayoff data.micro).bind
       (fun _ _ hrelated =>
-        serializedMacroStateLawCoupling G D rootPayoff
-          sourceDeclaredRoot sourcePolicy hrelated horizon)
+        (serializedMacroPolicy_match G D rootPayoff sourceDeclaredRoot
+          data sourcePolicy).stateLawCoupling hrelated horizon)⟩
 
 /-- Exact equality of complete initialized finite-horizon optional
 terminal-payoff laws. -/
@@ -332,16 +367,26 @@ theorem initializedPayoffLaw_eq
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
     (sourceDeclaredRoot : G.HistoryState → Prop)
+    (data : MacroPolicyData G D rootPayoff sourceDeclaredRoot)
+    [(target :
+        (macroExecutionKernelArena G D rootPayoff
+          sourceDeclaredRoot).State) →
+      Decidable
+        (IsEmpty
+          ((macroExecutionKernelArena G D rootPayoff
+            sourceDeclaredRoot).Action target))]
     (sourcePolicy : G.historyKernelArena.Policy)
     (horizon : Nat) :
-    (initializedSourceStateLaw G sourcePolicy horizon).map
-        G.stoppedPayoffAtHistory =
-      (initializedTargetStateLaw G D rootPayoff sourceDeclaredRoot
-        sourcePolicy horizon).map
-          (serializedStoppedPayoffAtHistory G rootPayoff) := by
+    ((initializedSourceStateLaw G sourcePolicy horizon).map
+        G.stoppedPayoffAtHistory).Equivalent
+      ((initializedTargetStateLaw G D rootPayoff sourceDeclaredRoot
+        data sourcePolicy horizon).map
+          (serializedStoppedPayoffAtHistory G rootPayoff)) := by
+  obtain ⟨coupling⟩ :=
+    initializedStateLawCoupling G D rootPayoff sourceDeclaredRoot
+      data sourcePolicy horizon
   exact
-    (initializedStateLawCoupling G D rootPayoff sourceDeclaredRoot
-      sourcePolicy horizon).map_eq
+    coupling.map_eq
         (fun sourceState targetHistory hrelated =>
           (stoppedPayoff_eq_of_rel G rootPayoff sourceState
             targetHistory hrelated).symm)
@@ -349,28 +394,38 @@ theorem initializedPayoffLaw_eq
 /-- Every scalar or structured utility computed from the optional terminal
 payoff has the same initialized finite-horizon law in both representations.
 
-Consequently any expectation functional defined on this common PMF yields
+Consequently any expectation functional defined on this common FiniteLaw yields
 equal expected utility without further simulation reasoning. -/
 theorem initializedUtilityLaw_eq
     [(world : G.WorldState) → Decidable (G.isTerminal world)]
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
     (sourceDeclaredRoot : G.HistoryState → Prop)
+    (data : MacroPolicyData G D rootPayoff sourceDeclaredRoot)
+    [(target :
+        (macroExecutionKernelArena G D rootPayoff
+          sourceDeclaredRoot).State) →
+      Decidable
+        (IsEmpty
+          ((macroExecutionKernelArena G D rootPayoff
+            sourceDeclaredRoot).Action target))]
     (sourcePolicy : G.historyKernelArena.Policy)
     (horizon : Nat)
     {V : Type*}
     (utility : Option (Fin (n + 1) → U) → V) :
-    (initializedSourceStateLaw G sourcePolicy horizon).map
-        (fun state => utility (G.stoppedPayoffAtHistory state)) =
-      (initializedTargetStateLaw G D rootPayoff sourceDeclaredRoot
-        sourcePolicy horizon).map
+    ((initializedSourceStateLaw G sourcePolicy horizon).map
+        (fun state => utility (G.stoppedPayoffAtHistory state))).Equivalent
+      ((initializedTargetStateLaw G D rootPayoff sourceDeclaredRoot
+        data sourcePolicy horizon).map
           (fun history =>
             utility
               (serializedStoppedPayoffAtHistory
-                G rootPayoff history)) := by
+                G rootPayoff history))) := by
+  obtain ⟨coupling⟩ :=
+    initializedStateLawCoupling G D rootPayoff sourceDeclaredRoot
+      data sourcePolicy horizon
   exact
-    (initializedStateLawCoupling G D rootPayoff sourceDeclaredRoot
-      sourcePolicy horizon).map_eq
+    coupling.map_eq
         (fun sourceState targetHistory hrelated =>
           congrArg utility
             (stoppedPayoff_eq_of_rel G rootPayoff sourceState
@@ -383,22 +438,30 @@ theorem initializedBehavioralUtilityLaw_eq
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
     (sourceDeclaredRoot : G.HistoryState → Prop)
+    (data : MacroPolicyData G D rootPayoff sourceDeclaredRoot)
+    [(target :
+        (macroExecutionKernelArena G D rootPayoff
+          sourceDeclaredRoot).State) →
+      Decidable
+        (IsEmpty
+          ((macroExecutionKernelArena G D rootPayoff
+            sourceDeclaredRoot).Action target))]
     (profile : D.BehavioralProfile)
     (horizon : Nat)
     {V : Type*}
     (utility : Option (Fin (n + 1) → U) → V) :
-    (initializedSourceStateLaw G
+    ((initializedSourceStateLaw G
         (D.behavioralHistoryPolicy profile) horizon).map
           (fun state =>
-            utility (G.stoppedPayoffAtHistory state)) =
-      (initializedTargetStateLaw G D rootPayoff sourceDeclaredRoot
-        (D.behavioralHistoryPolicy profile) horizon).map
+            utility (G.stoppedPayoffAtHistory state))).Equivalent
+      ((initializedTargetStateLaw G D rootPayoff sourceDeclaredRoot
+        data (D.behavioralHistoryPolicy profile) horizon).map
           (fun history =>
             utility
               (serializedStoppedPayoffAtHistory
-                G rootPayoff history)) :=
+                G rootPayoff history))) :=
   initializedUtilityLaw_eq G D rootPayoff sourceDeclaredRoot
-    (D.behavioralHistoryPolicy profile) horizon utility
+    data (D.behavioralHistoryPolicy profile) horizon utility
 
 /-- Source behavioral play and genuine target observed-EFG behavioral play
 have exactly the same initialized finite-horizon optional terminal-payoff law.
@@ -408,19 +471,28 @@ theorem initializedBehavioralMicroPayoffLaw_eq
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
     (sourceDeclaredRoot : G.HistoryState → Prop)
+    (data : MacroPolicyData G D rootPayoff sourceDeclaredRoot)
+    [(target :
+        (macroExecutionKernelArena G D rootPayoff
+          sourceDeclaredRoot).State) →
+      Decidable
+        (IsEmpty
+          ((macroExecutionKernelArena G D rootPayoff
+            sourceDeclaredRoot).Action target))]
     (profile : D.BehavioralProfile)
     (horizon : Nat) :
-    (initializedSourceStateLaw G
+    ((initializedSourceStateLaw G
         (D.behavioralHistoryPolicy profile) horizon).map
-          G.stoppedPayoffAtHistory =
-      (initializedBehavioralTargetMicroStateLaw G D rootPayoff
+          G.stoppedPayoffAtHistory).Equivalent
+      ((initializedBehavioralTargetMicroStateLaw G D rootPayoff
         sourceDeclaredRoot profile horizon).map
-          (serializedStoppedPayoffAtHistory G rootPayoff) := by
-  rw [initializedBehavioralTargetMicroStateLaw_eq G D rootPayoff
-    sourceDeclaredRoot profile horizon]
+          (serializedStoppedPayoffAtHistory G rootPayoff)) := by
   exact
-    initializedPayoffLaw_eq G D rootPayoff sourceDeclaredRoot
-      (D.behavioralHistoryPolicy profile) horizon
+    (initializedPayoffLaw_eq G D rootPayoff sourceDeclaredRoot
+      data (D.behavioralHistoryPolicy profile) horizon).trans
+        ((initializedBehavioralTargetMicroStateLaw_eq G D rootPayoff
+          sourceDeclaredRoot data profile horizon).map
+            (serializedStoppedPayoffAtHistory G rootPayoff)).symm
 
 /-- Every utility computed from the optional terminal payoff has the same law
 under source behavioral play and genuine target micro-step behavioral play. -/
@@ -429,25 +501,36 @@ theorem initializedBehavioralMicroUtilityLaw_eq
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
     (sourceDeclaredRoot : G.HistoryState → Prop)
+    (data : MacroPolicyData G D rootPayoff sourceDeclaredRoot)
+    [(target :
+        (macroExecutionKernelArena G D rootPayoff
+          sourceDeclaredRoot).State) →
+      Decidable
+        (IsEmpty
+          ((macroExecutionKernelArena G D rootPayoff
+            sourceDeclaredRoot).Action target))]
     (profile : D.BehavioralProfile)
     (horizon : Nat)
     {V : Type*}
     (utility : Option (Fin (n + 1) → U) → V) :
-    (initializedSourceStateLaw G
+    ((initializedSourceStateLaw G
         (D.behavioralHistoryPolicy profile) horizon).map
           (fun state =>
-            utility (G.stoppedPayoffAtHistory state)) =
-      (initializedBehavioralTargetMicroStateLaw G D rootPayoff
+            utility (G.stoppedPayoffAtHistory state))).Equivalent
+      ((initializedBehavioralTargetMicroStateLaw G D rootPayoff
         sourceDeclaredRoot profile horizon).map
           (fun history =>
             utility
               (serializedStoppedPayoffAtHistory
-                G rootPayoff history)) := by
-  rw [initializedBehavioralTargetMicroStateLaw_eq G D rootPayoff
-    sourceDeclaredRoot profile horizon]
+                G rootPayoff history))) := by
   exact
-    initializedBehavioralUtilityLaw_eq G D rootPayoff
-      sourceDeclaredRoot profile horizon utility
+    (initializedBehavioralUtilityLaw_eq G D rootPayoff
+      sourceDeclaredRoot data profile horizon utility).trans
+        ((initializedBehavioralTargetMicroStateLaw_eq G D rootPayoff
+          sourceDeclaredRoot data profile horizon).map
+            (fun history => utility
+              (serializedStoppedPayoffAtHistory
+                G rootPayoff history))).symm
 
 
 end ExtensiveGame.FOSG.Sequentialization
