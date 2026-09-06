@@ -6,7 +6,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 import EconCSLib.GameTheory.ExtensiveGame.Execution.Discrete.KernelArena
 import EconCSLib.GameTheory.ExtensiveGame.Relations.Discrete.KernelWeakSimulation
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Chance
-import EconCSLib.Math.Probability.PMF.FiniteProduct
+import EconCSLib.Math.Probability.FiniteLaw.Product
 
 /-!
 # EconCSLib.GameTheory.ExtensiveGame.FOSG.FOSG
@@ -63,12 +63,12 @@ structure FOSG (N : Type uN) (U : Type uU) where
   /-- Player `i`'s legal action at a world state. -/
   PlayerAction : N → WorldState → Type uA
   /-- Normalized initial world-state law. -/
-  init : PMF WorldState
+  init : FiniteLaw WorldState
   /-- Normalized next-world law after a simultaneous joint action. -/
   transition :
     (world : WorldState) →
       ((i : N) → PlayerAction i world) →
-      PMF WorldState
+      FiniteLaw WorldState
   /-- Player-specific private signal type. -/
   Observation : N → Type uO
   /-- Public signal type. -/
@@ -113,8 +113,9 @@ abbrev JointAction (G : FOSG N U) (world : G.WorldState) : Type _ :=
 /-- A realized FOSG history, indexed by its final world state.
 
 The constructors retain realized zero-probability trajectories as syntactic
-histories too; the PMF support of `initialHistoryKernel` and
-`historyKernelArena.next` identifies the positive-probability ones. -/
+histories too; the positive atoms of the `FiniteLaw`s
+`initialHistoryKernel` and `historyKernelArena.next` identify the
+positive-probability ones. -/
 inductive History (G : FOSG N U) : G.WorldState → Type _
   | initial (world : G.WorldState) : History G world
   | snoc {world : G.WorldState}
@@ -128,12 +129,12 @@ abbrev HistoryState (G : FOSG N U) :=
   Σ world : G.WorldState, G.History world
 
 /-- The normalized law of initial augmented histories. -/
-noncomputable def initialHistoryKernel (G : FOSG N U) :
-    PMF G.HistoryState :=
+def initialHistoryKernel (G : FOSG N U) :
+    FiniteLaw G.HistoryState :=
   G.init.map fun world => ⟨world, History.initial world⟩
 
 /-- The history-augmented stochastic macro Arena of a FOSG. -/
-noncomputable def historyKernelArena (G : FOSG N U) : KernelArena where
+def historyKernelArena (G : FOSG N U) : KernelArena where
   State := G.HistoryState
   Action := fun history => G.JointAction history.1
   next := fun history action =>
@@ -257,7 +258,7 @@ theorem publicObservations_eq_of_infoAt_eq
 /-- A behavioral strategy chooses a normalized abstract-action law at every
 information state of one player. -/
 abbrev BehavioralStrategy (D : G.DecisionModel) (i : N) :=
-  (information : D.InfoState i) → PMF (D.InfoAction i information)
+  (information : D.InfoState i) → FiniteLaw (D.InfoAction i information)
 
 /-- A profile of information-indexed behavioral strategies. -/
 abbrev BehavioralProfile (D : G.DecisionModel) :=
@@ -301,14 +302,14 @@ finite-player behavioral profile at one nonterminal augmented history.
 
 The `DecisionModel.actionEquiv` maps each player's abstract
 information-indexed action back to the concrete world-indexed action type;
-`PMF.finPi` then forms their independent dependent product. -/
-noncomputable def jointActionLaw
+`FiniteLaw.finPi` then forms their independent dependent product. -/
+def jointActionLaw
     (D : G.DecisionModel)
     (profile : D.BehavioralProfile)
     (history : G.HistoryState)
     (hnonterminal : ¬ G.isTerminal history.1) :
-    PMF (G.JointAction history.1) :=
-  PMF.finPi k fun i =>
+    FiniteLaw (G.JointAction history.1) :=
+  FiniteLaw.finPi k fun i =>
     (profile i (D.infoAt history hnonterminal i)).map
       (D.actionEquiv history hnonterminal i)
 
@@ -320,12 +321,12 @@ theorem jointActionLaw_map_apply
     (history : G.HistoryState)
     (hnonterminal : ¬ G.isTerminal history.1)
     (i : Fin k) :
-    (D.jointActionLaw profile history hnonterminal).map
-        (fun jointAction => jointAction i) =
-      (profile i (D.infoAt history hnonterminal i)).map
-        (D.actionEquiv history hnonterminal i) := by
+    ((D.jointActionLaw profile history hnonterminal).map
+        (fun jointAction => jointAction i)).Equivalent
+      ((profile i (D.infoAt history hnonterminal i)).map
+        (D.actionEquiv history hnonterminal i)) := by
   exact
-    PMF.finPi_map_apply k
+    FiniteLaw.finPi_map_apply k
       (fun j =>
         (profile j (D.infoAt history hnonterminal j)).map
           (D.actionEquiv history hnonterminal j))
@@ -334,7 +335,7 @@ theorem jointActionLaw_map_apply
 /-- Compile an information-indexed finite-player behavioral profile to the
 terminal-aware randomized policy of the history-augmented FOSG kernel Arena.
 -/
-noncomputable def behavioralHistoryPolicy
+def behavioralHistoryPolicy
     (D : G.DecisionModel)
     (profile : D.BehavioralProfile) :
     G.historyKernelArena.Policy :=
@@ -348,17 +349,18 @@ end DecisionModel
 
 /-- The initial augmented-history law is normalized. -/
 @[simp]
-theorem initialHistoryKernel_tsum (G : FOSG N U) :
-    ∑' history, G.initialHistoryKernel history = 1 :=
-  PMF.tsum_coe _
+theorem initialHistoryKernel_normalized (G : FOSG N U) :
+    FiniteLaw.totalWeight G.initialHistoryKernel.atoms = 1 :=
+  G.initialHistoryKernel.normalized
 
 /-- Every augmented macro-transition law is normalized. -/
 @[simp]
-theorem historyKernelArena_next_tsum (G : FOSG N U)
+theorem historyKernelArena_next_normalized (G : FOSG N U)
     (history : G.HistoryState)
     (action : G.historyKernelArena.Action history) :
-    ∑' nextHistory, G.historyKernelArena.next history action nextHistory = 1 :=
-  PMF.tsum_coe _
+    FiniteLaw.totalWeight
+      (G.historyKernelArena.next history action).atoms = 1 :=
+  (G.historyKernelArena.next history action).normalized
 
 /-- Terminality of an augmented FOSG history is exactly terminality of its
 final world state. -/
@@ -372,32 +374,33 @@ theorem historyKernelArena_isTerminal_iff (G : FOSG N U)
 
 Nonterminal histories map to `none`, so bounded execution never exposes the
 arbitrary nonterminal filler value of `FOSG.payoff`. -/
-noncomputable def stoppedPayoffAtHistory
-    (G : FOSG N U) (history : G.HistoryState) :
+def stoppedPayoffAtHistory
+    (G : FOSG N U)
+    [(world : G.WorldState) → Decidable (G.isTerminal world)]
+    (history : G.HistoryState) :
     Option (N → U) :=
-  by
-    classical
-    exact
-      if G.isTerminal history.1 then
-        some (G.payoff history.1)
-      else
-        none
+  if G.isTerminal history.1 then
+    some (G.payoff history.1)
+  else
+    none
 
 @[simp]
 theorem stoppedPayoffAtHistory_of_terminal
-    (G : FOSG N U) (history : G.HistoryState)
+    (G : FOSG N U)
+    [(world : G.WorldState) → Decidable (G.isTerminal world)]
+    (history : G.HistoryState)
     (hterminal : G.isTerminal history.1) :
     G.stoppedPayoffAtHistory history =
       some (G.payoff history.1) := by
-  classical
   simp [stoppedPayoffAtHistory, hterminal]
 
 @[simp]
 theorem stoppedPayoffAtHistory_of_not_terminal
-    (G : FOSG N U) (history : G.HistoryState)
+    (G : FOSG N U)
+    [(world : G.WorldState) → Decidable (G.isTerminal world)]
+    (history : G.HistoryState)
     (hnonterminal : ¬ G.isTerminal history.1) :
     G.stoppedPayoffAtHistory history = none := by
-  classical
   simp [stoppedPayoffAtHistory, hnonterminal]
 
 /-! ### Probabilistic weak serialization into an observed EFG -/
@@ -434,14 +437,14 @@ structure WeakSerialization
   /-- The initial FOSG history law is matched by a finite,
   chance-consistent target initialization execution. -/
   match_init :
-    ∃ policy :
+    PSigma fun policy :
         H.observed.base.toArena.StochasticHistoryPolicy
-          H.observed.base.init,
-      ∃ fuel : ℕ,
-        H.ChanceConsistent policy ∧
-        PMF.RelCoupling simulation.Rel
+          H.observed.base.init =>
+      PSigma fun fuel : ℕ =>
+        PSigma fun _hchance : H.ChanceConsistent policy =>
+        FiniteLaw.RelCoupling simulation.Rel
           G.initialHistoryKernel
-          (H.observed.base.toArena.stochasticHistoryPMFFrom
+          (H.observed.base.toArena.stochasticHistoryLawFrom
             policy
             (Arena.HistoryFrom.nil
               H.observed.base.toArena H.observed.base.init)
@@ -513,7 +516,7 @@ variable {G : FOSG N U} {H : ObservedChanceGame N U}
 
 /-- Forget probability weights from a FOSG serialization and retain an
 ordinary weak simulation of all positive-probability realized paths. -/
-noncomputable def toSupportWeakSimulation
+def toSupportWeakSimulation
     (S : G.WeakSerialization H) :
     G.historyKernelArena.supportArena.WeakSimulation
       (H.observed.base.toArena.unfoldFrom H.observed.base.init) :=
