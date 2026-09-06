@@ -21,7 +21,7 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.BehaviorRefinement.Structural
 # Discrete and structural EFG relations
 
 Recommended pre-stability import for strict structural representation
-changes, information refinements, PMF-kernel trajectory couplings, and
+changes, information refinements, finite-kernel trajectory couplings, and
 weak/stuttering simulations. The strict structural tier includes the
 payoff-free `ControlledObservedGame.Hom`/`Iso` hierarchy and external root,
 recall, and lawful-subgame transport; payoff compatibility is a separate
