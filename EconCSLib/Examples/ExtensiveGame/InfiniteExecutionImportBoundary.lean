@@ -8,13 +8,15 @@ import EconCSLib.GameTheory.ExtensiveGame.Interface.Execution.Infinite
 /-!
 # Infinite discrete execution import boundary
 
-Infinite PMF-driven paths intentionally introduce Mathlib kernels and measures
-while remaining independent of the non-atomic `MeasurableKernelArena` stack.
+Infinite finite-law-driven paths intentionally introduce supplied probability
+measures while remaining independent of both kernel construction and the
+non-atomic `MeasurableKernelArena` stack.
 -/
 
-#check Arena.stochasticHistoryPMFFrom
+#check Arena.stochasticHistoryLawFrom
+#check Arena.pathMarginal
 #check Arena.pathLaw
-#check ProbabilityTheory.Kernel
+#check MeasureTheory.ProbabilityMeasure
 
 /--
 error: Unknown identifier `MeasurableKernelArena`
