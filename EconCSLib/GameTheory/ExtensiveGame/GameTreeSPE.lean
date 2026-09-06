@@ -25,8 +25,9 @@ The canonical occurrence-sensitive theorem is
 
 ## Minimal assumptions
 
-Only `[TotalPreorder U]` — preorder + totality, no antisymmetry,
-no decidability. See `ExtensiveGame/BackwardInduction.lean`.
+The structural notions use only `[TotalPreorder U]`.  The executable
+backward-induction selector additionally uses `[DecidableLE U]`; no classical
+choice is used. See `ExtensiveGame/BackwardInduction.lean`.
 
 ## Main definitions
 
@@ -83,7 +84,7 @@ def Strategy (N U : Type*) : Type _ :=
 /-- The outcome (terminal payoff vector) of playing strategy `σ` starting
     from game tree `g`. Walks down the tree, using `σ` to pick a child at
     each `Node`, until a `Leaf` is reached. -/
-noncomputable def outcome (σ : Strategy N U) : GameTree N U → (N → U)
+def outcome (σ : Strategy N U) : GameTree N U → (N → U)
   | Leaf p => p
   | Node m h t => outcome σ (σ m h t).val
 termination_by g => g.size
@@ -106,20 +107,43 @@ theorem outcome_Node (σ : Strategy N U) (m : N) (h : GameTree N U)
 
 /-! ### Backward-induction strategy -/
 
-/-- The canonical backward-induction strategy: at each node, pick a child
-    whose backward-induction value equals the node's value (i.e., a child
-    attaining the argmax for the mover).
+/-- Applying `value` after selecting the best child is the same finite fold as
+selecting the best already-computed child value. -/
+private theorem value_argMaxOn_child
+    [DecidableLE U] (m : N) (h : GameTree N U)
+    (t : List (GameTree N U)) :
+    value (List.argMaxOn (fun child => (value child) m) h t) =
+      List.argMaxOn (fun childValue => childValue m)
+        (value h) (t.map value) := by
+  simp only [List.argMaxOn]
+  induction t generalizing h with
+  | nil =>
+      rfl
+  | cons child tail ih =>
+      simp only [List.foldl_cons, List.map_cons]
+      by_cases hle : (value h) m ≤ (value child) m
+      · simp only [hle, if_true]
+        exact ih child
+      · simp only [hle, if_false]
+        exact ih h
 
-    Noncomputable — uses classical choice via `value_Node_eq_some_child_value`. -/
-noncomputable def optStrategy [DecidableLE U] : Strategy N U := fun m h t =>
-  ⟨(value_Node_eq_some_child_value m h t).choose,
-   (value_Node_eq_some_child_value m h t).choose_spec.1⟩
+/-- The canonical executable backward-induction strategy: at each node, pick
+the child maximizing the mover's coordinate.  The child and its membership
+proof are produced by the same finite `argMaxOn` fold used by `value`; no
+existence theorem or classical choice is involved. -/
+def optStrategy [DecidableLE U] : Strategy N U := fun m h t =>
+  ⟨List.argMaxOn (fun child => (value child) m) h t,
+    List.argMaxOn_mem (fun child => (value child) m) h t⟩
 
 /-- At a node, the `optStrategy` picks a child whose value equals the node's value. -/
 theorem value_optStrategy_eq [DecidableLE U] (m : N) (h : GameTree N U)
     (t : List (GameTree N U)) :
     value (optStrategy m h t).val = value (Node m h t) :=
-  ((value_Node_eq_some_child_value m h t).choose_spec.2).symm
+  by
+    change
+      value (List.argMaxOn (fun child => (value child) m) h t) =
+        value (Node m h t)
+    rw [value_Node, valueList_eq_map, value_argMaxOn_child]
 
 /-! ### Strategy deviation -/
 
