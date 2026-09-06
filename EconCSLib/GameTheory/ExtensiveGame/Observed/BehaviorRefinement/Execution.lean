@@ -92,7 +92,7 @@ theorem map_behavioralHistoryPolicy
 
 /-- Exact naturality of bounded stochastic continuation execution under a
 chance-aware information refinement. -/
-theorem map_behavioralHistoryPMFFrom
+theorem map_behavioralHistoryLawFrom
     [(state : G.observed.base.State) →
       Decidable
         (G.observed.base.isTerminal state)]
@@ -105,11 +105,11 @@ theorem map_behavioralHistoryPMFFrom
       G.observed.base.toArena.HistoryFrom
         G.observed.base.init) :
     ∀ fuel,
-      (G.observed.base.toArena.stochasticHistoryPMFFrom
+      (G.observed.base.toArena.stochasticHistoryLawFrom
           (BehavioralProfile.toHistoryPolicy G profile)
           current fuel).map
           r.observedRefinement.historyIso.stateEquiv =
-        H.observed.base.toArena.stochasticHistoryPMFFrom
+        H.observed.base.toArena.stochasticHistoryLawFrom
           (BehavioralProfile.toHistoryPolicy H
             (r.observedRefinement.mapBehavioralProfile
               profile))
@@ -120,7 +120,7 @@ theorem map_behavioralHistoryPMFFrom
   induction fuel generalizing current with
   | zero =>
       exact
-        PMF.pure_map
+        FiniteLaw.pure_map
           r.observedRefinement.historyIso.stateEquiv
           current
   | succ fuel ih =>
@@ -132,10 +132,10 @@ theorem map_behavioralHistoryPMFFrom
                 current).1 :=
           (r.observedRefinement.isTerminal_iff
             current).mp hsource
-        rw [Arena.stochasticHistoryPMFFrom_succ_of_terminal
+        rw [Arena.stochasticHistoryLawFrom_succ_of_terminal
           (BehavioralProfile.toHistoryPolicy G profile)
           current fuel hsource]
-        rw [Arena.stochasticHistoryPMFFrom_succ_of_terminal
+        rw [Arena.stochasticHistoryLawFrom_succ_of_terminal
           (BehavioralProfile.toHistoryPolicy H
             (r.observedRefinement.mapBehavioralProfile
               profile))
@@ -143,7 +143,7 @@ theorem map_behavioralHistoryPMFFrom
             current)
           fuel htarget]
         exact
-          PMF.pure_map
+          FiniteLaw.pure_map
             r.observedRefinement.historyIso.stateEquiv
             current
       · have htarget :
@@ -153,10 +153,10 @@ theorem map_behavioralHistoryPMFFrom
           not_congr
             (r.observedRefinement.isTerminal_iff
               current) |>.mp hsource
-        rw [Arena.stochasticHistoryPMFFrom_succ_of_not_terminal
+        rw [Arena.stochasticHistoryLawFrom_succ_of_not_terminal
           (BehavioralProfile.toHistoryPolicy G profile)
           current fuel hsource]
-        rw [Arena.stochasticHistoryPMFFrom_succ_of_not_terminal
+        rw [Arena.stochasticHistoryLawFrom_succ_of_not_terminal
           (BehavioralProfile.toHistoryPolicy H
             (r.observedRefinement.mapBehavioralProfile
               profile))
@@ -173,7 +173,7 @@ theorem map_behavioralHistoryPMFFrom
           sourcePolicy current hsource
         let targetContinuation :=
           fun action =>
-            H.observed.base.toArena.stochasticHistoryPMFFrom
+            H.observed.base.toArena.stochasticHistoryLawFrom
                 targetPolicy
                 ⟨H.observed.base.next
                     (r.observedRefinement.historyIso.stateEquiv
@@ -185,7 +185,7 @@ theorem map_behavioralHistoryPMFFrom
         calc
           (sourceLaw.bind
               (fun action =>
-                G.observed.base.toArena.stochasticHistoryPMFFrom
+                G.observed.base.toArena.stochasticHistoryLawFrom
                     sourcePolicy
                     ⟨G.observed.base.next
                         current.1 action,
@@ -194,16 +194,16 @@ theorem map_behavioralHistoryPMFFrom
                 r.observedRefinement.historyIso.stateEquiv =
             sourceLaw.bind
               (fun action =>
-                (G.observed.base.toArena.stochasticHistoryPMFFrom
+                (G.observed.base.toArena.stochasticHistoryLawFrom
                     sourcePolicy
                     ⟨G.observed.base.next
                         current.1 action,
                       current.2.snoc action⟩
                     fuel).map
                   r.observedRefinement.historyIso.stateEquiv) :=
-              PMF.map_bind sourceLaw
+              FiniteLaw.map_bind sourceLaw
                 (fun action =>
-                  G.observed.base.toArena.stochasticHistoryPMFFrom
+                  G.observed.base.toArena.stochasticHistoryLawFrom
                       sourcePolicy
                       ⟨G.observed.base.next
                           current.1 action,
@@ -212,7 +212,7 @@ theorem map_behavioralHistoryPMFFrom
                 r.observedRefinement.historyIso.stateEquiv
           _ = sourceLaw.bind
               (fun action =>
-                H.observed.base.toArena.stochasticHistoryPMFFrom
+                H.observed.base.toArena.stochasticHistoryLawFrom
                     targetPolicy
                     (r.observedRefinement.historyIso.stateEquiv
                         ⟨G.observed.base.next
@@ -238,14 +238,14 @@ theorem map_behavioralHistoryPMFFrom
               funext action
               unfold targetContinuation
               change
-                H.observed.base.toArena.stochasticHistoryPMFFrom
+                H.observed.base.toArena.stochasticHistoryLawFrom
                       targetPolicy
                       (r.observedRefinement.historyIso.stateEquiv
                           ⟨G.observed.base.next
                               current.1 action,
                             current.2.snoc action⟩)
                       fuel =
-                  H.observed.base.toArena.stochasticHistoryPMFFrom
+                  H.observed.base.toArena.stochasticHistoryLawFrom
                       targetPolicy
                       ⟨H.observed.base.next
                           (r.observedRefinement.historyIso.stateEquiv
@@ -259,7 +259,7 @@ theorem map_behavioralHistoryPMFFrom
                       fuel
               apply congrArg
                 (fun next =>
-                  H.observed.base.toArena.stochasticHistoryPMFFrom
+                  H.observed.base.toArena.stochasticHistoryLawFrom
                       targetPolicy next fuel)
               exact
                 r.observedRefinement.historyIso.map_next
@@ -268,7 +268,7 @@ theorem map_behavioralHistoryPMFFrom
                 (r.observedRefinement.historyIso.actionEquiv
                   current)).bind
               targetContinuation :=
-            (PMF.bind_map sourceLaw
+            (FiniteLaw.bind_map sourceLaw
               (r.observedRefinement.historyIso.actionEquiv
                 current)
               targetContinuation).symm
@@ -342,10 +342,10 @@ theorem map_behavioralStoppedPayoffLawFrom
       G.behavioralStoppedPayoffLawFrom
         profile current fuel := by
   unfold behavioralStoppedPayoffLawFrom
-  rw [← r.map_behavioralHistoryPMFFrom
+  rw [← r.map_behavioralHistoryLawFrom
     profile current fuel]
   let sourceLaw :=
-    G.observed.base.toArena.stochasticHistoryPMFFrom
+    G.observed.base.toArena.stochasticHistoryLawFrom
       (BehavioralProfile.toHistoryPolicy G profile)
       current fuel
   calc
@@ -355,7 +355,7 @@ theorem map_behavioralStoppedPayoffLawFrom
       sourceLaw.map
         (H.stoppedPayoffAtHistory ∘
           r.observedRefinement.historyIso.stateEquiv) :=
-        PMF.map_comp
+        FiniteLaw.map_comp
           r.observedRefinement.historyIso.stateEquiv
           sourceLaw
           H.stoppedPayoffAtHistory
@@ -370,7 +370,7 @@ theorem map_behavioralStoppedPayoffLawFrom
 
 /-- The bounded behavioral continuation of a chance-aware information
 refinement is a game-form morphism. -/
-noncomputable def behavioralContinuationGameFormHom
+def behavioralContinuationGameFormHom
     [(state : G.observed.base.State) →
       Decidable
         (G.observed.base.isTerminal state)]
@@ -409,7 +409,7 @@ theorem behavioralContinuationGameFormHom_utilityCompatible
         (H.observed.base.isTerminal state)]
     (r : G.InformationRefinement H)
     (utility :
-      PMF (Option (N → U)) → N → V)
+      FiniteLaw (Option (N → U)) → N → V)
     (current :
       G.observed.base.toArena.HistoryFrom
         G.observed.base.init)
@@ -457,7 +457,7 @@ theorem behavioralContinuationIsNash_of_map
         (H.observed.base.isTerminal state)]
     (r : G.InformationRefinement H)
     (utility :
-      PMF (Option (N → U)) → N → V)
+      FiniteLaw (Option (N → U)) → N → V)
     (profile : G.observed.BehavioralProfile)
     (current :
       G.observed.base.toArena.HistoryFrom
@@ -494,7 +494,7 @@ theorem behavioralContinuationIsNash_iff_of_strategySurjective
     (hsurjective :
       r.observedRefinement.BehavioralStrategySurjective)
     (utility :
-      PMF (Option (N → U)) → N → V)
+      FiniteLaw (Option (N → U)) → N → V)
     (profile : G.observed.BehavioralProfile)
     (current :
       G.observed.base.toArena.HistoryFrom
@@ -535,7 +535,7 @@ theorem isBehavioralNashOnRootsAtFuel_of_map
       r.observedRefinement.MapsRootPresentations
         sourceRoots targetRoots)
     (utility :
-      PMF (Option (N → U)) → N → V)
+      FiniteLaw (Option (N → U)) → N → V)
     (profile : G.observed.BehavioralProfile)
     (fuel : ℕ)
     (hSPE :
@@ -578,7 +578,7 @@ theorem isBehavioralNashOnRootsAtFuel_iff_of_strategySurjective
       r.observedRefinement.PreservesRootPresentations
         sourceRoots targetRoots)
     (utility :
-      PMF (Option (N → U)) → N → V)
+      FiniteLaw (Option (N → U)) → N → V)
     (profile : G.observed.BehavioralProfile)
     (fuel : ℕ) :
     G.IsBehavioralNashOnRootsAtFuel
