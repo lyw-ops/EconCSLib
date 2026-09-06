@@ -185,4 +185,10 @@ theorem Vanishes.exists_within {radius : ApproximationRadius}
 
 end ApproximationRadius
 
+/-- A state-prefix approximation scheme.  Both fields are executable finite
+data; no infinite-path target is stored in the scheme. -/
+structure StatePrefixApproximationScheme (A : KernelArena) (start : ℕ) where
+  observable : (horizon : ℕ) → A.StatePrefix (start + horizon) → ℚ
+  radius : ApproximationRadius
+
 end KernelArena
