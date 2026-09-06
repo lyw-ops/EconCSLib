@@ -34,6 +34,11 @@ MARKDOWN_LINK_RE = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 FULL_MODULE_REFERENCE_RE = re.compile(
     r"`(EconCSLib(?:\.[A-Za-z0-9_]+)+)`"
 )
+LARGE_MODULE_ROW_RE = re.compile(
+    r"^\| `(EconCSLib\.GameTheory\.ExtensiveGame\.[^`]+)` "
+    r"\| `(800-999|1000-1199|1200\+)` \|",
+    re.MULTILINE,
+)
 DECLARATION_RE = re.compile(
     r"^(?:private\s+|protected\s+|noncomputable\s+|unsafe\s+)*"
     r"(?:abbrev|axiom|class|def|example|inductive|instance|lemma|opaque|"
@@ -47,8 +52,18 @@ DEPRECATED_RE = re.compile(
     r"([A-Za-z0-9_'.]+)",
     re.MULTILINE,
 )
+NONCOMPUTABLE_DATA_DECL_RE = re.compile(
+    r"^\s*noncomputable\s+(?:section|abbrev|def|instance|opaque)\b",
+    re.MULTILINE,
+)
+SEMANTIC_CERTIFICATE_THEOREM_RE = re.compile(
+    r"^\s*(?:theorem|lemma)\s+[A-Za-z0-9_'.]*"
+    r"(?:_eq_|_represents(?:_|\b))[A-Za-z0-9_'.]*\b",
+    re.MULTILINE,
+)
 
 EFG_PREFIX = "EconCSLib.GameTheory.ExtensiveGame."
+LARGE_EFG_LINE_THRESHOLD = 800
 
 # Every import-only source module is an explicit navigation surface. Adding a
 # new one therefore requires a deliberate entry here, not merely a file with a
@@ -58,7 +73,9 @@ CANONICAL_IMPORT_ONLY_MODULES = {
     "EconCSLib.Examples",
     "EconCSLib.OpenProblem",
     "EconCSLib.GameTheory.GameForm",
-    "EconCSLib.Math.Probability.PMF",
+    "EconCSLib.Math.Probability.FiniteLaw",
+    "EconCSLib.Math.Probability.Effective",
+    "EconCSLib.Math.Probability.Effective.Analytic",
     f"{EFG_PREFIX}Interface.StructuralCore",
     f"{EFG_PREFIX}Interface.Core",
     f"{EFG_PREFIX}Interface.Objective",
@@ -112,21 +129,21 @@ REMOVED_MODULE_PATHS = {
 }
 
 EXPECTED_CLOSURES = {
-    "EconCSLib": (38, 166),
+    "EconCSLib": (54, 185),
     f"{EFG_PREFIX}Interface.StructuralCore": (5, 5),
-    f"{EFG_PREFIX}Interface.Core": (17, 17),
-    f"{EFG_PREFIX}Interface.Objective": (33, 39),
-    f"{EFG_PREFIX}Interface.Winning": (36, 42),
-    f"{EFG_PREFIX}Interface.Winning.Stochastic": (51, 59),
-    f"{EFG_PREFIX}Interface.Execution.Finite": (34, 42),
-    f"{EFG_PREFIX}Interface.Execution.Infinite": (39, 47),
-    f"{EFG_PREFIX}Interface.Execution.Analytic": (59, 68),
-    f"{EFG_PREFIX}Interface.Relations.Discrete": (40, 48),
-    f"{EFG_PREFIX}Interface.Preservation": (23, 29),
-    f"{EFG_PREFIX}Interface.Equilibrium.Discrete": (68, 85),
-    f"{EFG_PREFIX}Interface.Equilibrium.Analytic": (99, 117),
-    f"{EFG_PREFIX}Interface.Restart": (107, 125),
-    f"{EFG_PREFIX}Interface.Compilation.Discrete": (89, 108),
+    f"{EFG_PREFIX}Interface.Core": (17, 23),
+    f"{EFG_PREFIX}Interface.Objective": (33, 45),
+    f"{EFG_PREFIX}Interface.Winning": (36, 48),
+    f"{EFG_PREFIX}Interface.Winning.Stochastic": (67, 79),
+    f"{EFG_PREFIX}Interface.Execution.Finite": (50, 62),
+    f"{EFG_PREFIX}Interface.Execution.Infinite": (55, 67),
+    f"{EFG_PREFIX}Interface.Execution.Analytic": (82, 96),
+    f"{EFG_PREFIX}Interface.Relations.Discrete": (55, 67),
+    f"{EFG_PREFIX}Interface.Preservation": (22, 34),
+    f"{EFG_PREFIX}Interface.Equilibrium.Discrete": (85, 103),
+    f"{EFG_PREFIX}Interface.Equilibrium.Analytic": (128, 151),
+    f"{EFG_PREFIX}Interface.Restart": (137, 160),
+    f"{EFG_PREFIX}Interface.Compilation.Discrete": (106, 126),
 }
 
 GOVERNANCE_CLOSURE_LABELS = {
@@ -149,10 +166,20 @@ EXPECTED_STRUCTURAL_CORE_EFG_CLOSURE = {
 FROZEN_MINIMAL_CORE_STRUCTURES = {}
 
 CONTROLLED_OBSERVED_MODULE = f"{EFG_PREFIX}Observed.Controlled"
-CONTROLLED_OBSERVED_START = (
-    r"^structure ControlledObservedGame \(N : Type uN\) where\s*$"
+CONTROLLED_DECISION_START = (
+    r"^structure ControlledDecisionGame \(N : Type uN\) where\s*$"
 )
-CONTROLLED_OBSERVED_END = r"^namespace ControlledObservedGame\s*$"
+CONTROLLED_DECISION_END = (
+    r"^structure ControlledObservedGame \(N : Type uN\)\s*$"
+)
+CONTROLLED_OBSERVED_START = (
+    r"^structure ControlledObservedGame \(N : Type uN\)\s*$"
+)
+CONTROLLED_OBSERVED_EXTENDS = (
+    r"^\s*extends\s+"
+    r"ControlledDecisionGame\.\{\s*uN\s*,\s*uA\s*,\s*uS\s*,\s*uI\s*\}"
+    r"\s+N\s+where\s*$"
+)
 
 CONTROLLED_INFRASTRUCTURE_RECALL = (
     f"{EFG_PREFIX}Observed.Controlled.Infrastructure.Recall"
@@ -235,6 +262,19 @@ EXPECTED_CONTROLLED_AGGREGATE_IMPORTS = {
         CONTROLLED_MORPHISM_SUBGAME,
         CONTROLLED_MORPHISM_RECALL,
         CONTROLLED_MORPHISM_OBJECTIVE,
+    },
+}
+
+EXPECTED_EFFECTIVE_AGGREGATE_IMPORTS = {
+    "EconCSLib.Math.Probability.Effective": {
+        "EconCSLib.Math.Probability.Effective.Enclosure",
+        "EconCSLib.Math.Probability.Effective.Core",
+        "EconCSLib.Math.Probability.Effective.Uniform",
+    },
+    "EconCSLib.Math.Probability.Effective.Analytic": {
+        "EconCSLib.Math.Probability.Effective",
+        "EconCSLib.Math.Probability.Effective.Semantics",
+        "EconCSLib.Math.Probability.Effective.UniformSemantics",
     },
 }
 
@@ -502,6 +542,195 @@ MAXIMUM_PATH_LAW_FORBIDDEN_NAMES = {
     "ObservedGame",
 }
 
+DISCRETE_PATH_LAW_ADAPTER = (
+    f"{EFG_PREFIX}Observed.Controlled.Law.DiscretePath"
+)
+ANALYTIC_PATH_LAW_ADAPTER = (
+    f"{EFG_PREFIX}Observed.Controlled.Law.Analytic"
+)
+MEASURABLE_KERNEL_ARENA = f"{EFG_PREFIX}Simulation.Kernel.Arena"
+
+# The execution regimes share a maximum lawful path-law carrier, not one
+# universal local executor. These route checks make that ownership boundary
+# enforceable without pretending that imports prove semantic preservation.
+SEMANTIC_REGIME_ROUTE_CONTRACTS = {
+    f"{EFG_PREFIX}Interface.Execution.Finite": (
+        set(),
+        {
+            MAXIMUM_PATH_LAW_MODULE,
+            DISCRETE_PATH_LAW_ADAPTER,
+            ANALYTIC_PATH_LAW_ADAPTER,
+            MEASURABLE_KERNEL_ARENA,
+        },
+    ),
+    f"{EFG_PREFIX}Interface.Execution.Infinite": (
+        {MAXIMUM_PATH_LAW_MODULE, DISCRETE_PATH_LAW_ADAPTER},
+        {ANALYTIC_PATH_LAW_ADAPTER, MEASURABLE_KERNEL_ARENA},
+    ),
+    f"{EFG_PREFIX}Interface.Execution.Analytic": (
+        {
+            MAXIMUM_PATH_LAW_MODULE,
+            DISCRETE_PATH_LAW_ADAPTER,
+            ANALYTIC_PATH_LAW_ADAPTER,
+            MEASURABLE_KERNEL_ARENA,
+        },
+        set(),
+    ),
+    f"{EFG_PREFIX}Interface.Compilation.Discrete": (
+        set(),
+        {
+            MAXIMUM_PATH_LAW_MODULE,
+            DISCRETE_PATH_LAW_ADAPTER,
+            ANALYTIC_PATH_LAW_ADAPTER,
+            MEASURABLE_KERNEL_ARENA,
+        },
+    ),
+    f"{EFG_PREFIX}FOSG.Sequentialization.Core": (
+        set(),
+        {
+            MAXIMUM_PATH_LAW_MODULE,
+            DISCRETE_PATH_LAW_ADAPTER,
+            ANALYTIC_PATH_LAW_ADAPTER,
+            MEASURABLE_KERNEL_ARENA,
+        },
+    ),
+    f"{EFG_PREFIX}FOSG.Sequentialization.Equilibrium": (
+        set(),
+        {
+            MAXIMUM_PATH_LAW_MODULE,
+            DISCRETE_PATH_LAW_ADAPTER,
+            ANALYTIC_PATH_LAW_ADAPTER,
+            MEASURABLE_KERNEL_ARENA,
+        },
+    ),
+}
+
+# Executable definitions own values; analytic leaves own only their
+# interpretation and compatibility proofs.  Each tuple contains the required
+# executable owners and the smallest governed facade that exposes the bridge.
+SEMANTIC_COMPATIBILITY_BRIDGES = {
+    "EconCSLib.Math.Probability.Effective.Semantics": (
+        {
+            "EconCSLib.Math.Probability.Effective.Enclosure",
+            "EconCSLib.Math.Probability.Effective.Core",
+        },
+        "EconCSLib.Math.Probability.Effective.Analytic",
+    ),
+    "EconCSLib.Math.Probability.Effective.UniformSemantics": (
+        {"EconCSLib.Math.Probability.Effective.Uniform"},
+        "EconCSLib.Math.Probability.Effective.Analytic",
+    ),
+    f"{EFG_PREFIX}Simulation.Kernel.FiniteExecution": (
+        {
+            f"{EFG_PREFIX}Execution.Discrete.HistoryKernel",
+            f"{EFG_PREFIX}Execution.Discrete.FiniteObservation",
+        },
+        f"{EFG_PREFIX}Interface.Execution.Analytic",
+    ),
+    f"{EFG_PREFIX}Simulation.Kernel.EffectivePathLaw": (
+        {f"{EFG_PREFIX}Execution.Discrete.EffectivePathLaw"},
+        f"{EFG_PREFIX}Interface.Execution.Analytic",
+    ),
+    f"{EFG_PREFIX}Simulation.Kernel.CertifiedPathApproximation": (
+        {f"{EFG_PREFIX}Execution.Discrete.CertifiedPathApproximation"},
+        f"{EFG_PREFIX}Interface.Execution.Analytic",
+    ),
+    f"{EFG_PREFIX}Simulation.Kernel.FiniteRealizedInformation": (
+        {f"{EFG_PREFIX}Execution.Discrete.RealizedInformation"},
+        f"{EFG_PREFIX}Interface.Execution.Analytic",
+    ),
+    f"{EFG_PREFIX}Simulation.Kernel.FiniteCompleteEventPath": (
+        {f"{EFG_PREFIX}Execution.Discrete.FiniteCompleteEventPath"},
+        f"{EFG_PREFIX}Interface.Execution.Analytic",
+    ),
+    f"{EFG_PREFIX}Simulation.Presentation.Kernel.EffectiveBehavioralProfile": (
+        {f"{EFG_PREFIX}Execution.Discrete.EffectiveKernelBehavioralProfile"},
+        f"{EFG_PREFIX}Interface.Execution.Analytic",
+    ),
+    f"{EFG_PREFIX}Simulation.Continuation.FiniteConditioning": (
+        {f"{EFG_PREFIX}Execution.Discrete.ConditionalContinuation"},
+        f"{EFG_PREFIX}Interface.Equilibrium.Analytic",
+    ),
+    f"{EFG_PREFIX}Simulation.Equilibrium.FinitePayoff": (
+        {f"{EFG_PREFIX}Execution.FinitePayoff"},
+        f"{EFG_PREFIX}Interface.Equilibrium.Analytic",
+    ),
+    f"{EFG_PREFIX}Simulation.Equilibrium.FiniteMeasureStrategy": (
+        {f"{EFG_PREFIX}Observed.FiniteMeasureStrategy"},
+        f"{EFG_PREFIX}Interface.Equilibrium.Analytic",
+    ),
+    f"{EFG_PREFIX}Simulation.Equilibrium.EffectiveMeasureStrategy": (
+        {"EconCSLib.Math.Probability.Effective.Core"},
+        f"{EFG_PREFIX}Interface.Equilibrium.Analytic",
+    ),
+    f"{EFG_PREFIX}Simulation.Equilibrium.EffectivePathUtility": (
+        {"EconCSLib.Math.Probability.Effective.Core"},
+        f"{EFG_PREFIX}Interface.Equilibrium.Analytic",
+    ),
+    f"{EFG_PREFIX}Simulation.Presentation.Chance.FiniteExecution": (
+        {f"{EFG_PREFIX}Execution.Discrete.ObservedChance"},
+        f"{EFG_PREFIX}Interface.Execution.Analytic",
+    ),
+    f"{EFG_PREFIX}Simulation.Restart.FiniteExecution": (
+        {f"{EFG_PREFIX}Execution.Discrete.FiniteObservation"},
+        f"{EFG_PREFIX}Interface.Restart",
+    ),
+}
+
+# These modules are the current algorithm-first EFG owners. Their values must
+# remain executable and reachable through the smallest documented facade,
+# without importing an analytic bridge, supplied infinite law, or measure
+# interpretation leaf.
+ALGORITHM_FIRST_EXECUTABLE_OWNERS = {
+    "EconCSLib.Math.Probability.Effective.Enclosure":
+        "EconCSLib.Math.Probability.Effective",
+    "EconCSLib.Math.Probability.Effective.Core":
+        "EconCSLib.Math.Probability.Effective",
+    "EconCSLib.Math.Probability.Effective.Uniform":
+        "EconCSLib.Math.Probability.Effective",
+    f"{EFG_PREFIX}Execution.Discrete.HistoryKernel":
+        f"{EFG_PREFIX}Interface.Execution.Finite",
+    f"{EFG_PREFIX}Execution.Discrete.FiniteObservation":
+        f"{EFG_PREFIX}Interface.Execution.Finite",
+    f"{EFG_PREFIX}Execution.Discrete.EffectivePathLaw":
+        f"{EFG_PREFIX}Interface.Execution.Finite",
+    f"{EFG_PREFIX}Execution.Discrete.EffectivePathUtility":
+        f"{EFG_PREFIX}Interface.Execution.Finite",
+    f"{EFG_PREFIX}Execution.Discrete.CertifiedPathApproximation":
+        f"{EFG_PREFIX}Interface.Execution.Finite",
+    f"{EFG_PREFIX}Execution.Discrete.DiscountedPathUtility":
+        f"{EFG_PREFIX}Interface.Execution.Finite",
+    f"{EFG_PREFIX}Execution.Discrete.FiniteCompleteEventPath":
+        f"{EFG_PREFIX}Interface.Execution.Finite",
+    f"{EFG_PREFIX}Execution.Discrete.RealizedInformation":
+        f"{EFG_PREFIX}Interface.Execution.Finite",
+    f"{EFG_PREFIX}Execution.Discrete.EffectiveKernelBehavioralProfile":
+        f"{EFG_PREFIX}Interface.Execution.Finite",
+    f"{EFG_PREFIX}Execution.Discrete.ConditionalContinuation":
+        f"{EFG_PREFIX}Interface.Execution.Finite",
+    f"{EFG_PREFIX}Execution.Discrete.ContinuationTruncation":
+        f"{EFG_PREFIX}Interface.Execution.Finite",
+    f"{EFG_PREFIX}Execution.Discrete.ObservedChance":
+        f"{EFG_PREFIX}Interface.Execution.Finite",
+    f"{EFG_PREFIX}Execution.FinitePayoff":
+        f"{EFG_PREFIX}Interface.Execution.Finite",
+    f"{EFG_PREFIX}Execution.FiniteCompletePath":
+        f"{EFG_PREFIX}Interface.Execution.Finite",
+    f"{EFG_PREFIX}Execution.Truncation":
+        f"{EFG_PREFIX}Interface.Execution.Finite",
+    f"{EFG_PREFIX}Observed.FinitePureNash":
+        f"{EFG_PREFIX}Interface.Equilibrium.Discrete",
+    f"{EFG_PREFIX}Observed.FiniteMeasureStrategy":
+        f"{EFG_PREFIX}Interface.Equilibrium.Discrete",
+}
+
+ALGORITHM_FIRST_FORBIDDEN_LOCAL_MODULES = {
+    f"{EFG_PREFIX}Execution.InfiniteTrajectory",
+    "EconCSLib.Math.Probability.FiniteLaw.Measure",
+    "EconCSLib.Math.Probability.Effective.Semantics",
+    "EconCSLib.Math.Probability.Effective.UniformSemantics",
+}
+
 FORBIDDEN_LEGACY_ROOT_NAMES = {
     "IsDesignatedContinuationRoot",
     "legacyContinuationRootPresentation",
@@ -594,8 +823,19 @@ def in_scope_modules(root: Path) -> set[str]:
     paths = list((root / "EconCSLib/GameTheory/ExtensiveGame").rglob("*.lean"))
     paths += [root / "EconCSLib/GameTheory/GameForm.lean"]
     paths += list((root / "EconCSLib/GameTheory/GameForm").rglob("*.lean"))
-    paths += [root / "EconCSLib/Math/Probability/PMF.lean"]
     paths += list((root / "EconCSLib/Math/Probability/PMF").rglob("*.lean"))
+    paths += [root / "EconCSLib/Math/Probability/FiniteLaw.lean"]
+    paths += list((root / "EconCSLib/Math/Probability/FiniteLaw").rglob("*.lean"))
+    paths += [root / "EconCSLib/Math/Probability/Effective.lean"]
+    paths += list((root / "EconCSLib/Math/Probability/Effective").rglob("*.lean"))
+    paths += [root / "EconCSLib/Math/Probability/FiniteMarkovChain.lean"]
+    paths += list(
+        (root / "EconCSLib/Math/Probability/FiniteMarkovChain").rglob("*.lean")
+    )
+    paths += [root / "EconCSLib/Math/Probability/RationalIntervalUnion.lean"]
+    paths += list(
+        (root / "EconCSLib/Math/Probability/RationalIntervalUnion").rglob("*.lean")
+    )
     return {
         name
         for path in paths
@@ -689,6 +929,16 @@ def strip_lean_comments_and_strings(text: str) -> str:
     return "".join(output)
 
 
+def semantic_compatibility_source_is_valid(source: str) -> bool:
+    """A bridge proves an equality/representation certificate and owns no result data."""
+
+    stripped = strip_lean_comments_and_strings(source)
+    return (
+        NONCOMPUTABLE_DATA_DECL_RE.search(stripped) is None
+        and SEMANTIC_CERTIFICATE_THEOREM_RE.search(stripped) is not None
+    )
+
+
 def frozen_structure_digest(
     source: str, start_pattern: str, end_pattern: str
 ) -> str | None:
@@ -716,25 +966,26 @@ def frozen_structure_digest(
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
-def controlled_observed_universe_mapping_is_valid(source: str) -> bool:
-    """Check the action/state universe mapping without freezing the record.
+def controlled_carrier_universe_mapping_is_valid(source: str) -> bool:
+    """Check both carrier universe mappings without freezing either record.
 
     `ControlledGame` exposes universes in player/action/state order.  The
     information-action family must therefore share `uA` with the base action
-    fiber, while the base state remains independently universe-polymorphic in
-    `uS`.
+    fiber in `ControlledDecisionGame`, while the base state remains
+    independently universe-polymorphic in `uS`. `ControlledObservedGame`
+    must extend that decision carrier without permuting its universes.
     """
 
     stripped = strip_lean_comments_and_strings(source)
     starts = list(
-        re.finditer(CONTROLLED_OBSERVED_START, stripped, re.MULTILINE)
+        re.finditer(CONTROLLED_DECISION_START, stripped, re.MULTILINE)
     )
     if len(starts) != 1:
         return False
     start = starts[0]
     ends = list(
         re.finditer(
-            CONTROLLED_OBSERVED_END,
+            CONTROLLED_DECISION_END,
             stripped[start.end():],
             re.MULTILINE,
         )
@@ -753,7 +1004,19 @@ def controlled_observed_universe_mapping_is_valid(source: str) -> bool:
         r"\(i\s*:\s*N\)\s*→\s*InfoState\s+i\s*→\s*Type\s+uA\b",
         declaration,
     )
-    return len(base_mapping) == 1 and len(info_action_mapping) == 1
+    observed_starts = list(
+        re.finditer(CONTROLLED_OBSERVED_START, stripped, re.MULTILINE)
+    )
+    observed_extends = list(
+        re.finditer(CONTROLLED_OBSERVED_EXTENDS, stripped, re.MULTILINE)
+    )
+    return (
+        len(base_mapping) == 1
+        and len(info_action_mapping) == 1
+        and len(observed_starts) == 1
+        and len(observed_extends) == 1
+        and observed_extends[0].start() >= observed_starts[0].end()
+    )
 
 
 def local_import_graph(root: Path) -> tuple[dict[str, set[str]], list[str]]:
@@ -848,7 +1111,6 @@ def efg_documentation_paths(root: Path) -> list[Path]:
         design / "extensive_game.md",
     ]
     paths.extend(design.glob("efg-*.md"))
-    paths.extend((design / "efg-prompts").glob("*.md"))
     return sorted({path for path in paths if path.is_file()})
 
 
@@ -877,6 +1139,47 @@ def documentation_link_errors(paths: list[Path]) -> list[str]:
             if not resolved.exists():
                 errors.append(f"{path}: unresolved local Markdown link {raw_target}")
     return errors
+
+
+def large_efg_line_band(line_count: int) -> str:
+    """Return the stable maintenance band for an audited large EFG module."""
+
+    if line_count >= 1200:
+        return "1200+"
+    if line_count >= 1000:
+        return "1000-1199"
+    if line_count >= LARGE_EFG_LINE_THRESHOLD:
+        return "800-999"
+    raise ValueError(f"line count {line_count} is below the audit threshold")
+
+
+def current_large_efg_modules(root: Path) -> dict[str, str]:
+    """Return every EFG source at or above the governed line threshold."""
+
+    result: dict[str, str] = {}
+    efg_root = root / "EconCSLib/GameTheory/ExtensiveGame"
+    for path in efg_root.rglob("*.lean"):
+        line_count = len(path.read_text(encoding="utf-8").splitlines())
+        if line_count < LARGE_EFG_LINE_THRESHOLD:
+            continue
+        module = module_name(path, root)
+        if module is not None:
+            result[module] = large_efg_line_band(line_count)
+    return result
+
+
+def documented_large_efg_modules(
+    source: str,
+) -> tuple[dict[str, str], set[str]]:
+    """Read machine-audited module/band rows and report duplicate modules."""
+
+    result: dict[str, str] = {}
+    duplicates: set[str] = set()
+    for module, band in LARGE_MODULE_ROW_RE.findall(source):
+        if module in result:
+            duplicates.add(module)
+        result[module] = band
+    return result, duplicates
 
 
 def run(root: Path) -> list[str]:
@@ -949,6 +1252,27 @@ def run(root: Path) -> list[str]:
                     f"{path}: recorded full module name does not resolve: "
                     f"{referenced}"
                 )
+
+    actual_large_modules = current_large_efg_modules(root)
+    audited_large_modules, duplicate_large_modules = (
+        documented_large_efg_modules(governance_source)
+    )
+    if duplicate_large_modules or audited_large_modules != actual_large_modules:
+        missing = sorted(actual_large_modules.keys() - audited_large_modules.keys())
+        stale = sorted(audited_large_modules.keys() - actual_large_modules.keys())
+        wrong_band = {
+            module: (audited_large_modules[module], actual_large_modules[module])
+            for module in sorted(
+                actual_large_modules.keys() & audited_large_modules.keys()
+            )
+            if audited_large_modules[module] != actual_large_modules[module]
+        }
+        errors.append(
+            f"{governance_path}: large-file audit differs from the current "
+            f">={LARGE_EFG_LINE_THRESHOLD}-line inventory; missing={missing}, "
+            f"stale={stale}, duplicates={sorted(duplicate_large_modules)}, "
+            f"wrong_band={wrong_band}"
+        )
     cycle = import_cycle(graph, scoped)
     if cycle is not None:
         errors.append("local import graph contains a cycle: " + " -> ".join(cycle))
@@ -986,15 +1310,17 @@ def run(root: Path) -> list[str]:
     )
     if (
         not controlled_observed_path.is_file()
-        or not controlled_observed_universe_mapping_is_valid(
+        or not controlled_carrier_universe_mapping_is_valid(
             controlled_observed_path.read_text(encoding="utf-8")
         )
     ):
         errors.append(
-            f"{controlled_observed_path}: ControlledObservedGame must map "
+            f"{controlled_observed_path}: ControlledDecisionGame must map "
             "ControlledGame universes as player/action/state "
-            "`.{uN, uA, uS}` and keep `InfoAction` in `Type uA`; this "
-            "narrow regression guard does not freeze the carrier"
+            "`.{uN, uA, uS}`, keep `InfoAction` in `Type uA`, and "
+            "ControlledObservedGame must extend it as "
+            "`.{uN, uA, uS, uI}`; this narrow regression guard does not "
+            "freeze either carrier"
         )
 
     lifecycle = lean_lifecycle(root)
@@ -1128,6 +1454,107 @@ def run(root: Path) -> list[str]:
                 f"required field {required}"
             )
 
+    maximum_law_closure = closure(graph, MAXIMUM_PATH_LAW_MODULE)
+    leaked_path_law_producers = maximum_law_closure & {
+        DISCRETE_PATH_LAW_ADAPTER,
+        ANALYTIC_PATH_LAW_ADAPTER,
+    }
+    if leaked_path_law_producers:
+        errors.append(
+            f"{maximum_law_path}: common path-law carrier depends on concrete "
+            "producer adapter(s): "
+            + ", ".join(sorted(leaked_path_law_producers))
+        )
+
+    for entry, (required, forbidden) in SEMANTIC_REGIME_ROUTE_CONTRACTS.items():
+        if entry not in graph:
+            errors.append(f"missing semantic-regime route module: {entry}")
+            continue
+        imported = closure(graph, entry)
+        missing = sorted(required - imported)
+        leaked = sorted(forbidden & imported)
+        if missing or leaked:
+            errors.append(
+                f"{module_path(entry, root)}: semantic-regime route differs; "
+                f"missing={missing}, forbidden={leaked}"
+            )
+
+    for bridge, (executable_owners, facade) in (
+        SEMANTIC_COMPATIBILITY_BRIDGES.items()
+    ):
+        if bridge not in graph:
+            errors.append(f"missing semantic-compatibility bridge: {bridge}")
+            continue
+        bridge_closure = closure(graph, bridge)
+        missing_owners = sorted(executable_owners - bridge_closure)
+        if missing_owners:
+            errors.append(
+                f"{module_path(bridge, root)}: semantic-compatibility bridge "
+                f"does not reach executable owner(s): {missing_owners}"
+            )
+        if facade not in graph or bridge not in closure(graph, facade):
+            errors.append(
+                f"{module_path(bridge, root)}: semantic-compatibility bridge "
+                f"is not exposed by {facade}"
+            )
+        for owner in sorted(executable_owners):
+            if owner not in graph:
+                errors.append(
+                    f"missing semantic-compatibility executable owner: {owner}"
+                )
+            elif bridge in closure(graph, owner):
+                errors.append(
+                    f"{module_path(owner, root)}: executable owner depends on "
+                    f"semantic-compatibility bridge {bridge}"
+                )
+        bridge_source = module_path(bridge, root).read_text(encoding="utf-8")
+        if not semantic_compatibility_source_is_valid(bridge_source):
+            errors.append(
+                f"{module_path(bridge, root)}: semantic-compatibility bridge "
+                "must contain an `_eq_` or `_represents` certificate theorem "
+                "and no noncomputable data declaration"
+            )
+
+    for owner, facade in ALGORITHM_FIRST_EXECUTABLE_OWNERS.items():
+        if owner not in graph:
+            errors.append(f"missing algorithm-first executable owner: {owner}")
+            continue
+        owner_closure = closure(graph, owner)
+        leaked = sorted(
+            module
+            for module in owner_closure
+            if module in ALGORITHM_FIRST_FORBIDDEN_LOCAL_MODULES
+            or module.startswith(f"{EFG_PREFIX}Simulation.")
+        )
+        if leaked:
+            errors.append(
+                f"{module_path(owner, root)}: algorithm-first owner reaches "
+                f"analytic module(s): {leaked}"
+            )
+        if facade not in graph or owner not in closure(graph, facade):
+            errors.append(
+                f"{module_path(owner, root)}: algorithm-first owner is not "
+                f"exposed by {facade}"
+            )
+        owner_source = module_path(owner, root).read_text(encoding="utf-8")
+        owner_stripped = strip_lean_comments_and_strings(owner_source)
+        if NONCOMPUTABLE_DATA_DECL_RE.search(owner_stripped):
+            errors.append(
+                f"{module_path(owner, root)}: algorithm-first owner contains "
+                "a noncomputable data declaration"
+            )
+        direct_imports = set(ANY_IMPORT_RE.findall(owner_source))
+        measure_imports = sorted(
+            imported
+            for imported in direct_imports
+            if imported.startswith("Mathlib.MeasureTheory")
+        )
+        if measure_imports:
+            errors.append(
+                f"{module_path(owner, root)}: algorithm-first owner directly "
+                f"imports measure theory: {measure_imports}"
+            )
+
     for module in sorted(scoped):
         path = module_path(module, root)
         stripped = strip_lean_comments_and_strings(
@@ -1244,6 +1671,18 @@ def run(root: Path) -> list[str]:
                 f"{module_path(aggregate, root)}: controlled aggregate "
                 "module docstring must identify a canonical aggregate facade "
                 "that owns no declarations"
+            )
+
+    for aggregate, expected_imports in EXPECTED_EFFECTIVE_AGGREGATE_IMPORTS.items():
+        actual_imports = graph.get(aggregate)
+        if actual_imports is None:
+            errors.append(f"missing effective-probability aggregate: {aggregate}")
+        elif actual_imports != expected_imports:
+            errors.append(
+                f"{module_path(aggregate, root)}: direct imports differ from "
+                "the effective-probability aggregate contract; "
+                f"expected={sorted(expected_imports)}, "
+                f"actual={sorted(actual_imports)}"
             )
 
     controlled_root = f"{EFG_PREFIX}Observed.Controlled"
@@ -1414,17 +1853,26 @@ def run(root: Path) -> list[str]:
     if any(module == f"{EFG_PREFIX}Interface.Restart" for module in compilation):
         errors.append("Interface.Compilation.Discrete must not depend on Restart")
 
-    pmf_modules = {
+    probability_modules = {
         module
         for module in graph
-        if module == "EconCSLib.Math.Probability.PMF"
+        if module == "EconCSLib.Math.Probability.FiniteLaw"
+        or module.startswith("EconCSLib.Math.Probability.FiniteLaw.")
+        or module == "EconCSLib.Math.Probability.Effective"
+        or module.startswith("EconCSLib.Math.Probability.Effective.")
+        or module == "EconCSLib.Math.Probability.FiniteMarkovChain"
+        or module.startswith("EconCSLib.Math.Probability.FiniteMarkovChain.")
+        or module == "EconCSLib.Math.Probability.RationalIntervalUnion"
+        or module.startswith("EconCSLib.Math.Probability.RationalIntervalUnion.")
+        or module == "EconCSLib.Math.Probability.PMF"
         or module.startswith("EconCSLib.Math.Probability.PMF.")
     }
-    for module in sorted(pmf_modules):
+    for module in sorted(probability_modules):
         for imported in sorted(graph[module]):
             if imported.startswith("EconCSLib.GameTheory."):
                 errors.append(
-                    f"{module_path(module, root)}: reusable PMF layer imports {imported}"
+                    f"{module_path(module, root)}: reusable probability layer "
+                    f"imports {imported}"
                 )
 
     for importer, imports in graph.items():
@@ -1461,9 +1909,9 @@ def run(root: Path) -> list[str]:
     simulation_count = sum(
         module.startswith(f"{EFG_PREFIX}Simulation.") for module in scoped
     )
-    if simulation_count != 29:
+    if simulation_count != 42:
         errors.append(
-            f"Simulation module count is {simulation_count}; expected governed count 29"
+            f"Simulation module count is {simulation_count}; expected governed count 42"
         )
 
     return errors
@@ -1511,6 +1959,7 @@ def main() -> int:
             "payoff-aware-adapter",
         }
     }
+    large_module_count = len(current_large_efg_modules(root))
     print(
         f"EFG governance checks passed: {len(rows)} registered modules, "
         f"{compatibility_count} temporary compatibility paths, "
@@ -1524,7 +1973,11 @@ def main() -> int:
         f"{controlled_role_counts['aggregate-facade']} facades/"
         f"{controlled_role_counts['payoff-aware-adapter']} adapters, "
         "minimal-core compatibility freeze deferred, "
-        "1 carrier-universe regression guard."
+        "1 carrier-universe regression guard, "
+        f"{len(SEMANTIC_REGIME_ROUTE_CONTRACTS)} semantic-regime route guards, "
+        f"{len(SEMANTIC_COMPATIBILITY_BRIDGES)} semantic-compatibility bridges, "
+        f"{len(ALGORITHM_FIRST_EXECUTABLE_OWNERS)} algorithm-first owners, "
+        f"{large_module_count} large-module audit rows."
     )
     lifecycle = lean_lifecycle(root)
     canonical_import_only = (
