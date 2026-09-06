@@ -17,7 +17,7 @@ regression does not promise external source compatibility for the
 pre-stability EFG paths it reaches.
 -/
 
-#check Arena.stochasticHistoryPMFFrom
+#check Arena.stochasticHistoryLawFrom
 #check GameTree.value
 
 /--
