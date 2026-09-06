@@ -1,11 +1,12 @@
 # General EFG Foundations
 
 Status: target architecture with Phase A, the foundational part of Phase B,
-and finite logical determinacy implemented through 2026-08-01.
+and finite logical determinacy implemented through 2026-08-12.
 `Execution.CompletePlay`, `Execution.Length`, `Execution.Objective`, and
 `Interface.Objective` implement the measure-free play, structural termination,
-and objective layers. `ControlledGame` and `ControlledObservedGame` now carry
-payoff-free controlled dynamics and information; `ExtensiveGame` is the
+and objective layers. `ControlledGame`, `ControlledDecisionGame`, and its
+optional `ControlledObservedGame` extension carry payoff-free controlled
+dynamics, decision information, and observations; `ExtensiveGame` is the
 compatible state-payoff extension. `Observed.WellFormed`, `FiniteUnfolding`,
 `Winning.Basic`, `Winning.Topology`, `Observed.Quasi`, and `Observed.General`
 implement the finite-profile, finite occurrence unfolding, winning,
@@ -17,9 +18,10 @@ infinite almost-sure winning is implemented separately from pathwise
 robustness and requires a probability-measure certificate. The canonical
 payoff-free complete-information constructor uses decision histories only;
 full-history information remains a named compatibility constructor. On the
-intentionally unconstrained base carrier, `DecisionMoverCoherent` is still
-required to rule out player-labeled terminal states. Lean source is
-authoritative.
+intentionally unconstrained base carrier, constructive `IsDecision` evidence
+and `RepresentedInfo` keep player-labeled terminals and unused raw information
+outside the strategy domain. `DecisionMoverCoherent` is only an optional
+normalization certificate. Lean source is authoritative.
 
 This document continues in
 [`efg-general-foundations-2-strategy.md`](efg-general-foundations-2-strategy.md).
@@ -29,7 +31,7 @@ This document continues in
 The canonical semantic lines are:
 
 ```text
-Arena -> ControlledGame -> ControlledObservedGame
+Arena -> ControlledGame -> ControlledDecisionGame -> ControlledObservedGame
                        \-> objectives / winning conditions
                        \-> discrete or analytic execution
 
