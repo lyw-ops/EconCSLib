@@ -3,9 +3,10 @@ Copyright (c) 2026 EconCSLib contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
-import EconCSLib.GameTheory.ExtensiveGame.Execution.InfiniteTrajectory
+import EconCSLib.GameTheory.ExtensiveGame.Execution.CompletePlay
 import EconCSLib.GameTheory.ExtensiveGame.Execution.Objective
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism.Core
+import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
 
 /-!
 # Payoff-free complete-path probability semantics
@@ -20,10 +21,12 @@ canonical terminal-absorbing complete-play predicate almost surely.  Local
 execution or chance-kernel coherence is deliberately orthogonal and is
 expressed by `RealizesExecution` or `ExecutionCoherent`.
 
-The carrier is a family of lawful path marginals, one for each starting
-history. It does not by itself assert that those marginals are versions of one
-joint causal process. Restart, conditioning, and cross-root coherence require
-an additional named certificate.
+The carrier is a family of lawful path measures and caller-supplied bounded
+coordinate laws, one family for each starting history. Every bounded law is
+certified equal to the corresponding path coordinate. The carrier does not by
+itself assert that different roots are versions of one joint causal process.
+Restart, conditioning, and cross-root coherence require an additional named
+certificate.
 
 Same-game strategy realization and cross-game functional realization are
 separate structures.  A cross-game realization records measurable history and
@@ -66,6 +69,18 @@ structure CompletePathLawSemantics
       (current : G.base.History),
       ∀ᵐ path ∂pathLaw profile current,
         G.base.toArena.IsCompletePlayPathFrom current path
+  /-- Caller-supplied bounded coordinate laws.  Keeping these as data avoids
+  manufacturing `Measure.map` values in an executable declaration. -/
+  boundedCompleteHistoryLaw :
+    (profile : ∀ i, Strategy i) →
+      G.base.History → ℕ → Measure G.base.History
+  /-- Every supplied bounded law is the corresponding coordinate marginal of
+  the complete path law. -/
+  boundedCompleteHistoryLaw_eq_map :
+    ∀ (profile : ∀ i, Strategy i)
+      (current : G.base.History) (time : ℕ),
+      boundedCompleteHistoryLaw profile current time =
+        (pathLaw profile current).map (fun path => path time)
 
 namespace CompletePathLawSemantics
 
@@ -98,16 +113,6 @@ theorem measurable_pathCoordinate (time : ℕ) :
     Measurable (fun path : ℕ → G.base.History => path time) :=
   measurable_pi_apply time
 
-/-- The law of the complete history at one bounded event coordinate. -/
-noncomputable def boundedCompleteHistoryLaw
-    (S : G.CompletePathLawSemantics)
-    (profile : S.Profile)
-    (current : G.base.History)
-    (time : ℕ) :
-    Measure G.base.History :=
-  (S.pathLaw profile current).map
-    (fun path => path time)
-
 /-- Equality of bounded complete-history laws. -/
 def BoundedCompleteHistoryLawEquivalentAt
     (S T : G.CompletePathLawSemantics)
@@ -129,23 +134,8 @@ theorem CompletePathLawEquivalentAt.boundedCompleteHistory
     S.BoundedCompleteHistoryLawEquivalentAt
       T source target current time := by
   unfold BoundedCompleteHistoryLawEquivalentAt
-    boundedCompleteHistoryLaw
-  rw [hpath]
-
-/-- Push a bounded history law through an explicitly measurable
-interpretation. -/
-noncomputable def interpretedHistoryLaw
-    (S : G.CompletePathLawSemantics)
-    (profile : S.Profile)
-    (current : G.base.History)
-    (time : ℕ)
-    {Outcome : Type uOutcome}
-    [MeasurableSpace Outcome]
-    (interpret : G.base.History → Outcome)
-    (_hinterpret : Measurable interpret) :
-    Measure Outcome :=
-  (S.boundedCompleteHistoryLaw
-    profile current time).map interpret
+  rw [S.boundedCompleteHistoryLaw_eq_map,
+    T.boundedCompleteHistoryLaw_eq_map, hpath]
 
 /-- Bounded history-law equality is preserved by every common measurable
 interpretation. -/
@@ -160,12 +150,9 @@ theorem BoundedCompleteHistoryLawEquivalentAt.interpreted
     {Outcome : Type uOutcome}
     [MeasurableSpace Outcome]
     (interpret : G.base.History → Outcome)
-    (hinterpret : Measurable interpret) :
-    S.interpretedHistoryLaw
-        source current time interpret hinterpret =
-      T.interpretedHistoryLaw
-        target current time interpret hinterpret := by
-  unfold interpretedHistoryLaw
+    (_hinterpret : Measurable interpret) :
+    (S.boundedCompleteHistoryLaw source current time).map interpret =
+      (T.boundedCompleteHistoryLaw target current time).map interpret := by
   rw [hhistory]
 
 /-! ## Downstream measurable interpretations -/
@@ -180,11 +167,9 @@ def HistoryTransformLawEquivalentAt
     (current : G.base.History)
     (time : ℕ)
     (terminalize : G.base.History → G.base.History)
-    (hterminalize : Measurable terminalize) : Prop :=
-  S.interpretedHistoryLaw
-      source current time terminalize hterminalize =
-    T.interpretedHistoryLaw
-      target current time terminalize hterminalize
+    (_hterminalize : Measurable terminalize) : Prop :=
+  (S.boundedCompleteHistoryLaw source current time).map terminalize =
+    (T.boundedCompleteHistoryLaw target current time).map terminalize
 
 /-- Terminal-history law equality under an explicitly measurable map whose
 codomain carries a proof that every result is terminal. -/
@@ -195,12 +180,10 @@ def TerminalHistoryLawEquivalentAt
     (time : ℕ)
     (terminalize :
       G.base.History →
-        G.base.toArena.TerminalHistoryFrom G.base.init)
-    (hterminalize : Measurable terminalize) : Prop :=
-  S.interpretedHistoryLaw
-      source current time terminalize hterminalize =
-    T.interpretedHistoryLaw
-      target current time terminalize hterminalize
+      G.base.toArena.TerminalHistoryFrom G.base.init)
+    (_hterminalize : Measurable terminalize) : Prop :=
+  (S.boundedCompleteHistoryLaw source current time).map terminalize =
+    (T.boundedCompleteHistoryLaw target current time).map terminalize
 
 /-- Outcome-law equality under an explicitly measurable interpretation. -/
 def OutcomeLawEquivalentAt
@@ -211,11 +194,9 @@ def OutcomeLawEquivalentAt
     {Outcome : Type uOutcome}
     [MeasurableSpace Outcome]
     (outcome : G.base.History → Outcome)
-    (houtcome : Measurable outcome) : Prop :=
-  S.interpretedHistoryLaw
-      source current time outcome houtcome =
-    T.interpretedHistoryLaw
-      target current time outcome houtcome
+    (_houtcome : Measurable outcome) : Prop :=
+  (S.boundedCompleteHistoryLaw source current time).map outcome =
+    (T.boundedCompleteHistoryLaw target current time).map outcome
 
 /-- Payoff-law equality is a downstream measurable outcome interpretation. -/
 abbrev PayoffLawEquivalentAt
@@ -300,12 +281,12 @@ theorem OutcomeLawEquivalentAt.integral_eq
     (integrand : Outcome → ℝ) :
     ∫ value,
         integrand value ∂
-          S.interpretedHistoryLaw
-            source current time outcome houtcome =
+          (S.boundedCompleteHistoryLaw
+            source current time).map outcome =
       ∫ value,
         integrand value ∂
-          T.interpretedHistoryLaw
-            target current time outcome houtcome := by
+          (T.boundedCompleteHistoryLaw
+            target current time).map outcome := by
   rw [hlaw]
 
 /-- Integrability transfers to the target because the two outcome laws are
@@ -325,11 +306,11 @@ theorem OutcomeLawEquivalentAt.integrable_target
     {utility : Outcome → ℝ}
     (hintegrable :
       Integrable utility
-        (S.interpretedHistoryLaw
-          source current time outcome houtcome)) :
+        ((S.boundedCompleteHistoryLaw
+          source current time).map outcome)) :
     Integrable utility
-      (T.interpretedHistoryLaw
-        target current time outcome houtcome) := by
+      ((T.boundedCompleteHistoryLaw
+        target current time).map outcome) := by
   rw [← hlaw]
   exact hintegrable
 
@@ -351,16 +332,16 @@ theorem OutcomeLawEquivalentAt.expectedUtility
     (_hutility : Measurable utility)
     (hintegrable :
       Integrable utility
-        (S.interpretedHistoryLaw
-          source current time outcome houtcome)) :
+        ((S.boundedCompleteHistoryLaw
+          source current time).map outcome)) :
     ∫ value,
         utility value ∂
-          S.interpretedHistoryLaw
-            source current time outcome houtcome =
+          (S.boundedCompleteHistoryLaw
+            source current time).map outcome =
       ∫ value,
         utility value ∂
-          T.interpretedHistoryLaw
-            target current time outcome houtcome := by
+          (T.boundedCompleteHistoryLaw
+            target current time).map outcome := by
   have _htarget := hlaw.integrable_target hintegrable
   exact hlaw.integral_eq utility
 
