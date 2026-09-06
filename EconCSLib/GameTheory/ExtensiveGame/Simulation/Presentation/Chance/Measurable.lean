@@ -42,6 +42,12 @@ information presentation.
 
 open MeasureTheory ProbabilityTheory
 
+local macro "finiteLawMeasure(" law:term ")" : term =>
+  `(($law).atoms.foldr
+      (fun atom rest =>
+        (atom.2 : ENNReal) • Measure.dirac atom.1 + rest)
+      0)
+
 namespace ExtensiveGame.ObservedChanceGame
 
 universe uN uU uI uC
@@ -70,6 +76,20 @@ structure MeasurablePresentation
     G.observed.BehavioralProfile →
       MeasurableKernelArena.EventInformation.RealizedActionPolicy
         realization
+  /-- Supplied profile-independent concrete chance kernel. -/
+  chanceKernel : (time : ℕ) →
+    Kernel (model.toArena.EventPrefix time) model.toArena.ActionBundle
+  /-- The supplied chance kernel is globally s-finite. -/
+  chanceKernel_isSFinite : ∀ time, IsSFiniteKernel (chanceKernel time)
+  /-- Every behavioral profile agrees with the supplied law at chance prefixes.
+  No reference profile or default law is selected. -/
+  chanceKernel_eq : ∀ (profile : G.observed.BehavioralProfile)
+    (time : ℕ) (events : model.toArena.EventPrefix time)
+    (_hnonterminal : ¬ G.observed.base.isTerminal
+      (MeasurableKernelArena.latestEventState time events).1)
+    (_hmover : G.observed.base.mover
+      (MeasurableKernelArena.latestEventState time events).1 = none),
+    chanceKernel time events = (toPolicy profile).realizedKernel time events
   /-- Map original player information into every time-indexed analytic
   information carrier. -/
   playerInformation :
@@ -97,9 +117,11 @@ structure MeasurablePresentation
             G.observed.infoAt
               (MeasurableKernelArena.latestEventState
                 time events)
-              i hmover hnonterminal⟩
+              i hmover
+              (G.observed.base.toArena.isDecision_of_not_isTerminal
+                _ hnonterminal)⟩
   /-- At a nonterminal player prefix, abstract selection followed by
-  realization is exactly the original behavioral PMF on concrete legal
+  realization is exactly the original behavioral finite law on concrete legal
   history/action bundles. -/
   player_realizedKernel :
     ∀ (profile : G.observed.BehavioralProfile)
@@ -114,10 +136,8 @@ structure MeasurablePresentation
             (MeasurableKernelArena.latestEventState time events).1 =
           some i),
       (toPolicy profile).realizedKernel time events =
-        @PMF.toMeasure
-          model.toArena.ActionBundle
-          model.historyActionMeasurable
-          ((profile.actionLawAt G.observed
+        finiteLawMeasure(
+          (profile.actionLawAt G.observed
               (MeasurableKernelArena.latestEventState time events)
               i hmover hnonterminal).map
             (fun action =>
@@ -125,7 +145,7 @@ structure MeasurablePresentation
                 action⟩ :
                 model.toArena.ActionBundle)))
   /-- At a nonterminal chance prefix, abstract selection followed by
-  realization is exactly the declared chance PMF on concrete legal
+  realization is exactly the declared chance finite law on concrete legal
   history/action bundles. -/
   chance_realizedKernel :
     ∀ (profile : G.observed.BehavioralProfile)
@@ -139,10 +159,8 @@ structure MeasurablePresentation
             (MeasurableKernelArena.latestEventState time events).1 =
           none),
       (toPolicy profile).realizedKernel time events =
-        @PMF.toMeasure
-          model.toArena.ActionBundle
-          model.historyActionMeasurable
-          ((G.chanceKernel
+        finiteLawMeasure(
+          (G.chanceKernel
               (MeasurableKernelArena.latestEventState time events)
               ⟨hmover, hnonterminal⟩).map
             (fun action =>
@@ -200,10 +218,14 @@ theorem abstractKernel_eq_of_player_infoAt_eq
     (hsame :
       G.observed.infoAt
           (MeasurableKernelArena.latestEventState time events₁)
-          i hmover₁ hnonterminal₁ =
+          i hmover₁
+          (G.observed.base.toArena.isDecision_of_not_isTerminal
+            _ hnonterminal₁) =
         G.observed.infoAt
           (MeasurableKernelArena.latestEventState time events₂)
-          i hmover₂ hnonterminal₂) :
+          i hmover₂
+          (G.observed.base.toArena.isDecision_of_not_isTerminal
+            _ hnonterminal₂)) :
     (presentation.toPolicy profile).abstractKernel time
         (presentation.information.informationAt time events₁) =
       (presentation.toPolicy profile).abstractKernel time
@@ -232,10 +254,8 @@ theorem compiledPolicy_kernel_of_mover
           (MeasurableKernelArena.latestEventState time events).1 =
         some i) :
     (presentation.compiledPolicy profile).kernel time events =
-      @PMF.toMeasure
-        model.toArena.ActionBundle
-        model.historyActionMeasurable
-        ((profile.actionLawAt G.observed
+      finiteLawMeasure(
+        (profile.actionLawAt G.observed
             (MeasurableKernelArena.latestEventState time events)
             i hmover hnonterminal).map
           (fun action =>
@@ -261,10 +281,8 @@ theorem compiledPolicy_kernel_of_chance
           (MeasurableKernelArena.latestEventState time events).1 =
         none) :
     (presentation.compiledPolicy profile).kernel time events =
-      @PMF.toMeasure
-        model.toArena.ActionBundle
-        model.historyActionMeasurable
-        ((G.chanceKernel
+      finiteLawMeasure(
+        (G.chanceKernel
             (MeasurableKernelArena.latestEventState time events)
             ⟨hmover, hnonterminal⟩).map
           (fun action =>
@@ -297,38 +315,19 @@ noncomputable def statePathMeasure
     model.toArena_terminalSet_measurable
     initialHistory
 
-/-- A profile-independent measurable chance kernel extracted from an existing
-PMF presentation.
-
-When the raw behavioral-profile type is inhabited, choose one reference
-profile and use its realized kernel.  At chance prefixes the local exactness
-theorem makes this choice observationally irrelevant.  When the raw profile
-type is empty, use the zero kernel; no behavioral profile can observe that
-branch, and the generic kernel-profile adapter below remains total. -/
-noncomputable def fixedChanceKernel
-    (presentation : MeasurablePresentation G model)
-    (time : ℕ) :
-    Kernel
-      (model.toArena.EventPrefix time)
-      model.toArena.ActionBundle := by
-  classical
-  by_cases hprofile :
-      Nonempty G.observed.BehavioralProfile
-  · exact
-      (presentation.toPolicy
-        (Classical.choice hprofile)).realizedKernel time
-  · exact 0
+/-- The supplied profile-independent measurable chance law. -/
+def fixedChanceKernel
+    (presentation : MeasurablePresentation G model) (time : ℕ) :
+    Kernel (model.toArena.EventPrefix time) model.toArena.ActionBundle :=
+  presentation.chanceKernel time
 
 instance fixedChanceKernel_isSFinite
-    (presentation : MeasurablePresentation G model)
-    (time : ℕ) :
-    IsSFiniteKernel (presentation.fixedChanceKernel time) := by
-  classical
-  unfold fixedChanceKernel
-  split <;> infer_instance
+    (presentation : MeasurablePresentation G model) (time : ℕ) :
+    IsSFiniteKernel (presentation.fixedChanceKernel time) :=
+  presentation.chanceKernel_isSFinite time
 
-/-- At a represented chance prefix, the extracted fixed chance kernel is
-exactly the original chance PMF packaged as a concrete bundle measure. -/
+/-- At a represented chance prefix, the supplied fixed chance kernel is
+exactly the original chance finite law packaged as a concrete bundle measure. -/
 theorem fixedChanceKernel_of_chance
     (presentation : MeasurablePresentation G model)
     (profile : G.observed.BehavioralProfile)
@@ -342,30 +341,20 @@ theorem fixedChanceKernel_of_chance
           (MeasurableKernelArena.latestEventState time events).1 =
         none) :
     presentation.fixedChanceKernel time events =
-      @PMF.toMeasure
-        model.toArena.ActionBundle
-        model.historyActionMeasurable
-        ((G.chanceKernel
+      finiteLawMeasure(
+        (G.chanceKernel
             (MeasurableKernelArena.latestEventState time events)
             ⟨hmover, hnonterminal⟩).map
           (fun action =>
             (⟨MeasurableKernelArena.latestEventState time events,
               action⟩ :
-              model.toArena.ActionBundle))) := by
-  classical
-  unfold fixedChanceKernel
-  split
-  · rename_i hprofile
-    exact
-      presentation.chance_realizedKernel
-        (Classical.choice hprofile)
-        time events hnonterminal hmover
-  · rename_i hprofile
-    exact (hprofile ⟨profile⟩).elim
+              model.toArena.ActionBundle))) :=
+  (presentation.chanceKernel_eq profile time events hnonterminal hmover).trans
+    (presentation.chance_realizedKernel profile time events hnonterminal hmover)
 
-/-- Forget the PMF-specific local equations and obtain the general structural
+/-- Forget the finite-law-specific local equations and obtain the general structural
 kernel presentation. -/
-noncomputable def toKernelPresentation
+def toKernelPresentation
     (presentation : MeasurablePresentation G model) :
     G.observed.MeasurableKernelPresentation model where
   information := presentation.information
@@ -377,9 +366,9 @@ noncomputable def toKernelPresentation
     intro time
     infer_instance
 
-/-- Embed one existing PMF behavioral profile as a general measurable
+/-- Embed one existing finite-law behavioral profile as a general measurable
 kernel-valued profile.  Its player and chance laws are unchanged. -/
-noncomputable def toKernelBehavioralProfile
+def toKernelBehavioralProfile
     (presentation : MeasurablePresentation G model)
     (profile : G.observed.BehavioralProfile) :
     presentation.toKernelPresentation.KernelBehavioralProfile where
@@ -396,7 +385,7 @@ noncomputable def toKernelBehavioralProfile
           profile time events hnonterminal hmover).symm
 
 /-- The general kernel-profile adapter compiles to definitionally the same raw
-event policy as the existing PMF presentation. -/
+event policy as the existing finite-law presentation. -/
 theorem toKernelBehavioralProfile_compiledPolicy
     (presentation : MeasurablePresentation G model)
     (profile : G.observed.BehavioralProfile) :
@@ -438,15 +427,30 @@ special case of the explicit measurable-history presentation.
 The conversion changes no carrier, information statistic, realization
 kernel, abstract policy, or concrete law.  It only replaces the old
 monolithic raw-policy equality field by the new local player/chance equations,
-which follow from that equality.  In particular, the canonical countable
-constructor specializes through this map without a second implementation. -/
-noncomputable def toMeasurablePresentation
-    (presentation : AnalyticPresentation G) :
+which follow from that equality. The caller also supplies the fixed chance
+kernel, its s-finiteness, and agreement at every represented chance prefix. -/
+def toMeasurablePresentation
+    (presentation : AnalyticPresentation G)
+    (chanceKernel : (time : ℕ) → Kernel
+      ((MeasurableHistoryModel.discrete G).toArena.EventPrefix time)
+      (MeasurableHistoryModel.discrete G).toArena.ActionBundle)
+    (chanceKernel_isSFinite : ∀ time, IsSFiniteKernel (chanceKernel time))
+    (chanceKernel_eq : ∀ (profile : G.observed.BehavioralProfile)
+      (time : ℕ)
+      (events : (MeasurableHistoryModel.discrete G).toArena.EventPrefix time)
+      (_hnonterminal : ¬ G.observed.base.isTerminal
+        (MeasurableKernelArena.latestEventState time events).1)
+      (_hmover : G.observed.base.mover
+        (MeasurableKernelArena.latestEventState time events).1 = none),
+      chanceKernel time events = (presentation.toPolicy profile).realizedKernel time events) :
     MeasurablePresentation G
       (MeasurableHistoryModel.discrete G) where
   information := presentation.information
   realization := presentation.realization
   toPolicy := presentation.toPolicy
+  chanceKernel := chanceKernel
+  chanceKernel_isSFinite := chanceKernel_isSFinite
+  chanceKernel_eq := chanceKernel_eq
   playerInformation := presentation.playerInformation
   player_informationAt :=
     presentation.player_informationAt
