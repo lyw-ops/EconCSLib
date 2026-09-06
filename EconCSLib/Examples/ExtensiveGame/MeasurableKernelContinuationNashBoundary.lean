@@ -189,30 +189,30 @@ noncomputable def historyModel :
     observed.MeasurableHistoryModel :=
   ObservedGame.MeasurableHistoryModel.discrete observed
 
-noncomputable local instance historyMeasurable : MeasurableSpace History :=
-  historyModel.historyMeasurable
+local instance historyMeasurable : MeasurableSpace History :=
+  ⊤
 
-noncomputable local instance historyMeasurableSingletonClass :
+local instance historyMeasurableSingletonClass :
     MeasurableSingletonClass History where
   measurableSet_singleton :=
     historyModel.singleton_measurable
 
 noncomputable abbrev AnalyticArena := historyModel.toArena
 
-noncomputable local instance actionBundleMeasurableSingletonClass :
+local instance actionBundleMeasurableSingletonClass :
     MeasurableSingletonClass AnalyticArena.ActionBundle where
   measurableSet_singleton := by
     intro _
     exact MeasurableSpace.measurableSet_top
 
 /-- Common analytic information is the latest complete history. -/
-noncomputable def eventInformation :
+def eventInformation :
     AnalyticArena.EventInformation where
   Information := fun _ => History
   informationMeasurable := fun _ =>
-    historyModel.historyMeasurable
+    ⊤
   informationAt := fun time events =>
-    latestEventState time events
+    (events ⟨time, Finset.mem_Iic.mpr le_rfl⟩).1
   informationAt_measurable := by
     intro time
     exact measurable_latestEventState time
@@ -236,14 +236,14 @@ theorem realizationKernel_apply
       Measure.dirac action := by
   rw [realizationKernel, Kernel.deterministic_apply]
 
-noncomputable instance realizationKernel_isFinite
+instance realizationKernel_isFinite
     (time : ℕ) :
     IsFiniteKernel (realizationKernel time) :=
   ⟨⟨1, ENNReal.one_lt_top, fun input => by
       rw [realizationKernel_apply]
       simp⟩⟩
 
-noncomputable instance realizationKernel_isSFinite
+instance realizationKernel_isSFinite
     (time : ℕ) :
     IsSFiniteKernel (realizationKernel time) := by
   exact
@@ -285,18 +285,38 @@ def terminalInformationSet : Set History :=
 def playerInformationSet : Set History :=
   {history | ¬ base.isTerminal history.1}
 
+private def terminalDecision (node : Node) :
+    Decidable (base.isTerminal node) := by
+  change Decidable (IsEmpty (nodeAction node))
+  cases node with
+  | root => exact isFalse (fun h => h.false false)
+  | second => exact isFalse (fun h => h.false false)
+  | terminalBad => exact isTrue ⟨fun action => nomatch action⟩
+  | terminalGood => exact isTrue ⟨fun action => nomatch action⟩
+
 /-- Exact measurable role classification. -/
 def roles :
     presentation.InformationRoles where
   playerTagMeasurable := ⊤
+  playerTagDecidableEq := inferInstance
   playerTagSingleton_measurable := by
     intro _
     exact MeasurableSpace.measurableSet_top
   terminalInformationSet := fun _ => terminalInformationSet
+  terminalInformationDecidable := fun _ information => by
+    change Decidable (information ∈ terminalInformationSet)
+    letI := terminalDecision information.1
+    unfold terminalInformationSet
+    infer_instance
   terminalInformationSet_measurable := by
     intro _
     exact MeasurableSpace.measurableSet_top
   playerInformationSet := fun _ => playerInformationSet
+  playerInformationDecidable := fun _ information => by
+    change Decidable (information ∈ playerInformationSet)
+    letI := terminalDecision information.1
+    unfold playerInformationSet
+    infer_instance
   playerInformationSet_measurable := by
     intro _
     exact MeasurableSpace.measurableSet_top
@@ -367,7 +387,7 @@ theorem no_nonterminal_chance
           exact ⟨Empty.elim⟩)
 
 /-- Profile assembly with an unreachable zero chance branch. -/
-noncomputable def assembly :
+def assembly :
     presentation.ProfileAssembly where
   toInformationRoles := roles
   chanceAbstractKernel := fun _ => 0
@@ -867,9 +887,7 @@ theorem transition_root_true :
   change
     AnalyticArena.nextMeasure rootHistory true =
       Measure.dirac rootGoodHistory
-  rw [
-    ObservedGame.MeasurableHistoryModel.toArena_nextMeasure,
-    PMF.toMeasure_pure]
+  rw [ObservedGame.MeasurableHistoryModel.toArena_nextMeasure]
   rfl
 
 @[simp]
@@ -879,9 +897,7 @@ theorem transition_second_false :
   change
     AnalyticArena.nextMeasure secondHistory false =
       Measure.dirac secondBadHistory
-  rw [
-    ObservedGame.MeasurableHistoryModel.toArena_nextMeasure,
-    PMF.toMeasure_pure]
+  rw [ObservedGame.MeasurableHistoryModel.toArena_nextMeasure]
   rfl
 
 @[simp]
@@ -891,9 +907,7 @@ theorem transition_second_true :
   change
     AnalyticArena.nextMeasure secondHistory true =
       Measure.dirac secondGoodHistory
-  rw [
-    ObservedGame.MeasurableHistoryModel.toArena_nextMeasure,
-    PMF.toMeasure_pure]
+  rw [ObservedGame.MeasurableHistoryModel.toArena_nextMeasure]
   rfl
 
 /-- The baseline's first future state from the initial history is the good
@@ -994,7 +1008,7 @@ theorem assembledDeviation_continuationCoordinate_one_second :
 /-! ## Bounded payoff and strict equilibrium refinement -/
 
 /-- Coordinate-one base payoff as a bounded measurable path utility. -/
-noncomputable def evaluation :
+def evaluation :
     ObservedGame.MeasurableHistoryModel.BoundedPathUtility
       historyModel where
   utility := fun _ path =>
