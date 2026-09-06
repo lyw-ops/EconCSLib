@@ -12,7 +12,7 @@ import EconCSLib.GameTheory.ExtensiveGame.Simulation.Continuation.Observed
 This module lifts the raw positive-prefix conditional compatibility theorem
 to canonical observed-game histories.
 
-For a profile started from `initialHistory`, it defines:
+For a profile started from `initialHistory`, certified data supplies:
 
 * the marginal mass of another complete history's canonical event prefix;
 * the regular conditional shifted event-path law at that prefix;
@@ -21,7 +21,9 @@ For a profile started from `initialHistory`, it defines:
 
 When the canonical prefix has nonzero marginal mass, these laws and expected
 utilities agree exactly with constructive absolute-prefix continuation.
-No equality is asserted at a null history.
+The conditional data projections require an explicit nonzero-mass witness;
+there is no conditional-law value at a null history. `Nonempty` theorems
+establish analytic existence without installing runtime instances.
 -/
 
 open MeasureTheory ProbabilityTheory
@@ -102,148 +104,154 @@ theorem ConditionalContinuation.nonempty
         (model.canonicalContinuationPrefix root)).map MeasurableKernelArena.eventPathStates
     stateLaw_eq := by intros; rfl }⟩
 
-/-- Marginal probability mass of the canonical complete event prefix
-represented by `root`, under execution from `initialHistory`. -/
-noncomputable def canonicalContinuationPrefixMass
+/-- Supplied marginal probability of the canonical prefix of `root`. -/
+def canonicalContinuationPrefixMass
     (profile : presentation.KernelBehavioralProfile)
-    (initialHistory root : CompleteHistory G) :
-    ℝ≥0∞ :=
-  profile.compiledPolicy.prefixMeasure
-      model.toArena_terminalSet_measurable
-      initialHistory
-      (MeasurableHistoryModel.canonicalContinuationStart root)
-    ({model.canonicalContinuationPrefix root} :
-      Set
-        (model.toArena.ContinuationPrefix
-          (MeasurableHistoryModel.canonicalContinuationStart root)))
+    [laws : ConditionalContinuation profile]
+    (initialHistory root : CompleteHistory G) : ℝ≥0∞ :=
+  laws.prefixMass initialHistory root
 
-/-- Regular conditional shifted future event-path law at the canonical prefix
-of `root`, under a path law started from `initialHistory`. -/
-noncomputable def conditionalContinuationEventPathMeasure
+/-- Supplied conditional event law, defined only at a positive-mass prefix. -/
+def conditionalContinuationEventPathMeasure
     [StandardBorelSpace (ℕ → model.toArena.PathEvent)]
     [Nonempty (ℕ → model.toArena.PathEvent)]
     (profile : presentation.KernelBehavioralProfile)
-    (initialHistory root : CompleteHistory G) :
+    [laws : ConditionalContinuation profile]
+    (initialHistory root : CompleteHistory G)
+    (hpositive : profile.canonicalContinuationPrefixMass initialHistory root ≠ 0) :
     Measure (ℕ → model.toArena.PathEvent) :=
-  profile.compiledPolicy.conditionalTailKernel
-    model.toArena_terminalSet_measurable
-    initialHistory
-    (MeasurableHistoryModel.canonicalContinuationStart root)
-    (model.canonicalContinuationPrefix root)
+  laws.eventLaw initialHistory root hpositive
 
-/-- At a positive-mass canonical prefix, the regular conditional event-path
-law equals constructive absolute-prefix continuation exactly. -/
+/-- Positive-prefix conditioning equals absolute-prefix continuation. -/
 theorem conditionalContinuationEventPathMeasure_eq_continuation
     [StandardBorelSpace (ℕ → model.toArena.PathEvent)]
     [Nonempty (ℕ → model.toArena.PathEvent)]
     (profile : presentation.KernelBehavioralProfile)
+    [laws : ConditionalContinuation profile]
     (initialHistory root : CompleteHistory G)
     [MeasurableSingletonClass
       (model.toArena.ContinuationPrefix
         (MeasurableHistoryModel.canonicalContinuationStart root))]
-    (hpositive :
-      profile.canonicalContinuationPrefixMass
-          initialHistory root ≠
-        0) :
-    profile.conditionalContinuationEventPathMeasure
-        initialHistory root =
+    (hpositive : profile.canonicalContinuationPrefixMass initialHistory root ≠ 0) :
+    profile.conditionalContinuationEventPathMeasure initialHistory root hpositive =
       profile.continuationEventPathMeasure root := by
-  unfold
-    conditionalContinuationEventPathMeasure
-    continuationEventPathMeasure
-  apply
-    profile.compiledPolicy.conditionalTailKernel_apply_eq_tailEventPathMeasureFromPrefix
-      model.toArena_terminalSet_measurable
-      initialHistory
-      (MeasurableHistoryModel.canonicalContinuationStart root)
-      (model.canonicalContinuationPrefix root)
-  simpa only [canonicalContinuationPrefixMass] using hpositive
+  change laws.eventLaw initialHistory root hpositive = _
+  rw [laws.eventLaw_eq]
+  apply profile.compiledPolicy.conditionalTailKernel_apply_eq_tailEventPathMeasureFromPrefix
+    model.toArena_terminalSet_measurable initialHistory
+    (MeasurableHistoryModel.canonicalContinuationStart root)
+    (model.canonicalContinuationPrefix root)
+  have hmass := laws.prefixMass_eq initialHistory root
+  exact hmass ▸ hpositive
 
-/-- State-path projection of the conditional shifted event-path law. -/
-noncomputable def conditionalContinuationStatePathMeasure
+/-- Supplied conditional state law on the positive-mass domain. -/
+def conditionalContinuationStatePathMeasure
     [StandardBorelSpace (ℕ → model.toArena.PathEvent)]
     [Nonempty (ℕ → model.toArena.PathEvent)]
     (profile : presentation.KernelBehavioralProfile)
-    (initialHistory root : CompleteHistory G) :
+    [laws : ConditionalContinuation profile]
+    (initialHistory root : CompleteHistory G)
+    (hpositive : profile.canonicalContinuationPrefixMass initialHistory root ≠ 0) :
     Measure (ℕ → model.toArena.State) :=
-  (profile.conditionalContinuationEventPathMeasure
-    initialHistory root).map
-      MeasurableKernelArena.eventPathStates
+  laws.stateLaw initialHistory root hpositive
 
-/-- At a positive-mass canonical prefix, the conditional state-path law
-equals constructive absolute-prefix continuation. -/
+/-- Conditional state laws retain the exact continuation state projection. -/
 theorem conditionalContinuationStatePathMeasure_eq_continuation
     [StandardBorelSpace (ℕ → model.toArena.PathEvent)]
     [Nonempty (ℕ → model.toArena.PathEvent)]
     (profile : presentation.KernelBehavioralProfile)
+    [laws : ConditionalContinuation profile]
     (initialHistory root : CompleteHistory G)
     [MeasurableSingletonClass
       (model.toArena.ContinuationPrefix
         (MeasurableHistoryModel.canonicalContinuationStart root))]
-    (hpositive :
-      profile.canonicalContinuationPrefixMass
-          initialHistory root ≠
-        0) :
-    profile.conditionalContinuationStatePathMeasure
-        initialHistory root =
+    (hpositive : profile.canonicalContinuationPrefixMass initialHistory root ≠ 0) :
+    profile.conditionalContinuationStatePathMeasure initialHistory root hpositive =
       profile.continuationStatePathMeasure root := by
-  unfold
-    conditionalContinuationStatePathMeasure
-    continuationStatePathMeasure
-    MeasurableKernelArena.EventHistoryActionPolicy.tailStatePathMeasureFromPrefix
-  rw [
-    profile.conditionalContinuationEventPathMeasure_eq_continuation
-      initialHistory root hpositive]
+  change laws.stateLaw initialHistory root hpositive = _
+  rw [laws.stateLaw_eq]
+  change (profile.conditionalContinuationEventPathMeasure
+    initialHistory root hpositive).map MeasurableKernelArena.eventPathStates = _
+  rw [profile.conditionalContinuationEventPathMeasure_eq_continuation
+    initialHistory root hpositive]
   rfl
 
 end MeasurableKernelPresentation.KernelBehavioralProfile
 
 namespace MeasurableHistoryModel.BoundedPathUtility
 
+open MeasurableKernelPresentation.KernelBehavioralProfile
+
 variable
   {model : MeasurableHistoryModel G}
   (evaluation : MeasurableHistoryModel.BoundedPathUtility model)
 
-/-- Expected bounded path utility under the conditional shifted state-path
-law at one canonical history prefix. -/
-noncomputable def conditionalContinuationExpectedUtility
+/-- Supplied exact conditional expectations; integration is a certificate,
+not a data-producing algorithm. -/
+class ConditionalEvaluation
+    {presentation : G.MeasurableKernelPresentation model}
+    (profile : presentation.KernelBehavioralProfile)
+    [ConditionalContinuation profile] where
+  /-- Expected utility for each player at an admitted conditional root. -/
+  value : [StandardBorelSpace (ℕ → model.toArena.PathEvent)] →
+    [Nonempty (ℕ → model.toArena.PathEvent)] →
+    (initialHistory root : CompleteHistory G) →
+    profile.canonicalContinuationPrefixMass initialHistory root ≠ 0 → N → ℝ
+  /-- The supplied utility is exactly the integral under the supplied state law. -/
+  value_eq : ∀ [StandardBorelSpace (ℕ → model.toArena.PathEvent)]
+    [Nonempty (ℕ → model.toArena.PathEvent)] initialHistory root hpositive i,
+    value initialHistory root hpositive i =
+      ∫ path, evaluation.utility i path
+        ∂profile.conditionalContinuationStatePathMeasure initialHistory root hpositive
+
+/-- Conditional integrals exist without a runtime selection of their values. -/
+theorem ConditionalEvaluation.nonempty
+    {presentation : G.MeasurableKernelPresentation model}
+    (profile : presentation.KernelBehavioralProfile)
+    [ConditionalContinuation profile] :
+    Nonempty (ConditionalEvaluation evaluation profile) := by
+  exact ⟨{
+    value := by
+      intro _ _ initialHistory root hpositive i
+      exact ∫ path, evaluation.utility i path
+        ∂profile.conditionalContinuationStatePathMeasure initialHistory root hpositive
+    value_eq := by intros; rfl }⟩
+
+/-- Supplied expected utility under positive-prefix conditioning. -/
+def conditionalContinuationExpectedUtility
     [StandardBorelSpace (ℕ → model.toArena.PathEvent)]
     [Nonempty (ℕ → model.toArena.PathEvent)]
     {presentation : G.MeasurableKernelPresentation model}
     (profile : presentation.KernelBehavioralProfile)
+    [ConditionalContinuation profile]
+    [values : ConditionalEvaluation evaluation profile]
     (initialHistory root : CompleteHistory G)
-    (i : N) :
-    ℝ :=
-  ∫ path, evaluation.utility i path
-    ∂profile.conditionalContinuationStatePathMeasure
-      initialHistory root
+    (hpositive : profile.canonicalContinuationPrefixMass initialHistory root ≠ 0)
+    (i : N) : ℝ :=
+  values.value initialHistory root hpositive i
 
-/-- At a positive-mass canonical prefix, conditional expected utility equals
-constructive absolute-prefix continuation expected utility. -/
+/-- Positive-prefix conditional expected utility equals continuation utility. -/
 theorem conditionalContinuationExpectedUtility_eq_continuation
     [StandardBorelSpace (ℕ → model.toArena.PathEvent)]
     [Nonempty (ℕ → model.toArena.PathEvent)]
     {presentation : G.MeasurableKernelPresentation model}
     (profile : presentation.KernelBehavioralProfile)
+    [ConditionalContinuation profile]
+    [values : ConditionalEvaluation evaluation profile]
     (initialHistory root : CompleteHistory G)
     [MeasurableSingletonClass
       (model.toArena.ContinuationPrefix
         (MeasurableHistoryModel.canonicalContinuationStart root))]
-    (hpositive :
-      profile.canonicalContinuationPrefixMass
-          initialHistory root ≠
-        0)
+    (hpositive : profile.canonicalContinuationPrefixMass initialHistory root ≠ 0)
     (i : N) :
     evaluation.conditionalContinuationExpectedUtility
-        profile initialHistory root i =
-      evaluation.continuationExpectedUtility
-        profile root i := by
-  unfold
-    conditionalContinuationExpectedUtility
-    continuationExpectedUtility
-  rw [
-    profile.conditionalContinuationStatePathMeasure_eq_continuation
-      initialHistory root hpositive]
+        profile initialHistory root hpositive i =
+      evaluation.continuationExpectedUtility profile root i := by
+  change values.value initialHistory root hpositive i = _
+  rw [values.value_eq]
+  unfold continuationExpectedUtility
+  rw [profile.conditionalContinuationStatePathMeasure_eq_continuation
+    initialHistory root hpositive]
 
 end MeasurableHistoryModel.BoundedPathUtility
 
