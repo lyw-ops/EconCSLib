@@ -20,7 +20,7 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Rec
 
 Canonical pre-stability Foundation Facade for typed histories, measure-free
 complete plays, structural termination certificates, bounded deterministic
-and PMF execution, and the payoff-free controlled history-indexed information
+and finite-law execution, and the payoff-free controlled history-indexed information
 structure. It also includes represented information, mover coherence,
 finite-EFG certificates, recall predicates, quasistrategies, and external
 lawful subgame systems without introducing another game record.
