@@ -71,7 +71,7 @@ pure-strategy saddle inequalities and the exact value identity.
 
 * `EconCSLib.GameTheory.ExtensiveGame.Zermelo` — the chance-free variant.
 * `EconCSLib.GameTheory.ExtensiveGame.StochasticGameTree` — n-player
-  real-payoff trees with normalized finite `PMF` chance laws.
+  real-payoff trees with exact rational `FiniteLaw` chance distributions.
 -/
 
 namespace ZeroSumChance
