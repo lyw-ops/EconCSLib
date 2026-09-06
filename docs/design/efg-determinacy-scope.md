@@ -11,8 +11,8 @@ opponent play.
 | API | Players / objective | Information / chance | Horizon | Strategy | Foundations | Exact conclusion |
 |---|---|---|---|---|---|---|
 | `GameTree.zermelo_determinacy` | two-player rational zero-sum payoff | perfect information, no chance | inductive finite `GameTree` | pure tree strategy | finite recursion and classical finite selection | saddle-value/payoff determinacy for the compact frontend |
-| `ControlledObservedGame.FiniteTwoPlayerHypotheses.isTwoPlayerDetermined` | exactly two; complete-play winning sets are total and exclusive | perfect information; no chance | uniform finite history bound, finite action/info presentation | total information-indexed pure strategy | specializes the well-founded proof; classical choice | one player has a robust pathwise winning strategy |
-| `ControlledObservedGame.WellFoundedTwoPlayerHypotheses.isTwoPlayerDetermined` | exactly two; complete-play winning sets are total and exclusive | perfect information; no chance; all strategy coordinates represented and inhabited | child relation well founded; branching and depths need not have uniform finite bounds | total information-indexed pure strategy | `WellFounded.fix`, excluded middle, and `Classical.choose`; no descriptive set theory | one player has a robust pathwise winning strategy |
+| `ControlledObservedGame.FiniteTwoPlayerHypotheses.isTwoPlayerDetermined` | exactly two; complete-play winning sets are total and exclusive | perfect information; no chance | uniform finite history bound, finite action/represented-information presentation | pure strategy over represented coordinates | specializes the well-founded proof; classical choice | one player has a robust pathwise winning strategy |
+| `ControlledObservedGame.WellFoundedTwoPlayerHypotheses.isTwoPlayerDetermined` | exactly two; complete-play winning sets are total and exclusive | perfect information; no chance; represented coordinates carry their own decision witnesses | child relation well founded; branching and depths need not have uniform finite bounds | pure strategy over represented coordinates | `WellFounded.fix`, excluded middle, and `Classical.choose`; no descriptive set theory | one player has a robust pathwise winning strategy |
 | `ControlledObservedGame.WellFoundedPrefixHypotheses.isTwoPlayerDetermined` | same two-player zero-sum winning-set scope | same perfect-information/no-chance scope | structurally well founded, plus a persistent prefix-decision certificate | pure | same classical well-founded proof | same pathwise determinacy; the prefix certificate additionally records clopen-style objective evidence |
 | `not_both_havePathwiseWinningStrategy` | two players; exclusivity only | arbitrary observed information; no chance | arbitrary | pure | constructs the joint pure-profile play; requires decidable terminality | the two players cannot both have robust winners; no existence conclusion |
 | `HasPathwiseWinningStrategy`, `HasWinningQuasiStrategy`, and payoff-aware `HasStrategicWinningStrategy` | arbitrary player type and winning family | information restrictions are explicit in later theorems | arbitrary | pure or quasistrategy | definitions/bridges only | compatibility or robust-winning predicates, not determinacy |
@@ -35,8 +35,9 @@ and action selection need:
   and a terminal winner;
 - perfect information to transport the representative's action back to the
   actual complete-history occurrence; and
-- representation plus mover coherence so the total dependent pure-strategy
-  type is inhabited at every declared coordinate.
+- the decision witness stored in each represented coordinate, which makes its
+  dependent abstract-action fiber inhabited without global representation or
+  mover-coherence hypotheses.
 
 No ordinal-valued transfinite recursion is exposed, no descriptive-set
 theory is imported, and no external determinacy axiom is assumed.
