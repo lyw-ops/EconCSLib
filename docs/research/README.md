@@ -6,10 +6,10 @@ broader mathematical gaps belong in the knowledge blueprint.
 
 Current EFG structure audits, API navigation, and lifecycle status are
 maintained under `../design/`, especially
-`efg-minimal-core-structure-audit.md`, `efg-public-api.md`,
-`efg-governance.md`, and `efg-module-status.md`. Historical cycle audits,
-completed execution plans, migration trackers, and private extraction reports
-are intentionally not retained.
+`extensive_game.md`, `efg-public-api.md`, `efg-governance.md`, and
+`efg-module-status.md`. Historical cycle/import audits, completed execution
+plans, migration trackers, and private extraction reports are intentionally not
+retained here.
 
 ## Notes
 
