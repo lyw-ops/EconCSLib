@@ -841,7 +841,7 @@ namespace HistoryActionPolicy
 
 /-- Regard a finite-state-prefix policy as an event-history policy that
 forgets all recorded actions before querying its action kernel. -/
-noncomputable def toEventHistoryActionPolicy
+def toEventHistoryActionPolicy
     (policy : A.HistoryActionPolicy) :
     A.EventHistoryActionPolicy where
   kernel := fun time =>
