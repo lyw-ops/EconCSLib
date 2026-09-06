@@ -113,7 +113,7 @@ def observed : ObservedGame (Fin 2) ℝ where
 /-- Explicit chance law. A point mass is sufficient here because the
 off-path distinction is about possible complete history occurrences rather
 than a consistency claim. -/
-noncomputable def game : ObservedChanceGame (Fin 2) ℝ where
+def game : ObservedChanceGame (Fin 2) ℝ where
   observed := observed
   chanceKernel := by
     intro history hchance
@@ -131,7 +131,7 @@ noncomputable def game : ObservedChanceGame (Fin 2) ℝ where
             exact ⟨Empty.elim⟩)).elim
     | chance =>
         simpa [base, Action, hstate] using
-          (PMF.pure false : PMF Bool)
+          (FiniteLaw.pure false : FiniteLaw Bool)
     | hidden high =>
         have hmover := hchance.1
         change mover history.1 = none at hmover
@@ -162,7 +162,7 @@ def rootOccurrence :
     game.observed.DecisionInfoWitness 0 () where
   history := initial
   mover := rfl
-  nonterminal := fun hterminal => hterminal.false false
+  decision := ⟨false⟩
   infoAt_eq := rfl
 
 /-- Low-type occurrence in player `1`'s information state. -/
@@ -170,7 +170,7 @@ def lowOccurrence :
     game.observed.DecisionInfoWitness 1 () where
   history := afterType false
   mover := rfl
-  nonterminal := fun hterminal => hterminal.false false
+  decision := ⟨false⟩
   infoAt_eq := rfl
 
 /-- High-type occurrence in the same player-`1` information state. -/
@@ -178,8 +178,16 @@ def highOccurrence :
     game.observed.DecisionInfoWitness 1 () where
   history := afterType true
   mover := rfl
-  nonterminal := fun hterminal => hterminal.false false
+  decision := ⟨false⟩
   infoAt_eq := rfl
+
+/-- The represented root decision-information coordinate. -/
+def rootInformation : game.observed.RepresentedInfo 0 :=
+  ⟨(), ⟨rootOccurrence⟩⟩
+
+/-- The represented hidden-type decision-information coordinate. -/
+def hiddenInformation : game.observed.RepresentedInfo 1 :=
+  ⟨(), ⟨lowOccurrence⟩⟩
 
 /-- The two belief points are distinct complete-history occurrences. -/
 theorem lowOccurrence_ne_highOccurrence :
@@ -198,86 +206,106 @@ theorem lowOccurrence_ne_highOccurrence :
 theorem hidden_histories_same_information :
     game.observed.infoAt
         (afterType false) 1 rfl
-        (fun hterminal => hterminal.false false) =
+        ⟨false⟩ =
       game.observed.infoAt
         (afterType true) 1 rfl
-        (fun hterminal => hterminal.false false) :=
+        ⟨false⟩ :=
   rfl
 
 /-- The behavioral profile stays out and prescribes response `false`. -/
-noncomputable def behavior :
+def behavior :
     game.observed.BehavioralProfile :=
-  fun _ _ => PMF.pure false
+  fun _ _ => FiniteLaw.pure false
 
 /-- Entry has zero probability under the displayed behavior, hence the
 hidden-type information state is missed by on-path checks. -/
 @[simp]
 theorem behavior_entry_probability :
-    behavior 0 () true = 0 := by
+    (behavior 0 rootInformation).expectRat
+      (fun action => match (show Bool from action) with
+        | true => 1
+        | false => 0) = 0 := by
   simp [behavior]
 
 /-- The two deterministic response laws are different. -/
 theorem pure_false_ne_pure_true :
-    (PMF.pure false : PMF Bool) ≠ PMF.pure true := by
+    (FiniteLaw.pure false : FiniteLaw Bool) ≠ FiniteLaw.pure true := by
   intro heq
   have hpoint :=
-    congrArg (fun law : PMF Bool => law false) heq
+    congrArg FiniteLaw.atoms heq
   simp at hpoint
 
 /-- Belief system concentrated on the low-type occurrence for player `1`. -/
-noncomputable def lowBeliefs : game.BeliefSystem := by
-  classical
+def lowBeliefs : game.BeliefSystem := by
   intro i information
   by_cases hi : i = 1
   · subst i
-    cases information
-    exact PMF.pure lowOccurrence
+    have hinformation : information.1 = () :=
+      by
+        change (show Unit from information.1) = ()
+        exact Subsingleton.elim _ _
+    exact FiniteLaw.pure (hinformation.symm ▸ lowOccurrence)
   · have hi0 : i = 0 := by
       fin_cases i
       · rfl
       · exact (hi rfl).elim
     subst i
-    cases information
-    exact PMF.pure rootOccurrence
+    have hinformation : information.1 = () :=
+      by
+        change (show Unit from information.1) = ()
+        exact Subsingleton.elim _ _
+    exact FiniteLaw.pure (hinformation.symm ▸ rootOccurrence)
 
 /-- Belief system concentrated on the high-type occurrence for player `1`. -/
-noncomputable def highBeliefs : game.BeliefSystem := by
-  classical
+def highBeliefs : game.BeliefSystem := by
   intro i information
   by_cases hi : i = 1
   · subst i
-    cases information
-    exact PMF.pure highOccurrence
+    have hinformation : information.1 = () :=
+      by
+        change (show Unit from information.1) = ()
+        exact Subsingleton.elim _ _
+    exact FiniteLaw.pure (hinformation.symm ▸ highOccurrence)
   · have hi0 : i = 0 := by
       fin_cases i
       · rfl
       · exact (hi rfl).elim
     subst i
-    cases information
-    exact PMF.pure rootOccurrence
+    have hinformation : information.1 = () :=
+      by
+        change (show Unit from information.1) = ()
+        exact Subsingleton.elim _ _
+    exact FiniteLaw.pure (hinformation.symm ▸ rootOccurrence)
 
 /-- Same behavior paired with the low-type off-path belief. -/
-noncomputable def lowAssessment : game.Assessment where
+def lowAssessment : game.Assessment where
   behavior := behavior
   beliefs := lowBeliefs
 
 /-- Same behavior paired with the high-type off-path belief. -/
-noncomputable def highAssessment : game.Assessment where
+def highAssessment : game.Assessment where
   behavior := behavior
   beliefs := highBeliefs
 
 /-- The low assessment gives the low occurrence probability one. -/
 @[simp]
 theorem lowAssessment_lowOccurrence :
-    lowAssessment.beliefs 1 () lowOccurrence = 1 := by
-  simp [lowAssessment, lowBeliefs]
+    (lowAssessment.beliefs 1 hiddenInformation).expectRat
+      (fun occurrence =>
+        match occurrence.history.1 with
+        | State.hidden false => 1
+        | _ => 0) = 1 := by
+  simp [lowAssessment, lowBeliefs, lowOccurrence, afterType]
 
 /-- The high assessment gives the low occurrence probability zero. -/
 @[simp]
 theorem highAssessment_lowOccurrence :
-    highAssessment.beliefs 1 () lowOccurrence = 0 := by
-  simp [highAssessment, highBeliefs,
-    lowOccurrence_ne_highOccurrence]
+    (highAssessment.beliefs 1 hiddenInformation).expectRat
+      (fun occurrence =>
+        match occurrence.history.1 with
+        | State.hidden false => 1
+        | _ => 0) = 0 := by
+  simp [highAssessment, highBeliefs, highOccurrence, afterType]
 
 /-- Local hidden-type decision evaluator.
 
@@ -285,59 +313,95 @@ For player `1`, response `false` is uniquely best when the belief is
 concentrated on the low occurrence; otherwise response `true` is uniquely
 best. Player `0`'s value is constant because only the off-path response
 regression matters here. -/
-noncomputable def evaluator :
+def evaluator :
     game.SequentialDecisionEvaluator where
   value := by
-    classical
     intro assessment i information deviation
     by_cases hi : i = 1
     · subst i
-      cases information
       exact
-        if assessment.beliefs 1 () lowOccurrence = 1 then
-          if deviation = PMF.pure false then 1 else 0
+        if (assessment.beliefs 1 information).expectRat
+            (fun occurrence =>
+              match occurrence.history.1 with
+              | State.hidden false => 1
+              | _ => 0) = 1 then
+          if deviation.expectRat
+              (fun action => match (show Bool from action) with
+                | false => 1
+                | true => 0) = 1 then 1 else 0
         else
-          if deviation = PMF.pure true then 1 else 0
+          if deviation.expectRat
+              (fun action => match (show Bool from action) with
+                | true => 1
+                | false => 0) = 1 then 1 else 0
     · exact 0
 
 /-- Under the low belief, deterministic response `false` receives value one.
 -/
 theorem evaluator_lowAssessment_prescribed :
-    evaluator.value lowAssessment 1 ()
-        (PMF.pure false) =
+    evaluator.value lowAssessment 1 hiddenInformation
+        (FiniteLaw.pure false) =
       1 := by
   classical
-  simp [evaluator]
-  exact rfl
+  have hbelief :
+      (lowAssessment.beliefs 1 hiddenInformation).expectRat
+        (fun occurrence =>
+          match occurrence.history.1 with
+          | State.hidden false => 1
+          | _ => 0) = 1 :=
+    lowAssessment_lowOccurrence
+  simp [evaluator, hbelief]
 
 /-- Under the low belief, every other response law receives value zero. -/
 theorem evaluator_lowAssessment_other
-    (deviation : PMF Bool)
-    (hne : deviation ≠ PMF.pure false) :
-    evaluator.value lowAssessment 1 () deviation = 0 := by
+    (deviation : FiniteLaw Bool)
+    (hne : deviation.expectRat
+      (fun action => match action with
+        | false => 1
+        | true => 0) ≠ 1) :
+    evaluator.value lowAssessment 1 hiddenInformation deviation = 0 := by
   classical
-  simp [evaluator]
+  have hbelief :
+      (lowAssessment.beliefs 1 hiddenInformation).expectRat
+        (fun occurrence =>
+          match occurrence.history.1 with
+          | State.hidden false => 1
+          | _ => 0) = 1 :=
+    lowAssessment_lowOccurrence
+  simp [evaluator, hbelief]
   exact hne
 
 /-- Under the high belief, deterministic response `true` receives value one.
 -/
 theorem evaluator_highAssessment_deviation :
-    evaluator.value highAssessment 1 ()
-        (PMF.pure true) =
+    evaluator.value highAssessment 1 hiddenInformation
+        (FiniteLaw.pure true) =
       1 := by
   classical
-  simp [evaluator]
-  exact rfl
+  have hbelief :
+      (highAssessment.beliefs 1 hiddenInformation).expectRat
+        (fun occurrence =>
+          match occurrence.history.1 with
+          | State.hidden false => 1
+          | _ => 0) = 0 :=
+    highAssessment_lowOccurrence
+  simp [evaluator, hbelief]
 
 /-- Under the high belief, deterministic response `false` receives value
 zero. -/
 theorem evaluator_highAssessment_prescribed :
-    evaluator.value highAssessment 1 ()
-        (PMF.pure false) =
+    evaluator.value highAssessment 1 hiddenInformation
+        (FiniteLaw.pure false) =
       0 := by
   classical
-  simp [evaluator]
-  exact pure_false_ne_pure_true
+  have hbelief :
+      (highAssessment.beliefs 1 hiddenInformation).expectRat
+        (fun occurrence =>
+          match occurrence.history.1 with
+          | State.hidden false => 1
+          | _ => 0) = 0 :=
+    highAssessment_lowOccurrence
+  simp [evaluator, hbelief]
 
 /-- Under the low-type belief, the prescribed response `false` is locally
 sequentially rational at the off-path information state. -/
@@ -347,16 +411,22 @@ theorem lowAssessment_sequentiallyRational :
   intro i information deviation
   by_cases hi : i = 1
   · subst i
-    cases information
+    have hinformation : information = hiddenInformation := by
+      apply Subtype.ext
+      cases information.1
+      rfl
+    subst information
     change
-      evaluator.value lowAssessment 1 () deviation ≤
-        evaluator.value lowAssessment 1 ()
-          (PMF.pure false)
+      evaluator.value lowAssessment 1 hiddenInformation deviation ≤
+        evaluator.value lowAssessment 1 hiddenInformation
+          (FiniteLaw.pure false)
     rw [evaluator_lowAssessment_prescribed]
     by_cases hdeviation :
-        deviation = (PMF.pure false : PMF Bool)
-    · subst deviation
-      exact le_of_eq evaluator_lowAssessment_prescribed
+        deviation.expectRat
+          (fun action => match (show Bool from action) with
+            | false => 1
+            | true => 0) = 1
+    · simp [evaluator, lowAssessment_lowOccurrence, hdeviation]
     · rw [evaluator_lowAssessment_other deviation hdeviation]
       norm_num
   · simp [evaluator, hi]
@@ -368,13 +438,13 @@ theorem highAssessment_not_sequentiallyRational :
       game highAssessment evaluator := by
   intro rational
   have h :=
-    rational 1 ()
-      (PMF.pure true : PMF Bool)
+    rational 1 hiddenInformation
+      (FiniteLaw.pure true : FiniteLaw Bool)
   change
-    evaluator.value highAssessment 1 ()
-        (PMF.pure true) ≤
-      evaluator.value highAssessment 1 ()
-        (PMF.pure false)
+    evaluator.value highAssessment 1 hiddenInformation
+        (FiniteLaw.pure true) ≤
+      evaluator.value highAssessment 1 hiddenInformation
+        (FiniteLaw.pure false)
     at h
   rw [evaluator_highAssessment_deviation,
     evaluator_highAssessment_prescribed] at h
