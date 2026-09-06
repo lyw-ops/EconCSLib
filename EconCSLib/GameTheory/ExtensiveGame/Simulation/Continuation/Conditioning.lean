@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
 import EconCSLib.GameTheory.ExtensiveGame.Simulation.Continuation.Path
+import EconCSLib.GameTheory.ExtensiveGame.Simulation.Kernel.EffectivePathLaw
 import Mathlib.Probability.Kernel.CondDistrib
 
 /-!
@@ -24,7 +25,9 @@ This module proves the mathematically safe compatibility statement:
 * at such an atom, the continuation law has the usual normalized joint-mass
   formula;
 * when the prefix mass is zero, that normalized formula collapses to zero and
-  cannot equal the constructive probability law.
+  cannot equal the constructive probability law;
+* an effective raw event policy computes every finite marginal of the
+  constructive continuation-tail kernel at each represented prefix.
 
 The regular conditional distribution requires a standard Borel future-path
 space. No pointwise claim is made at null prefixes.
@@ -37,6 +40,11 @@ namespace MeasurableKernelArena
 variable {A : MeasurableKernelArena}
 
 namespace EventHistoryActionPolicy
+
+local notation "μ[" atoms "]" =>
+  List.foldr (fun (atom : _ × ℚ≥0) rest =>
+    ((Prod.snd atom : ℚ≥0) : ENNReal) •
+      Measure.dirac (Prod.fst atom) + rest) 0 atoms
 
 /-- Kernel assigning to each complete prefix through `start` its constructive
 absolute-clock shifted future event-path law. -/
@@ -82,6 +90,35 @@ theorem continuationTailKernel_apply
     Kernel.map_apply _
       (measurable_tailEventPath (A := A) start)]
   rfl
+
+/-- An effective raw event policy gives exactly every finite-prefix marginal
+of the analytic `continuationTailKernel` evaluated at the represented
+prefix.
+
+The finite executor retains the supplied complete prefix and the original
+absolute policy clock, then reindexes the generated continuation as a tail.
+This is a pointwise finite-marginal statement about the existing analytic
+kernel; it does not construct an executable infinite-path kernel. -/
+theorem measure_tailPrefixLawFrom_eq_continuationTailKernel_apply_map_frestrictLe
+    {finiteArena : KernelArena}
+    [(state : finiteArena.State) →
+      Decidable (IsEmpty (finiteArena.Action state))]
+    (policy : finiteArena.EventHistoryPolicy)
+    (analytic : finiteArena.toMeasurable.EventHistoryActionPolicy)
+    (realizes : policy.AnalyticallyRealizedBy analytic)
+    (start : ℕ)
+    (initialPrefix : finiteArena.EventPrefix start)
+    (steps : ℕ) :
+    μ[((policy.tailPrefixLawFrom start initialPrefix steps).map
+        fun history => history.toAnalytic).atoms] =
+      (analytic.continuationTailKernel
+        finiteArena.toMeasurable_measurableSet_terminalSet
+        start initialPrefix.toAnalytic).map
+          (Preorder.frestrictLe steps) := by
+  rw [analytic.continuationTailKernel_apply]
+  exact
+    policy.measure_tailPrefixLawFrom_eq_tailEventPathMeasureFromPrefix_map_frestrictLe
+      analytic realizes start initialPrefix steps
 
 /-- Regular conditional distribution of the shifted future event path given
 the complete prefix through `start` under a time-zero path law. -/
@@ -248,6 +285,53 @@ theorem conditionalTailKernel_apply_eq_tailEventPathMeasureFromPrefix
   exact
     policy.continuationTailKernel_apply
       hterminal start initialPrefix
+
+/-- At a represented prefix atom of nonzero mass, effective finite tail
+execution gives every finite-prefix marginal of the regular conditional tail
+kernel evaluated at that atom.
+
+The executor retains the supplied complete prefix and absolute policy clock,
+then restricts the shifted future path through `steps`.  The nonzero-mass
+hypothesis is essential: this statement neither selects a version of the
+regular conditional distribution at a null prefix nor identifies the entire
+infinite-path measure by computation. -/
+theorem
+    measure_tailPrefixLawFrom_eq_conditionalTailKernel_apply_map_frestrictLe_of_prefix_ne_zero
+    {finiteArena : KernelArena}
+    [(state : finiteArena.State) →
+      Decidable (IsEmpty (finiteArena.Action state))]
+    [StandardBorelSpace
+      (ℕ → finiteArena.toMeasurable.PathEvent)]
+    [Nonempty (ℕ → finiteArena.toMeasurable.PathEvent)]
+    (policy : finiteArena.EventHistoryPolicy)
+    (analytic : finiteArena.toMeasurable.EventHistoryActionPolicy)
+    (realizes : policy.AnalyticallyRealizedBy analytic)
+    (initialState : finiteArena.State)
+    (start : ℕ)
+    [MeasurableSingletonClass
+      (finiteArena.toMeasurable.ContinuationPrefix start)]
+    (initialPrefix : finiteArena.EventPrefix start)
+    (hpositive :
+      analytic.prefixMeasure
+          finiteArena.toMeasurable_measurableSet_terminalSet
+          initialState start
+          ({initialPrefix.toAnalytic} :
+            Set (finiteArena.toMeasurable.ContinuationPrefix start)) ≠
+        0)
+    (steps : ℕ) :
+    μ[((policy.tailPrefixLawFrom start initialPrefix steps).map
+        fun history => history.toAnalytic).atoms] =
+      (analytic.conditionalTailKernel
+        finiteArena.toMeasurable_measurableSet_terminalSet
+        initialState start initialPrefix.toAnalytic).map
+          (Preorder.frestrictLe steps) := by
+  rw [
+    analytic.conditionalTailKernel_apply_eq_tailEventPathMeasureFromPrefix
+      finiteArena.toMeasurable_measurableSet_terminalSet
+      initialState start initialPrefix.toAnalytic hpositive]
+  exact
+    policy.measure_tailPrefixLawFrom_eq_tailEventPathMeasureFromPrefix_map_frestrictLe
+      analytic realizes start initialPrefix steps
 
 /-- At a positive prefix atom, constructive continuation satisfies the usual
 normalized joint-mass formula for every future-path event.
