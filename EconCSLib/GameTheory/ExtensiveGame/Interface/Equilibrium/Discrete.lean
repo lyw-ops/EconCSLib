@@ -22,6 +22,8 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.DeferredSampling.Realization
 import EconCSLib.GameTheory.ExtensiveGame.Observed.KuhnConditioning.Realization
 import EconCSLib.GameTheory.ExtensiveGame.Observed.LawEquivalence
 import EconCSLib.GameTheory.ExtensiveGame.Observed.StrategyBridge
+import EconCSLib.GameTheory.ExtensiveGame.Observed.FinitePureNash
+import EconCSLib.GameTheory.ExtensiveGame.Observed.FiniteMeasureStrategy
 
 /-!
 # Discrete EFG equilibrium
@@ -33,9 +35,13 @@ representation-transfer theorems.
 It extends `Interface.Relations.Discrete` with bounded and
 termination-certified equilibrium predicates, subgame perfection on lawful
 systems, payoff-free outcome-parametric continuation semantics and its
-state-payoff compatibility spelling, perfect recall, PMF realization, finite
+state-payoff compatibility spelling, perfect recall, finite-law realization, finite
 Kuhn bridges, conditioning, the countably supported general-strategy carrier,
-and the uniform strategy bridge. It does not import infinite path measures,
+the uniform strategy bridge, and exact finite-horizon pure Nash checking when
+the original root-bound information/action tables are explicitly enumerable.
+Finite joint pure-profile laws expose executable marginal, outcome, and path
+pushforwards without importing measure theory.
+It does not import infinite path measures,
 non-atomic measurable kernels, measurable path utilities, continuation
 conditioning, fresh-clock restart, or concrete compilers.
 
