@@ -111,10 +111,6 @@ def WellFoundedPrefixHypotheses.toControlled
   noChance := h.noChance
   perfectInformation := h.perfectInformation
   zeroSum := h.zeroSum
-  allDecisionInfoRepresented :=
-    h.allDecisionInfoRepresented
-  decisionMoverCoherent :=
-    h.decisionMoverCoherent
   prefixDecision := h.prefixDecision
 
 /-- Legacy payoff-aware finite determinacy is the canonical payoff-free
@@ -131,9 +127,11 @@ payoff-free theorem under definitional payoff erasure. -/
 theorem WellFoundedPrefixHypotheses.isTwoPlayerDetermined
     {G : ObservedGame (Fin 2) U}
     {W : G.base.toArena.WinningCondition G.base.init (Fin 2)}
-    (h : G.WellFoundedPrefixHypotheses W) :
+    (h : G.WellFoundedPrefixHypotheses W)
+    (data :
+      G.toControlledObservedGame.BackwardInductionData W) :
     G.IsTwoPlayerDetermined W :=
-  h.toControlled.isTwoPlayerDetermined
+  h.toControlled.isTwoPlayerDetermined data
 
 /-- Exclusive no-chance two-player objectives cannot give both players a
 pathwise winning strategy. -/
