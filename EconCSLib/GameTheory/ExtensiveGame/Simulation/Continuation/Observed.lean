@@ -76,7 +76,7 @@ history.
 Coordinate zero is the empty complete history with no incoming action. Every
 successor coordinate stores the extended complete history and the concrete
 action bundle selected at the preceding complete history. -/
-noncomputable def canonicalEventPrefixOfHistory
+def canonicalEventPrefixOfHistory
     {state : G.base.State}
     (history :
       G.base.toArena.History G.base.init state) :
@@ -108,7 +108,7 @@ def canonicalContinuationStart
 
 /-- Canonical absolute-time action-occurrence prefix represented by a complete
 history. -/
-noncomputable def canonicalContinuationPrefix
+def canonicalContinuationPrefix
     (root : CompleteHistory G) :
     model.toArena.ContinuationPrefix
       (canonicalContinuationStart root) :=
@@ -221,7 +221,8 @@ theorem latestEventState_canonicalContinuationPrefix
 
 end MeasurableHistoryModel
 
-namespace MeasurableKernelPresentation.KernelBehavioralProfile
+namespace MeasurableKernelPresentation
+namespace KernelBehavioralProfile
 
 variable
   {model : MeasurableHistoryModel G}
@@ -382,9 +383,11 @@ theorem freshRestartStateCoordinateMeasure_zero
       MeasurableKernelArena.PathEvent.measurable_state]
   rfl
 
-end MeasurableKernelPresentation.KernelBehavioralProfile
+end KernelBehavioralProfile
+end MeasurableKernelPresentation
 
-namespace MeasurableHistoryModel.BoundedPathUtility
+namespace MeasurableHistoryModel
+namespace BoundedPathUtility
 
 variable
   {model : MeasurableHistoryModel G}
@@ -715,9 +718,11 @@ theorem IsNashOnFreshRestartPresentation.isNashAt_init
       profile :=
   hspe _ roots.init_isRoot
 
-end MeasurableHistoryModel.BoundedPathUtility
+end BoundedPathUtility
+end MeasurableHistoryModel
 
-namespace MeasurableKernelPresentation.ProfileAssembly
+namespace MeasurableKernelPresentation
+namespace ProfileAssembly
 
 variable
   {model : MeasurableHistoryModel G}
@@ -769,9 +774,11 @@ structure EventuallyTerminatesUnderFreshRestartDeviationsAt
             profile who strategy))
         root
 
-end MeasurableKernelPresentation.ProfileAssembly
+end ProfileAssembly
+end MeasurableKernelPresentation
 
-namespace MeasurableHistoryModel.BoundedTerminalPayoffExtension
+namespace MeasurableHistoryModel
+namespace BoundedTerminalPayoffExtension
 
 variable
   {model : MeasurableHistoryModel G}
@@ -781,6 +788,7 @@ variable
 /-- Under absolute-prefix almost-sure terminal absorption, stopped utility
 converges almost everywhere to eventual terminal utility. -/
 theorem stoppedUtility_tendsto_eventualUtility_ae_continuation
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
     {presentation : G.MeasurableKernelPresentation model}
     (profile : presentation.KernelBehavioralProfile)
     (root : CompleteHistory G)
@@ -811,6 +819,7 @@ theorem eventualUtility_aestronglyMeasurable_continuation
     AEStronglyMeasurable
       (terminalPayoff.eventualUtility i)
       (profile.continuationStatePathMeasure root) := by
+  classical
   exact
     aestronglyMeasurable_of_tendsto_ae
       Filter.atTop
@@ -855,6 +864,7 @@ noncomputable def continuationExpectedEventualUtility
 /-- Expected absolute-prefix stopped utility converges to expected eventual
 terminal utility under almost-sure continuation absorption. -/
 theorem continuationExpectedUtility_tendsto_expectedEventualUtility
+    [(state : G.base.State) → Decidable (G.base.isTerminal state)]
     {presentation : G.MeasurableKernelPresentation model}
     (profile : presentation.KernelBehavioralProfile)
     (root : CompleteHistory G)
@@ -891,7 +901,7 @@ theorem continuationExpectedUtility_tendsto_expectedEventualUtility
 
 /-- Constructive continuation Nash optimality for expected eventual terminal
 payoff. -/
-noncomputable def IsNashAtContinuation
+def IsNashAtContinuation
     {presentation : G.MeasurableKernelPresentation model}
     (assembly : presentation.ProfileAssembly)
     (root : CompleteHistory G)
@@ -931,7 +941,7 @@ theorem isNashAtContinuation_proof_irrel
 
 /-- Nash optimality on presentation-designated continuations for expected
 eventual terminal payoff under canonical absolute-prefix semantics. -/
-noncomputable def IsNashOnPresentation
+def IsNashOnPresentation
     {presentation : G.MeasurableKernelPresentation model}
     (assembly : presentation.ProfileAssembly)
     (roots : G.RootPresentation)
@@ -948,7 +958,7 @@ noncomputable def IsNashOnPresentation
 
 /-- Expected-eventual-terminal-payoff subgame perfection under absolute-prefix
 semantics on an explicit, possibly conservative, lawful subgame system. -/
-noncomputable def IsSubgamePerfectOn
+def IsSubgamePerfectOn
     {presentation : G.MeasurableKernelPresentation model}
     (assembly : presentation.ProfileAssembly)
     (system : G.SubgameSystem)
@@ -965,7 +975,7 @@ noncomputable def IsSubgamePerfectOn
 
 /-- Standard expected-eventual-terminal-payoff SPE under absolute-prefix
 semantics on every structurally lawful subgame root. -/
-noncomputable def IsStandardSubgamePerfect
+def IsStandardSubgamePerfect
     {presentation : G.MeasurableKernelPresentation model}
     (assembly : presentation.ProfileAssembly)
     (system : G.CompleteSubgameSystem)
@@ -1006,7 +1016,7 @@ restarting at one root.
 The certificate covers both the baseline and every admitted deviation, so
 each expected eventual payoff in the comparison is mathematically justified.
 -/
-noncomputable def IsNashAtFreshRestart
+def IsNashAtFreshRestart
     {presentation : G.MeasurableKernelPresentation model}
     (assembly : presentation.ProfileAssembly)
     (root : CompleteHistory G)
@@ -1046,7 +1056,7 @@ theorem isNashAtFreshRestart_proof_irrel
 
 /-- Nash optimality on presentation-designated fresh restarts for expected
 eventual terminal payoff. -/
-noncomputable def IsNashOnFreshRestartPresentation
+def IsNashOnFreshRestartPresentation
     {presentation : G.MeasurableKernelPresentation model}
     (assembly : presentation.ProfileAssembly)
     (roots : G.RootPresentation)
@@ -1062,7 +1072,7 @@ noncomputable def IsNashOnFreshRestartPresentation
 
 /-- Expected-eventual-terminal-payoff subgame perfection under fresh restart
 on an explicit, possibly conservative, lawful subgame system. -/
-noncomputable def IsFreshRestartSubgamePerfectOn
+def IsFreshRestartSubgamePerfectOn
     {presentation : G.MeasurableKernelPresentation model}
     (assembly : presentation.ProfileAssembly)
     (system : G.SubgameSystem)
@@ -1078,7 +1088,7 @@ noncomputable def IsFreshRestartSubgamePerfectOn
 
 /-- Standard expected-eventual-terminal-payoff SPE under fresh restart on
 every structurally lawful subgame root. -/
-noncomputable def IsFreshRestartStandardSubgamePerfect
+def IsFreshRestartStandardSubgamePerfect
     {presentation : G.MeasurableKernelPresentation model}
     (assembly : presentation.ProfileAssembly)
     (system : G.CompleteSubgameSystem)
@@ -1113,6 +1123,7 @@ theorem IsNashOnFreshRestartPresentation.isNashAt_init
         roots.init_isRoot) :=
   hspe _ roots.init_isRoot
 
-end MeasurableHistoryModel.BoundedTerminalPayoffExtension
+end BoundedTerminalPayoffExtension
+end MeasurableHistoryModel
 
 end ExtensiveGame.ObservedGame
