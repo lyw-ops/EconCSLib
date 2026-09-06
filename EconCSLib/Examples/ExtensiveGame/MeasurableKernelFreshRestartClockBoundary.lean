@@ -60,11 +60,11 @@ def nodeNext : (state : Node) → nodeAction state → Node
   | .terminalTrue, action => nomatch action
 
 /-- Discrete deterministic kernel arena. -/
-noncomputable def discreteArena : KernelArena where
+def discreteArena : KernelArena where
   State := Node
   Action := nodeAction
   next := fun state action =>
-    PMF.pure (nodeNext state action)
+    FiniteLaw.pure (nodeNext state action)
 
 /-- Analytic top-measurable embedding of the finite arena. -/
 noncomputable abbrev arena : MeasurableKernelArena :=
@@ -86,7 +86,7 @@ theorem decodeActionBundle_surjective :
   | terminalFalse => exact Empty.elim action
   | terminalTrue => exact Empty.elim action
 
-noncomputable local instance actionBundleCountable :
+local instance actionBundleCountable :
     Countable arena.ActionBundle :=
   decodeActionBundle_surjective.countable
 
@@ -111,23 +111,23 @@ theorem decodePathEvent_surjective :
         decodeActionBundle_surjective bundle
       exact ⟨(state, .inr actionCode), rfl⟩
 
-noncomputable local instance pathEventCountable :
+local instance pathEventCountable :
     Countable arena.PathEvent :=
   decodePathEvent_surjective.countable
 
-noncomputable local instance actionBundleMeasurableSingletonClass :
+local instance actionBundleMeasurableSingletonClass :
     MeasurableSingletonClass arena.ActionBundle where
   measurableSet_singleton := by
     intro _
     exact MeasurableSpace.measurableSet_top
 
-noncomputable local instance stateMeasurableSingletonClass :
+local instance stateMeasurableSingletonClass :
     MeasurableSingletonClass arena.State where
   measurableSet_singleton := by
     intro _
     exact MeasurableSpace.measurableSet_top
 
-noncomputable local instance incomingMeasurableSingletonClass :
+local instance incomingMeasurableSingletonClass :
     MeasurableSingletonClass
       (Unit ⊕ arena.ActionBundle) where
   measurableSet_singleton := by
@@ -155,7 +155,7 @@ noncomputable local instance incomingMeasurableSingletonClass :
         exact
           (measurableSet_singleton bundle).inr_image
 
-noncomputable local instance pathEventMeasurableSingletonClass :
+local instance pathEventMeasurableSingletonClass :
     MeasurableSingletonClass arena.PathEvent := by
   infer_instance
 
@@ -169,11 +169,11 @@ theorem terminalSet_measurable :
 At `second`, time zero selects `false` and every positive time selects
 `true`. Values at terminal prefixes are irrelevant because the policy kills
 their action mass. -/
-noncomputable def selectedBundle
+def selectedBundle
     (time : ℕ)
     (events : arena.EventPrefix time) :
     arena.ActionBundle :=
-  match (latestEventState time events : Node) with
+  match ((events ⟨time, Finset.mem_Iic.mpr le_rfl⟩).1 : Node) with
   | .root => ⟨.root, false⟩
   | .second =>
       ⟨.second, decide (0 < time)⟩
@@ -216,6 +216,7 @@ noncomputable def policy :
             latestEventState time events
           unfold selectedBundle
           split <;> rename_i hstate
+          all_goals change latestEventState time events = _ at hstate
           · exact hstate.symm
           · exact hstate.symm
           · exact (hnonterminal (by
@@ -231,12 +232,12 @@ noncomputable def policy :
 
 /-- A stationary discrete policy choosing `false` at both decision states.
 -/
-noncomputable def stationaryDiscretePolicy :
+def stationaryDiscretePolicy :
     discreteArena.Policy :=
   fun state hnonterminal =>
     match state with
-    | .root => PMF.pure false
-    | .second => PMF.pure false
+    | .root => FiniteLaw.pure false
+    | .second => FiniteLaw.pure false
     | .terminalFalse =>
         (hnonterminal (by
           change IsEmpty Empty
@@ -259,17 +260,17 @@ noncomputable def stationaryEventPolicy :
   stationaryPolicy.toHistoryActionPolicy.toEventHistoryActionPolicy
 
 /-- Prefix of length zero obtained by starting fresh at the second state. -/
-noncomputable def freshSecondPrefix :
+def freshSecondPrefix :
     arena.EventPrefix 0 :=
-  fun _ => arena.initialEvent .second
+  fun _ => (.second, Sum.inl ())
 
 /-- A valid length-one absolute prefix from `root` to `second`, recording the
 root action occurrence. -/
-noncomputable def absoluteSecondPrefix :
+def absoluteSecondPrefix :
     arena.EventPrefix 1 :=
   fun index =>
     if index.1 = 0 then
-      arena.initialEvent .root
+      (.root, Sum.inl ())
     else
       (.second, .inr (⟨.root, false⟩ : arena.ActionBundle))
 
@@ -282,6 +283,13 @@ theorem latestEventState_freshSecondPrefix :
 theorem latestEventState_absoluteSecondPrefix :
     latestEventState 1 absoluteSecondPrefix = .second := by
   rfl
+
+-- Runtime regression: the same state at fresh and absolute times selects different actions.
+example :
+    (fun fresh retained : Bool => fresh = false ∧ retained = true)
+      (selectedBundle 0 freshSecondPrefix).2
+      (selectedBundle 1 absoluteSecondPrefix).2 := by
+  native_decide
 
 /-- The fresh second-state prefix is canonically rooted at the latest state
 of the retained absolute prefix. -/
@@ -297,6 +305,7 @@ theorem freshSecondPrefix_rooted_at_absoluteSecondState :
       (Finset.mem_Iic.mp time.2)
   simp [
     setInitialPrefix,
+    initialEvent,
     freshSecondPrefix,
     htime]
 
