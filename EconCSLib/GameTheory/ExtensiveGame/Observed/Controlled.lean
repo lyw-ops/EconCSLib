@@ -127,6 +127,82 @@ structure ControlledObservedGame (N : Type uN) where
       InfoAction i (infoAt history i hmover hnonterminal) ≃
         base.Action history.1
 
+namespace ControlledDecisionGame
+
+variable {N : Type*} (G : ControlledDecisionGame N)
+
+/-- A concrete player decision representing an abstract information state. -/
+structure DecisionInfoWitness
+    (G : ControlledDecisionGame N) (i : N)
+    (information : G.InfoState i) where
+  /-- Representing complete history. -/
+  history : G.base.History
+  /-- The selected player moves at the endpoint. -/
+  mover : G.base.mover history.1 = some i
+  /-- The endpoint has an actual legal action. -/
+  decision : G.base.toArena.IsDecision history.1
+  /-- The history represents the requested information state. -/
+  infoAt_eq : G.infoAt history i mover decision = information
+
+/-- Decision-information values that occur at at least one genuine player
+decision. -/
+def RepresentedInfo (G : ControlledDecisionGame N) (i : N) :=
+  { information : G.InfoState i //
+    Nonempty (G.DecisionInfoWitness i information) }
+
+/-- Package the information state at one concrete decision as a represented
+strategy coordinate. -/
+def representedInfoAt
+    (history : G.base.History) (i : N)
+    (hmover : G.base.mover history.1 = some i)
+    (hdecision : G.base.toArena.IsDecision history.1) :
+    G.RepresentedInfo i :=
+  ⟨G.infoAt history i hmover hdecision,
+    ⟨{
+      history := history
+      mover := hmover
+      decision := hdecision
+      infoAt_eq := rfl
+    }⟩⟩
+
+/-- Every represented decision-information coordinate has at least one
+abstract legal action. This follows from its decision witness and therefore
+requires no global mover-coherence or representation certificate. -/
+theorem representedInfo_nonempty_infoAction
+    (i : N) (information : G.RepresentedInfo i) :
+    Nonempty (G.InfoAction i information.1) := by
+  rcases information.2 with ⟨witness⟩
+  have habstract :=
+    witness.decision.map
+      (G.actionEquiv witness.history i witness.mover
+        witness.decision).symm
+  simpa [witness.infoAt_eq] using habstract
+
+/-- A deterministic contingent plan indexed only by represented decision
+information. -/
+def PureStrategy (i : N) : Type _ :=
+  (information : G.RepresentedInfo i) →
+    G.InfoAction i information.1
+
+/-- A profile of payoff-free pure contingent plans. -/
+def PureProfile : Type _ :=
+  (i : N) → G.PureStrategy i
+
+namespace PureStrategy
+
+/-- Realize an abstract pure action at one represented concrete history. -/
+def actionAt {i : N} (strategy : G.PureStrategy i)
+    (history : G.base.History)
+    (hmover : G.base.mover history.1 = some i)
+    (hdecision : G.base.toArena.IsDecision history.1) :
+    G.base.Action history.1 :=
+  G.actionEquiv history i hmover hdecision
+    (strategy (G.representedInfoAt history i hmover hdecision))
+
+end PureStrategy
+
+end ControlledDecisionGame
+
 namespace ControlledObservedGame
 
 variable {N M : Type*} (G : ControlledObservedGame N)
