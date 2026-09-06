@@ -345,7 +345,7 @@ namespace ActionPolicy
 
 /-- Regard a stationary state-Markov action policy as a finite-history policy
 by reading only the latest state. -/
-noncomputable def toHistoryActionPolicy (policy : A.ActionPolicy) :
+def toHistoryActionPolicy (policy : A.ActionPolicy) :
     A.HistoryActionPolicy where
   kernel := fun time =>
     Kernel.comap policy.kernel
@@ -408,10 +408,11 @@ when routed through the more general history-dependent policy interface. -/
 theorem toHistoryActionPolicy_pathMeasure
     (policy : A.ActionPolicy)
     (hterminal : MeasurableSet A.terminalSet)
+    [PathExecution policy hterminal]
     (initialState : A.State) :
     policy.toHistoryActionPolicy.pathMeasure hterminal initialState =
       policy.pathMeasure hterminal initialState := by
-  rw [HistoryActionPolicy.pathMeasure, ActionPolicy.pathMeasure]
+  rw [HistoryActionPolicy.pathMeasure, ActionPolicy.pathMeasure, PathExecution.path_eq]
   congr 1
 
 /-- The more general executor also preserves every stationary
@@ -419,13 +420,15 @@ one-coordinate marginal exactly. -/
 theorem toHistoryActionPolicy_coordinateMeasure
     (policy : A.ActionPolicy)
     (hterminal : MeasurableSet A.terminalSet)
+    [PathExecution policy hterminal]
     (initialState : A.State) (time : ℕ) :
     policy.toHistoryActionPolicy.coordinateMeasure
         hterminal initialState time =
       policy.coordinateMeasure hterminal initialState time := by
   rw [HistoryActionPolicy.coordinateMeasure,
-    ActionPolicy.coordinateMeasure,
+    ActionPolicy.coordinateMeasure, PathExecution.coordinate_eq,
     policy.toHistoryActionPolicy_pathMeasure]
+  rfl
 
 end ActionPolicy
 
