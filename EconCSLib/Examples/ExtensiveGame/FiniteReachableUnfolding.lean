@@ -109,9 +109,8 @@ theorem oneStep_allDecisionInfoRepresented :
           Arena.HistoryFrom.nil oneStepArena 0
         mover := by
           rfl
-        nonterminal := by
-          change ¬ IsEmpty Bool
-          exact not_isEmpty_iff.mpr ⟨false⟩
+        decision := by
+          exact ⟨false⟩
         infoAt_eq := rfl }⟩
 
 theorem oneStep_decisionMoverCoherent :
@@ -146,22 +145,29 @@ def oneStep_finiteEFG :
   finiteAction := by
     change
       ∀ history : oneStepArena.HistoryFrom 0,
-        Finite
+        Fintype
           (if history.1 = 0 then Bool else Empty)
     intro history
     by_cases hstate : history.1 = 0
     · simpa [hstate] using
-          (show Finite Bool from inferInstance)
+          (show Fintype Bool from inferInstance)
     · simpa [hstate] using
-        (show Finite Empty from inferInstance)
-  finiteInfoState := by
-    intro _player
-    change Finite Unit
-    infer_instance
-  allDecisionInfoRepresented :=
-    oneStep_allDecisionInfoRepresented
-  decisionMoverCoherent :=
-    oneStep_decisionMoverCoherent
+        (show Fintype Empty from inferInstance)
+  finiteDecisionPresentation := by
+    intro player
+    cases player
+    let information : oneStepObserved.RepresentedInfo () :=
+      oneStepObserved.representedInfoAt
+        (Arena.HistoryFrom.nil oneStepArena 0)
+        () rfl ⟨false⟩
+    letI : Unique (oneStepObserved.RepresentedInfo ()) := {
+      default := information
+      uniq := fun other => by
+        apply Subtype.ext
+        exact Subsingleton.elim _ _ }
+    exact
+      ⟨⟨1, Equiv.ofUnique _ _⟩,
+        fun _information => inferInstance⟩
 
 /-- The finite unfolding is genuinely enumerable despite its infinite
 ambient compact state type. -/
@@ -215,12 +221,25 @@ theorem distinct_unfolding_states :
   oneStep_finiteEFG.state_ne_of_originalHistory_ne
     distinct_histories
 
-noncomputable def routeTerminalOutcome :
+/-- Compare the complete one-step history, including its Boolean action. -/
+local instance historyLeftDecidable (history : oneStepArena.HistoryFrom 0) :
+    Decidable (history = leftHistory) := by
+  rcases history with ⟨state, path⟩
+  cases path with
+  | nil => exact isFalse (by intro h; cases h)
+  | @snoc previous path action =>
+    cases path with
+    | nil =>
+      cases action
+      · exact isTrue rfl
+      · exact isFalse (by intro h; cases h)
+    | snoc path previousAction => exact Empty.elim action
+
+/-- Distinguish the two terminal occurrences by their full histories. -/
+def routeTerminalOutcome :
     oneStepArena.TerminalOutcome (0 : Nat) Bool :=
-  by
-    classical
-    exact fun terminalHistory =>
-      if terminalHistory.1 = leftHistory then false else true
+  fun terminalHistory =>
+    if terminalHistory.1 = leftHistory then false else true
 
 theorem routeTerminalOutcome_left :
     routeTerminalOutcome
@@ -246,6 +265,11 @@ theorem routeTerminalOutcome_right :
     fun heq => distinct_histories heq.symm
   simp [routeTerminalOutcome, hright]
 
+example :
+    routeTerminalOutcome ⟨leftHistory, by exact ⟨Empty.elim⟩⟩ = false ∧
+    routeTerminalOutcome ⟨rightHistory, by exact ⟨Empty.elim⟩⟩ = true := by
+  native_decide
+
 /-! ## Payoff-free preservation regressions -/
 
 /-- Forgetting the irrelevant unit payoff produces the canonical payoff-free
@@ -261,22 +285,8 @@ def oneStep_controlledFinite :
   lengthBound := oneStep_finiteEFG.lengthBound
   hasLengthBound := oneStep_finiteEFG.hasLengthBound
   finiteAction := oneStep_finiteEFG.finiteAction
-  finiteInfoState := oneStep_finiteEFG.finiteInfoState
-  allDecisionInfoRepresented := by
-    intro player information
-    cases player
-    cases information
-    refine
-      ⟨
-        { history :=
-            Arena.HistoryFrom.nil oneStepArena 0
-          mover := rfl
-          nonterminal := by
-            change ¬ IsEmpty Bool
-            exact not_isEmpty_iff.mpr ⟨false⟩
-          infoAt_eq := rfl }⟩
-  decisionMoverCoherent :=
-    oneStep_finiteEFG.decisionMoverCoherent
+  finiteDecisionPresentation :=
+    oneStep_finiteEFG.finiteDecisionPresentation
 
 /-- A nontrivial external root presentation selecting the initial history and
 the left terminal occurrence. -/
@@ -329,7 +339,7 @@ theorem discrete_chance_preserved
     (chanceKernel :
       (history : oneStepControlled.base.History) →
         oneStepControlled.base.isChanceState history.1 →
-          PMF (oneStepControlled.base.Action history.1))
+          FiniteLaw (oneStepControlled.base.Action history.1))
     (history :
       oneStep_controlledFinite.toFiniteObservedGame.base.History)
     (hchance :
