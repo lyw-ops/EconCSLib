@@ -63,6 +63,14 @@ def UniformDeviationConvergenceAt [DecidableEq N]
         infinitePayoff root
           (Function.update profile i deviation) i) ≤ error n
 
+private lemma tendsto_of_abs_sub_le_error {payoff error : ℕ → ℝ} {value : ℝ}
+    (herror : Tendsto error atTop (nhds 0))
+    (hbound : ∀ n, |payoff n - value| ≤ error n) :
+    Tendsto payoff atTop (nhds value) := by
+  apply tendsto_iff_dist_tendsto_zero.mpr
+  exact squeeze_zero (fun _ => dist_nonneg)
+    (fun n => by simpa [Real.dist_eq] using hbound n) herror
+
 /-- Exact finite-index Nash on declared roots passes to the infinite payoff
 when approximation errors vanish uniformly over all roots, players, and
 unilateral deviations. -/
@@ -80,36 +88,10 @@ theorem isNashOnRootsForInfinitePayoff_of_uniformDeviationConvergence
       ∀ n, G.IsNashOnRootsForPayoff (finitePayoff n) profile) :
     G.IsNashOnRootsForPayoff infinitePayoff profile := by
   intro root hroot i deviation
-  have hbase :
-      Tendsto
-        (fun n => finitePayoff n root profile i)
-        atTop
-        (nhds (infinitePayoff root profile i)) := by
-    apply tendsto_iff_dist_tendsto_zero.mpr
-    apply squeeze_zero
-    · intro n
-      exact dist_nonneg
-    · intro n
-      simpa [Real.dist_eq] using
-        (huniform.2.2 n root i deviation).1
-    · exact huniform.2.1
-  have hdeviation :
-      Tendsto
-        (fun n =>
-          finitePayoff n root
-            (Function.update profile i deviation) i)
-        atTop
-        (nhds
-          (infinitePayoff root
-            (Function.update profile i deviation) i)) := by
-    apply tendsto_iff_dist_tendsto_zero.mpr
-    apply squeeze_zero
-    · intro n
-      exact dist_nonneg
-    · intro n
-      simpa [Real.dist_eq] using
-        (huniform.2.2 n root i deviation).2
-    · exact huniform.2.1
+  have hbase := tendsto_of_abs_sub_le_error huniform.2.1
+    (fun n => (huniform.2.2 n root i deviation).1)
+  have hdeviation := tendsto_of_abs_sub_le_error huniform.2.1
+    (fun n => (huniform.2.2 n root i deviation).2)
   exact
     le_of_tendsto_of_tendsto'
       hdeviation hbase
