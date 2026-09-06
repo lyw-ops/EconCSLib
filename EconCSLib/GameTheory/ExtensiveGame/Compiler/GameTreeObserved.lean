@@ -200,13 +200,6 @@ theorem Subtree.arenaHistory_nonempty {subtree root : GameTree N U}
         ⟨_, List.mem_cons_of_mem head hmem⟩
       exact ⟨(Arena.History.nil.snoc first).append rest⟩
 
-/-- Choose a compiled Arena history witnessing a subtree occurrence. -/
-noncomputable def Subtree.toArenaHistory
-    {subtree root : GameTree N U}
-    (hsubtree : Subtree subtree root) :
-    (toExtensiveGame root).toArena.History root subtree :=
-  hsubtree.arenaHistory_nonempty.some
-
 /-! ### Endpoint observations and decision information -/
 
 /-- A node context, used as the decision information state in the compiled
@@ -290,33 +283,29 @@ instance toObservedGame.instTerminalDecidable (root : GameTree N U) :
 
 /-! ### Strategy correspondence -/
 
-/-- One player's pure strategies in the observed compilation are exactly the
-existing complete contingent plans for `GameTree`. -/
-def playerStrategyEquiv (root : GameTree N U) (i : N) :
-    (toObservedGame root).PureStrategy i ≃ PlayerStrategy N U where
-  toFun σ := fun mover head tail => σ ⟨mover, head, tail⟩
-  invFun τ := fun info => τ info.mover info.head info.tail
-  left_inv σ := by
-    funext info
-    cases info
-    rfl
-  right_inv τ := by
-    funext mover head tail
-    rfl
+/-- Restrict a structural endpoint plan to node contexts represented by a
+genuine decision history from `root`.  Unlike the former API, this is not
+claimed to be an equivalence: an unrestricted `PlayerStrategy` also contains
+irrelevant coordinates at node values that never occur below `root`. -/
+def playerStrategyToObservedStrategy (root : GameTree N U) (i : N)
+    (strategy : PlayerStrategy N U) :
+    (toObservedGame root).PureStrategy i :=
+  fun information =>
+    strategy information.1.mover information.1.head information.1.tail
 
 /-- Translate the old global tree strategy into an observed pure profile.
 The outer player argument is irrelevant because the old global strategy
 already dispatches on the mover stored in each node context. -/
 def strategyToObservedProfile (root : GameTree N U) (σ : Strategy N U) :
     (toObservedGame root).PureProfile :=
-  fun _ info => σ info.mover info.head info.tail
+  fun _ info => σ info.1.mover info.1.head info.1.tail
 
 /-- Translate a strategic-form profile player by player into the observed
 pure-profile type. -/
 def playerProfileToObservedProfile (root : GameTree N U)
     (σ : N → PlayerStrategy N U) :
     (toObservedGame root).PureProfile :=
-  fun i info => σ i info.mover info.head info.tail
+  fun i => playerStrategyToObservedStrategy root i (σ i)
 
 /-- The terminal-aware base-history policy induced by a translated global
 tree strategy. -/
@@ -350,7 +339,7 @@ theorem strategyHistoryPolicy_node (root : GameTree N U)
       (toObservedGame root) _ _ _ _ mover rfl]
   simp only [ExtensiveGame.ObservedGame.PureProfile.actionAt,
     ExtensiveGame.ObservedGame.PureStrategy.actionAt,
-    strategyToObservedProfile, toObservedGame, nodeActionEquiv, nodeInfoAt]
+    toObservedGame, nodeActionEquiv, nodeInfoAt]
   rfl
 
 /-- At a concrete node history, translating a player profile prescribes the
@@ -530,45 +519,92 @@ theorem stoppedPayoff_playerProfile_eq_outcome
     _ = payoff := toExtensiveGame_payoff_leaf root payoff
     _ = outcome (profileStrategy σ) root := hpayoff
 
-/-! ### Representation-neutral game-form isomorphism -/
+/-! ### Structural and observed game forms -/
 
 /-- The existing `GameTree` strategic semantics as a deterministic
 strategy/outcome game form. -/
-noncomputable def toGameForm (root : GameTree N U) : GameForm N where
+def toGameForm (root : GameTree N U) : GameForm N where
   Strategy := fun _ => PlayerStrategy N U
   Outcome := N → U
   outcome σ := outcome (profileStrategy σ) root
 
-/-- Convert an arbitrary observed pure profile back to the existing
-player-strategy profile. -/
-def observedProfileToPlayerProfile (root : GameTree N U)
-    (σ : (toObservedGame root).PureProfile) :
-    N → PlayerStrategy N U :=
-  fun i => playerStrategyEquiv root i (σ i)
+/-- The concrete child selected by an observed profile at a represented node
+history.  The complete history is supplied as runtime data, so no decision of
+whether the endpoint information is represented is needed. -/
+def observedActionAtNode (root : GameTree N U)
+    (profile : (toObservedGame root).PureProfile)
+    (mover : N) (head : GameTree N U) (tail : List (GameTree N U))
+    (history :
+      (toExtensiveGame root).toArena.History root
+        (.Node mover head tail)) :
+    (toExtensiveGame root).Action (.Node mover head tail) :=
+  profile.actionAt (toObservedGame root)
+    ⟨.Node mover head tail, history⟩ mover rfl
+    ⟨⟨head, List.mem_cons_self⟩⟩
+
+/-- Evaluate an endpoint-observed profile from a supplied concrete history.
+
+Execution follows the selected child structurally.  In particular, this does
+not extend the profile to information coordinates that do not occur below the
+compiled root. -/
+def observedOutcomeFrom (root : GameTree N U)
+    (profile : (toObservedGame root).PureProfile) :
+    (current : (toExtensiveGame root).toArena.HistoryFrom root) → N → U
+  | ⟨.Leaf payoff, _⟩ => payoff
+  | ⟨.Node mover head tail, history⟩ =>
+      let action :=
+        observedActionAtNode root profile mover head tail history
+      observedOutcomeFrom root profile
+        ⟨action.1, history.snoc action⟩
+termination_by current => current.1.size
+decreasing_by
+  exact size_mem_children_lt mover head tail action.2
 
 @[simp]
-theorem observedProfileToPlayerProfile_toObserved
-    (root : GameTree N U) (σ : N → PlayerStrategy N U) :
-    observedProfileToPlayerProfile root
-      (playerProfileToObservedProfile root σ) = σ := by
-  funext i mover head tail
-  rfl
-
-@[simp]
-theorem playerProfileToObservedProfile_toPlayer
+theorem observedOutcomeFrom_leaf
     (root : GameTree N U)
-    (σ : (toObservedGame root).PureProfile) :
-    playerProfileToObservedProfile root
-      (observedProfileToPlayerProfile root σ) = σ := by
-  funext i info
-  cases info
-  rfl
+    (profile : (toObservedGame root).PureProfile)
+    (payoff : N → U)
+    (history :
+      (toExtensiveGame root).toArena.History root (.Leaf payoff)) :
+    observedOutcomeFrom root profile ⟨.Leaf payoff, history⟩ = payoff := by
+  rw [observedOutcomeFrom]
+
+/-- If a supplied history endpoint is propositionally a leaf, direct observed
+evaluation returns that leaf payoff.  This form is convenient when the
+endpoint is carried by a dependent history package. -/
+theorem observedOutcomeFrom_eq_of_endpoint_leaf
+    (root : GameTree N U)
+    (profile : (toObservedGame root).PureProfile)
+    (current : (toExtensiveGame root).toArena.HistoryFrom root)
+    (payoff : N → U) (hendpoint : current.1 = .Leaf payoff) :
+    observedOutcomeFrom root profile current = payoff := by
+  rcases current with ⟨state, history⟩
+  simp only at hendpoint
+  subst state
+  exact observedOutcomeFrom_leaf root profile payoff history
+
+@[simp]
+theorem observedOutcomeFrom_node
+    (root : GameTree N U)
+    (profile : (toObservedGame root).PureProfile)
+    (mover : N) (head : GameTree N U) (tail : List (GameTree N U))
+    (history :
+      (toExtensiveGame root).toArena.History root
+        (.Node mover head tail)) :
+    observedOutcomeFrom root profile
+        ⟨.Node mover head tail, history⟩ =
+      observedOutcomeFrom root profile
+        ⟨(observedActionAtNode root profile mover head tail history).1,
+          history.snoc
+            (observedActionAtNode root profile mover head tail history)⟩ :=
+  by rw [observedOutcomeFrom]
 
 /-! ### Termination-certified continuation semantics -/
 
 /-- From any accumulated compiled history, an arbitrary observed pure profile
-reaches the same leaf as the corresponding `GameTree` player profile whenever
-the fuel dominates the current subtree size. -/
+reaches the leaf computed by `observedOutcomeFrom` whenever the fuel dominates
+the current subtree size. -/
 theorem stoppedHistoryFrom_observedProfile_reaches_outcome
     (root : GameTree N U)
     (profile : (toObservedGame root).PureProfile)
@@ -579,32 +615,82 @@ theorem stoppedHistoryFrom_observedProfile_reaches_outcome
       ((toObservedGame root).stoppedHistoryFrom profile
         (toExtensiveGame_noChanceOnHistories root) current fuel).1 =
           GameTree.Leaf payoff ∧
-      payoff =
-        outcome
-          (profileStrategy
-            (observedProfileToPlayerProfile root profile))
-          current.1 := by
-  rw [← playerProfileToObservedProfile_toPlayer root profile]
-  simpa [ExtensiveGame.ObservedGame.stoppedHistoryFrom] using
-    stoppedHistoryFrom_policy_reaches_outcome root
-      (profileStrategy
-        (observedProfileToPlayerProfile root profile))
-      (playerProfileHistoryPolicy root
-        (observedProfileToPlayerProfile root profile))
-      (playerProfileHistoryPolicy_node root
-        (observedProfileToPlayerProfile root profile))
-      current.1 current.2 fuel hsize
+      payoff = observedOutcomeFrom root profile current := by
+  let motive : GameTree N U → Prop := fun subtree =>
+    ∀ (history :
+        (toExtensiveGame root).toArena.History root subtree)
+      (remaining : ℕ), subtree.size ≤ remaining →
+      ∃ payoff : N → U,
+        ((toObservedGame root).stoppedHistoryFrom profile
+          (toExtensiveGame_noChanceOnHistories root)
+          ⟨subtree, history⟩ remaining).1 = .Leaf payoff ∧
+        payoff = observedOutcomeFrom root profile ⟨subtree, history⟩
+  apply GameTree.strong_induction (motive := motive)
+  · intro payoff history remaining _hremaining
+    refine ⟨payoff, ?_, (observedOutcomeFrom_leaf root profile payoff history).symm⟩
+    change
+      ((toExtensiveGame root).toArena.stoppedHistoryFrom
+        (profile.toHistoryPolicy (toObservedGame root)
+          (toExtensiveGame_noChanceOnHistories root))
+        ⟨.Leaf payoff, history⟩ remaining).1 = .Leaf payoff
+    rw [Arena.stoppedHistoryFrom_eq_self_of_terminal _ _
+      (toExtensiveGame_isTerminal_leaf root payoff) remaining]
+  · intro mover head tail ih history remaining hremaining
+    cases remaining with
+    | zero =>
+        have hpositive := size_pos (.Node mover head tail)
+        omega
+    | succ remaining =>
+        have hnonterminal :=
+          toExtensiveGame_not_isTerminal_node root mover head tail
+        let action :=
+          observedActionAtNode root profile mover head tail history
+        have hpolicyAction :
+            profile.toHistoryPolicy (toObservedGame root)
+                (toExtensiveGame_noChanceOnHistories root)
+                ⟨.Node mover head tail, history⟩ hnonterminal =
+              action := by
+          rw [ExtensiveGame.ObservedGame.PureProfile.toHistoryPolicy_of_mover
+            (toObservedGame root) profile
+            (toExtensiveGame_noChanceOnHistories root)
+            ⟨.Node mover head tail, history⟩ hnonterminal mover rfl]
+          rfl
+        have hchildSize : action.1.size ≤ remaining := by
+          have hlt :=
+            size_mem_children_lt mover head tail action.2
+          omega
+        obtain ⟨payoff, hendpoint, hpayoff⟩ :=
+          ih action.1 action.2 (history.snoc action)
+            remaining hchildSize
+        refine ⟨payoff, ?_, ?_⟩
+        · change
+            ((toExtensiveGame root).toArena.stoppedHistoryFrom
+              (profile.toHistoryPolicy (toObservedGame root)
+                (toExtensiveGame_noChanceOnHistories root))
+              ⟨.Node mover head tail, history⟩ (Nat.succ remaining)).1 =
+                .Leaf payoff
+          rw [Arena.stoppedHistoryFrom_succ_of_not_terminal _ _ _
+            hnonterminal]
+          simpa only [hpolicyAction, toExtensiveGame, treeArena, arenaNext]
+            using hendpoint
+        · rw [observedOutcomeFrom_node]
+          exact hpayoff
+  · exact hsize
 
 /-- The finite compiled `GameTree` terminates under every pure profile from
 every admissible history root. -/
-theorem toObservedGame_pureTerminatingOnAllContinuations
+def toObservedGame_pureTerminationPlanOnAllContinuations
     (root : GameTree N U) :
-    (toObservedGame root).PureTerminatingOnRoots
-      (toExtensiveGame_noChanceOnHistories root)
+    ∀ current,
       (ExtensiveGame.ObservedGame.ContinuationRootPresentation.allHistories
-        (toObservedGame root).base) := by
-  intro current _hroot profile
-  refine ⟨root.size, ?_⟩
+        (toObservedGame root).base).IsRoot current →
+      (toObservedGame root).PureTerminationPlanAt
+        (toExtensiveGame_noChanceOnHistories root) current := by
+  intro current _hroot
+  refine
+    { fuel := fun _profile => root.size
+      terminal := ?_ }
+  intro profile
   obtain ⟨payoff, hendpoint, _⟩ :=
     stoppedHistoryFrom_observedProfile_reaches_outcome
       root profile current root.size
@@ -617,21 +703,20 @@ theorem toObservedGame_pureTerminatingOnAllContinuations
   exact toExtensiveGame_isTerminal_leaf root payoff
 
 /-- The total termination-certified payoff from an arbitrary compiled history
-is the ordinary `GameTree.outcome` at its endpoint subtree. -/
+is the directly executable observed outcome from that history. -/
 theorem terminalPayoffFrom_observedProfile_eq_outcome
     (root : GameTree N U)
     (profile : (toObservedGame root).PureProfile)
     (current :
       (toExtensiveGame root).toArena.HistoryFrom root)
-    (hterminates :
-      (toObservedGame root).PureTerminatesFrom profile
-        (toExtensiveGame_noChanceOnHistories root) current) :
+    (fuel : ℕ)
+    (hselectedTerminal :
+      (toObservedGame root).PureTerminatesAtFuel profile
+        (toExtensiveGame_noChanceOnHistories root) current fuel) :
     (toObservedGame root).terminalPayoffFrom profile
-        (toExtensiveGame_noChanceOnHistories root) current hterminates =
-      outcome
-        (profileStrategy
-          (observedProfileToPlayerProfile root profile))
-        current.1 := by
+        (toExtensiveGame_noChanceOnHistories root) current fuel
+          hselectedTerminal =
+      observedOutcomeFrom root profile current := by
   obtain ⟨payoff, hendpoint, hpayoff⟩ :=
     stoppedHistoryFrom_observedProfile_reaches_outcome
       root profile current root.size
@@ -650,16 +735,13 @@ theorem terminalPayoffFrom_observedProfile_eq_outcome
     (toExtensiveGame root).payoff
         ((toObservedGame root).toControlledObservedGame.terminalHistoryFrom
           profile (toExtensiveGame_noChanceOnHistories root) current
-          hterminates).1 =
-      outcome
-        (profileStrategy
-          (observedProfileToPlayerProfile root profile))
-        current.1
+          fuel).1 =
+      observedOutcomeFrom root profile current
   rw [
     (toObservedGame root).toControlledObservedGame
       |>.terminalHistoryFrom_eq_of_terminal
         profile (toExtensiveGame_noChanceOnHistories root) current
-        hterminates root.size hterminal]
+        fuel hselectedTerminal root.size hterminal]
   calc
     (toExtensiveGame root).payoff
         ((toObservedGame root).stoppedHistoryFrom profile
@@ -667,140 +749,17 @@ theorem terminalPayoffFrom_observedProfile_eq_outcome
         (toExtensiveGame root).payoff (.Leaf payoff) :=
       congrArg (toExtensiveGame root).payoff hendpoint
     _ = payoff := toExtensiveGame_payoff_leaf root payoff
-    _ = outcome
-          (profileStrategy
-            (observedProfileToPlayerProfile root profile))
-          current.1 := hpayoff
-
-/-- At every compiled history, the existing `GameTree` game form is strictly
-isomorphic to the termination-certified observed continuation game form. -/
-noncomputable def terminalContinuationGameFormIso
-    (root : GameTree N U)
-    (current :
-      (toExtensiveGame root).toArena.HistoryFrom root) :
-    (toGameForm current.1).Iso
-      ((toObservedGame root).terminalContinuationGameForm
-        (toExtensiveGame_noChanceOnHistories root) current
-        ((toObservedGame_pureTerminatingOnAllContinuations root)
-          current trivial)) where
-  strategyEquiv := fun i => (playerStrategyEquiv root i).symm
-  outcomeEquiv := Equiv.refl _
-  map_outcome := by
-    intro profile
-    change
-      outcome (profileStrategy profile) current.1 =
-        (toObservedGame root).terminalPayoffFrom
-          (playerProfileToObservedProfile root profile)
-          (toExtensiveGame_noChanceOnHistories root) current _
-    rw [terminalPayoffFrom_observedProfile_eq_outcome,
-      observedProfileToPlayerProfile_toObserved]
-
-/-- The history-local total game-form isomorphism preserves terminal payoff
-utilities. -/
-theorem terminalContinuationGameFormIso_utilityCompatible
-    (root : GameTree N U)
-    (current :
-      (toExtensiveGame root).toArena.HistoryFrom root) :
-    (terminalContinuationGameFormIso root current).UtilityCompatible
-      (fun payoff : N → U => payoff)
-      (fun payoff : N → U => payoff) := by
-  intro payoff i
-  rfl
-
-/-- Pure Nash equilibrium in a termination-certified observed continuation is
-exactly the existing `GameTree.IsNashAt` predicate at the endpoint subtree. -/
-theorem terminalContinuationGameForm_isNash_iff_isNashAt
-    [DecidableEq N] [TotalPreorder U]
-    (root : GameTree N U)
-    (profile : N → PlayerStrategy N U)
-    (current :
-      (toExtensiveGame root).toArena.HistoryFrom root) :
-    ((toObservedGame root).terminalContinuationGameForm
-        (toExtensiveGame_noChanceOnHistories root) current
-        ((toObservedGame_pureTerminatingOnAllContinuations root)
-          current trivial)).IsNash
-        (fun payoff : N → U => payoff)
-        (playerProfileToObservedProfile root profile) ↔
-      IsNashAt (profileStrategy profile) current.1 := by
-  calc
-    ((toObservedGame root).terminalContinuationGameForm
-        (toExtensiveGame_noChanceOnHistories root) current
-        ((toObservedGame_pureTerminatingOnAllContinuations root)
-          current trivial)).IsNash
-        (fun payoff : N → U => payoff)
-        (playerProfileToObservedProfile root profile) ↔
-        (toGameForm current.1).IsNash
-          (fun payoff : N → U => payoff) profile := by
-      simpa [GameForm.Iso.mapProfile,
-        terminalContinuationGameFormIso] using
-        ((terminalContinuationGameFormIso root current).isNash_iff
-          (terminalContinuationGameFormIso_utilityCompatible
-            root current) profile).symm
-    _ ↔ IsNashAt (profileStrategy profile) current.1 := by
-      change
-        _root_.IsNashEquilibrium
-            (GameTree.toStrategicGame current.1) profile ↔
-          IsNashAt (profileStrategy profile) current.1
-      exact toStrategicGame_nash_iff_isNashAt current.1 profile
-
-/-- The endpoint compiler's termination-certified Nash-on-designated-
-continuations predicate recovers the existing root-scoped structural
-`GameTree.IsGlobalEndpointSubgamePerfectOn` predicate.
-
-This is not the canonical occurrence-sensitive standard-SPE theorem. -/
-theorem observed_isPureNashOnAllContinuations_iff_isGlobalEndpointSubgamePerfectOn
-    [DecidableEq N] [TotalPreorder U]
-    (root : GameTree N U)
-    (profile : N → PlayerStrategy N U) :
-    (toObservedGame root).IsPureNashOnRoots
-        (toExtensiveGame_noChanceOnHistories root)
-        (ExtensiveGame.ObservedGame.ContinuationRootPresentation.allHistories
-          (toObservedGame root).base)
-        (toObservedGame_pureTerminatingOnAllContinuations root)
-        (fun payoff : N → U => payoff)
-        (playerProfileToObservedProfile root profile) ↔
-      IsGlobalEndpointSubgamePerfectOn (profileStrategy profile) root := by
-  constructor
-  · intro hspe subtree hsubtree
-    let history := hsubtree.toArenaHistory
-    have hobserved :=
-      hspe ⟨subtree, history⟩ trivial
-    exact
-      (terminalContinuationGameForm_isNash_iff_isNashAt
-        root profile ⟨subtree, history⟩).mp hobserved
-  · intro hspe current _hroot
-    have hsubtree : Subtree current.1 root :=
-      arenaHistory_subtree current.2
-    have htree := hspe current.1 hsubtree
-    exact
-      (terminalContinuationGameForm_isNash_iff_isNashAt
-        root profile current).mpr htree
+    _ = observedOutcomeFrom root profile current := hpayoff
 
 /-- The observed compilation's deterministic game form.
 
 Its total outcome evaluator is justified operationally by
 `stoppedPayoff_observedProfile_eq_gameFormOutcome` below. -/
-noncomputable def observedToGameForm (root : GameTree N U) : GameForm N where
+def observedToGameForm (root : GameTree N U) : GameForm N where
   Strategy := (toObservedGame root).PureStrategy
   Outcome := N → U
-  outcome σ :=
-    outcome (profileStrategy
-      (observedProfileToPlayerProfile root σ)) root
-
-/-- The old player-strategy semantics and the observed-game pure-strategy
-semantics are isomorphic as deterministic game forms. -/
-def gameFormIso (root : GameTree N U) :
-    (toGameForm root).Iso (observedToGameForm root) where
-  strategyEquiv := fun i => (playerStrategyEquiv root i).symm
-  outcomeEquiv := Equiv.refl _
-  map_outcome := by
-    intro σ
-    change outcome (profileStrategy σ) root =
-      outcome
-        (profileStrategy
-          (observedProfileToPlayerProfile root
-            (playerProfileToObservedProfile root σ))) root
-    rw [observedProfileToPlayerProfile_toObserved]
+  outcome σ := observedOutcomeFrom root σ
+    ⟨root, Arena.History.nil⟩
 
 /-- The observed game-form evaluator is exactly the payoff produced by
 terminal-aware stopped execution. -/
@@ -811,32 +770,33 @@ theorem stoppedPayoff_observedProfile_eq_gameFormOutcome
         (toObservedGame root) (toExtensiveGame_terminalDecidable root)
         σ (toExtensiveGame_noChanceOnHistories root) root.size =
       some ((observedToGameForm root).outcome σ) := by
-  rw [← playerProfileToObservedProfile_toPlayer root σ]
-  exact stoppedPayoff_playerProfile_eq_outcome root
-    (observedProfileToPlayerProfile root σ)
-
-/-- The game-form isomorphism preserves the identity utility interpretation of
-terminal payoff vectors. -/
-theorem gameFormIso_utilityCompatible (root : GameTree N U) :
-    (gameFormIso root).UtilityCompatible
-      (fun payoff : N → U => payoff)
-      (fun payoff : N → U => payoff) := by
-  intro payoff i
-  rfl
-
-/-- Pure Nash equilibrium is invariant under the `GameTree` to observed-game
-strategy isomorphism. -/
-theorem gameFormIso_isNash_iff
-    [DecidableEq N] [Preorder U]
-    (root : GameTree N U) (σ : (toGameForm root).Profile) :
-    (toGameForm root).IsNash
-        (fun payoff : N → U => payoff) σ ↔
-      (observedToGameForm root).IsNash
-        (fun payoff : N → U => payoff)
-        (playerProfileToObservedProfile root σ) := by
-  simpa [GameForm.Iso.mapProfile, gameFormIso] using
-    (gameFormIso root).isNash_iff
-      (gameFormIso_utilityCompatible root) σ
+  obtain ⟨payoff, hendpoint, hpayoff⟩ :=
+    stoppedHistoryFrom_observedProfile_reaches_outcome
+      root σ ⟨root, Arena.History.nil⟩ root.size (Nat.le_refl _)
+  have hterminal :
+      (toExtensiveGame root).isTerminal
+        ((toObservedGame root).stoppedHistoryFrom σ
+          (toExtensiveGame_noChanceOnHistories root)
+          ⟨root, Arena.History.nil⟩ root.size).1 := by
+    exact hendpoint.symm ▸ toExtensiveGame_isTerminal_leaf root payoff
+  change
+    (toExtensiveGame root).stoppedPayoff
+        (σ.toHistoryPolicy (toObservedGame root)
+          (toExtensiveGame_noChanceOnHistories root)) root.size =
+      some (observedOutcomeFrom root σ
+        ⟨root, Arena.History.nil⟩)
+  rw [ExtensiveGame.stoppedPayoff_eq_some_of_terminal _ _ _ hterminal]
+  apply congrArg some
+  calc
+    (toExtensiveGame root).payoff
+        ((toObservedGame root).stoppedHistoryFrom σ
+          (toExtensiveGame_noChanceOnHistories root)
+          ⟨root, Arena.History.nil⟩ root.size).1 =
+        (toExtensiveGame root).payoff (.Leaf payoff) :=
+      congrArg (toExtensiveGame root).payoff hendpoint
+    _ = payoff := toExtensiveGame_payoff_leaf root payoff
+    _ = observedOutcomeFrom root σ
+          ⟨root, Arena.History.nil⟩ := hpayoff
 
 /-- The `GameTree` game-form Nash predicate is definitionally the existing
 strategic-form Nash predicate. -/
@@ -847,27 +807,5 @@ theorem toGameForm_isNash_iff_toStrategicGame
         (fun payoff : N → U => payoff) σ ↔
       _root_.IsNashEquilibrium (GameTree.toStrategicGame root) σ :=
   Iff.rfl
-
-/-- Observed-game pure Nash is exactly the existing root-scoped
-`GameTree.IsNashAt` predicate under the strategy isomorphism. -/
-theorem observedGameForm_isNash_iff_isNashAt
-    [DecidableEq N] [TotalPreorder U]
-    (root : GameTree N U) (σ : N → PlayerStrategy N U) :
-    (observedToGameForm root).IsNash
-        (fun payoff : N → U => payoff)
-        (playerProfileToObservedProfile root σ) ↔
-      IsNashAt (profileStrategy σ) root := by
-  calc
-    (observedToGameForm root).IsNash
-        (fun payoff : N → U => payoff)
-        (playerProfileToObservedProfile root σ) ↔
-        (toGameForm root).IsNash
-          (fun payoff : N → U => payoff) σ :=
-      (gameFormIso_isNash_iff root σ).symm
-    _ ↔ IsNashAt (profileStrategy σ) root := by
-      change
-        _root_.IsNashEquilibrium (GameTree.toStrategicGame root) σ ↔
-          IsNashAt (profileStrategy σ) root
-      exact toStrategicGame_nash_iff_isNashAt root σ
 
 end GameTree
