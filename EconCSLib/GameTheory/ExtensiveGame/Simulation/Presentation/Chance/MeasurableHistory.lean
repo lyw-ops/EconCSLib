@@ -22,7 +22,7 @@ HistoryFrom init
 
 together with measurability of projection, deterministic history append, and
 the terminal set.  Its transition kernel is required pointwise to be the
-Dirac/`PMF.pure` history-append law.  Measurable singletons are recorded
+Dirac history-append law.  Measurable singletons are recorded
 because the joint event-policy compiler uses them to express legality.
 
 The structure is an explicit certificate, not an automatic measurable-space
@@ -100,9 +100,9 @@ structure MeasurableHistoryModel
   transition_apply :
     ∀ historyAction,
       transition historyAction =
-        @PMF.toMeasure
+        @Measure.dirac
           (CompleteHistory G) historyMeasurable
-          (PMF.pure (appendHistory G historyAction))
+          (appendHistory G historyAction)
   /-- The set of complete histories with no legal action is measurable. -/
   terminalSet_measurable :
     @MeasurableSet
@@ -121,7 +121,7 @@ variable {G : ObservedGame N U}
 
 /-- The measurable kernel arena represented by an explicit complete-history
 model. -/
-noncomputable def toArena
+def toArena
     (model : MeasurableHistoryModel G) :
     MeasurableKernelArena where
   State := CompleteHistory G
@@ -145,7 +145,7 @@ theorem toArena_terminalSet_measurable
     MeasurableSet model.toArena.terminalSet :=
   model.terminalSet_measurable
 
-/-- The represented successor measure is exactly `PMF.toMeasure` of one
+/-- The represented successor measure is exactly the Dirac measure of one
 deterministic history append. -/
 @[simp]
 theorem toArena_nextMeasure
@@ -153,9 +153,9 @@ theorem toArena_nextMeasure
     (history : model.toArena.State)
     (action : model.toArena.Action history) :
     model.toArena.nextMeasure history action =
-      @PMF.toMeasure
+      @Measure.dirac
         (CompleteHistory G) model.historyMeasurable
-        (PMF.pure (appendHistory G ⟨history, action⟩)) :=
+        (appendHistory G ⟨history, action⟩) :=
   model.transition_apply ⟨history, action⟩
 
 /-- The established discrete top-space lift, packaged as an explicit
@@ -186,7 +186,23 @@ noncomputable def discrete
       transition_isMarkov := arena.transition_isMarkov
       transition_apply := by
         intro historyAction
-        rfl
+        dsimp only [arena, KernelArena.toMeasurable]
+        change
+          (((G.base.toArena.historyKernelArena G.base.init).next
+            historyAction.1 historyAction.2).atoms.foldr
+              (fun atom rest =>
+                (atom.2 : ENNReal) •
+                  @Measure.dirac (CompleteHistory G) ⊤ atom.1 + rest)
+              0) = _
+        rw [Arena.historyKernelArena_next, FiniteLaw.pure_atoms]
+        simp only [List.foldr_cons, List.foldr_nil]
+        change
+          (((1 : ℚ≥0) : NNReal) : ENNReal) •
+              @Measure.dirac (CompleteHistory G) ⊤
+                (appendHistory G historyAction) + 0 =
+            @Measure.dirac (CompleteHistory G) ⊤
+              (appendHistory G historyAction)
+        simp
       terminalSet_measurable := by
         change
           @MeasurableSet
@@ -235,7 +251,7 @@ abbrev appendHistory (G : ObservedChanceGame N U) :=
 
 /-- Compatibility spelling for the structural measurable-history model.
 
-The model depends only on `G.observed`; the chance PMF is deliberately absent
+The model depends only on `G.observed`; the chance finite law is deliberately absent
 from its definition. -/
 abbrev MeasurableHistoryModel (G : ObservedChanceGame N U) :=
   ObservedGame.MeasurableHistoryModel G.observed
