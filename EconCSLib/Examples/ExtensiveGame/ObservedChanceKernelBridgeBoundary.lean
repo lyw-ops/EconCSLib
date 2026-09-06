@@ -35,6 +35,12 @@ This example therefore verifies both sides of the design:
 
 open MeasureTheory ProbabilityTheory
 
+local macro "finiteLawMeasureTop(" law:term ")" : term =>
+  `(($law).atoms.foldr
+      (fun atom rest =>
+        (atom.2 : ENNReal) • @Measure.dirac _ ⊤ atom.1 + rest)
+      0)
+
 namespace Examples.ObservedChanceKernelBridgeBoundary
 
 open Examples.AbsentMinded
@@ -74,9 +80,9 @@ instance terminalDecidable
 
 /-- The unique behavioral profile on the unique abstract information action.
 The one abstract law is reused at both player histories. -/
-noncomputable def profile :
+def profile :
     game.observed.BehavioralProfile :=
-  fun _ _ => PMF.pure ()
+  fun _ _ => FiniteLaw.pure ()
 
 /-- The lifted policy's player branch at the first decision is exactly the
 concrete realization of the information-indexed profile. -/
@@ -99,17 +105,21 @@ theorem firstDecision_player_branch :
       0 rfl
 
 /-- The bridge gives exact equality of the two-step analytic endpoint measure
-and the original stopped-history PMF measure in the concrete regression. -/
-theorem analytic_two_step_endpoint_exact :
+and the original stopped-history finite-law measure in the concrete
+regression. -/
+theorem analytic_two_step_endpoint_exact
+    [MeasurableKernelArena.ActionPolicy.EndpointExecution
+      (_root_.ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryKernelPolicy
+        game profile).toMeasurable
+      (game.observed.base.toArena.historyKernelArena
+        game.observed.base.init).toMeasurable_measurableSet_terminalSet] :
     (_root_.ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryKernelPolicy
       game profile).toMeasurable.endpointMeasure
         (game.observed.base.toArena.historyKernelArena
           game.observed.base.init).toMeasurable_measurableSet_terminalSet
         2 firstDecision =
-      @PMF.toMeasure
-        (game.observed.base.toArena.HistoryFrom
-          game.observed.base.init) ⊤
-        (game.observed.base.toArena.stochasticHistoryPMFFrom
+      finiteLawMeasureTop(
+        game.observed.base.toArena.stochasticHistoryLawFrom
           (_root_.ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryPolicy
             game profile)
           firstDecision 2) :=
@@ -132,12 +142,12 @@ instance liftedArena_stateMeasurableSingleton :
       exact MeasurableSpace.measurableSet_top
 
 /-- Time-zero event prefix based at the first player history. -/
-noncomputable def firstPrefix : liftedArena.EventPrefix 0 :=
-  fun _ => liftedArena.initialEvent firstDecision
+def firstPrefix : liftedArena.EventPrefix 0 :=
+  fun _ => (firstDecision, Sum.inl ())
 
 /-- Time-zero event prefix based at the second player history. -/
-noncomputable def secondPrefix : liftedArena.EventPrefix 0 :=
-  fun _ => liftedArena.initialEvent secondDecision
+def secondPrefix : liftedArena.EventPrefix 0 :=
+  fun _ => (secondDecision, Sum.inl ())
 
 /-- A deliberately merged statistic for the two recurring player decisions.
 It is enough to expose the concrete action-bundle obstruction. -/
