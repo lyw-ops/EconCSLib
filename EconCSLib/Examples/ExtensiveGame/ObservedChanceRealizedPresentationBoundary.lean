@@ -40,6 +40,49 @@ open Examples.RealizedInformationBoundary
 open ExtensiveGame
 open MeasurableKernelArena
 
+local macro "finiteLawMeasureTop(" law:term ")" : term =>
+  `(($law).atoms.foldr
+      (fun atom rest =>
+        (atom.2 : ENNReal) • @Measure.dirac _ ⊤ atom.1 + rest)
+      0)
+
+private theorem finiteLawMeasureTop_map_const
+    {α β : Type*} (law : FiniteLaw α) (value : β) :
+    finiteLawMeasureTop(law.map (Function.const α value)) =
+      @Measure.dirac β ⊤ value := by
+  rw [FiniteLaw.map_atoms]
+  have hfold :
+      ∀ atoms : List (α × ℚ≥0),
+        (atoms.map fun atom => (value, atom.2)).foldr
+            (fun atom rest =>
+              (atom.2 : ENNReal) •
+                @Measure.dirac β ⊤ atom.1 + rest)
+            0 =
+          (((FiniteLaw.totalWeight atoms : ℚ≥0) : NNReal) : ENNReal) •
+            @Measure.dirac β ⊤ value := by
+    intro atoms
+    induction atoms with
+    | nil => simp [FiniteLaw.totalWeight]
+    | cons atom atoms ih =>
+        rcases atom with ⟨outcome, weight⟩
+        simp only [List.map_cons, List.foldr_cons]
+        rw [ih, ← add_smul]
+        congr 1
+        unfold FiniteLaw.totalWeight
+        simp only [List.map_cons, List.sum_cons]
+        change
+          (((weight : ℚ≥0) : NNReal) : ENNReal) +
+              ((((atoms.map Prod.snd).sum : ℚ≥0) : NNReal) : ENNReal) =
+            (((weight + (atoms.map Prod.snd).sum : ℚ≥0) : NNReal) : ENNReal)
+        simp
+  simp only [Function.const_apply]
+  rw [hfold, FiniteLaw.totalWeight_atoms]
+  change
+    (((1 : ℚ≥0) : NNReal) : ENNReal) •
+        @Measure.dirac β ⊤ value =
+      @Measure.dirac β ⊤ value
+  simp
+
 /-- The absent-minded observed chance game admits a realized analytic
 presentation whose information statistic genuinely merges the two recurring
 player histories. -/
@@ -99,60 +142,42 @@ noncomputable def presentation :
             funext action
             cases action
             rfl
-          have hmap :
-              (ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryKernelPolicy
+          have hmap :=
+            congrArg
+              (fun actionMap =>
+                (ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryKernelPolicy
                   game arbitraryProfile
                   (⟨Rung.s0, path⟩ : liftedArena.State)
-                  hterminal).map
-                    (fun action =>
-                      (⟨(⟨Rung.s0, path⟩ : liftedArena.State),
-                        action⟩ : liftedArena.ActionBundle)) =
-                PMF.pure
-                  (⟨(⟨Rung.s0, path⟩ : liftedArena.State),
-                    ()⟩ : liftedArena.ActionBundle) := by
-            calc
-              _ =
-                  (ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryKernelPolicy
-                    game arbitraryProfile
-                    (⟨Rung.s0, path⟩ : liftedArena.State)
-                    hterminal).map
-                      (Function.const _
-                        (⟨(⟨Rung.s0, path⟩ : liftedArena.State),
-                          ()⟩ : liftedArena.ActionBundle)) :=
-                congrArg
-                  (fun actionMap =>
-                    (ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryKernelPolicy
-                      game arbitraryProfile
-                      (⟨Rung.s0, path⟩ : liftedArena.State)
-                      hterminal).map actionMap)
-                  hfun
-              _ = _ := PMF.map_const _ _
+                  hterminal).map actionMap)
+              hfun
           calc
             Measure.dirac
                 (realizeBundle
                   (⟨Rung.s0, path⟩ : liftedArena.State)) =
-                @PMF.toMeasure liftedArena.ActionBundle ⊤
-                  (PMF.pure
-                    (⟨(⟨Rung.s0, path⟩ : liftedArena.State),
-                      ()⟩ : liftedArena.ActionBundle)) := by
+              finiteLawMeasureTop(
+                (ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryKernelPolicy
+                  game arbitraryProfile
+                  (⟨Rung.s0, path⟩ : liftedArena.State)
+                  hterminal).map
+                    (Function.const _
+                      (⟨(⟨Rung.s0, path⟩ : liftedArena.State),
+                        ()⟩ : liftedArena.ActionBundle))) := by
               change
                 Measure.dirac
                     (⟨(⟨Rung.s0, path⟩ : liftedArena.State),
-                      ()⟩ : liftedArena.ActionBundle) =
-                  @PMF.toMeasure liftedArena.ActionBundle ⊤
-                    (PMF.pure
-                      (⟨(⟨Rung.s0, path⟩ : liftedArena.State),
-                        ()⟩ : liftedArena.ActionBundle))
+                      ()⟩ : liftedArena.ActionBundle) = _
               exact
-                (@PMF.toMeasure_pure
-                  liftedArena.ActionBundle
+                (finiteLawMeasureTop_map_const
+                  (ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryKernelPolicy
+                    game arbitraryProfile
+                    (⟨Rung.s0, path⟩ : liftedArena.State)
+                    hterminal)
                   (⟨(⟨Rung.s0, path⟩ : liftedArena.State),
-                    ()⟩ : liftedArena.ActionBundle)
-                  ⊤).symm
+                    ()⟩ : liftedArena.ActionBundle)).symm
             _ = _ :=
               congrArg
-                (fun law : PMF liftedArena.ActionBundle =>
-                  @PMF.toMeasure liftedArena.ActionBundle ⊤ law)
+                (fun law : FiniteLaw liftedArena.ActionBundle =>
+                  finiteLawMeasureTop(law))
                 hmap.symm
       | s1 =>
           have hrealize :
@@ -175,60 +200,42 @@ noncomputable def presentation :
             funext action
             cases action
             rfl
-          have hmap :
-              (ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryKernelPolicy
+          have hmap :=
+            congrArg
+              (fun actionMap =>
+                (ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryKernelPolicy
                   game arbitraryProfile
                   (⟨Rung.s1, path⟩ : liftedArena.State)
-                  hterminal).map
-                    (fun action =>
-                      (⟨(⟨Rung.s1, path⟩ : liftedArena.State),
-                        action⟩ : liftedArena.ActionBundle)) =
-                PMF.pure
-                  (⟨(⟨Rung.s1, path⟩ : liftedArena.State),
-                    ()⟩ : liftedArena.ActionBundle) := by
-            calc
-              _ =
-                  (ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryKernelPolicy
-                    game arbitraryProfile
-                    (⟨Rung.s1, path⟩ : liftedArena.State)
-                    hterminal).map
-                      (Function.const _
-                        (⟨(⟨Rung.s1, path⟩ : liftedArena.State),
-                          ()⟩ : liftedArena.ActionBundle)) :=
-                congrArg
-                  (fun actionMap =>
-                    (ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryKernelPolicy
-                      game arbitraryProfile
-                      (⟨Rung.s1, path⟩ : liftedArena.State)
-                      hterminal).map actionMap)
-                  hfun
-              _ = _ := PMF.map_const _ _
+                  hterminal).map actionMap)
+              hfun
           calc
             Measure.dirac
                 (realizeBundle
                   (⟨Rung.s1, path⟩ : liftedArena.State)) =
-                @PMF.toMeasure liftedArena.ActionBundle ⊤
-                  (PMF.pure
-                    (⟨(⟨Rung.s1, path⟩ : liftedArena.State),
-                      ()⟩ : liftedArena.ActionBundle)) := by
+              finiteLawMeasureTop(
+                (ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryKernelPolicy
+                  game arbitraryProfile
+                  (⟨Rung.s1, path⟩ : liftedArena.State)
+                  hterminal).map
+                    (Function.const _
+                      (⟨(⟨Rung.s1, path⟩ : liftedArena.State),
+                        ()⟩ : liftedArena.ActionBundle))) := by
               change
                 Measure.dirac
                     (⟨(⟨Rung.s1, path⟩ : liftedArena.State),
-                      ()⟩ : liftedArena.ActionBundle) =
-                  @PMF.toMeasure liftedArena.ActionBundle ⊤
-                    (PMF.pure
-                      (⟨(⟨Rung.s1, path⟩ : liftedArena.State),
-                        ()⟩ : liftedArena.ActionBundle))
+                      ()⟩ : liftedArena.ActionBundle) = _
               exact
-                (@PMF.toMeasure_pure
-                  liftedArena.ActionBundle
+                (finiteLawMeasureTop_map_const
+                  (ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryKernelPolicy
+                    game arbitraryProfile
+                    (⟨Rung.s1, path⟩ : liftedArena.State)
+                    hterminal)
                   (⟨(⟨Rung.s1, path⟩ : liftedArena.State),
-                    ()⟩ : liftedArena.ActionBundle)
-                  ⊤).symm
+                    ()⟩ : liftedArena.ActionBundle)).symm
             _ = _ :=
               congrArg
-                (fun law : PMF liftedArena.ActionBundle =>
-                  @PMF.toMeasure liftedArena.ActionBundle ⊤ law)
+                (fun law : FiniteLaw liftedArena.ActionBundle =>
+                  finiteLawMeasureTop(law))
                 hmap.symm
       | s2 =>
           exact
@@ -274,8 +281,8 @@ theorem recurring_player_abstract_law_eq :
       rfl secondPrefix_nonterminal
       infoState_recurs
 
-/-- The realized presentation recovers the exact old two-step stopped-history
-law through the generic finite-state theorem. -/
+/-- The realized presentation recovers the exact two-step stopped-history
+finite-law measure through the generic finite-state theorem. -/
 theorem realized_two_step_state_law_exact :
     Measure.map
         (fun path : ℕ → game.AnalyticHistoryArena.State => path 2)
@@ -284,10 +291,8 @@ theorem realized_two_step_state_law_exact :
             (game.observed.base.toArena.historyKernelArena
               game.observed.base.init).toMeasurable_measurableSet_terminalSet
             firstDecision) =
-      @PMF.toMeasure
-        (game.observed.base.toArena.HistoryFrom
-          game.observed.base.init) ⊤
-        (game.observed.base.toArena.stochasticHistoryPMFFrom
+      finiteLawMeasureTop(
+        game.observed.base.toArena.stochasticHistoryLawFrom
           (ExtensiveGame.ObservedChanceGame.BehavioralProfile.toHistoryPolicy
             game profile)
           firstDecision 2) :=
