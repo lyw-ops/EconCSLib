@@ -8,8 +8,8 @@ import EconCSLib.GameTheory.ExtensiveGame.Simulation.Presentation.Chance.Countab
 /-!
 # Countable observed semantics with an uncountable player identifier type
 
-This regression guards the cardinality-minimal boundary of the canonical
-countable-discrete observed-chance presentation.
+This regression guards the cardinality-minimal boundary of an effective
+countable observed-chance presentation.
 
 The ambient player type is `Unit ⊕ ℝ`, hence uncountable. Only the distinguished
 left player ever moves. Every real-indexed unused player nevertheless has an
@@ -17,11 +17,11 @@ uncountable `ℝ` information fiber, and every such information point has an
 uncountable `ℝ` action fiber.
 
 Those declared points are unreachable, so the reachable player-information
-carrier is still a singleton. The example obtains the canonical analytic
-presentation using only the two-history and one-history-action covers and
-checks exact one-step kernel compilation. This is a strict regression against
-counting unused player identifiers, information points, or information
-actions.
+carrier is still a singleton. Histories and history/actions have explicit
+encoders and partial decoders. Analytic kernels are supplied separately, and
+their existing compilation certificate gives exact one-step compatibility.
+Unused player identifiers, information points, and actions are never
+enumerated or used to invent fallback values.
 -/
 
 open MeasureTheory ProbabilityTheory
@@ -87,7 +87,7 @@ def sparseInformationAt
     (history : base.toArena.HistoryFrom base.init)
     (i : Player)
     (hmover : base.mover history.1 = some i)
-    (_hnonterminal : ¬ base.isTerminal history.1) :
+    (_hdecision : base.toArena.IsDecision history.1) :
     sparseInfoState i := by
   change nodeMover history.1 = some i at hmover
   cases hstate : history.1 with
@@ -106,9 +106,9 @@ def sparseActionEquiv
     (history : base.toArena.HistoryFrom base.init)
     (i : Player)
     (hmover : base.mover history.1 = some i)
-    (hnonterminal : ¬ base.isTerminal history.1) :
+    (hdecision : base.toArena.IsDecision history.1) :
     sparseInfoAction i
-        (sparseInformationAt history i hmover hnonterminal) ≃
+        (sparseInformationAt history i hmover hdecision) ≃
       base.Action history.1 := by
   change nodeMover history.1 = some i at hmover
   cases hstate : history.1 with
@@ -182,6 +182,14 @@ def terminalHistory :
     game.observed.base.toArena.HistoryFrom game.observed.base.init :=
   ⟨Node.terminal, initialHistory.2.snoc ()⟩
 
+/-- Executable terminal decisions for the two-node model. -/
+instance terminalDecidable
+    (state : game.observed.base.State) :
+    Decidable (game.observed.base.isTerminal state) := by
+  cases state with
+  | decision => exact isFalse fun hterminal => hterminal.false ()
+  | terminal => exact isTrue ⟨Empty.elim⟩
+
 /-- Every complete history is either the initial or terminal history. -/
 theorem history_classify
     (history :
@@ -224,11 +232,22 @@ theorem historyCover_surjective :
   · exact ⟨0, hinitial.symm⟩
   · exact ⟨1, hterminal.symm⟩
 
-noncomputable instance historyCountable :
-    Countable
+/-- An explicit encoder/decoder for complete histories. -/
+instance historyEncoding :
+    Encodable
       (game.observed.base.toArena.HistoryFrom
-        game.observed.base.init) :=
-  historyCover_surjective.countable
+        game.observed.base.init) where
+  encode history := match history.1 with
+    | .decision => 0
+    | .terminal => 1
+  decode
+    | 0 => some initialHistory
+    | 1 => some terminalHistory
+    | _ => none
+  encodek history := by
+    rcases history_classify history with hinitial | hterminal
+    · subst history; rfl
+    · subst history; rfl
 
 /-- A singleton cover of the total complete-history/local-action carrier. The
 terminal history contributes no element. -/
@@ -250,10 +269,20 @@ theorem completeHistoryActionCover_surjective :
     change Empty at action
     exact Empty.elim action
 
-noncomputable instance completeHistoryActionCountable :
-    Countable
-      (ObservedChanceGame.CompleteHistoryAction game) :=
-  completeHistoryActionCover_surjective.countable
+/-- The action-bundle decoder has one value and fails at every other code. -/
+instance completeHistoryActionEncoding :
+    Encodable
+      (ObservedChanceGame.CompleteHistoryAction game) where
+  encode _ := 0
+  decode
+    | 0 => some (completeHistoryActionCover ())
+    | _ => none
+  encodek historyAction := by
+    obtain ⟨value, hvalue⟩ :=
+      completeHistoryActionCover_surjective historyAction
+    cases value
+    cases hvalue
+    rfl
 
 /-- The ambient player identifier type is genuinely not countable. -/
 theorem player_not_countable :
@@ -336,30 +365,129 @@ theorem player_information_action_not_countable :
       hinjective.countable
 
 /-- The unique behavioral profile at the sole inhabited information point. -/
-noncomputable def profile :
+def profile :
     game.observed.BehavioralProfile := by
   intro i information
+  rcases information with ⟨information, _hwitness⟩
   change sparseInfoState i at information
-  change PMF (sparseInfoAction i information)
+  change FiniteLaw (sparseInfoAction i information)
   cases i with
   | inl value =>
       cases value
       cases information
-      exact PMF.pure ()
+      exact FiniteLaw.pure ()
   | inr value =>
-      change PMF ℝ
-      exact PMF.pure 0
+      exfalso
+      rcases _hwitness with ⟨witness⟩
+      have hmover := witness.mover
+      change nodeMover witness.history.1 = some (.inr value) at hmover
+      cases hstate : witness.history.1 <;>
+        simp [nodeMover, activePlayer, hstate] at hmover
 
-/-- The automatic presentation exists without a `Countable Player` instance. -/
-noncomputable def presentation :
-    game.AnalyticPresentation :=
-  ObservedChanceGame.CountablePresentation.presentation game
+/-- The canonical reachable player point. -/
+private def activeInformation :
+    ObservedChanceGame.ReachablePlayerInformation game :=
+  ObservedChanceGame.reachablePlayerInformationAt game initialHistory
+    activePlayer rfl (fun hterminal => hterminal.false ())
+
+/-- The tagged-information encoder does not inspect any real-valued unused
+player data. Its decoder explicitly enumerates the terminal and active tags. -/
+instance taggedInformationEncoding :
+    Encodable (ObservedChanceGame.CountableInformation game) where
+  encode
+    | .terminal => 0
+    | .player _ => 1
+    | .chance _ _ => 2
+  decode
+    | 0 => some .terminal
+    | 1 => some (.player activeInformation)
+    | _ => none
+  encodek information := by
+    cases information with
+    | terminal => rfl
+    | player information =>
+        rcases information with
+          ⟨⟨i, information⟩, ⟨history, hmover, hdecision, _hinformation⟩⟩
+        rcases history_classify history with hinitial | hterminal
+        · subst history
+          have hi : i = activePlayer := (Option.some.inj hmover).symm
+          subst i
+          change Unit at information
+          cases information
+          rfl
+        · subst history
+          rcases hdecision with ⟨action⟩
+          exact Empty.elim action
+    | chance history hchance =>
+        cases hstate : history.1 with
+        | decision =>
+            have hmover := hchance.1
+            change nodeMover history.1 = none at hmover
+            rw [hstate] at hmover
+            exact (Option.some_ne_none activePlayer hmover).elim
+        | terminal =>
+            apply (hchance.2 ?_).elim
+            rw [hstate]
+            exact ⟨Empty.elim⟩
+
+local instance : DecidableEq (ObservedChanceGame.CountableInformation game) :=
+  Encodable.decidableEqOfEncodable _
+
+/-- Reachability is decided by the player tag, without equality tests or an
+enumeration of the unused real-valued player identifiers. -/
+private def reachableDecision
+    (information : ObservedChanceGame.PlayerInformationPoint game) :
+    Decidable (ObservedChanceGame.IsReachablePlayerInformation game information) := by
+  rcases information with ⟨i, information⟩
+  cases i with
+  | inl value =>
+      cases value
+      change Unit at information
+      cases information
+      exact isTrue ⟨initialHistory, rfl, ⟨()⟩, rfl⟩
+  | inr value =>
+      exact isFalse (by
+        rintro ⟨history, hmover, _hdecision, _hinformation⟩
+        change nodeMover history.1 = some (.inr value) at hmover
+        cases hstate : history.1 <;>
+          simp [nodeMover, activePlayer, hstate] at hmover)
+
+/-- Missing information produces explicit lookup failure, not a terminal tag. -/
+example :
+    (ObservedChanceGame.CountablePresentation.informationOfPlayerInformation
+      game reachableDecision ⟨(.inr 0 : Player), (0 : ℝ)⟩).isNone = true := by
+  native_decide
+
+/-- Matching realization executes using equality from the explicit encoding. -/
+example :
+    (ObservedChanceGame.CountablePresentation.realizedAction game initialHistory
+      (fun hterminal => hterminal.false ())
+      (ObservedChanceGame.CountablePresentation.playerAction
+        game activeInformation ())).isSome = true := by
+  native_decide
+
+/-- Native execution uses the explicit encoder and terminal decision. -/
+example :
+    Encodable.encode
+      (ObservedChanceGame.CountablePresentation.informationAtHistory
+        game initialHistory) = 1 ∧
+    Encodable.encode
+      (ObservedChanceGame.CountablePresentation.informationAtHistory
+        game terminalHistory) = 0 := by
+  native_decide
+
+/-- The one-element action enumeration has explicit lookup failure. -/
+example :
+    (Encodable.decode
+      (α := ObservedChanceGame.CompleteHistoryAction game) 1).isNone = true := by
+  native_decide
+
+variable (presentation : game.AnalyticPresentation)
 
 /-- The canonical tagged information carrier is countable even though the
 ambient player type and the total original information carrier are not.
-Together with `presentation`, this records the strictly reachable
-hypothesis boundary without quantifying over the presentation structure's
-independent carrier universes. -/
+This instance is derived from the explicit encoder above, not from a chosen
+equivalence or a countability proof. -/
 theorem tagged_information_countable :
     Countable (ObservedChanceGame.CountableInformation game) :=
   inferInstance
