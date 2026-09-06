@@ -11,7 +11,7 @@ import EconCSLib.GameTheory.ExtensiveGame.Simulation.Presentation.Kernel.Core
 
 This downstream adapter packages the actual state/history-path law generated
 by `MeasurableKernelPresentation` in the same payoff-free
-`CompletePathLawSemantics` used by discrete PMF execution.  Player strategy
+`CompletePathLawSemantics` used by supplied discrete path execution. Player strategy
 carriers and their measurable profile assembly are supplied explicitly.
 
 The analytic executor already proves normalization.  Canonical
@@ -63,7 +63,13 @@ noncomputable def kernelBehavioralCompletePathLawSemantics
         exact
           MeasurableKernelArena.EventHistoryActionPolicy.statePathMeasure_isProbability
             _ _ _
-      pathLaw_ae_legal := lawful }
+      pathLaw_ae_legal := lawful
+      boundedCompleteHistoryLaw := fun profile current time =>
+        ((assemble profile).statePathMeasure current).map
+          (fun path => path time)
+      boundedCompleteHistoryLaw_eq_map := by
+        intro _profile _current _time
+        rfl }
 
 /-- The analytic adapter realizes the existing kernel-generated state/history
 path law definitionally. -/
