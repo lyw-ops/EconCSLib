@@ -5,6 +5,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 
 import EconCSLib.GameTheory.ExtensiveGame.Execution.Objective
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Behavior
+import Mathlib.Data.Fintype.EquivFin
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Finite
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Law.Discrete
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Morphism.Subgame
@@ -17,10 +18,10 @@ import Mathlib.Tactic
 # Finite occurrence-sensitive reachable unfolding
 
 `FiniteEFGHypotheses` does not require a finite ambient state space.  Its
-uniform history-length bound and locally finite legal actions instead make the
-reachable complete-history carrier finite.  This module constructs that
-carrier and an ordinary finite-state `ExtensiveGame` whose states are bounded
-complete histories.
+uniform history-length bound and explicitly enumerable legal actions instead
+make the reachable complete-history carrier explicitly enumerable.  This
+module constructs that carrier and an ordinary finite-state `ExtensiveGame`
+whose states are bounded complete histories.
 
 The construction never quotients by endpoint state.  Distinct histories that
 merge in the compact arena remain distinct states of the finite unfolding.
@@ -42,7 +43,8 @@ concept assumptions.
 
 ## Main results
 
-* bounded exact-length histories are finite under locally finite actions;
+* bounded exact-length histories are enumerated by recursive history
+  decomposition under explicitly enumerable actions;
 * every history lies below a declared structural length bound;
 * the finite unfolding has finite states and finite actions;
 * transitions, movers, payoffs, observations, information, and structural
@@ -91,81 +93,116 @@ theorem historyOfLengthFrom_zero_subsingleton
         simp at hlength
   exact Subtype.ext (hfirst.trans hsecond.symm)
 
-/-- Exact-length complete histories are finite when legal actions are finite
-at every represented history. -/
+/-- Exact-length complete histories are explicitly enumerable when every
+represented history has an explicit action enumeration.
+
+The zero-length case is equivalent to `PUnit`. The successor case is
+equivalent to a dependent pair of a prefix and its final action, so the
+construction requires neither classical choice nor a global action equality
+decision. -/
 @[implicit_reducible]
-noncomputable def finiteHistoryOfLengthFrom
+def finiteHistoryOfLengthFrom
     (finiteAction :
       ∀ history : A.HistoryFrom start,
-        Finite (A.Action history.1)) :
+        Fintype (A.Action history.1)) :
     ∀ length : ℕ,
-      Finite (A.HistoryOfLengthFrom start length)
+      Fintype (A.HistoryOfLengthFrom start length)
   | 0 => by
       letI :
           Subsingleton
             (A.HistoryOfLengthFrom start 0) :=
         historyOfLengthFrom_zero_subsingleton A start
-      exact Finite.of_subsingleton
+      let equivalence :
+          PUnit.{1} ≃ A.HistoryOfLengthFrom start 0 :=
+        { toFun := fun _ =>
+            ⟨HistoryFrom.nil A start, rfl⟩
+          invFun := fun _ => PUnit.unit
+          left_inv := fun _ => rfl
+          right_inv := fun history => Subsingleton.elim _ _ }
+      exact Fintype.ofEquiv PUnit.{1} equivalence
   | length + 1 => by
       letI :
-          Finite
+          Fintype
             (A.HistoryOfLengthFrom start length) :=
         finiteHistoryOfLengthFrom finiteAction length
       letI (history :
           A.HistoryOfLengthFrom start length) :
-          Finite (A.Action history.1.1) :=
+          Fintype (A.Action history.1.1) :=
         finiteAction history.1
-      let extend :
+      let equivalence :
           (Σ history :
               A.HistoryOfLengthFrom start length,
-            A.Action history.1.1) →
+            A.Action history.1.1) ≃
             A.HistoryOfLengthFrom start (length + 1) :=
-        fun ⟨history, action⟩ =>
-          ⟨⟨A.next history.1.1 action,
-              history.1.2.snoc action⟩,
-            by simp [history.2]⟩
-      apply Finite.of_surjective extend
-      intro target
-      rcases target with
-        ⟨⟨finish, history⟩, hlength⟩
-      cases history with
-      | nil =>
-          simp at hlength
-      | @snoc previousState path action =>
-          have hprefix :
-              path.length = length := by
-            simp only [History.length_snoc] at hlength
-            omega
-          refine
-            ⟨⟨⟨⟨previousState, path⟩, hprefix⟩,
-                action⟩, ?_⟩
-          apply Subtype.ext
-          rfl
+        { toFun := fun ⟨history, action⟩ =>
+            ⟨⟨A.next history.1.1 action,
+                history.1.2.snoc action⟩,
+              by simp [history.2]⟩
+          invFun := fun target => by
+            rcases target with
+              ⟨⟨finish, history⟩, hlength⟩
+            cases history with
+            | nil =>
+                simp at hlength
+            | @snoc previousState path action =>
+                have hprefix :
+                    path.length = length := by
+                  simp only [History.length_snoc] at hlength
+                  omega
+                exact
+                  ⟨⟨⟨previousState, path⟩, hprefix⟩,
+                    action⟩
+          left_inv := by
+            rintro ⟨⟨⟨finish, history⟩, hlength⟩, action⟩
+            rfl
+          right_inv := by
+            rintro ⟨⟨finish, history⟩, hlength⟩
+            cases history with
+            | nil =>
+                simp at hlength
+            | snoc path action =>
+                rfl }
+      exact Fintype.ofEquiv _ equivalence
 
-/-- Bounded complete histories form a finite type under locally finite legal
-actions. -/
+/-- Bounded complete histories are explicitly enumerable under explicitly
+enumerable legal actions.
+
+The equivalence records each history together with its actual length in
+`Fin (bound + 1)`. Thus the bounded enumeration is assembled from exact-length
+enumerations without classical choice or a global history equality decision.
+-/
 @[implicit_reducible]
-noncomputable def finiteBoundedHistoryFrom
+def finiteBoundedHistoryFrom
     (finiteAction :
       ∀ history : A.HistoryFrom start,
-        Finite (A.Action history.1))
+        Fintype (A.Action history.1))
     (bound : ℕ) :
-    Finite (A.BoundedHistoryFrom start bound) := by
-  letI (length : ℕ) :
-      Finite (A.HistoryOfLengthFrom start length) :=
+    Fintype (A.BoundedHistoryFrom start bound) := by
+  letI (length : Fin (bound + 1)) :
+      Fintype (A.HistoryOfLengthFrom start length) :=
     finiteHistoryOfLengthFrom finiteAction length
-  let encode :
-      A.BoundedHistoryFrom start bound →
-        Σ length : Fin (bound + 1),
-          A.HistoryOfLengthFrom start length :=
-    fun history =>
-      ⟨⟨history.1.2.length,
-          Nat.lt_succ_iff.mpr history.2⟩,
-        ⟨history.1, rfl⟩⟩
-  apply Finite.of_injective encode
-  intro first second heq
-  apply Subtype.ext
-  exact congrArg (fun encoded => encoded.2.1) heq
+  let equivalence :
+      (Σ length : Fin (bound + 1),
+        A.HistoryOfLengthFrom start length) ≃
+        A.BoundedHistoryFrom start bound :=
+    { toFun := fun ⟨length, history⟩ =>
+        ⟨history.1, by
+          rw [history.2]
+          exact Nat.lt_succ_iff.mp length.2⟩
+      invFun := fun history =>
+        ⟨⟨history.1.2.length,
+            Nat.lt_succ_iff.mpr history.2⟩,
+          ⟨history.1, rfl⟩⟩
+      left_inv := by
+        rintro ⟨⟨length, hlengthBound⟩, ⟨history, hlength⟩⟩
+        simp only at hlength
+        subst length
+        rfl
+      right_inv := by
+        intro history
+        apply Subtype.ext
+        rfl }
+  exact Fintype.ofEquiv _ equivalence
 
 /-- A structural root length bound bounds every legal complete history, not
 only histories generated by a selected policy. -/
@@ -272,10 +309,11 @@ namespace ExtensiveGame.ObservedGame.FiniteEFGHypotheses
 
 variable {N U : Type*} {G : ObservedGame N U}
 
+variable (h : G.FiniteEFGHypotheses)
+
 /-- The finite occurrence-sensitive history game extracted from a structural
 finite-EFG certificate. -/
-noncomputable def toFiniteHistoryGame
-    (h : G.FiniteEFGHypotheses) :
+def toFiniteHistoryGame :
     ExtensiveGame N U :=
   ExtensiveGame.ofArena
     (G.base.toArena.boundedUnfolding
@@ -287,35 +325,30 @@ noncomputable def toFiniteHistoryGame
 
 /-- Original complete history represented by one finite-unfolding state. -/
 def originalHistory
-    (h : G.FiniteEFGHypotheses)
     (state : h.toFiniteHistoryGame.State) :
     G.base.toArena.HistoryFrom G.base.init :=
   state.1
 
-/-- The finite unfolding has a finite state carrier even when the ambient
-compact state type is infinite. -/
-noncomputable instance finiteState
+/-- The bounded unfolding has an explicitly enumerated state carrier even
+when the ambient compact state type is infinite. Its enumeration is obtained
+by recursively decomposing histories, without classical choice. -/
+instance finiteState
     (h : G.FiniteEFGHypotheses) :
     Fintype h.toFiniteHistoryGame.State := by
   change Fintype
     (G.base.toArena.BoundedHistoryFrom
       G.base.init h.lengthBound)
-  letI : Finite
-      (G.base.toArena.BoundedHistoryFrom
-        G.base.init h.lengthBound) :=
-    Arena.finiteBoundedHistoryFrom
-      h.finiteAction h.lengthBound
-  exact Fintype.ofFinite _
+  exact Arena.finiteBoundedHistoryFrom
+    h.finiteAction h.lengthBound
 
-/-- Legal actions remain finite at every finite-unfolding state. -/
-noncomputable instance finiteUnfoldingAction
+/-- Legal actions retain the caller-supplied explicit enumeration at every
+finite-unfolding state. -/
+instance finiteUnfoldingAction
     (h : G.FiniteEFGHypotheses)
     (state : h.toFiniteHistoryGame.State) :
     Fintype (h.toFiniteHistoryGame.Action state) := by
   change Fintype (G.base.Action state.1.1)
-  letI : Finite (G.base.Action state.1.1) :=
-    h.finiteAction state.1
-  exact Fintype.ofFinite _
+  exact h.finiteAction state.1
 
 @[simp]
 theorem originalHistory_init
@@ -338,7 +371,6 @@ theorem originalHistory_next
 /-- The finite unfolding preserves legal action occurrences definitionally.
 -/
 def actionEquiv
-    (h : G.FiniteEFGHypotheses)
     (state : h.toFiniteHistoryGame.State) :
     h.toFiniteHistoryGame.Action state ≃
       G.base.Action (h.originalHistory state).1 :=
@@ -363,7 +395,6 @@ theorem payoff_eq
 /-- Pull back one player's private observation without forgetting the
 occurrence-sensitive original history. -/
 def privateObservationAt
-    (h : G.FiniteEFGHypotheses)
     (i : N) (state : h.toFiniteHistoryGame.State) :
     G.Observation i :=
   G.observe i (h.originalHistory state)
@@ -371,7 +402,6 @@ def privateObservationAt
 /-- Pull back the public observation through the original-history
 projection. -/
 def publicObservationAt
-    (h : G.FiniteEFGHypotheses)
     (state : h.toFiniteHistoryGame.State) :
     G.PublicObservation :=
   G.publicObserve (h.originalHistory state)
@@ -379,14 +409,15 @@ def publicObservationAt
 /-- Pull back the decision information state at a player-controlled
 finite-unfolding state. -/
 def informationAt
-    (h : G.FiniteEFGHypotheses)
     (state : h.toFiniteHistoryGame.State) (i : N)
     (hmover :
       h.toFiniteHistoryGame.mover state = some i)
     (hnonterminal :
       ¬ h.toFiniteHistoryGame.isTerminal state) :
     G.InfoState i :=
-  G.infoAt (h.originalHistory state) i hmover hnonterminal
+  G.infoAt (h.originalHistory state) i hmover
+    (G.base.toArena.isDecision_of_not_isTerminal
+      (h.originalHistory state).1 hnonterminal)
 
 /-- The pulled-back private observation has exactly the original public
 component. -/
@@ -402,8 +433,7 @@ decision-information presentation.
 
 Every observation is evaluated at the full original history stored in the
 finite endpoint, so merging ambient states does not merge information. -/
-noncomputable def toFiniteObservedGame
-    (h : G.FiniteEFGHypotheses) :
+def toFiniteObservedGame :
     ObservedGame N U where
   base := h.toFiniteHistoryGame
   Observation := G.Observation
@@ -428,29 +458,10 @@ noncomputable def toFiniteObservedGame
     G.actionEquiv
       (h.originalHistory history.1) i hmover hnonterminal
 
-/-- Pure contingent plans are definitionally unchanged by finite occurrence
-unfolding because information-state and abstract-action families are reused
-exactly. -/
-def pureStrategyEquiv
-    (h : G.FiniteEFGHypotheses) (i : N) :
-    h.toFiniteObservedGame.PureStrategy i ≃
-      G.PureStrategy i :=
-  Equiv.refl _
-
-/-- Behavioral contingent plans are also definitionally unchanged. Thus
-componentwise pure and behavioral unilateral replacements use the same
-strategy carrier before and after extraction. -/
-def behavioralStrategyEquiv
-    (h : G.FiniteEFGHypotheses) (i : N) :
-    h.toFiniteObservedGame.BehavioralStrategy i ≃
-      G.BehavioralStrategy i :=
-  Equiv.refl _
-
 /-- Pull an external root presentation back to the finite occurrence
 presentation. This records visibility only and makes no standard-subgame
 lawfulness claim. -/
 def pullRootPresentation
-    (h : G.FiniteEFGHypotheses)
     (roots : G.RootPresentation) :
     h.toFiniteObservedGame.RootPresentation where
   IsRoot := fun history =>
@@ -461,7 +472,6 @@ def pullRootPresentation
 /-- Pull back a history-sensitive terminal outcome to a terminal state of the
 finite unfolding. -/
 def pullTerminalOutcome
-    (h : G.FiniteEFGHypotheses)
     {Outcome : Type*}
     (outcome :
       G.base.toArena.TerminalOutcome G.base.init Outcome)
@@ -473,7 +483,7 @@ def pullTerminalOutcome
     ⟨h.originalHistory state, hterminal⟩
 
 /-- A discrete chance law at a finite-unfolding state is exactly the original
-PMF at the represented complete history. -/
+FiniteLaw at the represented complete history. -/
 def discreteChanceLawAt
     (chanceGame : ObservedChanceGame N U)
     (h : chanceGame.observed.FiniteEFGHypotheses)
@@ -481,13 +491,13 @@ def discreteChanceLawAt
     (hchance :
       h.toFiniteHistoryGame.mover state = none ∧
         ¬ h.toFiniteHistoryGame.isTerminal state) :
-    PMF (h.toFiniteHistoryGame.Action state) :=
+    FiniteLaw (h.toFiniteHistoryGame.Action state) :=
   chanceGame.chanceKernel
     (h.originalHistory state) hchance
 
 /-- The finite observed occurrence carrier equipped with exactly the original
-discrete chance PMF at every represented chance history. -/
-noncomputable def toFiniteObservedChanceGame
+discrete chance FiniteLaw at every represented chance history. -/
+def toFiniteObservedChanceGame
     (chanceGame : ObservedChanceGame N U)
     (h : chanceGame.observed.FiniteEFGHypotheses) :
     ObservedChanceGame N U where
@@ -526,10 +536,11 @@ universe uN uA uS uO uI uP
 variable {N : Type uN}
   {G : ControlledObservedGame.{uN, uA, uS, uO, uI, uP} N}
 
+variable (h : G.FiniteEFGHypotheses)
+
 /-- Payoff-free finite occurrence-sensitive history game extracted from a
 structural finite-EFG certificate. -/
-noncomputable def toFiniteHistoryGame
-    (h : G.FiniteEFGHypotheses) :
+def toFiniteHistoryGame :
     ControlledGame.{uN, uA, max uA uS} N :=
   ControlledGame.ofArena
     (G.base.toArena.boundedUnfolding
@@ -540,21 +551,18 @@ noncomputable def toFiniteHistoryGame
 
 /-- Original complete history represented by a payoff-free unfolding state. -/
 def originalHistory
-    (h : G.FiniteEFGHypotheses)
     (state : h.toFiniteHistoryGame.State) :
     G.base.History :=
   state.1
 
 @[simp]
-theorem originalHistory_init
-    (h : G.FiniteEFGHypotheses) :
+theorem originalHistory_init :
     h.originalHistory h.toFiniteHistoryGame.init =
       Arena.HistoryFrom.nil G.base.toArena G.base.init :=
   rfl
 
 @[simp]
 theorem originalHistory_next
-    (h : G.FiniteEFGHypotheses)
     (state : h.toFiniteHistoryGame.State)
     (action : h.toFiniteHistoryGame.Action state) :
     h.originalHistory
@@ -565,7 +573,6 @@ theorem originalHistory_next
 
 /-- Dependent legal-action fibers are preserved exactly. -/
 def actionEquiv
-    (h : G.FiniteEFGHypotheses)
     (state : h.toFiniteHistoryGame.State) :
     h.toFiniteHistoryGame.Action state ≃
       G.base.Action (h.originalHistory state).1 :=
@@ -573,7 +580,6 @@ def actionEquiv
 
 @[simp]
 theorem mover_eq
-    (h : G.FiniteEFGHypotheses)
     (state : h.toFiniteHistoryGame.State) :
     h.toFiniteHistoryGame.mover state =
       G.base.mover (h.originalHistory state).1 :=
@@ -582,8 +588,7 @@ theorem mover_eq
 /-- The payoff-free finite occurrence carrier with private/public
 observations and decision information evaluated on the full original
 history. -/
-noncomputable def toFiniteObservedGame
-    (h : G.FiniteEFGHypotheses) :
+def toFiniteObservedGame :
     ControlledObservedGame.{
       uN, uA, max uA uS, uO, uI, uP} N where
   base := h.toFiniteHistoryGame
@@ -611,7 +616,6 @@ noncomputable def toFiniteObservedGame
 
 /-- The bounded state representing one original complete history. -/
 def boundedState
-    (h : G.FiniteEFGHypotheses)
     (history : G.base.History) :
     h.toFiniteHistoryGame.State :=
   ⟨history,
@@ -620,14 +624,12 @@ def boundedState
 
 @[simp]
 theorem originalHistory_boundedState
-    (h : G.FiniteEFGHypotheses)
     (history : G.base.History) :
     h.originalHistory (h.boundedState history) = history :=
   rfl
 
 @[simp]
-theorem boundedState_nil
-    (h : G.FiniteEFGHypotheses) :
+theorem boundedState_nil :
     h.boundedState
         (Arena.HistoryFrom.nil G.base.toArena G.base.init) =
       h.toFiniteHistoryGame.init := by
@@ -636,7 +638,6 @@ theorem boundedState_nil
 
 @[simp]
 theorem boundedState_snoc
-    (h : G.FiniteEFGHypotheses)
     (history : G.base.History)
     (action : G.base.Action history.1) :
     h.boundedState
@@ -649,8 +650,7 @@ theorem boundedState_snoc
 
 /-- Canonically lift one original path to the path through its successive
 occurrences in the bounded unfolding. -/
-def liftPath
-    (h : G.FiniteEFGHypotheses) :
+def liftPath (h : G.FiniteEFGHypotheses) :
     {finish : G.base.State} →
       (path : G.base.toArena.History G.base.init finish) →
         h.toFiniteHistoryGame.toArena.History
@@ -679,21 +679,18 @@ def liftPath
 /-- Canonically lift one original complete history to a complete history of
 the bounded occurrence unfolding. -/
 def liftHistory
-    (h : G.FiniteEFGHypotheses)
     (history : G.base.History) :
     h.toFiniteObservedGame.base.History :=
   ⟨h.boundedState history, h.liftPath history.2⟩
 
 @[simp]
 theorem originalHistory_liftHistory
-    (h : G.FiniteEFGHypotheses)
     (history : G.base.History) :
     h.originalHistory (h.liftHistory history).1 = history :=
   rfl
 
 @[simp]
-theorem liftHistory_nil
-    (h : G.FiniteEFGHypotheses) :
+theorem liftHistory_nil :
     h.liftHistory
         (Arena.HistoryFrom.nil G.base.toArena G.base.init) =
       Arena.HistoryFrom.nil
@@ -704,7 +701,6 @@ theorem liftHistory_nil
 
 @[simp]
 theorem liftHistory_snoc
-    (h : G.FiniteEFGHypotheses)
     (history : G.base.History)
     (action : G.base.Action history.1) :
     h.liftHistory
@@ -719,7 +715,6 @@ theorem liftHistory_snoc
 canonically lifting it again is the identity. -/
 @[simp]
 theorem liftHistory_originalHistory
-    (h : G.FiniteEFGHypotheses)
     (history : h.toFiniteObservedGame.base.History) :
     h.liftHistory (h.originalHistory history.1) = history := by
   obtain ⟨finish, path⟩ := history
@@ -753,8 +748,7 @@ theorem liftHistory_originalHistory
 
 /-- Complete histories of the finite occurrence unfolding are canonically
 equivalent to the original complete histories. -/
-def historyEquiv
-    (h : G.FiniteEFGHypotheses) :
+def historyEquiv :
     h.toFiniteObservedGame.base.History ≃ G.base.History where
   toFun := fun history => h.originalHistory history.1
   invFun := h.liftHistory
@@ -763,8 +757,7 @@ def historyEquiv
 
 /-- Strict arena isomorphism obtained by projecting a bounded unfolding
 history to its occurrence-sensitive original history. -/
-def historyArenaIso
-    (h : G.FiniteEFGHypotheses) :
+def historyArenaIso :
     h.toFiniteObservedGame.base.unfold.toArena.Iso
       G.base.unfold.toArena where
   stateEquiv := h.historyEquiv
@@ -775,8 +768,7 @@ def historyArenaIso
 
 /-- The finite occurrence presentation is strictly isomorphic, without any
 payoff field, to the original payoff-free observed game. -/
-def toOriginalIso
-    (h : G.FiniteEFGHypotheses) :
+def toOriginalIso :
     h.toFiniteObservedGame.Iso G where
   historyIso := h.historyArenaIso
   map_init := rfl
@@ -819,16 +811,14 @@ theorem perfectRecall_iff
 
 /-- Private-signal perfect recall is preserved and reflected by finite
 occurrence unfolding. -/
-theorem eventClockSignalPerfectRecall_iff
-    (h : G.FiniteEFGHypotheses) :
+theorem eventClockSignalPerfectRecall_iff :
     h.toFiniteObservedGame.EventClockSignalPerfectRecall ↔
       G.EventClockSignalPerfectRecall :=
   h.toOriginalIso.eventClockSignalPerfectRecall_iff
 
 /-- Public-signal perfect recall is preserved and reflected by finite
 occurrence unfolding. -/
-theorem eventClockPublicPerfectRecall_iff
-    (h : G.FiniteEFGHypotheses) :
+theorem eventClockPublicPerfectRecall_iff :
     h.toFiniteObservedGame.HasEventClockPublicPerfectRecall ↔
       G.HasEventClockPublicPerfectRecall :=
   h.toOriginalIso.hasEventClockPublicPerfectRecall_iff
@@ -837,7 +827,6 @@ theorem eventClockPublicPerfectRecall_iff
 history. -/
 @[simp]
 theorem observe_eq
-    (h : G.FiniteEFGHypotheses)
     (i : N)
     (history : h.toFiniteObservedGame.base.History) :
     h.toFiniteObservedGame.observe i history =
@@ -848,7 +837,6 @@ theorem observe_eq
 history. -/
 @[simp]
 theorem publicObserve_eq
-    (h : G.FiniteEFGHypotheses)
     (history : h.toFiniteObservedGame.base.History) :
     h.toFiniteObservedGame.publicObserve history =
       G.publicObserve (h.originalHistory history.1) :=
@@ -858,7 +846,6 @@ theorem publicObserve_eq
 history. -/
 @[simp]
 theorem infoAt_eq
-    (h : G.FiniteEFGHypotheses)
     (history : h.toFiniteObservedGame.base.History)
     (i : N)
     (hmover :
@@ -870,15 +857,14 @@ theorem infoAt_eq
 /-- Pure contingent-plan carriers are canonically equivalent under
 payoff-free finite occurrence unfolding. -/
 def pureStrategyEquiv
-    (h : G.FiniteEFGHypotheses) (i : N) :
+    (i : N) :
     h.toFiniteObservedGame.PureStrategy i ≃
       G.PureStrategy i :=
-  Equiv.refl _
+  h.toOriginalIso.strategyEquiv i
 
 /-- Project a complete play of the bounded unfolding to the corresponding
 occurrence-sensitive complete play of the original arena. -/
 def projectCompletePlay
-    (h : G.FiniteEFGHypotheses)
     (play :
       h.toFiniteHistoryGame.toArena.CompletePlayFrom
         h.toFiniteHistoryGame.init) :
@@ -908,7 +894,6 @@ def projectCompletePlay
 
 @[simp]
 theorem projectCompletePlay_historyAt
-    (h : G.FiniteEFGHypotheses)
     (play :
       h.toFiniteHistoryGame.toArena.CompletePlayFrom
         h.toFiniteHistoryGame.init)
@@ -920,14 +905,12 @@ theorem projectCompletePlay_historyAt
 /-- Pull a complete-path objective back through occurrence-sensitive complete
 play projection. -/
 def pullWinningCondition
-    (h : G.FiniteEFGHypotheses)
     (W : G.base.WinningCondition) :
     h.toFiniteHistoryGame.WinningCondition :=
   fun i => h.projectCompletePlay ⁻¹' W i
 
 @[simp]
 theorem mem_pullWinningCondition_iff
-    (h : G.FiniteEFGHypotheses)
     (W : G.base.WinningCondition)
     (i : N)
     (play :
@@ -940,14 +923,12 @@ theorem mem_pullWinningCondition_iff
 /-- Map a finite-unfolding pure profile back to the original payoff-free
 information carrier. -/
 def mapPureProfile
-    (h : G.FiniteEFGHypotheses)
     (profile : h.toFiniteObservedGame.PureProfile) :
     G.PureProfile :=
   fun i => h.pureStrategyEquiv i (profile i)
 
 /-- Lift an original pure strategy to the finite unfolding. -/
 def liftPureStrategy
-    (h : G.FiniteEFGHypotheses)
     {i : N} (strategy : G.PureStrategy i) :
     h.toFiniteObservedGame.PureStrategy i :=
   (h.pureStrategyEquiv i).symm strategy
@@ -973,7 +954,6 @@ theorem mapPureProfile_update
 /-- Pull an external payoff-free root presentation back without changing its
 selected original histories. -/
 def pullRootPresentation
-    (h : G.FiniteEFGHypotheses)
     (roots : G.ContinuationRootPresentation) :
     h.toFiniteObservedGame.ContinuationRootPresentation where
   IsRoot := fun history =>
@@ -985,7 +965,6 @@ def pullRootPresentation
 represented original history. -/
 @[simp]
 theorem pullRootPresentation_isRoot_iff
-    (h : G.FiniteEFGHypotheses)
     (roots : G.ContinuationRootPresentation)
     (history : h.toFiniteObservedGame.base.History) :
     (h.pullRootPresentation roots).IsRoot history ↔
@@ -995,7 +974,6 @@ theorem pullRootPresentation_isRoot_iff
 /-- The canonical strict isomorphism exactly preserves every externally
 selected root presentation pulled to the finite occurrence carrier. -/
 theorem toOriginalIso_preservesRootPresentation
-    (h : G.FiniteEFGHypotheses)
     (roots : G.ContinuationRootPresentation) :
     h.toOriginalIso.PreservesRootPresentations
       (h.pullRootPresentation roots) roots := by
@@ -1004,16 +982,14 @@ theorem toOriginalIso_preservesRootPresentation
 
 /-- Pull a lawful payoff-free subgame system to the finite occurrence
 presentation through the canonical strict isomorphism. -/
-noncomputable def pullSubgameSystem
-    (h : G.FiniteEFGHypotheses)
+def pullSubgameSystem
     (system : G.SubgameSystem) :
     h.toFiniteObservedGame.SubgameSystem :=
   h.toOriginalIso.symm.mapSubgameSystem system
 
 /-- Pull a complete lawful payoff-free subgame system to the finite
 occurrence presentation. -/
-noncomputable def pullCompleteSubgameSystem
-    (h : G.FiniteEFGHypotheses)
+def pullCompleteSubgameSystem
     (system : G.CompleteSubgameSystem) :
     h.toFiniteObservedGame.CompleteSubgameSystem :=
   h.toOriginalIso.symm.mapCompleteSubgameSystem system
@@ -1022,7 +998,6 @@ noncomputable def pullCompleteSubgameSystem
 original histories were selected. -/
 @[simp]
 theorem pullSubgameSystem_isRoot_iff
-    (h : G.FiniteEFGHypotheses)
     (system : G.SubgameSystem)
     (history : h.toFiniteObservedGame.base.History) :
     (h.pullSubgameSystem system).IsRoot history ↔
@@ -1032,7 +1007,6 @@ theorem pullSubgameSystem_isRoot_iff
 /-- Lawfulness of every selected subgame root is formally preserved by the
 finite occurrence unfolding. -/
 theorem pullSubgameSystem_isLawful
-    (h : G.FiniteEFGHypotheses)
     (system : G.SubgameSystem)
     {history : h.toFiniteObservedGame.base.History}
     (hroot : system.IsRoot (h.originalHistory history.1)) :
@@ -1042,7 +1016,6 @@ theorem pullSubgameSystem_isLawful
 /-- Pull a history-sensitive terminal objective back to an unfolding
 endpoint without quotienting histories that share a compact state. -/
 def pullTerminalOutcome
-    (h : G.FiniteEFGHypotheses)
     {Outcome : Type*}
     (outcome :
       G.base.toArena.TerminalOutcome G.base.init Outcome)
@@ -1055,26 +1028,24 @@ def pullTerminalOutcome
 /-- Pull a discrete chance kernel through the occurrence-sensitive
 unfolding. -/
 def pullDiscreteChanceKernel
-    (h : G.FiniteEFGHypotheses)
     (chanceKernel :
       (history : G.base.History) →
         G.base.isChanceState history.1 →
-          PMF (G.base.Action history.1))
+          FiniteLaw (G.base.Action history.1))
     (history : h.toFiniteObservedGame.base.History)
     (hchance :
       h.toFiniteObservedGame.base.isChanceState history.1) :
-    PMF (h.toFiniteObservedGame.base.Action history.1) :=
+    FiniteLaw (h.toFiniteObservedGame.base.Action history.1) :=
   chanceKernel (h.originalHistory history.1) hchance
 
 /-- Pulled discrete chance is definitionally the original law at the
 represented complete history. -/
 @[simp]
 theorem pullDiscreteChanceKernel_eq
-    (h : G.FiniteEFGHypotheses)
     (chanceKernel :
       (history : G.base.History) →
         G.base.isChanceState history.1 →
-          PMF (G.base.Action history.1))
+          FiniteLaw (G.base.Action history.1))
     (history : h.toFiniteObservedGame.base.History)
     (hchance :
       h.toFiniteObservedGame.base.isChanceState history.1) :
@@ -1082,63 +1053,39 @@ theorem pullDiscreteChanceKernel_eq
       chanceKernel (h.originalHistory history.1) hchance :=
   rfl
 
-/-- Package the pulled PMF kernel as a discrete payoff-free chance game. -/
-noncomputable def toFiniteObservedChanceGame
-    (h : G.FiniteEFGHypotheses)
+/-- Package the pulled FiniteLaw kernel as a discrete payoff-free chance game. -/
+def toFiniteObservedChanceGame
     (chanceKernel :
       (history : G.base.History) →
         G.base.isChanceState history.1 →
-          PMF (G.base.Action history.1)) :
+          FiniteLaw (G.base.Action history.1)) :
     DiscreteControlledObservedChanceGame N where
   observed := h.toFiniteObservedGame
   chanceKernel :=
     h.pullDiscreteChanceKernel chanceKernel
 
-/-- Push a PMF through a carrier equivalence. -/
-noncomputable def pmfEquiv
-    {α β : Type*} (e : α ≃ β) :
-    PMF α ≃ PMF β where
-  toFun := fun law => law.map e
-  invFun := fun law => law.map e.symm
-  left_inv := by
-    intro law
-    change (law.map e).map e.symm = law
-    rw [PMF.map_comp]
-    rw [show (e.symm ∘ e : α → α) = id by
-      funext action
-      exact e.symm_apply_apply action]
-    exact PMF.map_id law
-  right_inv := by
-    intro law
-    change (law.map e.symm).map e = law
-    rw [PMF.map_comp]
-    rw [show (e ∘ e.symm : β → β) = id by
-      funext action
-      exact e.apply_symm_apply action]
-    exact PMF.map_id law
-
 /-- Behavioral contingent-plan carriers are canonically equivalent after
 pulling the discrete chance law to the finite occurrence unfolding. -/
-noncomputable def behavioralStrategyEquiv
-    (h : G.FiniteEFGHypotheses)
+def behavioralStrategyEquiv
     (chanceKernel :
       (history : G.base.History) →
         G.base.isChanceState history.1 →
-          PMF (G.base.Action history.1))
+          FiniteLaw (G.base.Action history.1))
     (i : N) :
     (h.toFiniteObservedChanceGame chanceKernel).BehavioralStrategy i ≃
       (DiscreteControlledObservedChanceGame.withChanceKernel
         G chanceKernel).BehavioralStrategy i :=
-  Equiv.refl _
+  (h.toOriginalIso.representedInfoEquiv i).piCongr fun information =>
+    FiniteLaw.mapEquiv
+      (h.toOriginalIso.infoActionEquiv i information.1)
 
 /-- Map a finite-unfolding behavioral profile back to the original
 payoff-free discrete chance presentation. -/
-noncomputable def mapBehavioralProfile
-    (h : G.FiniteEFGHypotheses)
+def mapBehavioralProfile
     (chanceKernel :
       (history : G.base.History) →
         G.base.isChanceState history.1 →
-          PMF (G.base.Action history.1))
+          FiniteLaw (G.base.Action history.1))
     (profile :
       (h.toFiniteObservedChanceGame
         chanceKernel).BehavioralProfile) :
@@ -1153,7 +1100,7 @@ theorem mapBehavioralProfile_update
     (chanceKernel :
       (history : G.base.History) →
         G.base.isChanceState history.1 →
-          PMF (G.base.Action history.1))
+          FiniteLaw (G.base.Action history.1))
     (profile :
       (h.toFiniteObservedChanceGame
         chanceKernel).BehavioralProfile)
@@ -1177,11 +1124,10 @@ theorem mapBehavioralProfile_update
 /-- The behavioral/chance history-policy square commutes under the canonical
 strict history isomorphism of the finite occurrence unfolding. -/
 theorem mapBehavioralHistoryPolicy
-    (h : G.FiniteEFGHypotheses)
     (chanceKernel :
       (history : G.base.History) →
         G.base.isChanceState history.1 →
-          PMF (G.base.Action history.1))
+          FiniteLaw (G.base.Action history.1))
     (profile :
       (h.toFiniteObservedChanceGame
         chanceKernel).BehavioralProfile)
@@ -1224,24 +1170,87 @@ theorem mapBehavioralHistoryPolicy
       have hnonterminalProof : htarget = hsource :=
         Subsingleton.elim _ _
       cases hnonterminalProof
-      unfold
-        DiscreteControlledObservedChanceGame.BehavioralStrategy.actionLawAt
+      let sourceDecision :=
+        h.toFiniteObservedGame.base.toArena
+          |>.isDecision_of_not_isTerminal history.1 hsource
+      let targetDecision :=
+        G.base.toArena.isDecision_of_not_isTerminal
+          (h.originalHistory history.1).1 hsource
+      let sourceInformation :=
+        h.toFiniteObservedGame.representedInfoAt
+          history i hmover sourceDecision
+      let targetInformation :=
+        G.representedInfoAt (h.originalHistory history.1)
+          i hmover targetDecision
+      have hrepresented :
+          h.toOriginalIso.representedInfoEquiv i sourceInformation =
+            targetInformation := by
+        apply Subtype.ext
+        rfl
+      have hchoice :
+          h.mapBehavioralProfile chanceKernel profile i targetInformation =
+            (profile i sourceInformation).map
+              (h.toOriginalIso.infoActionEquiv
+                i sourceInformation.1) := by
+        simpa [mapBehavioralProfile, behavioralStrategyEquiv,
+          sourceInformation, targetInformation] using
+          Equiv.piCongr_apply_of_eq
+            (W := fun information :
+                h.toFiniteObservedGame.RepresentedInfo i =>
+              FiniteLaw
+                (h.toFiniteObservedGame.InfoAction
+                  i information.1))
+            (Z := fun information : G.RepresentedInfo i =>
+              FiniteLaw (G.InfoAction i information.1))
+            (h.toOriginalIso.representedInfoEquiv i)
+            (fun information =>
+              FiniteLaw.mapEquiv
+                (h.toOriginalIso.infoActionEquiv
+                  i information.1))
+            (profile i) sourceInformation targetInformation hrepresented
+      simp only
+        [DiscreteControlledObservedChanceGame.BehavioralStrategy.actionLawAt,
+          ControlledObservedGame.BehavioralStrategy.actionLawAt]
       change
-        ((profile i
-            (G.infoAt
-              (h.originalHistory history.1) i hmover
-              hsource)).map
-          (G.actionEquiv
-            (h.originalHistory history.1)
-            i hmover hsource)).map id =
-          (profile i
-            (G.infoAt
-              (h.originalHistory history.1) i hmover
-              hsource)).map
-            (G.actionEquiv
-              (h.originalHistory history.1) i hmover
-              hsource)
-      exact PMF.map_id _
+        (((profile i sourceInformation).map
+            (h.toFiniteObservedGame.actionEquiv
+              history i hmover sourceDecision)).map
+          (h.toOriginalIso.historyIso.actionEquiv history)) =
+          ((h.mapBehavioralProfile chanceKernel profile i
+              targetInformation).map
+            (G.actionEquiv (h.originalHistory history.1)
+              i hmover targetDecision))
+      rw [hchoice]
+      calc
+        ((profile i sourceInformation).map
+              (h.toFiniteObservedGame.actionEquiv
+                history i hmover sourceDecision)).map
+            (h.toOriginalIso.historyIso.actionEquiv history) =
+            (profile i sourceInformation).map
+              ((h.toOriginalIso.historyIso.actionEquiv history) ∘
+                (h.toFiniteObservedGame.actionEquiv
+                  history i hmover sourceDecision)) :=
+          FiniteLaw.map_comp
+            (h.toFiniteObservedGame.actionEquiv
+              history i hmover sourceDecision)
+            (profile i sourceInformation) _
+        _ =
+            (profile i sourceInformation).map
+              ((G.actionEquiv (h.originalHistory history.1)
+                  i hmover targetDecision) ∘
+                (h.toOriginalIso.infoActionEquiv
+                  i sourceInformation.1)) := by
+          rfl
+        _ =
+            ((profile i sourceInformation).map
+                (h.toOriginalIso.infoActionEquiv
+                  i sourceInformation.1)).map
+              (G.actionEquiv (h.originalHistory history.1)
+                i hmover targetDecision) :=
+          (FiniteLaw.map_comp
+            (h.toOriginalIso.infoActionEquiv
+              i sourceInformation.1)
+            (profile i sourceInformation) _).symm
   | none =>
       have htargetMover :
           G.base.mover
@@ -1261,7 +1270,7 @@ theorem mapBehavioralHistoryPolicy
       simpa [toFiniteObservedChanceGame,
         pullDiscreteChanceKernel, toOriginalIso,
         historyArenaIso] using
-        PMF.map_id
+        FiniteLaw.map_id
           (chanceKernel
             (h.originalHistory history.1)
             ⟨hmover, hsource⟩)
@@ -1269,7 +1278,6 @@ theorem mapBehavioralHistoryPolicy
 /-- Complete bounded history execution law is preserved by finite occurrence
 unfolding for every behavioral profile, initial history, and fuel. -/
 theorem mapBehavioralHistoryLaw
-    (h : G.FiniteEFGHypotheses)
     [(state : h.toFiniteObservedGame.base.State) →
       Decidable
         (h.toFiniteObservedGame.base.isTerminal state)]
@@ -1278,25 +1286,25 @@ theorem mapBehavioralHistoryLaw
     (chanceKernel :
       (history : G.base.History) →
         G.base.isChanceState history.1 →
-          PMF (G.base.Action history.1))
+          FiniteLaw (G.base.Action history.1))
     (profile :
       (h.toFiniteObservedChanceGame
         chanceKernel).BehavioralProfile)
     (current : h.toFiniteObservedGame.base.History)
     (fuel : ℕ) :
-    ((h.toFiniteObservedGame.base.toArena.stochasticHistoryPMFFrom
+    ((h.toFiniteObservedGame.base.toArena.stochasticHistoryLawFrom
           (DiscreteControlledObservedChanceGame.BehavioralProfile.toHistoryPolicy
             (h.toFiniteObservedChanceGame chanceKernel) profile)
           current fuel).map
         h.toOriginalIso.historyIso.stateEquiv) =
-      G.base.toArena.stochasticHistoryPMFFrom
+      G.base.toArena.stochasticHistoryLawFrom
         (DiscreteControlledObservedChanceGame.BehavioralProfile.toHistoryPolicy
           (DiscreteControlledObservedChanceGame.withChanceKernel
             G chanceKernel)
           (h.mapBehavioralProfile chanceKernel profile))
         (h.toOriginalIso.historyIso.stateEquiv current)
         fuel :=
-  ExtensiveGame.Arena.Iso.map_stochasticHistoryPMFFrom
+  ExtensiveGame.Arena.Iso.map_stochasticHistoryLawFrom
     h.toOriginalIso.historyIso
     (DiscreteControlledObservedChanceGame.BehavioralProfile.toHistoryPolicy
       (h.toFiniteObservedChanceGame chanceKernel) profile)
@@ -1307,10 +1315,9 @@ theorem mapBehavioralHistoryLaw
     (h.mapBehavioralHistoryPolicy chanceKernel profile)
     current fuel
 
-/-- The finite occurrence unfolding packages its exact bounded-history PMF
+/-- The finite occurrence unfolding packages its exact bounded-history FiniteLaw
 theorem as a genuine cross-representation preservation certificate. -/
-noncomputable def boundedHistoryLawPreservation
-    (h : G.FiniteEFGHypotheses)
+def boundedHistoryLawPreservation
     [finiteTerminalDecidable :
       (state : h.toFiniteObservedGame.base.State) →
       Decidable
@@ -1321,7 +1328,7 @@ noncomputable def boundedHistoryLawPreservation
     (chanceKernel :
       (history : G.base.History) →
         G.base.isChanceState history.1 →
-          PMF (G.base.Action history.1)) :
+          FiniteLaw (G.base.Action history.1)) :
     DiscreteControlledObservedChanceGame.CrossGameBoundedCompleteHistoryLawRealization
       ((@DiscreteControlledObservedChanceGame.behavioralCertifiedExecutionLaw
           _ (h.toFiniteObservedChanceGame chanceKernel)
@@ -1341,8 +1348,7 @@ noncomputable def boundedHistoryLawPreservation
         chanceKernel profile current fuel
 
 /-- The payoff-free finite unfolding retains the declared length bound. -/
-theorem toFiniteHistoryGame_hasLengthBound
-    (h : G.FiniteEFGHypotheses) :
+theorem toFiniteHistoryGame_hasLengthBound :
     h.toFiniteHistoryGame.toArena.HasLengthBoundFrom
       h.toFiniteHistoryGame.init h.lengthBound :=
   Arena.boundedUnfolding_hasLengthBoundFrom h.hasLengthBound
@@ -1350,7 +1356,6 @@ theorem toFiniteHistoryGame_hasLengthBound
 /-- Distinct original histories remain distinct unfolding states, including
 histories that merge at a common compact endpoint. -/
 theorem state_ne_of_originalHistory_ne
-    (h : G.FiniteEFGHypotheses)
     {first second : h.toFiniteHistoryGame.State}
     (hne :
       h.originalHistory first ≠
@@ -1360,3 +1365,36 @@ theorem state_ne_of_originalHistory_ne
   exact hne (congrArg h.originalHistory heq)
 
 end ExtensiveGame.ControlledObservedGame.FiniteEFGHypotheses
+
+namespace ExtensiveGame.ObservedGame.FiniteEFGHypotheses
+
+variable {N U : Type*} {G : ObservedGame N U}
+
+variable (h : G.FiniteEFGHypotheses)
+
+/-- Pure contingent plans are canonically equivalent under the payoff-bearing
+finite occurrence unfolding. The raw information/action families are reused,
+while represented-coordinate witnesses are transported through the canonical
+history isomorphism. -/
+def pureStrategyEquiv
+    (i : N) :
+    h.toFiniteObservedGame.PureStrategy i ≃
+      G.PureStrategy i :=
+  ControlledObservedGame.FiniteEFGHypotheses.pureStrategyEquiv
+    (G := G.toControlledObservedGame) h i
+
+/-- Behavioral contingent plans are canonically equivalent under the
+payoff-bearing finite occurrence unfolding. -/
+def behavioralStrategyEquiv
+    (i : N) :
+    h.toFiniteObservedGame.BehavioralStrategy i ≃
+      G.BehavioralStrategy i :=
+  let controlledHypotheses :
+      G.toControlledObservedGame.FiniteEFGHypotheses := h
+  (controlledHypotheses.toOriginalIso.representedInfoEquiv i).piCongr
+    fun information =>
+      FiniteLaw.mapEquiv
+        (controlledHypotheses.toOriginalIso.infoActionEquiv
+          i information.1)
+
+end ExtensiveGame.ObservedGame.FiniteEFGHypotheses
