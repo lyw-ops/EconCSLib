@@ -16,21 +16,21 @@ Serializer states, observations, information, and behavioral-profile compilation
 
 namespace ExtensiveGame.FOSG.Sequentialization
 
-universe uU
+universe uU uSA uO uP
 
 variable {n : ℕ} {U : Type uU}
-  (G : FOSG (Fin (n + 1)) U)
+  (G : FOSG.{0, uU, uSA, uSA, uO, uP} (Fin (n + 1)) U)
 
 /-- A partial simultaneous action containing choices for all players whose
 indices are strictly below `count`. -/
 def PartialAction (world : G.WorldState) (count : ℕ) : Type _ :=
-  PMF.FinPrefix (fun i : Fin (n + 1) => G.PlayerAction i world) count
+  FiniteLaw.FinPrefix (fun i : Fin (n + 1) => G.PlayerAction i world) count
 
 namespace PartialAction
 
 /-- The empty partial action. -/
 def empty (world : G.WorldState) : PartialAction G world 0 :=
-  PMF.FinPrefix.empty
+  FiniteLaw.FinPrefix.empty
 
 /-- Append the action of player `count` to a partial simultaneous action. -/
 def snoc {world : G.WorldState} {count : ℕ}
@@ -38,13 +38,13 @@ def snoc {world : G.WorldState} {count : ℕ}
     (hcount : count < n + 1)
     (action : G.PlayerAction ⟨count, hcount⟩ world) :
     PartialAction G world (count + 1) :=
-  PMF.FinPrefix.snoc collected hcount action
+  FiniteLaw.FinPrefix.snoc collected hcount action
 
 /-- A complete partial action is a joint action. -/
 def complete {world : G.WorldState}
     (collected : PartialAction G world (n + 1)) :
     G.JointAction world :=
-  PMF.FinPrefix.complete collected rfl
+  FiniteLaw.FinPrefix.complete collected rfl
 
 /-- Restrict a complete joint action to the first `count` players. -/
 def ofJoint {world : G.WorldState}
@@ -62,13 +62,13 @@ theorem snoc_ofJoint {world : G.WorldState}
       ofJoint G jointAction (count + 1) := by
   funext i hi
   by_cases hprevious : i.val < count
-  · simp [snoc, PMF.FinPrefix.snoc, ofJoint, hprevious]
+  · simp [snoc, FiniteLaw.FinPrefix.snoc, ofJoint, hprevious]
   · have hvalue : i.val = count :=
       Nat.eq_of_lt_succ_of_not_lt hi hprevious
     have hplayer : i = (⟨count, hcount⟩ : Fin (n + 1)) :=
       Fin.ext hvalue
     subst i
-    simp [snoc, PMF.FinPrefix.snoc, ofJoint]
+    simp [snoc, FiniteLaw.FinPrefix.snoc, ofJoint]
 
 end PartialAction
 
@@ -412,7 +412,7 @@ def chanceKernel
       (game G rootPayoff).toArena.HistoryFrom
         (game G rootPayoff).init)
     (hchance : (game G rootPayoff).isChanceState history.1) :
-    PMF ((game G rootPayoff).Action history.1) := by
+    FiniteLaw ((game G rootPayoff).Action history.1) := by
   cases hstate : history.1 with
   | root =>
       exact G.init
@@ -508,8 +508,22 @@ def rootPresentation
 
 /-! ### Information-indexed behavioral-profile compilation -/
 
+/-- Restrict one FOSG behavioral strategy to information states represented by
+genuine serialized player decisions. -/
+def serializedObservedBehavioralStrategy
+    [(world : G.WorldState) → Decidable (G.isTerminal world)]
+    (D : G.DecisionModel)
+    (rootPayoff : Fin (n + 1) → U)
+    (sourceDeclaredRoot : G.HistoryState → Prop)
+    (i : Fin (n + 1))
+    (strategy : D.BehavioralStrategy i) :
+    (observedChanceGame G D rootPayoff
+      sourceDeclaredRoot).observed.BehavioralStrategy i :=
+  fun information => strategy information.1
+
 /-- Reinterpret a FOSG `DecisionModel` behavioral profile as a behavioral
-profile of the serialized observed EFG.
+profile of the serialized observed EFG by restricting it to represented
+decision information.
 
 The compiler deliberately reuses the same information-state and abstract
 action types.  No hidden serializer state appears in the resulting strategy.
@@ -522,33 +536,51 @@ def serializedObservedBehavioralProfile
     (profile : D.BehavioralProfile) :
     (observedChanceGame G D rootPayoff
       sourceDeclaredRoot).observed.BehavioralProfile :=
-  fun i information => profile i information
+  fun i => serializedObservedBehavioralStrategy G D rootPayoff
+    sourceDeclaredRoot i (profile i)
 
-/-- Behavioral profiles are not merely embedded by the serializer: because
-the compiled observed EFG reuses the decision model's information and abstract
-action types, profile compilation is an actual equivalence. -/
+/-- Optional certificate that restriction to represented serialized
+information is an equivalence of strategy spaces.
+
+This is deliberately not part of the compiler: arbitrary `InfoState` values
+may be ghost coordinates with no decision witness, and their action fibers
+need not admit a canonical extension. -/
+structure BehavioralStrategyEquivalence
+    [(world : G.WorldState) → Decidable (G.isTerminal world)]
+    (D : G.DecisionModel)
+    (rootPayoff : Fin (n + 1) → U)
+    (sourceDeclaredRoot : G.HistoryState → Prop) where
+  /-- Playerwise strategy equivalence. -/
+  strategyEquiv :
+    (i : Fin (n + 1)) →
+      D.BehavioralStrategy i ≃
+        (observedChanceGame G D rootPayoff
+          sourceDeclaredRoot).observed.BehavioralStrategy i
+  /-- The forward equivalence is the compiler's restriction map. -/
+  strategyEquiv_apply :
+    ∀ (i : Fin (n + 1)) (strategy : D.BehavioralStrategy i)
+      (information :
+        (observedChanceGame G D rootPayoff
+          sourceDeclaredRoot).observed.RepresentedInfo i),
+      strategyEquiv i strategy information = strategy information.1
+
+/-- A supplied playerwise certificate induces an equivalence of complete
+behavioral profiles. -/
 def serializedObservedBehavioralProfileEquiv
     [(world : G.WorldState) → Decidable (G.isTerminal world)]
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
-    (sourceDeclaredRoot : G.HistoryState → Prop) :
+    (sourceDeclaredRoot : G.HistoryState → Prop)
+    (certificate :
+      BehavioralStrategyEquivalence G D rootPayoff sourceDeclaredRoot) :
     D.BehavioralProfile ≃
       (observedChanceGame G D rootPayoff
-        sourceDeclaredRoot).observed.BehavioralProfile where
-  toFun :=
-    serializedObservedBehavioralProfile G D rootPayoff
-      sourceDeclaredRoot
-  invFun := fun profile i information => profile i information
-  left_inv := by
-    intro profile
-    rfl
-  right_inv := by
-    intro profile
-    rfl
+        sourceDeclaredRoot).observed.BehavioralProfile :=
+  Equiv.piCongrRight certificate.strategyEquiv
 
 /-- The micro-step stochastic history policy induced by a serialized
 behavioral profile and the compiler's declared chance kernels. -/
-noncomputable def serializedBehavioralHistoryPolicy
+def serializedBehavioralHistoryPolicy
     [(world : G.WorldState) → Decidable (G.isTerminal world)]
     (D : G.DecisionModel)
     (rootPayoff : Fin (n + 1) → U)
@@ -598,7 +630,9 @@ theorem serializedObservedBehavioralProfile_deviate
           sourceDeclaredRoot).observed
         (serializedObservedBehavioralProfile G D rootPayoff
           sourceDeclaredRoot profile)
-        who deviation := by
+        who
+        (serializedObservedBehavioralStrategy G D rootPayoff
+          sourceDeclaredRoot who deviation) := by
   funext i information
   by_cases hi : i = who
   · subst i
@@ -704,13 +738,13 @@ theorem serializedBehavioralHistoryPolicy_root
 
 /-- The concrete action law of each source player at one nonterminal macro
 history.  Its finite dependent product is `DecisionModel.jointActionLaw`. -/
-noncomputable def behavioralActionLaws
+def behavioralActionLaws
     (D : G.DecisionModel)
     (profile : D.BehavioralProfile)
     (source : G.HistoryState)
     (hsource : ¬ G.isTerminal source.1)
     (i : Fin (n + 1)) :
-    PMF (G.PlayerAction i source.1) :=
+    FiniteLaw (G.PlayerAction i source.1) :=
   (profile i (D.infoAt source hsource i)).map
     (D.actionEquiv source hsource i)
 
@@ -722,7 +756,7 @@ theorem jointActionLaw_eq_finPi
     (source : G.HistoryState)
     (hsource : ¬ G.isTerminal source.1) :
     D.jointActionLaw profile source hsource =
-      PMF.finPi (n + 1)
+      FiniteLaw.finPi (n + 1)
         (behavioralActionLaws G D profile source hsource) :=
   rfl
 
@@ -737,14 +771,14 @@ theorem collected_eq_of_mem_support_finPiFrom
     (htotal : count + remaining = n + 1)
     (collected : PartialAction G source.1 count)
     (jointAction : G.JointAction source.1)
-    (hjoint : jointAction ∈
-      (PMF.finPiFrom
+    (hjoint :
+      (FiniteLaw.finPiFrom
         (behavioralActionLaws G D profile source hsource)
-        remaining count htotal collected).support) :
+        remaining count htotal collected).HasPositiveAtom jointAction) :
     PartialAction.ofJoint G jointAction count = collected := by
   funext i hi
   exact
-    PMF.finPiFrom_apply_eq_of_mem_support_of_lt
+    FiniteLaw.finPiFrom_apply_eq_of_hasPositiveAtom_of_lt
       (behavioralActionLaws G D profile source hsource)
       remaining count htotal collected jointAction hjoint i hi
 
