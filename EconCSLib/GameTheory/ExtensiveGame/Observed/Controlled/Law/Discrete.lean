@@ -10,7 +10,7 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled
 # Payoff-free discrete chance and bounded history laws
 
 `DiscreteControlledObservedChanceGame` attaches normalized, countably
-supported `PMF` chance kernels to a payoff-free observed controlled game.
+supported `FiniteLaw` chance kernels to a payoff-free observed controlled game.
 It stores no payoff, root selection, finiteness, recall, or objective.
 
 `BoundedHistoryLawFamily` is the raw data layer. The dependent history carrier
@@ -38,8 +38,8 @@ variable {N : Type*} (G : ControlledObservedGame N)
 /-- A countably supported behavioral strategy indexed by payoff-free decision
 information. -/
 abbrev BehavioralStrategy (i : N) :=
-  (information : G.InfoState i) →
-    PMF (G.InfoAction i information)
+  (information : G.RepresentedInfo i) →
+    FiniteLaw (G.InfoAction i information.1)
 
 /-- One payoff-free discrete behavioral strategy per player. -/
 abbrev BehavioralProfile :=
@@ -54,15 +54,16 @@ def BehavioralProfile.deviate [DecidableEq N]
 
 /-- Realize a discrete behavioral strategy as a law on legal actions at one
 represented player decision. -/
-noncomputable def BehavioralStrategy.actionLawAt
+def BehavioralStrategy.actionLawAt
     {i : N} (strategy : G.BehavioralStrategy i)
     (history : G.base.History)
     (hmover : G.base.mover history.1 = some i)
     (hnonterminal : ¬ G.base.isTerminal history.1) :
-    PMF (G.base.Action history.1) :=
-  (strategy
-    (G.infoAt history i hmover hnonterminal)).map
-      (G.actionEquiv history i hmover hnonterminal)
+    FiniteLaw (G.base.Action history.1) :=
+  let hdecision :=
+    G.base.toArena.isDecision_of_not_isTerminal history.1 hnonterminal
+  (strategy (G.representedInfoAt history i hmover hdecision)).map
+    (G.actionEquiv history i hmover hdecision)
 
 /-- Equal information states force a behavioral profile to choose the same
 dependent abstract action law. -/
@@ -70,26 +71,26 @@ theorem BehavioralProfile.actionLaw_eq_of_infoState_eq
     (profile : G.BehavioralProfile) (i : N)
     (first second : G.base.History)
     (firstMover : G.base.mover first.1 = some i)
-    (firstNonterminal : ¬ G.base.isTerminal first.1)
+    (firstDecision : G.base.toArena.IsDecision first.1)
     (secondMover : G.base.mover second.1 = some i)
-    (secondNonterminal : ¬ G.base.isTerminal second.1)
+    (secondDecision : G.base.toArena.IsDecision second.1)
     (hsame :
-      G.infoAt first i firstMover firstNonterminal =
-        G.infoAt second i secondMover secondNonterminal) :
-    (⟨G.infoAt first i firstMover firstNonterminal,
+      G.infoAt first i firstMover firstDecision =
+        G.infoAt second i secondMover secondDecision) :
+    (⟨G.representedInfoAt first i firstMover firstDecision,
         profile i
-          (G.infoAt first i firstMover firstNonterminal)⟩ :
-      Σ information : G.InfoState i,
-        PMF (G.InfoAction i information)) =
-      ⟨G.infoAt second i secondMover secondNonterminal,
+          (G.representedInfoAt first i firstMover firstDecision)⟩ :
+      Σ information : G.RepresentedInfo i,
+        FiniteLaw (G.InfoAction i information.1)) =
+      ⟨G.representedInfoAt second i secondMover secondDecision,
         profile i
-          (G.infoAt second i secondMover secondNonterminal)⟩ :=
+          (G.representedInfoAt second i secondMover secondDecision)⟩ :=
   congrArg
-    (fun information : G.InfoState i =>
+    (fun information : G.RepresentedInfo i =>
       (⟨information, profile i information⟩ :
-        Σ state : G.InfoState i,
-          PMF (G.InfoAction i state)))
-    hsame
+        Σ state : G.RepresentedInfo i,
+          FiniteLaw (G.InfoAction i state.1)))
+    (Subtype.ext hsame)
 
 end ControlledObservedGame
 
@@ -104,7 +105,7 @@ structure DiscreteControlledObservedChanceGame
   chanceKernel :
     (history : observed.base.History) →
       observed.base.isChanceState history.1 →
-        PMF (observed.base.Action history.1)
+        FiniteLaw (observed.base.Action history.1)
 
 namespace DiscreteControlledObservedChanceGame
 
@@ -117,7 +118,7 @@ abbrev withChanceKernel
     (chanceKernel :
       (history : observed.base.History) →
         observed.base.isChanceState history.1 →
-          PMF (observed.base.Action history.1)) :
+          FiniteLaw (observed.base.Action history.1)) :
     DiscreteControlledObservedChanceGame N where
   observed := observed
   chanceKernel := chanceKernel
@@ -139,19 +140,19 @@ abbrev BehavioralProfile.deviate [DecidableEq N]
     G.observed profile who deviation
 
 /-- Concrete legal-action law at one represented player decision. -/
-noncomputable abbrev BehavioralStrategy.actionLawAt
+abbrev BehavioralStrategy.actionLawAt
     {i : N} (strategy : G.BehavioralStrategy i)
     (history : G.observed.base.History)
     (hmover :
       G.observed.base.mover history.1 = some i)
     (hnonterminal :
       ¬ G.observed.base.isTerminal history.1) :
-    PMF (G.observed.base.Action history.1) :=
+    FiniteLaw (G.observed.base.Action history.1) :=
   ControlledObservedGame.BehavioralStrategy.actionLawAt
     G.observed strategy history hmover hnonterminal
 
 /-- Stochastic history policy induced jointly by strategic and chance laws. -/
-noncomputable def BehavioralProfile.toHistoryPolicy
+def BehavioralProfile.toHistoryPolicy
     (profile : G.BehavioralProfile) :
     G.observed.base.toArena.StochasticHistoryPolicy
       G.observed.base.init :=
@@ -203,15 +204,15 @@ theorem BehavioralProfile.toHistoryPolicy_of_chance
     contradiction
   · rfl
 
-/-- Bounded complete-history PMF for the discrete behavioral model. -/
-noncomputable def behavioralHistoryLaw
+/-- Bounded complete-history law for the discrete behavioral model. -/
+def behavioralHistoryLaw
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (profile : G.BehavioralProfile)
     (current : G.observed.base.History)
     (fuel : ℕ) :
-    PMF G.observed.base.History :=
-  G.observed.base.toArena.stochasticHistoryPMFFrom
+    FiniteLaw G.observed.base.History :=
+  G.observed.base.toArena.stochasticHistoryLawFrom
     (profile.toHistoryPolicy G) current fuel
 
 end DiscreteControlledObservedChanceGame
@@ -224,7 +225,7 @@ variable {N : Type*}
 
 /-! ## Payoff-free bounded history-law families -/
 
-/-- Uncertified strategy-indexed bounded history PMFs.
+/-- Uncertified finite laws on bounded histories, indexed by strategies.
 
 The semantic object is the full occurrence-sensitive history, not merely its
 endpoint state. The dependent history type already enforces legal reachability
@@ -239,7 +240,7 @@ structure BoundedHistoryLawFamily
   historyLaw :
     (profile : ∀ i, Strategy i) →
       G.observed.base.History → ℕ →
-        PMF G.observed.base.History
+        FiniteLaw G.observed.base.History
 
 namespace BoundedHistoryLawFamily
 
@@ -267,7 +268,7 @@ structure CompleteHistoryLawRealization
   /-- Map each player's source strategy into the target carrier. -/
   mapStrategy :
     (i : N) → S.Strategy i → T.Strategy i
-  /-- Preserve every bounded complete-history PMF exactly. -/
+  /-- Preserve every bounded complete-history FiniteLaw exactly. -/
   historyLaw_eq :
     ∀ (profile : S.Profile)
       (current : G.observed.base.History)
@@ -342,7 +343,7 @@ end BoundedHistoryLawFamily
 /-- Certified bounded execution law for the declared chance kernel and
 behavioral profiles.
 
-PMF values already carry normalization intrinsically; `normalized` exposes
+`FiniteLaw` values already carry normalization intrinsically; `normalized` exposes
 that fact as a named certificate. The dependent `History` codomain makes every
 support point a legal root-reachable history. `terminal_absorbing` records
 stopping, while `execution_eq` ties the family to the concrete behavioral
@@ -351,23 +352,24 @@ structure CertifiedBehavioralExecutionLaw
     (G : DiscreteControlledObservedChanceGame N)
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)] where
-  /-- Certified bounded history PMF. -/
+  /-- Certified bounded history FiniteLaw. -/
   historyLaw :
     G.BehavioralProfile →
       G.observed.base.History → ℕ →
-        PMF G.observed.base.History
+        FiniteLaw G.observed.base.History
   /-- Each bounded law has total mass one. -/
   normalized :
     ∀ (profile : G.BehavioralProfile)
       (current : G.observed.base.History)
       (fuel : ℕ),
-      ∑' history, historyLaw profile current fuel history = 1
-  /-- Every support point carries a legal history from the game root. -/
-  support_is_legal_reachable :
+      FiniteLaw.totalWeight
+        (historyLaw profile current fuel).atoms = 1
+  /-- Every positive atom carries a legal history from the game root. -/
+  positive_atoms_are_legal_reachable :
     ∀ (profile : G.BehavioralProfile)
       (current history : G.observed.base.History)
       (fuel : ℕ),
-      history ∈ (historyLaw profile current fuel).support →
+      (historyLaw profile current fuel).HasPositiveAtom history →
         Nonempty
           (G.observed.base.toArena.History
             G.observed.base.init history.1)
@@ -377,7 +379,7 @@ structure CertifiedBehavioralExecutionLaw
       (current : G.observed.base.History)
       (fuel : ℕ),
       G.observed.base.isTerminal current.1 →
-        historyLaw profile current fuel = PMF.pure current
+        historyLaw profile current fuel = FiniteLaw.pure current
   /-- The certified law is exactly the specified behavioral/chance executor. -/
   execution_eq :
     ∀ (profile : G.BehavioralProfile)
@@ -395,7 +397,7 @@ The witness is a legal typed suffix in the underlying Arena, and the equality
 retains the complete action-occurrence history rather than merely relating
 endpoint states. This is derived from `execution_eq`; callers do not need to
 unfold the concrete stochastic executor. -/
-theorem exists_suffix_of_mem_support
+theorem exists_suffix_of_hasPositiveAtom
     {G : DiscreteControlledObservedChanceGame N}
     {terminalDecidable :
       (state : G.observed.base.State) →
@@ -405,20 +407,21 @@ theorem exists_suffix_of_mem_support
     (profile : G.BehavioralProfile)
     (current endpoint : G.observed.base.History)
     (fuel : ℕ)
-    (hsupport : endpoint ∈ (S.historyLaw profile current fuel).support) :
+    (hsupport :
+      (S.historyLaw profile current fuel).HasPositiveAtom endpoint) :
     ∃ suffix :
         G.observed.base.toArena.History current.1 endpoint.1,
       endpoint.2 = current.2.append suffix := by
   rw [S.execution_eq profile current fuel] at hsupport
   exact
-    G.observed.base.toArena.exists_suffix_of_mem_support_stochasticHistoryPMFFrom
+    G.observed.base.toArena.exists_suffix_of_hasPositiveAtom_stochasticHistoryLawFrom
       (profile.toHistoryPolicy G) current endpoint fuel hsupport
 
 /-- A support endpoint from a terminal current history is the current history
 itself. Equivalently, the only continuation suffix is empty; the accompanying
 law-level statement is `terminal_absorbing`, which gives the Dirac law at
 `current`. -/
-theorem eq_current_of_terminal_of_mem_support
+theorem eq_current_of_terminal_of_hasPositiveAtom
     {G : DiscreteControlledObservedChanceGame N}
     {terminalDecidable :
       (state : G.observed.base.State) →
@@ -429,10 +432,12 @@ theorem eq_current_of_terminal_of_mem_support
     (current endpoint : G.observed.base.History)
     (fuel : ℕ)
     (hterminal : G.observed.base.isTerminal current.1)
-    (hsupport : endpoint ∈ (S.historyLaw profile current fuel).support) :
+    (hsupport :
+      (S.historyLaw profile current fuel).HasPositiveAtom endpoint) :
     endpoint = current := by
   rw [S.terminal_absorbing profile current fuel hterminal] at hsupport
-  exact (PMF.mem_support_pure_iff current endpoint).mp hsupport
+  exact
+    (FiniteLaw.hasPositiveAtom_pure_iff current endpoint).mp hsupport
 
 /-- Forget execution certificates and retain the raw history-law family. -/
 def toBoundedHistoryLawFamily
@@ -461,7 +466,7 @@ structure CrossGameBoundedCompleteHistoryLawRealization
   mapHistory :
     G.observed.base.History →
       H.observed.base.History
-  /-- Exact bounded PMF pushforward at every profile, history, and fuel. -/
+  /-- Exact bounded FiniteLaw pushforward at every profile, history, and fuel. -/
   historyLaw_map_eq :
     ∀ (profile : S.Profile)
       (current : G.observed.base.History)
@@ -502,7 +507,7 @@ end CrossGameBoundedCompleteHistoryLawRealization
 
 /-- Concrete certified bounded execution law for behavioral strategies and the
 stored discrete chance kernel. -/
-noncomputable def behavioralCertifiedExecutionLaw
+def behavioralCertifiedExecutionLaw
     (G : DiscreteControlledObservedChanceGame N)
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)] :
@@ -511,14 +516,14 @@ noncomputable def behavioralCertifiedExecutionLaw
     G.behavioralHistoryLaw profile current fuel
   normalized := by
     intro profile current fuel
-    exact PMF.tsum_coe _
-  support_is_legal_reachable := by
+    exact FiniteLaw.totalWeight_atoms _
+  positive_atoms_are_legal_reachable := by
     intro profile current history fuel hsupport
     exact ⟨history.2⟩
   terminal_absorbing := by
     intro profile current fuel hterminal
     exact
-      G.observed.base.toArena.stochasticHistoryPMFFrom_of_terminal
+      G.observed.base.toArena.stochasticHistoryLawFrom_of_terminal
         (profile.toHistoryPolicy G) current hterminal fuel
   execution_eq := by
     intro profile current fuel
