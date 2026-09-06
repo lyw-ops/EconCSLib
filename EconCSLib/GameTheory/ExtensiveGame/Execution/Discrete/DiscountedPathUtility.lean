@@ -136,4 +136,307 @@ structure StateDiscountedPathUtility (A : KernelArena) where
   /-- Every executable one-period reward obeys the supplied bound. -/
   reward_abs_le : ∀ time state, |reward time state| ≤ (bound : ℚ)
 
+/-- Executable discounted action-recording event reward with a uniform
+per-period bound. -/
+structure EventDiscountedPathUtility (A : KernelArena) where
+  /-- Rational reward at an absolute time and complete path event. -/
+  reward : ℕ → A.PathEvent → ℚ
+  /-- Nonnegative rational discount. -/
+  discount : ℚ≥0
+  /-- Strict discount needed for a finite geometric tail. -/
+  discount_lt_one : discount < 1
+  /-- Uniform nonnegative rational absolute reward bound. -/
+  bound : ℚ≥0
+  /-- Every executable one-period reward obeys the supplied bound. -/
+  reward_abs_le : ∀ time event, |reward time event| ≤ (bound : ℚ)
+
+namespace StateDiscountedPathUtility
+
+variable {A : KernelArena}
+
+variable (utility : StateDiscountedPathUtility A)
+
+/-- Exact first `horizon` discounted state rewards from absolute `start`.
+Offsets are precisely `0, ..., horizon - 1`; horizon zero is the empty sum. -/
+def finiteObservable
+    (start horizon : ℕ) (history : A.StatePrefix (start + horizon)) : ℚ :=
+  ∑ offset : Fin horizon,
+    (utility.discount : ℚ) ^ offset.val *
+      utility.reward (start + offset.val)
+        (history (DiscountedPathUtility.coordinate start horizon offset))
+
+@[simp]
+theorem finiteObservable_zero
+    (start : ℕ) (history : A.StatePrefix (start + 0)) :
+    utility.finiteObservable start 0 history = 0 := by
+  simp [finiteObservable]
+
+/-- The utility's executable geometric tail schedule. -/
+def tailRadius :
+    ApproximationRadius :=
+  DiscountedPathUtility.geometricTailRadius utility.discount utility.bound
+
+@[simp]
+theorem tailRadius_apply
+    (horizon : ℕ) :
+    utility.tailRadius horizon =
+      utility.bound * utility.discount ^ horizon / (1 - utility.discount) :=
+  rfl
+
+/-- The state discounted utility as an A15 approximation scheme. -/
+def approximationScheme
+    (start : ℕ) : StatePrefixApproximationScheme A start where
+  observable := utility.finiteObservable start
+  radius := utility.tailRadius
+
+/-- Exact rational finite-horizon center under a coherent effective state
+path law. -/
+def center {start : ℕ} {initialPrefix : A.StatePrefix start}
+    (utility : StateDiscountedPathUtility A)
+    (law : StateEffectivePathLawFrom A start initialPrefix)
+    (horizon : ℕ) : ℚ :=
+  (utility.approximationScheme start).center law horizon
+
+/-- Exact finite-horizon center paired with the geometric scheme radius. -/
+def estimate {start : ℕ} {initialPrefix : A.StatePrefix start}
+    (utility : StateDiscountedPathUtility A)
+    (law : StateEffectivePathLawFrom A start initialPrefix)
+    (horizon : ℕ) : RationalSchemeEstimate :=
+  (utility.approximationScheme start).estimate law horizon
+
+/-- Search a bounded number of horizons and evaluate the first state estimate
+whose geometric radius meets the tolerance. -/
+def search {start : ℕ} {initialPrefix : A.StatePrefix start}
+    (utility : StateDiscountedPathUtility A)
+    (law : StateEffectivePathLawFrom A start initialPrefix)
+    (tolerance : ℚ≥0) (budget : ℕ) :
+    Option (ℕ × RationalSchemeEstimate) :=
+  (utility.approximationScheme start).search law tolerance budget
+
+/-- Unfolding the state center exposes the exact `FiniteLaw.expectRat` query
+of the first `H` discounted rewards. -/
+theorem center_eq_expectedPrefixValue
+    {start : ℕ} {initialPrefix : A.StatePrefix start}
+    (utility : StateDiscountedPathUtility A)
+    (law : StateEffectivePathLawFrom A start initialPrefix)
+    (horizon : ℕ) :
+    utility.center law horizon =
+      law.expectedPrefixValue horizon
+        (utility.finiteObservable start horizon) :=
+  rfl
+
+/-- The declared state radius vanishes at every valid discount. -/
+theorem tailRadius_vanishes :
+    utility.tailRadius.Vanishes :=
+  DiscountedPathUtility.geometricTailRadius_vanishes
+    utility.discount_lt_one
+
+/-- Every positive tolerance admits a finite state horizon whose geometric
+radius meets it. -/
+theorem exists_tailRadius_le
+    (tolerance : ℚ≥0) (htolerance : 0 < tolerance) :
+    ∃ horizon, utility.tailRadius horizon ≤ tolerance :=
+  utility.tailRadius_vanishes.exists_within tolerance htolerance
+
+/-- Compute the least state horizon at which the geometric schedule meets a
+positive tolerance. -/
+def leastHorizon
+    (start : ℕ) (tolerance : ℚ≥0) (htolerance : 0 < tolerance) : ℕ :=
+  (utility.approximationScheme start).leastHorizon tolerance
+    (utility.exists_tailRadius_le tolerance htolerance)
+
+/-- The computed state horizon meets the tolerance and every earlier one
+fails it. -/
+theorem leastHorizon_spec
+    (start : ℕ) (tolerance : ℚ≥0) (htolerance : 0 < tolerance) :
+    utility.tailRadius (utility.leastHorizon start tolerance htolerance) ≤
+        tolerance ∧
+      ∀ earlier < utility.leastHorizon start tolerance htolerance,
+        tolerance < utility.tailRadius earlier :=
+  (utility.approximationScheme start).leastHorizon_spec tolerance
+    (utility.exists_tailRadius_le tolerance htolerance)
+
+/-- Forget action data in the reward input while retaining the exact state
+coordinate and all discount data. -/
+def toEvent :
+    EventDiscountedPathUtility A where
+  reward time event := utility.reward time event.state
+  discount := utility.discount
+  discount_lt_one := utility.discount_lt_one
+  bound := utility.bound
+  reward_abs_le time event := utility.reward_abs_le time event.state
+
+end StateDiscountedPathUtility
+
+namespace EventDiscountedPathUtility
+
+variable {A : KernelArena}
+
+variable (utility : EventDiscountedPathUtility A)
+
+/-- Exact first `horizon` discounted action-recording event rewards from
+absolute `start`.  Offsets are precisely `0, ..., horizon - 1`. -/
+def finiteObservable
+    (start horizon : ℕ) (history : A.EventPrefix (start + horizon)) : ℚ :=
+  ∑ offset : Fin horizon,
+    (utility.discount : ℚ) ^ offset.val *
+      utility.reward (start + offset.val)
+        (history (DiscountedPathUtility.coordinate start horizon offset))
+
+@[simp]
+theorem finiteObservable_zero
+    (start : ℕ) (history : A.EventPrefix (start + 0)) :
+    utility.finiteObservable start 0 history = 0 := by
+  simp [finiteObservable]
+
+/-- The event utility's executable geometric tail schedule. -/
+def tailRadius :
+    ApproximationRadius :=
+  DiscountedPathUtility.geometricTailRadius utility.discount utility.bound
+
+@[simp]
+theorem tailRadius_apply
+    (horizon : ℕ) :
+    utility.tailRadius horizon =
+      utility.bound * utility.discount ^ horizon / (1 - utility.discount) :=
+  rfl
+
+/-- The event discounted utility as an A15 approximation scheme. -/
+def approximationScheme
+    (start : ℕ) : EventPrefixApproximationScheme A start where
+  observable := utility.finiteObservable start
+  radius := utility.tailRadius
+
+/-- Exact rational finite-horizon center under a coherent effective event
+path law. -/
+def center {start : ℕ} {initialPrefix : A.EventPrefix start}
+    (utility : EventDiscountedPathUtility A)
+    (law : EventEffectivePathLawFrom A start initialPrefix)
+    (horizon : ℕ) : ℚ :=
+  (utility.approximationScheme start).center law horizon
+
+/-- Exact finite-horizon center paired with the geometric scheme radius. -/
+def estimate {start : ℕ} {initialPrefix : A.EventPrefix start}
+    (utility : EventDiscountedPathUtility A)
+    (law : EventEffectivePathLawFrom A start initialPrefix)
+    (horizon : ℕ) : RationalSchemeEstimate :=
+  (utility.approximationScheme start).estimate law horizon
+
+/-- Search a bounded number of horizons and evaluate the first event estimate
+whose geometric radius meets the tolerance. -/
+def search {start : ℕ} {initialPrefix : A.EventPrefix start}
+    (utility : EventDiscountedPathUtility A)
+    (law : EventEffectivePathLawFrom A start initialPrefix)
+    (tolerance : ℚ≥0) (budget : ℕ) :
+    Option (ℕ × RationalSchemeEstimate) :=
+  (utility.approximationScheme start).search law tolerance budget
+
+/-- Unfolding the event center exposes the exact `FiniteLaw.expectRat` query
+of the first `H` discounted rewards. -/
+theorem center_eq_expectedPrefixValue
+    {start : ℕ} {initialPrefix : A.EventPrefix start}
+    (utility : EventDiscountedPathUtility A)
+    (law : EventEffectivePathLawFrom A start initialPrefix)
+    (horizon : ℕ) :
+    utility.center law horizon =
+      law.expectedPrefixValue horizon
+        (utility.finiteObservable start horizon) :=
+  rfl
+
+/-- The declared event radius vanishes at every valid discount. -/
+theorem tailRadius_vanishes :
+    utility.tailRadius.Vanishes :=
+  DiscountedPathUtility.geometricTailRadius_vanishes
+    utility.discount_lt_one
+
+/-- Every positive tolerance admits a finite event horizon whose geometric
+radius meets it. -/
+theorem exists_tailRadius_le
+    (tolerance : ℚ≥0) (htolerance : 0 < tolerance) :
+    ∃ horizon, utility.tailRadius horizon ≤ tolerance :=
+  utility.tailRadius_vanishes.exists_within tolerance htolerance
+
+/-- Compute the least event horizon at which the geometric schedule meets a
+positive tolerance. -/
+def leastHorizon
+    (start : ℕ) (tolerance : ℚ≥0) (htolerance : 0 < tolerance) : ℕ :=
+  (utility.approximationScheme start).leastHorizon tolerance
+    (utility.exists_tailRadius_le tolerance htolerance)
+
+/-- The computed event horizon meets the tolerance and every earlier one
+fails it. -/
+theorem leastHorizon_spec
+    (start : ℕ) (tolerance : ℚ≥0) (htolerance : 0 < tolerance) :
+    utility.tailRadius (utility.leastHorizon start tolerance htolerance) ≤
+        tolerance ∧
+      ∀ earlier < utility.leastHorizon start tolerance htolerance,
+        tolerance < utility.tailRadius earlier :=
+  (utility.approximationScheme start).leastHorizon_spec tolerance
+    (utility.exists_tailRadius_le tolerance htolerance)
+
+end EventDiscountedPathUtility
+
+namespace StateDiscountedPathUtility
+
+variable {A : KernelArena}
+
+variable (utility : StateDiscountedPathUtility A)
+
+/-- State reward projection to action-recording events preserves every exact
+finite discounted observable definitionally. -/
+@[simp]
+theorem toEvent_finiteObservable
+    (start horizon : ℕ) (history : A.EventPrefix (start + horizon)) :
+    utility.toEvent.finiteObservable start horizon history =
+      utility.finiteObservable start horizon history.states :=
+  rfl
+
+/-- The projected event scheme is definitionally the A15 projection of the
+state scheme, including its radius schedule. -/
+theorem toEvent_approximationScheme
+    (utility : StateDiscountedPathUtility A) (start : ℕ) :
+    utility.toEvent.approximationScheme start =
+      (utility.approximationScheme start).toEvent :=
+  rfl
+
+/-- Executing a state-history policy with action recording preserves the
+discounted estimate after forgetting the recorded actions. -/
+theorem toEvent_estimate_effectivePathLawFrom
+    [(state : A.State) → Decidable (IsEmpty (A.Action state))]
+    (utility : StateDiscountedPathUtility A)
+    (policy : A.StateHistoryPolicy) (start : ℕ)
+    (initialPrefix : A.EventPrefix start) (horizon : ℕ) :
+    utility.toEvent.estimate
+        ((policy.toEventHistoryPolicy).effectivePathLawFrom
+          start initialPrefix) horizon =
+      utility.estimate
+        (policy.effectivePathLawFrom start initialPrefix.states) horizon := by
+  change
+    (utility.approximationScheme start).toEvent.estimate
+        ((policy.toEventHistoryPolicy).effectivePathLawFrom
+          start initialPrefix) horizon =
+      (utility.approximationScheme start).estimate
+        (policy.effectivePathLawFrom start initialPrefix.states) horizon
+  exact
+    StatePrefixApproximationScheme.toEvent_estimate_effectivePathLawFrom
+      (utility.approximationScheme start) policy initialPrefix horizon
+
+/-- The corresponding projected-event and state scheme intervals are equal. -/
+theorem toEvent_interval_effectivePathLawFrom
+    [(state : A.State) → Decidable (IsEmpty (A.Action state))]
+    (utility : StateDiscountedPathUtility A)
+    (policy : A.StateHistoryPolicy) (start : ℕ)
+    (initialPrefix : A.EventPrefix start) (horizon : ℕ) :
+    (utility.toEvent.approximationScheme start).interval
+        ((policy.toEventHistoryPolicy).effectivePathLawFrom
+          start initialPrefix) horizon =
+      (utility.approximationScheme start).interval
+        (policy.effectivePathLawFrom start initialPrefix.states) horizon := by
+  rw [utility.toEvent_approximationScheme]
+  exact
+    StatePrefixApproximationScheme.toEvent_interval_effectivePathLawFrom
+      (utility.approximationScheme start) policy initialPrefix horizon
+
+end StateDiscountedPathUtility
+
 end KernelArena
