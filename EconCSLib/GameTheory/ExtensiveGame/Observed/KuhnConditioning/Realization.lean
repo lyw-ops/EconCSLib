@@ -12,8 +12,8 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.DeferredSampling.Realization
 Root-scoped law morphisms, deviation coverage, and finite Kuhn transfer.
 
 The mathematical realization target is [Kuhn 1953, §4, Thm. 4] under finite
-perfect recall. This module's exact bounded history/payoff-law equalities and
-Nash-transfer morphisms are the occurrence-sensitive `PMF` implementation of
+perfect recall. This module's bounded history/payoff-law equivalences and
+Nash-transfer theorems are the constructive `FiniteLaw` implementation of
 that target. They do not assert equality of arbitrary infinite path measures.
 -/
 
@@ -24,13 +24,18 @@ universe uN uU uAS uO uI uP
 variable {N : Type uN} {U : Type uU}
   (G : ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
 
-/-- Exact root-scoped conditional behavioralization as a law-game morphism.
+/-- Root-scoped conditional behavioralization preserves the semantic payoff
+law of every mixed profile.
 
 This morphism already gives exact outcome-law realization.  Two-way Nash
 transfer additionally needs semantic coverage of arbitrary behavioral
 deviations, proved separately from the law equality. -/
-noncomputable def mixedToBehavioralLawHomAt
-    [Fintype N] [DecidableEq N]
+theorem mixedToBehavioralLawHomAt
+    [Fintype N] [LinearOrder N]
+    [∀ (i : N)
+      (information : G.observed.RepresentedInfo i),
+      DecidableEq
+        (G.observed.InfoAction i information.1)]
     [(state : G.observed.base.State) →
       Decidable
         (G.observed.base.isTerminal state)]
@@ -38,28 +43,18 @@ noncomputable def mixedToBehavioralLawHomAt
     (current :
       G.observed.base.toArena.HistoryFrom
         G.observed.base.init)
+    (offPath : G.observed.BehavioralProfile)
     (fuel : ℕ) :
-    (G.mixedLawGameForm current fuel).Hom
-      (G.behavioralLawGameForm current fuel) where
-  strategyMap :=
-    fun i strategy =>
-      certificate.behavioralizeMixedFrom
-        G.observed current i strategy
-  outcomeMap := id
-  map_outcomeLaw := by
-    intro profile
-    unfold LawGameForm.RealizesVia
-    change
+    ∀ profile,
       (G.mixedStoppedPayoffLawFrom
-        profile current fuel).map id =
-      G.behavioralStoppedPayoffLawFrom
+        profile current fuel).Equivalent
+      (G.behavioralStoppedPayoffLawFrom
         (certificate.behavioralizeMixedProfileFrom
-          G.observed current profile)
-        current fuel
-    rw [PMF.map_id]
-    exact
-      G.mixedToBehavioral_stoppedPayoffLawFrom
-        certificate profile current fuel
+          G.observed current profile offPath)
+        current fuel) :=
+  fun profile =>
+    G.mixedToBehavioral_stoppedPayoffLawFrom
+      certificate profile offPath current fuel
 
 /-- Replacing one root-scoped behavioralized component by an arbitrary
 behavioral strategy has the same bounded history law as replacing the source
@@ -68,7 +63,7 @@ mixed component by that strategy's independently sampled complete table.
 The statement is strengthened along every suffix of the selected root so that
 the proof can recurse through stochastic execution. -/
 theorem behavioralDeviationHistoryLawAlong_eq
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable
         (G.observed.base.isTerminal state)]
@@ -77,6 +72,7 @@ theorem behavioralDeviationHistoryLawAlong_eq
     (root :
       G.observed.base.toArena.HistoryFrom
         G.observed.base.init)
+    (offPath : G.observed.BehavioralProfile)
     (who : N)
     (target :
       G.observed.BehavioralStrategy who)
@@ -92,30 +88,35 @@ theorem behavioralDeviationHistoryLawAlong_eq
           who target)
     let baseBehavior :
         G.observed.BehavioralProfile :=
-      h.recallCertificate.behavioralizeMixedProfileFrom
-        G.observed root profile
+      h.mixedToBehavioralProfileAt
+        G.observed root profile offPath
     let targetBehavior :
         G.observed.BehavioralProfile :=
       Function.update baseBehavior who target
     let realizedBehavior :
         G.observed.BehavioralProfile :=
-      h.recallCertificate.behavioralizeMixedProfileFrom
+      h.mixedToBehavioralProfileAt
         G.observed root sourceDeviation
+        (Function.update offPath who target)
     let current :
         G.observed.base.toArena.HistoryFrom
           G.observed.base.init :=
       ⟨finish, root.2.append suffix⟩
-    G.observed.base.toArena.stochasticHistoryPMFFrom
+    (G.observed.base.toArena.stochasticHistoryLawFrom
         (BehavioralProfile.toHistoryPolicy G
           targetBehavior)
-        current fuel =
-      G.observed.base.toArena.stochasticHistoryPMFFrom
+        current fuel).Equivalent
+      (G.observed.base.toArena.stochasticHistoryLawFrom
         (BehavioralProfile.toHistoryPolicy G
           realizedBehavior)
-        current fuel := by
+        current fuel) := by
+  letI (i : N) (information : G.observed.RepresentedInfo i) :
+      DecidableEq
+        (G.observed.InfoAction i information.1) :=
+    (h.finiteDecisionPresentation i).2 information
   induction fuel generalizing finish with
   | zero =>
-      rfl
+      exact FiniteLaw.Equivalent.refl _
   | succ fuel ih =>
       let sourceDeviation :
           G.observed.MixedProfile :=
@@ -124,45 +125,47 @@ theorem behavioralDeviationHistoryLawAlong_eq
             who target)
       let baseBehavior :
           G.observed.BehavioralProfile :=
-        h.recallCertificate.behavioralizeMixedProfileFrom
-          G.observed root profile
+        h.mixedToBehavioralProfileAt
+          G.observed root profile offPath
       let targetBehavior :
           G.observed.BehavioralProfile :=
         Function.update baseBehavior who target
       let realizedBehavior :
           G.observed.BehavioralProfile :=
-        h.recallCertificate.behavioralizeMixedProfileFrom
+        h.mixedToBehavioralProfileAt
           G.observed root sourceDeviation
+          (Function.update offPath who target)
       let current :
           G.observed.base.toArena.HistoryFrom
             G.observed.base.init :=
         ⟨finish, root.2.append suffix⟩
       change
-        G.observed.base.toArena.stochasticHistoryPMFFrom
+        (G.observed.base.toArena.stochasticHistoryLawFrom
             (BehavioralProfile.toHistoryPolicy G
               targetBehavior)
-            current (fuel + 1) =
-          G.observed.base.toArena.stochasticHistoryPMFFrom
+            current (fuel + 1)).Equivalent
+          (G.observed.base.toArena.stochasticHistoryLawFrom
             (BehavioralProfile.toHistoryPolicy G
               realizedBehavior)
-            current (fuel + 1)
+            current (fuel + 1))
       by_cases hterminal :
           G.observed.base.isTerminal current.1
-      · simp [Arena.stochasticHistoryPMFFrom,
-          hterminal]
-      · rw [G.observed.base.toArena.stochasticHistoryPMFFrom_succ_of_not_terminal
+      · simpa [Arena.stochasticHistoryLawFrom,
+          hterminal] using
+            FiniteLaw.Equivalent.refl (FiniteLaw.pure current)
+      · rw [G.observed.base.toArena.stochasticHistoryLawFrom_succ_of_not_terminal
           (BehavioralProfile.toHistoryPolicy G
             targetBehavior)
           current fuel hterminal]
-        rw [G.observed.base.toArena.stochasticHistoryPMFFrom_succ_of_not_terminal
+        rw [G.observed.base.toArena.stochasticHistoryLawFrom_succ_of_not_terminal
           (BehavioralProfile.toHistoryPolicy G
             realizedBehavior)
           current fuel hterminal]
         have hpolicy :
-            BehavioralProfile.toHistoryPolicy G
-                targetBehavior current hterminal =
-              BehavioralProfile.toHistoryPolicy G
-                realizedBehavior current hterminal := by
+            (BehavioralProfile.toHistoryPolicy G
+                targetBehavior current hterminal).Equivalent
+              (BehavioralProfile.toHistoryPolicy G
+                realizedBehavior current hterminal) := by
           cases hmover :
               G.observed.base.mover current.1 with
           | none =>
@@ -172,7 +175,11 @@ theorem behavioralDeviationHistoryLawAlong_eq
               rw [BehavioralProfile.toHistoryPolicy_of_chance
                 G realizedBehavior current
                 hterminal hmover]
+              exact FiniteLaw.Equivalent.refl _
           | some mover =>
+              let hdecision :=
+                G.observed.base.toArena.isDecision_of_not_isTerminal
+                  current.1 hterminal
               rw [BehavioralProfile.toHistoryPolicy_of_mover
                 G targetBehavior current
                 hterminal mover hmover]
@@ -182,15 +189,7 @@ theorem behavioralDeviationHistoryLawAlong_eq
               unfold
                 ObservedGame.BehavioralProfile.actionLawAt
                 ObservedGame.BehavioralStrategy.actionLawAt
-              apply congrArg
-                (fun abstractLaw :
-                    PMF
-                      (G.observed.InfoAction mover
-                        (G.observed.infoAt
-                          current mover hmover hterminal)) =>
-                  abstractLaw.map
-                    (G.observed.actionEquiv
-                      current mover hmover hterminal))
+              apply FiniteLaw.Equivalent.map
               by_cases hmoverWho :
                   mover = who
               · subst mover
@@ -203,18 +202,20 @@ theorem behavioralDeviationHistoryLawAlong_eq
                   simpa [current] using hterminal
                 simp only [targetBehavior,
                   realizedBehavior, sourceDeviation,
+                  ObservedGame.FiniteKuhnHypotheses.mixedToBehavioralProfileAt,
                   ObservedGame.RecallCertificate.behavioralizeMixedProfileFrom,
                   Function.update]
                 change
-                  target
-                      (G.observed.infoAt
-                        current who hmover hterminal) =
-                    h.recallCertificate.behavioralizeMixedFrom
+                  (target
+                      (G.observed.representedInfoAt
+                        current who hmover hdecision)).Equivalent
+                    (h.recallCertificate.behavioralizeMixedFrom
                       G.observed root who
                       (h.behavioralToMixedStrategy
                         who target)
-                      (G.observed.infoAt
-                        current who hmover hterminal)
+                      target
+                      (G.observed.representedInfoAt
+                        current who hmover hdecision))
                 exact
                   (h.behavioralize_behavioralToMixed_at_append
                     G.observed root suffix who hmover' hnonterminal'
@@ -222,15 +223,12 @@ theorem behavioralDeviationHistoryLawAlong_eq
               · simp [targetBehavior,
                   realizedBehavior, baseBehavior,
                   sourceDeviation,
+                  ObservedGame.FiniteKuhnHypotheses.mixedToBehavioralProfileAt,
                   ObservedGame.RecallCertificate.behavioralizeMixedProfileFrom,
                   Function.update, hmoverWho]
-        rw [hpolicy]
-        apply congrArg
-          (fun continuation =>
-            (BehavioralProfile.toHistoryPolicy G
-              realizedBehavior current
-              hterminal).bind continuation)
-        funext action
+                exact FiniteLaw.Equivalent.refl _
+        apply hpolicy.bind
+        intro action
         have ihAction :=
           ih
             (suffix := suffix.snoc action)
@@ -248,7 +246,7 @@ Only the non-deviating players use the table behavioralization; their local
 laws agree with the source behavioral strategies at every history reachable
 from the selected root. -/
 theorem behavioralTableDeviationHistoryLawAlong_eq
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable
         (G.observed.base.isTerminal state)]
@@ -269,7 +267,7 @@ theorem behavioralTableDeviationHistoryLawAlong_eq
       h.behavioralToMixedProfile profile
     let mappedProfile :=
       h.mixedToBehavioralProfileAt
-        G.observed root mixedProfile
+        G.observed root mixedProfile profile
     let sourceDeviation :=
       Function.update profile who target
     let mappedDeviation :=
@@ -278,23 +276,27 @@ theorem behavioralTableDeviationHistoryLawAlong_eq
         G.observed.base.toArena.HistoryFrom
           G.observed.base.init :=
       ⟨finish, root.2.append suffix⟩
-    G.observed.base.toArena.stochasticHistoryPMFFrom
+    (G.observed.base.toArena.stochasticHistoryLawFrom
         (BehavioralProfile.toHistoryPolicy G
           sourceDeviation)
-        current fuel =
-      G.observed.base.toArena.stochasticHistoryPMFFrom
+        current fuel).Equivalent
+      (G.observed.base.toArena.stochasticHistoryLawFrom
         (BehavioralProfile.toHistoryPolicy G
           mappedDeviation)
-        current fuel := by
+        current fuel) := by
+  letI (i : N) (information : G.observed.RepresentedInfo i) :
+      DecidableEq
+        (G.observed.InfoAction i information.1) :=
+    (h.finiteDecisionPresentation i).2 information
   induction fuel generalizing finish with
   | zero =>
-      rfl
+      exact FiniteLaw.Equivalent.refl _
   | succ fuel ih =>
       let mixedProfile :=
         h.behavioralToMixedProfile profile
       let mappedProfile :=
         h.mixedToBehavioralProfileAt
-          G.observed root mixedProfile
+          G.observed root mixedProfile profile
       let sourceDeviation :=
         Function.update profile who target
       let mappedDeviation :=
@@ -304,31 +306,32 @@ theorem behavioralTableDeviationHistoryLawAlong_eq
             G.observed.base.init :=
         ⟨finish, root.2.append suffix⟩
       change
-        G.observed.base.toArena.stochasticHistoryPMFFrom
+        (G.observed.base.toArena.stochasticHistoryLawFrom
             (BehavioralProfile.toHistoryPolicy G
               sourceDeviation)
-            current (fuel + 1) =
-          G.observed.base.toArena.stochasticHistoryPMFFrom
+            current (fuel + 1)).Equivalent
+          (G.observed.base.toArena.stochasticHistoryLawFrom
             (BehavioralProfile.toHistoryPolicy G
               mappedDeviation)
-            current (fuel + 1)
+            current (fuel + 1))
       by_cases hterminal :
           G.observed.base.isTerminal current.1
-      · simp [Arena.stochasticHistoryPMFFrom,
-          hterminal]
-      · rw [G.observed.base.toArena.stochasticHistoryPMFFrom_succ_of_not_terminal
+      · simpa [Arena.stochasticHistoryLawFrom,
+          hterminal] using
+            FiniteLaw.Equivalent.refl (FiniteLaw.pure current)
+      · rw [G.observed.base.toArena.stochasticHistoryLawFrom_succ_of_not_terminal
           (BehavioralProfile.toHistoryPolicy G
             sourceDeviation)
           current fuel hterminal]
-        rw [G.observed.base.toArena.stochasticHistoryPMFFrom_succ_of_not_terminal
+        rw [G.observed.base.toArena.stochasticHistoryLawFrom_succ_of_not_terminal
           (BehavioralProfile.toHistoryPolicy G
             mappedDeviation)
           current fuel hterminal]
         have hpolicy :
-            BehavioralProfile.toHistoryPolicy G
-                sourceDeviation current hterminal =
-              BehavioralProfile.toHistoryPolicy G
-                mappedDeviation current hterminal := by
+            (BehavioralProfile.toHistoryPolicy G
+                sourceDeviation current hterminal).Equivalent
+              (BehavioralProfile.toHistoryPolicy G
+                mappedDeviation current hterminal) := by
           cases hmover :
               G.observed.base.mover current.1 with
           | none =>
@@ -338,7 +341,11 @@ theorem behavioralTableDeviationHistoryLawAlong_eq
               rw [BehavioralProfile.toHistoryPolicy_of_chance
                 G mappedDeviation current
                 hterminal hmover]
+              exact FiniteLaw.Equivalent.refl _
           | some mover =>
+              let hdecision :=
+                G.observed.base.toArena.isDecision_of_not_isTerminal
+                  current.1 hterminal
               rw [BehavioralProfile.toHistoryPolicy_of_mover
                 G sourceDeviation current
                 hterminal mover hmover]
@@ -348,20 +355,13 @@ theorem behavioralTableDeviationHistoryLawAlong_eq
               unfold
                 ObservedGame.BehavioralProfile.actionLawAt
                 ObservedGame.BehavioralStrategy.actionLawAt
-              apply congrArg
-                (fun abstractLaw :
-                    PMF
-                      (G.observed.InfoAction mover
-                        (G.observed.infoAt
-                          current mover hmover hterminal)) =>
-                  abstractLaw.map
-                    (G.observed.actionEquiv
-                      current mover hmover hterminal))
+              apply FiniteLaw.Equivalent.map
               by_cases hmoverWho :
                   mover = who
               · subst mover
                 simp [sourceDeviation,
                   mappedDeviation]
+                exact FiniteLaw.Equivalent.refl _
               · have hmover' :
                     G.observed.base.mover finish =
                       some mover := by
@@ -377,27 +377,23 @@ theorem behavioralTableDeviationHistoryLawAlong_eq
                   ObservedGame.RecallCertificate.behavioralizeMixedProfileFrom,
                   Function.update, hmoverWho]
                 change
-                  profile mover
-                      (G.observed.infoAt
-                        current mover hmover hterminal) =
-                    h.recallCertificate.behavioralizeMixedFrom
+                  (profile mover
+                      (G.observed.representedInfoAt
+                        current mover hmover hdecision)).Equivalent
+                    (h.recallCertificate.behavioralizeMixedFrom
                       G.observed root mover
                       (h.behavioralToMixedStrategy
                         mover (profile mover))
-                      (G.observed.infoAt
-                        current mover hmover hterminal)
+                      (profile mover)
+                      (G.observed.representedInfoAt
+                        current mover hmover hdecision))
                 exact
                   (h.behavioralize_behavioralToMixed_at_append
                     G.observed root suffix mover
                     hmover' hnonterminal'
                     (profile mover)).symm
-        rw [hpolicy]
-        apply congrArg
-          (fun continuation =>
-            (BehavioralProfile.toHistoryPolicy G
-              mappedDeviation current
-              hterminal).bind continuation)
-        funext action
+        apply hpolicy.bind
+        intro action
         have ihAction :=
           ih
             (suffix := suffix.snoc action)
@@ -409,7 +405,7 @@ theorem behavioralTableDeviationHistoryLawAlong_eq
 /-- Payoff-law form of table behavioralization equivalence under an arbitrary
 unilateral behavioral deviation. -/
 theorem behavioralTableDeviationPayoffLaw_eq
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable
         (G.observed.base.isTerminal state)]
@@ -422,17 +418,18 @@ theorem behavioralTableDeviationPayoffLaw_eq
     (target :
       G.observed.BehavioralStrategy who)
     (fuel : ℕ) :
-    G.behavioralStoppedPayoffLawFrom
+    (G.behavioralStoppedPayoffLawFrom
         (Function.update profile who target)
-        current fuel =
-      G.behavioralStoppedPayoffLawFrom
+        current fuel).Equivalent
+      (G.behavioralStoppedPayoffLawFrom
         (Function.update
           (h.mixedToBehavioralProfileAt
             G.observed current
             (h.behavioralToMixedProfile
-              profile))
+              profile)
+            profile)
           who target)
-        current fuel := by
+        current fuel) := by
   have hhistory :=
     G.behavioralTableDeviationHistoryLawAlong_eq
       h profile current who target
@@ -442,17 +439,13 @@ theorem behavioralTableDeviationPayoffLaw_eq
       fuel
   dsimp only at hhistory
   rw [Arena.History.append_nil] at hhistory
-  exact
-    congrArg
-      (fun law =>
-        law.map G.stoppedPayoffAtHistory)
-      hhistory
+  exact hhistory.map G.stoppedPayoffAtHistory
 
 /-- Exact payoff-law realization of an arbitrary unilateral behavioral
 deviation by independently sampling that deviating behavioral strategy's
 complete contingent table. -/
 theorem behavioralDeviationPayoffLaw_eq_mixed
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable
         (G.observed.base.isTerminal state)]
@@ -461,21 +454,26 @@ theorem behavioralDeviationPayoffLaw_eq_mixed
     (current :
       G.observed.base.toArena.HistoryFrom
         G.observed.base.init)
+    (offPath : G.observed.BehavioralProfile)
     (who : N)
     (target :
       G.observed.BehavioralStrategy who)
     (fuel : ℕ) :
-    G.behavioralStoppedPayoffLawFrom
+    (G.behavioralStoppedPayoffLawFrom
         (Function.update
           (h.mixedToBehavioralProfileAt
-            G.observed current profile)
+            G.observed current profile offPath)
           who target)
-        current fuel =
-      G.mixedStoppedPayoffLawFrom
+        current fuel).Equivalent
+      (G.mixedStoppedPayoffLawFrom
         (Function.update profile who
           (h.behavioralToMixedStrategy
             who target))
-        current fuel := by
+        current fuel) := by
+  letI (i : N) (information : G.observed.RepresentedInfo i) :
+      DecidableEq
+        (G.observed.InfoAction i information.1) :=
+    (h.finiteDecisionPresentation i).2 information
   let sourceDeviation :
       G.observed.MixedProfile :=
     Function.update profile who
@@ -485,58 +483,33 @@ theorem behavioralDeviationPayoffLaw_eq_mixed
       G.observed.BehavioralProfile :=
     Function.update
       (h.mixedToBehavioralProfileAt
-        G.observed current profile)
+        G.observed current profile offPath)
       who target
   let realizedBehavior :
       G.observed.BehavioralProfile :=
     h.mixedToBehavioralProfileAt
       G.observed current sourceDeviation
+      (Function.update offPath who target)
   have hhistory :=
     G.behavioralDeviationHistoryLawAlong_eq
-      h profile current who target
+      h profile current offPath who target
       (Arena.History.nil :
         G.observed.base.toArena.History
           current.1 current.1)
       fuel
   dsimp only at hhistory
   rw [Arena.History.append_nil] at hhistory
-  calc
-    G.behavioralStoppedPayoffLawFrom
-        targetBehavior current fuel =
-      (G.observed.base.toArena.stochasticHistoryPMFFrom
-        (BehavioralProfile.toHistoryPolicy G
-          targetBehavior)
-        current fuel).map
-          G.stoppedPayoffAtHistory :=
-      rfl
-    _ =
-      (G.observed.base.toArena.stochasticHistoryPMFFrom
-        (BehavioralProfile.toHistoryPolicy G
-          realizedBehavior)
-        current fuel).map
-          G.stoppedPayoffAtHistory := by
-      exact
-        congrArg
-          (fun law =>
-            law.map G.stoppedPayoffAtHistory)
-          hhistory
-    _ =
-      G.behavioralStoppedPayoffLawFrom
-        realizedBehavior current fuel :=
-      rfl
-    _ =
-      G.mixedStoppedPayoffLawFrom
-        sourceDeviation current fuel := by
-      exact
-        (G.mixedToBehavioral_stoppedPayoffLawFrom
-          h.recallCertificate sourceDeviation
-          current fuel).symm
+  exact
+    (hhistory.map G.stoppedPayoffAtHistory).trans
+      (G.mixedToBehavioral_stoppedPayoffLawFrom
+        h.recallCertificate sourceDeviation
+        (Function.update offPath who target)
+        current fuel).symm
 
-/-- The finite perfect-recall hypotheses construct the complete root-scoped
-mixed-to-behavioral realization certificate, including semantic coverage of
-all unilateral behavioral deviations. -/
-noncomputable def finiteKuhnMixedBehavioralRealizationAt
-    [Fintype N] [DecidableEq N]
+/-- The finite perfect-recall hypotheses give root-scoped semantic
+realization, including coverage of all unilateral behavioral deviations. -/
+theorem finiteKuhnMixedBehavioralRealizationAt
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable
         (G.observed.base.isTerminal state)]
@@ -544,25 +517,37 @@ noncomputable def finiteKuhnMixedBehavioralRealizationAt
     (current :
       G.observed.base.toArena.HistoryFrom
         G.observed.base.init)
+    (offPath : G.observed.BehavioralProfile)
     (fuel : ℕ) :
-    G.MixedBehavioralRealizationAt
-      current fuel where
-  behavioralize :=
-    fun i strategy =>
-      h.recallCertificate.behavioralizeMixedFrom
-        G.observed current i strategy
-  map_payoffLaw := by
-    intro profile
-    exact
-      (G.mixedToBehavioral_stoppedPayoffLawFrom
-        h.recallCertificate profile
-        current fuel).symm
-  realize_deviation := by
-    intro profile i target
-    exact
-      ⟨h.behavioralToMixedStrategy i target,
-        G.behavioralDeviationPayoffLaw_eq_mixed
-          h profile current i target fuel⟩
+    ∀ profile : G.observed.MixedProfile,
+      (G.behavioralStoppedPayoffLawFrom
+        (h.mixedToBehavioralProfileAt
+          G.observed current profile offPath)
+        current fuel).Equivalent
+        (G.mixedStoppedPayoffLawFrom profile current fuel) ∧
+      ∀ (i : N) (target : G.observed.BehavioralStrategy i),
+        ∃ source : G.observed.MixedStrategy i,
+          (G.behavioralStoppedPayoffLawFrom
+            (Function.update
+              (h.mixedToBehavioralProfileAt
+                G.observed current profile offPath)
+              i target)
+            current fuel).Equivalent
+          (G.mixedStoppedPayoffLawFrom
+            (Function.update profile i source)
+            current fuel) := by
+  letI (i : N) (information : G.observed.RepresentedInfo i) :
+      DecidableEq
+        (G.observed.InfoAction i information.1) :=
+    (h.finiteDecisionPresentation i).2 information
+  intro profile
+  constructor
+  · exact (G.mixedToBehavioral_stoppedPayoffLawFrom
+      h.recallCertificate profile offPath current fuel).symm
+  · intro i target
+    exact ⟨h.behavioralToMixedStrategy i target,
+      G.behavioralDeviationPayoffLaw_eq_mixed
+        h profile current offPath i target fuel⟩
 
 /-- The behavioral-to-mixed continuation morphism has exact rootwise semantic
 coverage of every arbitrary mixed deviation under finite perfect recall.
@@ -572,7 +557,7 @@ behavioralization of the target mixed plan.  Non-deviating independently
 sampled behavioral tables are replaced by their original behavioral
 strategies using the reachable-history equivalence above. -/
 theorem behavioralToMixedContinuationHom_outcomeDeviationCompleteAt
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable
         (G.observed.base.isTerminal state)]
@@ -580,46 +565,42 @@ theorem behavioralToMixedContinuationHom_outcomeDeviationCompleteAt
     (roots : G.observed.RootPresentation)
     (profile : G.observed.BehavioralProfile)
     (fuel : ℕ) :
-    (G.behavioralToMixedContinuationHom
-      h roots fuel).OutcomeDeviationCompleteAt
-        profile := by
+    ∀ current, roots.IsRoot current →
+      ∀ (i : N) (targetMixed : G.observed.MixedStrategy i),
+        ∃ sourceBehavior : G.observed.BehavioralStrategy i,
+          (G.mixedStoppedPayoffLawFrom
+            (Function.update
+              (h.behavioralToMixedProfile profile)
+              i targetMixed)
+            current fuel).Equivalent
+          (G.behavioralStoppedPayoffLawFrom
+            (Function.update profile i sourceBehavior)
+            current fuel) := by
+  letI (i : N) (information : G.observed.RepresentedInfo i) :
+      DecidableEq
+        (G.observed.InfoAction i information.1) :=
+    (h.finiteDecisionPresentation i).2 information
   intro current _ i targetMixed
-  let sourceBehavior :
-      G.observed.BehavioralStrategy i :=
-    h.recallCertificate.behavioralizeMixedFrom
-      G.observed current i targetMixed
-  refine ⟨sourceBehavior, ?_⟩
-  dsimp only [
-    ContinuationGameForm.Hom.atHom,
-    GameForm.Hom.mapProfile,
-    ContinuationGameForm.toGameForm,
-    behavioralToMixedContinuationHom,
-    behavioralContinuationFamilyOnRoots,
-    mixedContinuationFamilyOnRoots,
-    ObservedGame.FiniteKuhnHypotheses.behavioralToMixedProfile]
-  change
-    G.mixedStoppedPayoffLawFrom
-        (Function.update
-          (h.behavioralToMixedProfile profile)
-          i targetMixed)
-        current fuel =
-      (G.behavioralStoppedPayoffLawFrom
-        (Function.update profile i sourceBehavior)
-        current fuel)
   let mixedDeviation :
       G.observed.MixedProfile :=
     Function.update
       (h.behavioralToMixedProfile profile)
       i targetMixed
+  let sourceBehavior :
+      G.observed.BehavioralStrategy i :=
+    h.mixedToBehavioralProfileAt
+      G.observed current mixedDeviation profile i
+  refine ⟨sourceBehavior, ?_⟩
   let mappedBase :
       G.observed.BehavioralProfile :=
     h.mixedToBehavioralProfileAt
       G.observed current
       (h.behavioralToMixedProfile profile)
+      profile
   let mappedDeviation :
       G.observed.BehavioralProfile :=
     h.mixedToBehavioralProfileAt
-      G.observed current mixedDeviation
+      G.observed current mixedDeviation profile
   have hmapped :
       mappedDeviation =
         Function.update mappedBase
@@ -635,29 +616,21 @@ theorem behavioralToMixedContinuationHom_outcomeDeviationCompleteAt
         mixedDeviation,
         ObservedGame.FiniteKuhnHypotheses.mixedToBehavioralProfileAt,
         Function.update, hji]
-  calc
-    G.mixedStoppedPayoffLawFrom
-        mixedDeviation current fuel =
-      G.behavioralStoppedPayoffLawFrom
-        mappedDeviation current fuel :=
-      G.mixedToBehavioral_stoppedPayoffLawFrom
-        h.recallCertificate mixedDeviation
-        current fuel
-    _ =
-      G.behavioralStoppedPayoffLawFrom
-        (Function.update mappedBase
-          i sourceBehavior)
-        current fuel := by
-      rw [hmapped]
-    _ =
-      G.behavioralStoppedPayoffLawFrom
-        (Function.update profile
-          i sourceBehavior)
-        current fuel := by
-      exact
-        (G.behavioralTableDeviationPayoffLaw_eq
-          h profile current i sourceBehavior
-          fuel).symm
+  apply FiniteLaw.Equivalent.trans
+    (second := G.behavioralStoppedPayoffLawFrom
+      mappedDeviation current fuel)
+  · exact G.mixedToBehavioral_stoppedPayoffLawFrom
+      h.recallCertificate mixedDeviation profile current fuel
+  apply FiniteLaw.Equivalent.trans
+    (second := G.behavioralStoppedPayoffLawFrom
+      (Function.update mappedBase i sourceBehavior)
+      current fuel)
+  · exact FiniteLaw.Equivalent.of_eq (congrArg
+      (fun mapped => G.behavioralStoppedPayoffLawFrom
+        mapped current fuel) hmapped)
+  exact
+    (G.behavioralTableDeviationPayoffLaw_eq
+      h profile current i sourceBehavior fuel).symm
 
 /-- Full bounded Kuhn designated-continuation theorem: under finite perfect
 recall, a behavioral profile is Nash on every presentation-designated
@@ -668,7 +641,7 @@ This discharges the semantic-deviation premise of the earlier conditional Nash o
 bridge; it does not claim a false root-independent strategy-space
 isomorphism. -/
 theorem isBehavioralNashOnRootsAtFuel_iff_mixed
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
     [Preorder V]
     [(state : G.observed.base.State) →
       Decidable
@@ -676,7 +649,9 @@ theorem isBehavioralNashOnRootsAtFuel_iff_mixed
     (h : G.observed.FiniteKuhnHypotheses)
     (roots : G.observed.RootPresentation)
     (utility :
-      PMF (Option (N → U)) → N → V)
+      FiniteLaw (Option (N → U)) → N → V)
+    (hutility : ∀ {left right}, left.Equivalent right →
+      ∀ i, utility left i = utility right i)
     (profile : G.observed.BehavioralProfile)
     (fuel : ℕ) :
     G.IsBehavioralNashOnRootsAtFuel
@@ -687,22 +662,25 @@ theorem isBehavioralNashOnRootsAtFuel_iff_mixed
         fuel := by
   exact
     G.isBehavioralNashOnRootsAtFuel_iff_mixed_of_deviationComplete
-      h roots utility profile fuel
+      h roots utility hutility profile fuel
       (G.behavioralToMixedContinuationHom_outcomeDeviationCompleteAt
         h roots profile fuel)
 
 /-- Constructive root-scoped Kuhn realization gives two-way Nash transfer for
 every utility functional on the complete bounded payoff law. -/
 theorem finiteKuhn_isNash_iff
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
     [Preorder V]
     [(state : G.observed.base.State) →
       Decidable
         (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteKuhnHypotheses)
     (utility :
-      PMF (Option (N → U)) → N → V)
+      FiniteLaw (Option (N → U)) → N → V)
+    (hutility : ∀ {left right}, left.Equivalent right →
+      ∀ i, utility left i = utility right i)
     (profile : G.observed.MixedProfile)
+    (offPath : G.observed.BehavioralProfile)
     (current :
       G.observed.base.toArena.HistoryFrom
         G.observed.base.init)
@@ -713,11 +691,30 @@ theorem finiteKuhn_isNash_iff
         current fuel).IsNash
           utility
       (h.mixedToBehavioralProfileAt
-            G.observed current profile) := by
-  exact
-    (G.finiteKuhnMixedBehavioralRealizationAt
-      h current fuel).isNash_iff
-      utility profile
+            G.observed current profile offPath) := by
+  letI (i : N) (information : G.observed.RepresentedInfo i) :
+      DecidableEq
+        (G.observed.InfoAction i information.1) :=
+    (h.finiteDecisionPresentation i).2 information
+  let realization : G.MixedBehavioralRealizationAt
+      current fuel := {
+    behavioralize := fun i strategy =>
+      h.recallCertificate.behavioralizeMixedFrom
+        G.observed current i strategy (offPath i)
+    map_payoffLaw := by
+      intro sourceProfile
+      exact (G.mixedToBehavioral_stoppedPayoffLawFrom
+        h.recallCertificate sourceProfile offPath current fuel).symm
+    realize_deviation := by
+      intro sourceProfile i target
+      exact ⟨h.behavioralToMixedStrategy i target,
+        G.behavioralDeviationPayoffLaw_eq_mixed
+          h sourceProfile current offPath i target fuel⟩ }
+  simpa [realization,
+    MixedBehavioralRealizationAt.mapProfile,
+    ObservedGame.FiniteKuhnHypotheses.mixedToBehavioralProfileAt,
+    ObservedGame.RecallCertificate.behavioralizeMixedProfileFrom] using
+      realization.isNash_iff utility hutility profile
 
 /-- The finite Kuhn package specializes the broader countably-supported,
 bounded-history realization theorem by supplying its recall certificate.
@@ -726,7 +723,7 @@ Finite information is not consumed by the law equality itself; it is needed
 later for behavioral-deviation coverage and hence the two-way Nash theorem
 above. -/
 theorem finiteKuhn_boundedHistoryLaw_specialization
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable
         (G.observed.base.isTerminal state)]
@@ -735,14 +732,21 @@ theorem finiteKuhn_boundedHistoryLaw_specialization
     (current :
       G.observed.base.toArena.HistoryFrom
         G.observed.base.init)
+    (offPath : G.observed.BehavioralProfile)
     (fuel : ℕ) :
-    G.mixedStoppedHistoryLawFrom profile current fuel =
-      G.observed.base.toArena.stochasticHistoryPMFFrom
+    (G.mixedStoppedHistoryLawFrom profile current fuel).Equivalent
+      (G.observed.base.toArena.stochasticHistoryLawFrom
         (BehavioralProfile.toHistoryPolicy G
-          (h.recallCertificate.behavioralizeMixedProfileFrom
-            G.observed current profile))
-        current fuel :=
-  G.countablySupportedMixedToBehavioral_boundedHistoryLaw
-    h.recallCertificate profile current fuel
+          (h.mixedToBehavioralProfileAt
+            G.observed current profile offPath))
+        current fuel) :=
+  by
+    letI (i : N) (information : G.observed.RepresentedInfo i) :
+        DecidableEq
+          (G.observed.InfoAction i information.1) :=
+      (h.finiteDecisionPresentation i).2 information
+    simpa [ObservedGame.FiniteKuhnHypotheses.mixedToBehavioralProfileAt] using
+      G.countablySupportedMixedToBehavioral_boundedHistoryLaw
+        h.recallCertificate profile offPath current fuel
 
 end ExtensiveGame.ObservedChanceGame
