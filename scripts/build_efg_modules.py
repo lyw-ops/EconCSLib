@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build every governed EFG, GameForm, and direct PMF support module.
+"""Build every governed EFG, GameForm, and direct probability-support module.
 
 The lifecycle table in ``docs/design/efg-module-status.md`` is the only
 hand-maintained module list.  Before invoking Lake, this script checks that
