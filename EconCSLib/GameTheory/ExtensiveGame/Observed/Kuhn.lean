@@ -67,7 +67,7 @@ bounded Kuhn Nash-on-designated-continuations theorems are in `KuhnConditioning`
 ## Source boundary
 
 The finite perfect-recall realization target is [Kuhn 1953, §4, Thm. 4] and
-[MFoGT, Thm. 6.3.4]. The Lean certificates below use discrete `PMF` laws and
+[MFoGT, Thm. 6.3.4]. The Lean certificates below use discrete `FiniteLaw` laws and
 terminal-aware bounded complete-history execution. Root-scoped conditioning,
 deviation-complete law morphisms, and continuation-family transport are
 EconCSLib representation theorems; the citations do not justify an
@@ -85,22 +85,28 @@ Keeping the hypotheses separate from the realization certificate lets the
 base API state generic transfer theorems without baking in one particular
 conditionalization construction. -/
 structure FiniteKuhnHypotheses
-    (G : ObservedGame N U) [DecidableEq N] : Prop where
-  /-- Players remember their own prior information states and actions. -/
-  perfectRecall : G.PerfectRecall
-  /-- Every player has finitely many decision information states. -/
-  finiteInfoState :
-    ∀ i : N, Finite (G.InfoState i)
+    (G : ObservedGame N U) [DecidableEq N] where
+  /-- Executable factorization of remembered own decisions. -/
+  recallCertificate : G.RecallCertificate
+  /-- Explicit represented-information order and executable action equality. -/
+  finiteDecisionPresentation :
+    ∀ i : N,
+      (Σ size : ℕ, G.RepresentedInfo i ≃ Fin size) ×
+        (∀ information : G.RepresentedInfo i,
+          DecidableEq (G.InfoAction i information.1))
 
 /-- The exact hypotheses needed to pre-sample a behavioral profile as
 independent complete contingent plans and prove their local action marginals.
 
 No player equality or recall property is needed at this construction layer. -/
 structure FiniteInformationHypotheses
-    (G : ObservedGame N U) : Prop where
-  /-- Every player has finitely many decision information states. -/
-  finiteInfoState :
-    ∀ i : N, Finite (G.InfoState i)
+    (G : ObservedGame N U) where
+  /-- Explicit represented-information order and executable action equality. -/
+  finiteDecisionPresentation :
+    ∀ i : N,
+      (Σ size : ℕ, G.RepresentedInfo i ≃ Fin size) ×
+        (∀ information : G.RepresentedInfo i,
+          DecidableEq (G.InfoAction i information.1))
 
 /-- The exact structural hypotheses needed to identify pre-sampled complete
 plans with repeated local behavioral execution.
@@ -109,12 +115,15 @@ Unlike `FiniteKuhnHypotheses`, this does not require perfect recall.  It
 requires only the no-repeated-decision-key property consumed by deferred
 sampling, together with finite decision-information types. -/
 structure FiniteNoAbsentMindednessHypotheses
-    (G : ObservedGame N U) [DecidableEq N] : Prop where
+    (G : ObservedGame N U) [DecidableEq N] where
   /-- No player revisits one decision information state along a history. -/
   noAbsentMindedness : G.NoAbsentMindedness
-  /-- Every player has finitely many decision information states. -/
-  finiteInfoState :
-    ∀ i : N, Finite (G.InfoState i)
+  /-- Explicit represented-information order and executable action equality. -/
+  finiteDecisionPresentation :
+    ∀ i : N,
+      (Σ size : ℕ, G.RepresentedInfo i ≃ Fin size) ×
+        (∀ information : G.RepresentedInfo i,
+          DecidableEq (G.InfoAction i information.1))
 
 namespace FiniteEFGHypotheses
 
@@ -125,17 +134,18 @@ hypothesis needed for independent complete-plan sampling. -/
 def toFiniteInformationHypotheses
     (h : G.FiniteEFGHypotheses) :
     G.FiniteInformationHypotheses where
-  finiteInfoState := h.finiteInfoState
+  finiteDecisionPresentation := h.finiteDecisionPresentation
 
-/-- Adding perfect recall to a structural finite-EFG certificate supplies the
-standard hypotheses for root-scoped constructive Kuhn realization. -/
+/-- Adding an explicit recall certificate to a structural finite-EFG
+certificate supplies the standard hypotheses for root-scoped constructive
+Kuhn realization. -/
 def toFiniteKuhnHypotheses
     [DecidableEq N]
     (h : G.FiniteEFGHypotheses)
-    (hPerfectRecall : G.PerfectRecall) :
+    (recallCertificate : G.RecallCertificate) :
     G.FiniteKuhnHypotheses where
-  perfectRecall := hPerfectRecall
-  finiteInfoState := h.finiteInfoState
+  recallCertificate := recallCertificate
+  finiteDecisionPresentation := h.finiteDecisionPresentation
 
 end FiniteEFGHypotheses
 
@@ -150,38 +160,38 @@ This construction is the behavioral-to-mixed half of the finite Kuhn bridge.
 Perfect recall is not needed for the construction or its local marginals; it
 is not needed for the execution comparison either: no-absent-mindedness is the
 strictly weaker property consumed there. -/
-noncomputable def toMixed {i : N}
-    [Fintype (G.InfoState i)]
+def toMixed {i : N}
+    [Fintype (G.RepresentedInfo i)] [LinearOrder (G.RepresentedInfo i)]
     (strategy : G.BehavioralStrategy i) :
     G.MixedStrategy i := by
   change
-    (information : G.InfoState i) →
-      PMF (G.InfoAction i information) at strategy
+    (information : G.RepresentedInfo i) →
+      FiniteLaw (G.InfoAction i information.1) at strategy
   change
-    PMF
-      ((information : G.InfoState i) →
-        G.InfoAction i information)
-  exact PMF.fintypePi strategy
+    FiniteLaw
+      ((information : G.RepresentedInfo i) →
+        G.InfoAction i information.1)
+  exact FiniteLaw.fintypePi strategy
 
 /-- The sampled pure plan has exactly the declared behavioral action law at
 each information state. -/
 theorem toMixed_actionMarginal {i : N}
-    [Fintype (G.InfoState i)]
+    [Fintype (G.RepresentedInfo i)] [LinearOrder (G.RepresentedInfo i)]
     (strategy : G.BehavioralStrategy i)
-    (information : G.InfoState i) :
-    (toMixed G strategy).map
+    (information : G.RepresentedInfo i) :
+    ((toMixed G strategy).map
         (fun pureStrategy =>
-          pureStrategy information) =
-      strategy information := by
+          pureStrategy information)).Equivalent
+      (strategy information) := by
   change
-    (information : G.InfoState i) →
-      PMF (G.InfoAction i information) at strategy
+    (information : G.RepresentedInfo i) →
+      FiniteLaw (G.InfoAction i information.1) at strategy
   change
-    (PMF.fintypePi strategy).map
+    ((FiniteLaw.fintypePi strategy).map
         (fun pureStrategy =>
-          pureStrategy information) =
-      strategy information
-  exact PMF.fintypePi_map_apply
+          pureStrategy information)).Equivalent
+      (strategy information)
+  exact FiniteLaw.fintypePi_map_apply
     strategy information
 
 end BehavioralStrategy
@@ -190,20 +200,22 @@ namespace FiniteInformationHypotheses
 
 variable {G : ObservedGame N U}
 
-/-- Behavioral-to-mixed construction under finite information only. -/
-noncomputable def behavioralToMixedStrategy
+/-- Behavioral-to-mixed construction under an explicit finite decision
+presentation. -/
+def behavioralToMixedStrategy
     (h : G.FiniteInformationHypotheses)
     (i : N)
     (strategy : G.BehavioralStrategy i) :
     G.MixedStrategy i :=
-  letI : Finite (G.InfoState i) :=
-    h.finiteInfoState i
-  letI : Fintype (G.InfoState i) :=
-    Fintype.ofFinite (G.InfoState i)
+  let presentation := (h.finiteDecisionPresentation i).1
+  letI : Fintype (G.RepresentedInfo i) :=
+    Fintype.ofEquiv (Fin presentation.1) presentation.2.symm
+  letI : LinearOrder (G.RepresentedInfo i) :=
+    LinearOrder.lift' presentation.2 presentation.2.injective
   strategy.toMixed G
 
 /-- Independently pre-sample every player's complete contingent plan. -/
-noncomputable def behavioralToMixedProfile
+def behavioralToMixedProfile
     (h : G.FiniteInformationHypotheses)
     (profile : G.BehavioralProfile) :
     G.MixedProfile :=
@@ -216,19 +228,20 @@ theorem behavioralToMixedStrategy_actionMarginal
     (h : G.FiniteInformationHypotheses)
     (i : N)
     (strategy : G.BehavioralStrategy i)
-    (information : G.InfoState i) :
-    (h.behavioralToMixedStrategy i strategy).map
-        (fun pureStrategy => pureStrategy information) =
-      strategy information := by
-  letI : Finite (G.InfoState i) :=
-    h.finiteInfoState i
-  letI : Fintype (G.InfoState i) :=
-    Fintype.ofFinite (G.InfoState i)
+    (information : G.RepresentedInfo i) :
+    ((h.behavioralToMixedStrategy i strategy).map
+        (fun pureStrategy => pureStrategy information)).Equivalent
+      (strategy information) := by
+  let presentation := (h.finiteDecisionPresentation i).1
+  letI : Fintype (G.RepresentedInfo i) :=
+    Fintype.ofEquiv (Fin presentation.1) presentation.2.symm
+  letI : LinearOrder (G.RepresentedInfo i) :=
+    LinearOrder.lift' presentation.2 presentation.2.injective
   exact
     BehavioralStrategy.toMixed_actionMarginal
       G strategy information
 
-/-! The concrete-history forms below still consume only finite information:
+/-! The concrete-history forms below still consume only finite represented information:
 `actionAt` merely realizes the already-sampled abstract action through the
 game's indexed action equivalence. -/
 
@@ -244,54 +257,45 @@ theorem behavioralToMixedStrategy_actionLawAt
       G.base.mover history.1 = some i)
     (hnonterminal :
       ¬ G.base.isTerminal history.1) :
-    (h.behavioralToMixedStrategy
+    ((h.behavioralToMixedStrategy
       i strategy).map
         (fun pureStrategy =>
           pureStrategy.actionAt
-            G history hmover hnonterminal) =
-      strategy.actionLawAt
-        G history hmover hnonterminal := by
+            G history hmover
+              (G.base.toArena.isDecision_of_not_isTerminal _
+                hnonterminal))).Equivalent
+      (strategy.actionLawAt
+        G history hmover hnonterminal) := by
+  let hdecision :=
+    G.base.toArena.isDecision_of_not_isTerminal
+      history.1 hnonterminal
   unfold PureStrategy.actionAt
     BehavioralStrategy.actionLawAt
-  calc
-    (h.behavioralToMixedStrategy
-        i strategy).map
-          (fun pureStrategy =>
-            G.actionEquiv history i hmover hnonterminal
-              (pureStrategy
-                (G.infoAt history i hmover hnonterminal))) =
-        ((h.behavioralToMixedStrategy
-            i strategy).map
-              (fun pureStrategy =>
-                pureStrategy
-                  (G.infoAt history i hmover hnonterminal))).map
-            (G.actionEquiv history i hmover hnonterminal) := by
-      exact
-        (PMF.map_comp
-          (fun pureStrategy =>
-            pureStrategy
-              (G.infoAt history i hmover hnonterminal))
-          (h.behavioralToMixedStrategy
-            i strategy)
-          (G.actionEquiv history i hmover hnonterminal)).symm
-    _ = (strategy
-          (G.infoAt history i hmover hnonterminal)).map
-            (G.actionEquiv history i hmover hnonterminal) := by
-      exact congrArg
-        (fun law :
-          PMF
-            (G.InfoAction i
-              (G.infoAt history i hmover hnonterminal)) =>
-          law.map
-            (G.actionEquiv history i hmover hnonterminal))
-        (h.behavioralToMixedStrategy_actionMarginal
-          i strategy
-          (G.infoAt history i hmover hnonterminal))
+  apply FiniteLaw.Equivalent.trans
+    (second :=
+      ((h.behavioralToMixedStrategy i strategy).map
+        (fun pureStrategy =>
+          pureStrategy
+            (G.representedInfoAt history i hmover hdecision))).map
+        (G.actionEquiv history i hmover hdecision))
+  · apply FiniteLaw.Equivalent.of_eq
+    exact
+      (FiniteLaw.map_comp
+        (fun pureStrategy =>
+          pureStrategy
+            (G.representedInfoAt history i hmover hdecision))
+        (h.behavioralToMixedStrategy i strategy)
+        (G.actionEquiv history i hmover hdecision)).symm
+  · exact
+      (h.behavioralToMixedStrategy_actionMarginal
+        i strategy
+        (G.representedInfoAt history i hmover hdecision)).map
+          (G.actionEquiv history i hmover hdecision)
 
 /-- The independently sampled complete pure profile has the same current
 concrete-action marginal as the source behavioral profile. -/
 theorem behavioralToMixedProfile_actionLawAt
-    [Fintype N]
+    [Fintype N] [LinearOrder N]
     (h : G.FiniteInformationHypotheses)
     (profile : G.BehavioralProfile)
     (history :
@@ -301,46 +305,40 @@ theorem behavioralToMixedProfile_actionLawAt
       G.base.mover history.1 = some i)
     (hnonterminal :
       ¬ G.base.isTerminal history.1) :
-    ((h.behavioralToMixedProfile
+    (((h.behavioralToMixedProfile
         profile).pureProfileLaw G).map
         (fun pureProfile =>
           pureProfile.actionAt
-            G history i hmover hnonterminal) =
-      profile.actionLawAt
-        G history i hmover hnonterminal := by
+            G history i hmover
+              (G.base.toArena.isDecision_of_not_isTerminal _
+                hnonterminal))).Equivalent
+      (profile.actionLawAt
+        G history i hmover hnonterminal) := by
   unfold MixedProfile.pureProfileLaw
-  calc
-    (PMF.fintypePi
+  apply FiniteLaw.Equivalent.trans
+    (second :=
+      ((FiniteLaw.fintypePi
         (h.behavioralToMixedProfile profile)).map
-          (fun pureProfile =>
-            PureProfile.actionAt
-              G pureProfile history i hmover hnonterminal) =
-        ((PMF.fintypePi
-          (h.behavioralToMixedProfile profile)).map
-            (fun pureProfile =>
-              pureProfile i)).map
+          (fun pureProfile => pureProfile i)).map
+        (fun pureStrategy =>
+          PureStrategy.actionAt G pureStrategy history hmover
+            (G.base.toArena.isDecision_of_not_isTerminal _ hnonterminal)))
+  · apply FiniteLaw.Equivalent.of_eq
+    exact
+      (FiniteLaw.map_comp
+        (fun pureProfile => pureProfile i)
+        (FiniteLaw.fintypePi (h.behavioralToMixedProfile profile))
+        (fun pureStrategy =>
+          PureStrategy.actionAt G pureStrategy history hmover
+            (G.base.toArena.isDecision_of_not_isTerminal _ hnonterminal))).symm
+  · exact
+      (FiniteLaw.fintypePi_map_apply
+        (h.behavioralToMixedProfile profile) i).map
           (fun pureStrategy =>
-            PureStrategy.actionAt
-              G pureStrategy history hmover hnonterminal) := by
-      exact
-        (PMF.map_comp
-          (fun pureProfile => pureProfile i)
-          (PMF.fintypePi
-            (h.behavioralToMixedProfile profile))
-          (fun pureStrategy =>
-            PureStrategy.actionAt
-              G pureStrategy history hmover hnonterminal)).symm
-    _ = (h.behavioralToMixedStrategy
-          i (profile i)).map
-            (fun pureStrategy =>
-              PureStrategy.actionAt
-                G pureStrategy history hmover hnonterminal) := by
-      rw [PMF.fintypePi_map_apply]
-      rfl
-    _ = profile.actionLawAt
-          G history i hmover hnonterminal :=
-      h.behavioralToMixedStrategy_actionLawAt
-        i (profile i) history hmover hnonterminal
+            PureStrategy.actionAt G pureStrategy history hmover
+              (G.base.toArena.isDecision_of_not_isTerminal _ hnonterminal) ) |>.trans
+        (h.behavioralToMixedStrategy_actionLawAt
+          i (profile i) history hmover hnonterminal)
 
 end FiniteInformationHypotheses
 
@@ -353,10 +351,10 @@ construction hypotheses. -/
 def toFiniteInformationHypotheses
     (h : G.FiniteNoAbsentMindednessHypotheses) :
     G.FiniteInformationHypotheses where
-  finiteInfoState := h.finiteInfoState
+  finiteDecisionPresentation := h.finiteDecisionPresentation
 
 /-- Compatibility wrapper for the finite-information construction. -/
-noncomputable def behavioralToMixedStrategy
+def behavioralToMixedStrategy
     (h : G.FiniteNoAbsentMindednessHypotheses)
     (i : N)
     (strategy : G.BehavioralStrategy i) :
@@ -364,7 +362,7 @@ noncomputable def behavioralToMixedStrategy
   h.toFiniteInformationHypotheses.behavioralToMixedStrategy i strategy
 
 /-- Compatibility wrapper for independently sampled complete profiles. -/
-noncomputable def behavioralToMixedProfile
+def behavioralToMixedProfile
     (h : G.FiniteNoAbsentMindednessHypotheses)
     (profile : G.BehavioralProfile) :
     G.MixedProfile :=
@@ -375,10 +373,10 @@ theorem behavioralToMixedStrategy_actionMarginal
     (h : G.FiniteNoAbsentMindednessHypotheses)
     (i : N)
     (strategy : G.BehavioralStrategy i)
-    (information : G.InfoState i) :
-    (h.behavioralToMixedStrategy i strategy).map
-        (fun pureStrategy => pureStrategy information) =
-      strategy information :=
+    (information : G.RepresentedInfo i) :
+    ((h.behavioralToMixedStrategy i strategy).map
+        (fun pureStrategy => pureStrategy information)).Equivalent
+      (strategy information) :=
   h.toFiniteInformationHypotheses.behavioralToMixedStrategy_actionMarginal
     i strategy information
 
@@ -393,16 +391,18 @@ theorem behavioralToMixedStrategy_actionLawAt
       G.base.mover history.1 = some i)
     (hnonterminal :
       ¬ G.base.isTerminal history.1) :
-    (h.behavioralToMixedStrategy i strategy).map
+    ((h.behavioralToMixedStrategy i strategy).map
         (fun pureStrategy =>
-          pureStrategy.actionAt G history hmover hnonterminal) =
-      strategy.actionLawAt G history hmover hnonterminal :=
+          pureStrategy.actionAt G history hmover
+            (G.base.toArena.isDecision_of_not_isTerminal _
+              hnonterminal))).Equivalent
+      (strategy.actionLawAt G history hmover hnonterminal) :=
   h.toFiniteInformationHypotheses.behavioralToMixedStrategy_actionLawAt
     i strategy history hmover hnonterminal
 
 /-- Compatibility wrapper for the complete-profile concrete marginal. -/
 theorem behavioralToMixedProfile_actionLawAt
-    [Fintype N]
+    [Fintype N] [LinearOrder N]
     (h : G.FiniteNoAbsentMindednessHypotheses)
     (profile : G.BehavioralProfile)
     (history :
@@ -412,10 +412,12 @@ theorem behavioralToMixedProfile_actionLawAt
       G.base.mover history.1 = some i)
     (hnonterminal :
       ¬ G.base.isTerminal history.1) :
-    ((h.behavioralToMixedProfile profile).pureProfileLaw G).map
+    (((h.behavioralToMixedProfile profile).pureProfileLaw G).map
         (fun pureProfile =>
-          pureProfile.actionAt G history i hmover hnonterminal) =
-      profile.actionLawAt G history i hmover hnonterminal :=
+          pureProfile.actionAt G history i hmover
+            (G.base.toArena.isDecision_of_not_isTerminal _
+              hnonterminal))).Equivalent
+      (profile.actionLawAt G history i hmover hnonterminal) :=
   h.toFiniteInformationHypotheses.behavioralToMixedProfile_actionLawAt
     profile history i hmover hnonterminal
 
@@ -430,14 +432,14 @@ hypotheses. -/
 def toFiniteInformationHypotheses
     (h : G.FiniteKuhnHypotheses) :
     G.FiniteInformationHypotheses where
-  finiteInfoState := h.finiteInfoState
+  finiteDecisionPresentation := h.finiteDecisionPresentation
 
 /-- The perfect-recall component supplies the no-repeated-information-key
 condition needed by the pre-sampled execution proof. -/
 theorem noAbsentMindedness
     (h : G.FiniteKuhnHypotheses) :
     G.NoAbsentMindedness :=
-  h.perfectRecall.noAbsentMindedness
+  h.recallCertificate.perfectRecall.noAbsentMindedness
 
 /-- Forget perfect recall and retain exactly the assumptions required for the
 behavioral-to-mixed deferred-sampling direction. -/
@@ -445,14 +447,14 @@ def toFiniteNoAbsentMindednessHypotheses
     (h : G.FiniteKuhnHypotheses) :
     G.FiniteNoAbsentMindednessHypotheses where
   noAbsentMindedness := h.noAbsentMindedness
-  finiteInfoState := h.finiteInfoState
+  finiteDecisionPresentation := h.finiteDecisionPresentation
 
 /-- Behavioral-to-mixed construction using the finite-information witness
 stored in the Kuhn hypotheses.
 
 This is a compatibility wrapper around the weaker
 `FiniteNoAbsentMindednessHypotheses` construction. -/
-noncomputable def behavioralToMixedStrategy
+def behavioralToMixedStrategy
     (h : G.FiniteKuhnHypotheses)
     (i : N)
     (strategy : G.BehavioralStrategy i) :
@@ -465,7 +467,7 @@ complete contingent plans.
 
 This is a compatibility wrapper around the weaker
 `FiniteNoAbsentMindednessHypotheses` construction. -/
-noncomputable def behavioralToMixedProfile
+def behavioralToMixedProfile
     (h : G.FiniteKuhnHypotheses)
     (profile : G.BehavioralProfile) :
     G.MixedProfile :=
@@ -478,12 +480,12 @@ theorem behavioralToMixedStrategy_actionMarginal
     (h : G.FiniteKuhnHypotheses)
     (i : N)
     (strategy : G.BehavioralStrategy i)
-    (information : G.InfoState i) :
-    (h.behavioralToMixedStrategy
+    (information : G.RepresentedInfo i) :
+    ((h.behavioralToMixedStrategy
       i strategy).map
         (fun pureStrategy =>
-          pureStrategy information) =
-      strategy information := by
+          pureStrategy information)).Equivalent
+      (strategy information) := by
   exact
     FiniteNoAbsentMindednessHypotheses.behavioralToMixedStrategy_actionMarginal
       h.toFiniteNoAbsentMindednessHypotheses
@@ -501,13 +503,15 @@ theorem behavioralToMixedStrategy_actionLawAt
       G.base.mover history.1 = some i)
     (hnonterminal :
       ¬ G.base.isTerminal history.1) :
-    (h.behavioralToMixedStrategy
+    ((h.behavioralToMixedStrategy
       i strategy).map
         (fun pureStrategy =>
           pureStrategy.actionAt
-            G history hmover hnonterminal) =
-      strategy.actionLawAt
-        G history hmover hnonterminal :=
+            G history hmover
+              (G.base.toArena.isDecision_of_not_isTerminal _
+                hnonterminal))).Equivalent
+      (strategy.actionLawAt
+        G history hmover hnonterminal) :=
   FiniteNoAbsentMindednessHypotheses.behavioralToMixedStrategy_actionLawAt
     h.toFiniteNoAbsentMindednessHypotheses
     i strategy history hmover hnonterminal
@@ -515,7 +519,7 @@ theorem behavioralToMixedStrategy_actionLawAt
 /-- The independently sampled complete pure profile has the same current
 concrete-action marginal as the source behavioral profile. -/
 theorem behavioralToMixedProfile_actionLawAt
-    [Fintype N]
+    [Fintype N] [LinearOrder N]
     (h : G.FiniteKuhnHypotheses)
     (profile : G.BehavioralProfile)
     (history :
@@ -525,13 +529,15 @@ theorem behavioralToMixedProfile_actionLawAt
       G.base.mover history.1 = some i)
     (hnonterminal :
       ¬ G.base.isTerminal history.1) :
-    ((h.behavioralToMixedProfile
+    (((h.behavioralToMixedProfile
         profile).pureProfileLaw G).map
         (fun pureProfile =>
           pureProfile.actionAt
-            G history i hmover hnonterminal) =
-      profile.actionLawAt
-        G history i hmover hnonterminal :=
+            G history i hmover
+              (G.base.toArena.isDecision_of_not_isTerminal _
+                hnonterminal))).Equivalent
+      (profile.actionLawAt
+        G history i hmover hnonterminal) :=
   FiniteNoAbsentMindednessHypotheses.behavioralToMixedProfile_actionLawAt
     h.toFiniteNoAbsentMindednessHypotheses
     profile history i hmover hnonterminal
@@ -548,9 +554,9 @@ variable {N U : Type*}
 
 /-- Bounded mixed contingent-plan continuations on a separately supplied root
 presentation. -/
-noncomputable def mixedContinuationFamilyOnRoots
+def mixedContinuationFamilyOnRoots
     (G : ObservedChanceGame N U)
-    [Fintype N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (roots : G.observed.RootPresentation)
@@ -561,7 +567,7 @@ noncomputable def mixedContinuationFamilyOnRoots
     G.observed.base.toArena.HistoryFrom
       G.observed.base.init
   IsDeclaredRoot := roots.IsRoot
-  Outcome := PMF (Option (N → U))
+  Outcome := FiniteLaw (Option (N → U))
   outcome := fun current profile =>
     G.mixedStoppedPayoffLawFrom profile current fuel
 
@@ -569,7 +575,7 @@ noncomputable def mixedContinuationFamilyOnRoots
 view of the mixed law game form definitionally. -/
 theorem mixedContinuationFamilyOnRoots_toGameForm
     (G : ObservedChanceGame N U)
-    [Fintype N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable
         (G.observed.base.isTerminal state)]
@@ -587,13 +593,13 @@ theorem mixedContinuationFamilyOnRoots_toGameForm
 continuation family. -/
 theorem isMixedNashOnRootsAtFuel_iff_continuationFamily
     (G : ObservedChanceGame N U)
-    [Fintype N] [DecidableEq N] [Preorder V]
+    [Fintype N] [LinearOrder N] [DecidableEq N] [Preorder V]
     [(state : G.observed.base.State) →
       Decidable
         (G.observed.base.isTerminal state)]
     (roots : G.observed.RootPresentation)
     (utility :
-      PMF (Option (N → U)) → N → V)
+      FiniteLaw (Option (N → U)) → N → V)
     (profile : G.observed.MixedProfile)
     (fuel : ℕ) :
     G.IsMixedNashOnRootsAtFuel
@@ -613,7 +619,7 @@ deviation must have the same payoff law as some mixed deviation, but the
 behavioral strategy itself need not lie in the image of `behavioralize`. -/
 structure MixedBehavioralRealizationAt
     (G : ObservedChanceGame N U)
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable
         (G.observed.base.isTerminal state)]
@@ -626,16 +632,17 @@ structure MixedBehavioralRealizationAt
     (i : N) →
       G.observed.MixedStrategy i →
         G.observed.BehavioralStrategy i
-  /-- The mapped complete profile has exactly the source payoff law. -/
+  /-- The mapped complete profile has the same semantic payoff law as the
+  source profile. -/
   map_payoffLaw :
     ∀ profile : G.observed.MixedProfile,
-      G.behavioralStoppedPayoffLawFrom
+      (G.behavioralStoppedPayoffLawFrom
           (fun i => behavioralize i (profile i))
-          current fuel =
-        G.mixedStoppedPayoffLawFrom
-          profile current fuel
-  /-- Every unilateral behavioral deviation is exactly realized by a mixed
-  deviation in the same opponents' context. -/
+          current fuel).Equivalent
+        (G.mixedStoppedPayoffLawFrom
+          profile current fuel)
+  /-- Every unilateral behavioral deviation is semantically realized by a
+  mixed deviation in the same opponents' context. -/
   realize_deviation :
     ∀ (profile : G.observed.MixedProfile)
       (i : N)
@@ -643,20 +650,20 @@ structure MixedBehavioralRealizationAt
         G.observed.BehavioralStrategy i),
       ∃ sourceStrategy :
           G.observed.MixedStrategy i,
-        G.behavioralStoppedPayoffLawFrom
+        (G.behavioralStoppedPayoffLawFrom
             (Function.update
               (fun j => behavioralize j (profile j))
               i targetStrategy)
-            current fuel =
-          G.mixedStoppedPayoffLawFrom
+            current fuel).Equivalent
+          (G.mixedStoppedPayoffLawFrom
             (Function.update profile i sourceStrategy)
-            current fuel
+            current fuel)
 
 namespace MixedBehavioralRealizationAt
 
 variable
     {G : ObservedChanceGame N U}
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable
         (G.observed.base.isTerminal state)]
@@ -666,7 +673,7 @@ variable
     {fuel : ℕ}
 
 /-- Map a complete mixed profile through a root-scoped realization. -/
-noncomputable def mapProfile
+def mapProfile
     (R : G.MixedBehavioralRealizationAt current fuel)
     (profile : G.observed.MixedProfile) :
     G.observed.BehavioralProfile :=
@@ -681,58 +688,49 @@ theorem mapProfile_apply
       R.behavioralize i (profile i) :=
   rfl
 
-/-- The root-scoped certificate induces a law-game morphism from mixed plans
-to behavioral strategies. -/
-noncomputable def lawHom
-    (R : G.MixedBehavioralRealizationAt current fuel) :
-    (G.mixedLawGameForm current fuel).Hom
-      (G.behavioralLawGameForm current fuel) where
-  strategyMap :=
-    R.behavioralize
-  outcomeMap :=
-    id
-  map_outcomeLaw := by
-    intro profile
-    unfold LawGameForm.RealizesVia
-    change
-      (G.mixedStoppedPayoffLawFrom
-        profile current fuel).map id =
-        G.behavioralStoppedPayoffLawFrom
-          (R.mapProfile profile) current fuel
-    rw [PMF.map_id]
-    exact (R.map_payoffLaw profile).symm
+/-- The root-scoped certificate semantically realizes every mixed profile by
+its mapped behavioral profile. -/
+theorem lawHom
+    (R : G.MixedBehavioralRealizationAt current fuel)
+    (profile : G.observed.MixedProfile) :
+    (G.mixedStoppedPayoffLawFrom
+      profile current fuel).Equivalent
+      (G.behavioralStoppedPayoffLawFrom
+        (R.mapProfile profile) current fuel) :=
+  (R.map_payoffLaw profile).symm
 
 /-- The induced law morphism uses the certificate's profile map. -/
 @[simp]
 theorem lawHom_mapProfile
     (R : G.MixedBehavioralRealizationAt current fuel)
     (profile : G.observed.MixedProfile) :
-    R.lawHom.mapProfile profile =
-      R.mapProfile profile :=
-  rfl
+    (G.mixedStoppedPayoffLawFrom
+      profile current fuel).Equivalent
+      (G.behavioralStoppedPayoffLawFrom
+        (R.mapProfile profile) current fuel) :=
+  R.lawHom profile
 
 /-- The root-scoped realization gives exact semantic coverage of all
 behavioral deviation laws. -/
 theorem lawHom_outcomeDeviationCompleteAt
     (R : G.MixedBehavioralRealizationAt current fuel)
     (profile : G.observed.MixedProfile) :
-    R.lawHom.OutcomeDeviationCompleteAt
-      profile := by
+    ∀ (i : N)
+      (targetStrategy : G.observed.BehavioralStrategy i),
+      ∃ sourceStrategy : G.observed.MixedStrategy i,
+        (G.behavioralStoppedPayoffLawFrom
+          (Function.update
+            (R.mapProfile profile)
+            i targetStrategy)
+          current fuel).Equivalent
+        (G.mixedStoppedPayoffLawFrom
+          (Function.update profile i sourceStrategy)
+          current fuel) := by
   intro i targetStrategy
   obtain ⟨sourceStrategy, hrealizes⟩ :=
     R.realize_deviation
       profile i targetStrategy
   refine ⟨sourceStrategy, ?_⟩
-  change
-    G.behavioralStoppedPayoffLawFrom
-        (Function.update
-          (R.mapProfile profile)
-          i targetStrategy)
-        current fuel =
-      (G.mixedStoppedPayoffLawFrom
-        (Function.update profile i sourceStrategy)
-        current fuel).map id
-  rw [PMF.map_id]
   exact hrealizes
 
 /-- Root-scoped realization preserves and reflects Nash equilibrium for every
@@ -741,21 +739,69 @@ theorem isNash_iff
     [Preorder V]
     (R : G.MixedBehavioralRealizationAt current fuel)
     (utility :
-      PMF (Option (N → U)) → N → V)
+      FiniteLaw (Option (N → U)) → N → V)
+    (hutility : ∀ {left right}, left.Equivalent right →
+      ∀ i, utility left i = utility right i)
     (profile : G.observed.MixedProfile) :
     (G.mixedLawGameForm current fuel).IsNash
         utility profile ↔
       (G.behavioralLawGameForm current fuel).IsNash
         utility (R.mapProfile profile) := by
-  apply
-    R.lawHom.isNash_iff_of_outcomeDeviationCompleteAt
-      (profile := profile)
-  · intro law i
-    change utility (law.map id) i = utility law i
-    rw [PMF.map_id]
-  · exact
-      R.lawHom_outcomeDeviationCompleteAt
-        profile
+  constructor
+  · intro hmixed i targetStrategy
+    obtain ⟨sourceStrategy, hdeviation⟩ :=
+      R.realize_deviation profile i targetStrategy
+    have hmixedDeviation := hmixed i sourceStrategy
+    calc
+      utility (G.behavioralStoppedPayoffLawFrom
+          (Function.update (R.mapProfile profile)
+            i targetStrategy) current fuel) i =
+          utility (G.mixedStoppedPayoffLawFrom
+            (Function.update profile i sourceStrategy)
+            current fuel) i :=
+        hutility hdeviation i
+      _ ≤ utility (G.mixedStoppedPayoffLawFrom
+            profile current fuel) i := hmixedDeviation
+      _ = utility (G.behavioralStoppedPayoffLawFrom
+            (R.mapProfile profile) current fuel) i :=
+        (hutility (R.map_payoffLaw profile) i).symm
+  · intro hbehavior i targetStrategy
+    have hbehaviorDeviation :=
+      hbehavior i (R.behavioralize i targetStrategy)
+    have hupdated :
+        R.mapProfile (Function.update profile i targetStrategy) =
+          Function.update (R.mapProfile profile) i
+            (R.behavioralize i targetStrategy) := by
+      funext j
+      by_cases hji : j = i
+      · subst j
+        simp [mapProfile]
+      · simp [mapProfile, hji]
+    have hdeviation :=
+      R.map_payoffLaw (Function.update profile i targetStrategy)
+    change
+      (G.behavioralStoppedPayoffLawFrom
+        (R.mapProfile (Function.update profile i targetStrategy))
+        current fuel).Equivalent
+      (G.mixedStoppedPayoffLawFrom
+        (Function.update profile i targetStrategy)
+        current fuel) at hdeviation
+    rw [hupdated] at hdeviation
+    calc
+      utility (G.mixedStoppedPayoffLawFrom
+          (Function.update profile i targetStrategy)
+          current fuel) i =
+          utility (G.behavioralStoppedPayoffLawFrom
+            (Function.update (R.mapProfile profile) i
+              (R.behavioralize i targetStrategy))
+            current fuel) i :=
+        (hutility hdeviation i).symm
+      _ ≤ utility (G.behavioralStoppedPayoffLawFrom
+            (R.mapProfile profile) current fuel) i :=
+        hbehaviorDeviation
+      _ = utility (G.mixedStoppedPayoffLawFrom
+            profile current fuel) i :=
+        hutility (R.map_payoffLaw profile) i
 
 end MixedBehavioralRealizationAt
 
@@ -769,7 +815,7 @@ it is sufficient for Nash on presentation-designated continuations transfer; `Fi
 to imply it for arbitrary mixed profiles. -/
 structure MixedBehavioralContinuationRealization
     (G : ObservedChanceGame N U)
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable
         (G.observed.base.isTerminal state)]
@@ -814,21 +860,21 @@ namespace MixedBehavioralContinuationRealization
 
 variable
     {G : ObservedChanceGame N U}
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable
         (G.observed.base.isTerminal state)]
     {fuel : ℕ}
 
 /-- Map a complete mixed profile through a continuation-wide realization. -/
-noncomputable def mapProfile
+def mapProfile
     (R : G.MixedBehavioralContinuationRealization fuel)
     (profile : G.observed.MixedProfile) :
     G.observed.BehavioralProfile :=
   fun i => R.behavioralize i (profile i)
 
 /-- Restrict a continuation-wide realization to one root. -/
-noncomputable def atRoot
+def atRoot
     (R : G.MixedBehavioralContinuationRealization fuel)
     (current :
       G.observed.base.toArena.HistoryFrom
@@ -839,15 +885,19 @@ noncomputable def atRoot
     R.behavioralize
   map_payoffLaw :=
     fun profile =>
-      R.map_payoffLaw profile current
+      FiniteLaw.Equivalent.of_eq
+        (R.map_payoffLaw profile current)
   realize_deviation :=
-    fun profile i targetStrategy =>
-      R.realize_deviation
-        profile current i targetStrategy
+    fun profile i targetStrategy => by
+      obtain ⟨sourceStrategy, hsource⟩ :=
+        R.realize_deviation
+          profile current i targetStrategy
+      exact ⟨sourceStrategy,
+        FiniteLaw.Equivalent.of_eq hsource⟩
 
 /-- A continuation-wide realization induces a representation-neutral
 continuation morphism. -/
-noncomputable def continuationHom
+def continuationHom
     (R : G.MixedBehavioralContinuationRealization fuel)
     (roots : G.observed.RootPresentation) :
     (G.mixedContinuationFamilyOnRoots roots fuel).Hom
@@ -906,7 +956,7 @@ theorem isNashOnRootsAtFuel_iff
     (R : G.MixedBehavioralContinuationRealization fuel)
     (roots : G.observed.RootPresentation)
     (utility :
-      PMF (Option (N → U)) → N → V)
+      FiniteLaw (Option (N → U)) → N → V)
     (profile : G.observed.MixedProfile) :
     G.IsMixedNashOnRootsAtFuel
         roots utility profile fuel ↔
