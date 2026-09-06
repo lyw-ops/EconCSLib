@@ -14,7 +14,7 @@ non-atomic kernels.
 -/
 
 #check Arena.WeakSimulation
-#check ExtensiveGame.Arena.Iso.map_stochasticHistoryPMFFrom
+#check ExtensiveGame.Arena.Iso.map_stochasticHistoryLawFrom
 #check ExtensiveGame.ObservedGame.InformationRefinement
 #check KernelArena.Simulation.PolicyMatch
 
