@@ -37,6 +37,38 @@ namespace ExtensiveGame
 
 universe uN uA uS uO uI uP
 
+/-- Minimal decision-information data over a payoff-free controlled game.
+
+This carrier contains no observation or public-signal layer. It is the minimal
+information-set core needed for pure strategies: a controlled Arena, decision
+information, and equivalences between abstract and concrete legal actions. -/
+structure ControlledDecisionGame (N : Type uN) where
+  /-- The payoff-free controlled dynamics. -/
+  base : ControlledGame.{uN, uA, uS} N
+  /-- Player `i`'s decision-information carrier. -/
+  InfoState : N → Type uI
+  /-- Decision information at a genuine decision history controlled by player
+  `i`.
+
+  The constructive `IsDecision` premise supplies an actual legal action. This
+  avoids treating `¬ IsEmpty` as data and makes terminal mover labels
+  semantically irrelevant. -/
+  infoAt :
+    ∀ (history : base.toArena.HistoryFrom base.init) (i : N),
+      base.mover history.1 = some i →
+      base.toArena.IsDecision history.1 →
+      InfoState i
+  /-- Abstract actions at one decision-information state. -/
+  InfoAction : (i : N) → InfoState i → Type uA
+  /-- Abstract information actions are exactly the legal concrete actions at
+  each represented decision history. -/
+  actionEquiv :
+    ∀ (history : base.toArena.HistoryFrom base.init) (i : N)
+      (hmover : base.mover history.1 = some i)
+      (hdecision : base.toArena.IsDecision history.1),
+      InfoAction i (infoAt history i hmover hdecision) ≃
+        base.Action history.1
+
 /-- Observation and decision-information data over a payoff-free controlled
 game.
 
