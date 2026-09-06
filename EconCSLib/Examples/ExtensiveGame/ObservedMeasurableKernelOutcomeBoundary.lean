@@ -98,6 +98,15 @@ def observed : ObservedGame Unit ℝ where
         rw [hstate] at hmover
         contradiction
 
+/-- Executable terminal test shared by role selection and bounded utility. -/
+local instance terminalDecision :
+    (node : observed.base.State) → Decidable (observed.base.isTerminal node) := by
+  intro node
+  change Decidable (IsEmpty (nodeAction node))
+  cases node with
+  | root => exact isFalse (fun h => h.false false)
+  | terminal action => exact isTrue ⟨fun action => nomatch action⟩
+
 abbrev History := ObservedGame.CompleteHistory observed
 
 /-- Empty initial history. -/
@@ -126,10 +135,10 @@ noncomputable def historyModel :
     observed.MeasurableHistoryModel :=
   ObservedGame.MeasurableHistoryModel.discrete observed
 
-noncomputable local instance historyMeasurable : MeasurableSpace History :=
-  historyModel.historyMeasurable
+local instance historyMeasurable : MeasurableSpace History :=
+  ⊤
 
-noncomputable local instance historyMeasurableSingletonClass :
+local instance historyMeasurableSingletonClass :
     MeasurableSingletonClass History where
   measurableSet_singleton :=
     historyModel.singleton_measurable
@@ -224,14 +233,27 @@ def playerInformationSet : Set History :=
 def roles :
     presentation.InformationRoles where
   playerTagMeasurable := ⊤
+  playerTagDecidableEq := inferInstance
   playerTagSingleton_measurable := by
     intro _
     exact MeasurableSpace.measurableSet_top
   terminalInformationSet := fun _ => terminalInformationSet
+  terminalInformationDecidable := fun _ information => by
+    change Decidable (information ∈ terminalInformationSet)
+    letI : Decidable (base.isTerminal information.1) :=
+      terminalDecision information.1
+    unfold terminalInformationSet
+    infer_instance
   terminalInformationSet_measurable := by
     intro _
     exact MeasurableSpace.measurableSet_top
   playerInformationSet := fun _ => playerInformationSet
+  playerInformationDecidable := fun _ information => by
+    change Decidable (information ∈ playerInformationSet)
+    letI : Decidable (base.isTerminal information.1) :=
+      terminalDecision information.1
+    unfold playerInformationSet
+    infer_instance
   playerInformationSet_measurable := by
     intro _
     exact MeasurableSpace.measurableSet_top
@@ -282,7 +304,7 @@ theorem no_nonterminal_chance
           exact ⟨Empty.elim⟩)
 
 /-- Profile assembly with an unreachable zero chance branch. -/
-noncomputable def assembly :
+def assembly :
     presentation.ProfileAssembly where
   toInformationRoles := roles
   chanceAbstractKernel := fun _ => 0
@@ -509,9 +531,9 @@ noncomputable def assembledDeviation :
 /-! ## Strict compiled and path-law witnesses -/
 
 /-- Inhabited initial event prefix. -/
-noncomputable def rootPrefix :
+def rootPrefix :
     AnalyticArena.EventPrefix 0 :=
-  fun _ => AnalyticArena.initialEvent rootHistory
+  fun _ => (rootHistory, Sum.inl ())
 
 @[simp]
 theorem latestEventState_rootPrefix :
@@ -611,9 +633,7 @@ theorem transition_rootBundle
   change
     AnalyticArena.nextMeasure rootHistory action =
       Measure.dirac (terminalHistory action)
-  rw [
-    ObservedGame.MeasurableHistoryModel.toArena_nextMeasure,
-    PMF.toMeasure_pure]
+  rw [ObservedGame.MeasurableHistoryModel.toArena_nextMeasure]
   rfl
 
 /-- The baseline time-one state coordinate is concentrated on the
@@ -743,7 +763,7 @@ theorem assembledDeviation_terminatesBy_one :
 
 /-- The base payoff itself is a measurable bounded extension from terminal
 histories to all complete histories. -/
-noncomputable def terminalPayoff :
+def terminalPayoff :
     ObservedGame.MeasurableHistoryModel.BoundedTerminalPayoffExtension
       observed historyModel where
   payoff := fun _ history =>
@@ -767,11 +787,62 @@ noncomputable def terminalPayoff :
     | terminal action =>
         cases action <;> simp [nodePayoff]
 
-/-- Horizon-one stopped terminal payoff. -/
-noncomputable def evaluation :
+/-- Horizon-one stopped terminal payoff. The concrete fields avoid passing
+the analytic history-model constructor to the runtime evaluator. -/
+def evaluation :
     ObservedGame.MeasurableHistoryModel.BoundedPathUtility
-      historyModel :=
-  terminalPayoff.stoppedBoundedPathUtility 1
+      historyModel where
+  utility := fun i path =>
+    letI : Decidable (base.isTerminal (path 1).1) := terminalDecision (path 1).1
+    if base.isTerminal (path 1).1 then terminalPayoff.payoff i (path 1) else 0
+  utility_measurable := (terminalPayoff.stoppedBoundedPathUtility 1).utility_measurable
+  bound := terminalPayoff.bound
+  norm_utility_le := (terminalPayoff.stoppedBoundedPathUtility 1).norm_utility_le
+
+-- The executable decision reaches both branches. The real-valued checks below
+-- reduce the stopped wrapper; they do not compute an integral or compare reals.
+example : @decide (base.isTerminal rootHistory.1) (terminalDecision _) = false ∧
+    @decide (base.isTerminal (terminalHistory true).1) (terminalDecision _) = true := by
+  native_decide
+
+example : evaluation.utility () (fun _ => rootHistory) = 0 := rfl
+
+example : evaluation.utility () (fun _ => terminalHistory true) = 1 := rfl
+
+section StoppedUtilityChecks
+
+/-- A deliberately nonzero off-terminal extension tests the stopping guard,
+independently of the base game's zero payoff at its root. -/
+private def offTerminalPayoff :
+    ObservedGame.MeasurableHistoryModel.TerminalPayoffExtension
+      observed historyModel where
+  payoff := fun _ history =>
+    match history.1 with
+    | .root => 7
+    | .terminal action => nodePayoff (.terminal action) ()
+  payoff_measurable := by
+    intro _
+    change @Measurable History ℝ ⊤ inferInstance _
+    exact Measurable.of_discrete
+  payoff_eq_base := by
+    intro i history hterminal
+    cases i
+    cases hstate : history.1 with
+    | root =>
+        rw [hstate] at hterminal
+        exact (hterminal.false false).elim
+    | terminal action =>
+        rfl
+
+-- These equalities are checked by kernel reduction, including a guard that
+-- would fail if stopped utility merely returned the supplied payoff.
+example : offTerminalPayoff.payoff () rootHistory = 7 := rfl
+
+example : offTerminalPayoff.stoppedUtility 0 () (fun _ => rootHistory) = 0 := rfl
+
+example : offTerminalPayoff.stoppedUtility 0 () (fun _ => terminalHistory true) = 1 := rfl
+
+end StoppedUtilityChecks
 
 /-- The assembled baseline has expected utility zero. -/
 theorem assembledBaseline_expectedUtility :
