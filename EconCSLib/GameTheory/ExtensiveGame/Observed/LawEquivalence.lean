@@ -23,7 +23,7 @@ predicate records the additional reverse semantic coverage needed for
 two-way equilibrium transfer.
 
 The concrete models below are discrete: chance and strategic randomization
-use `PMF`.  `StrategicMode.analyticGeneral` is only a classification tag for
+use `FiniteLaw`.  `StrategicMode.analyticGeneral` is only a classification tag for
 future measurable semantics; no analytic strategy carrier is constructed or
 claimed here.
 
@@ -69,7 +69,7 @@ structure BoundedCompleteHistorySemantics
     (∀ i, Strategy i) →
       G.observed.base.toArena.HistoryFrom G.observed.base.init →
       ℕ →
-      PMF
+      FiniteLaw
         (G.observed.base.toArena.HistoryFrom
           G.observed.base.init)
 
@@ -89,8 +89,8 @@ def CompleteHistoryLawEquivalentAt
     (current :
       G.observed.base.toArena.HistoryFrom G.observed.base.init)
     (fuel : ℕ) : Prop :=
-  S.historyLaw source current fuel =
-    T.historyLaw target current fuel
+  (S.historyLaw source current fuel).Equivalent
+    (T.historyLaw target current fuel)
 
 /-- Equality after observing any function of the bounded complete history. -/
 def OutcomeLawEquivalentAt
@@ -102,8 +102,8 @@ def OutcomeLawEquivalentAt
     (current :
       G.observed.base.toArena.HistoryFrom G.observed.base.init)
     (fuel : ℕ) : Prop :=
-  (S.historyLaw source current fuel).map observer =
-    (T.historyLaw target current fuel).map observer
+  ((S.historyLaw source current fuel).map observer).Equivalent
+    ((T.historyLaw target current fuel).map observer)
 
 /-- Convert one bounded history to an optional terminal history.
 
@@ -156,7 +156,7 @@ def LawUtilityEquivalentAt
     (S T : G.BoundedCompleteHistorySemantics)
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
-    (utility : PMF (Option (N → U)) → N → V)
+    (utility : FiniteLaw (Option (N → U)) → N → V)
     (source : S.Profile) (target : T.Profile)
     (current :
       G.observed.base.toArena.HistoryFrom G.observed.base.init)
@@ -212,7 +212,7 @@ theorem CompleteHistoryLawEquivalentAt.mappedOutcome
     S.OutcomeLawEquivalentAt T observer
       source target current fuel := by
   unfold OutcomeLawEquivalentAt
-  rw [h]
+  exact h.map observer
 
 /-- Complete-history equality implies optional terminal-history-law
 equality. -/
@@ -257,16 +257,18 @@ theorem PayoffLawEquivalentAt.utility
     {fuel : ℕ}
     (h : S.PayoffLawEquivalentAt T
       source target current fuel)
-    (utility : PMF (Option (N → U)) → N → V) :
+    (utility : FiniteLaw (Option (N → U)) → N → V)
+    (hutility : ∀ {left right}, left.Equivalent right →
+      ∀ i, utility left i = utility right i) :
     S.LawUtilityEquivalentAt T utility
       source target current fuel := by
   intro i
-  rw [h]
+  exact hutility h i
 
 end BoundedCompleteHistorySemantics
 
-/-- Behavioral discrete-PMF complete-history semantics. -/
-noncomputable def behavioralCompleteHistorySemantics
+/-- Behavioral discrete finite-law complete-history semantics. -/
+def behavioralCompleteHistorySemantics
     (G : ObservedChanceGame N U)
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)] :
@@ -275,14 +277,14 @@ noncomputable def behavioralCompleteHistorySemantics
   strategicMode := .behavioral
   chanceSemantics := .discretePMF
   historyLaw profile current fuel :=
-    G.observed.base.toArena.stochasticHistoryPMFFrom
+    G.observed.base.toArena.stochasticHistoryLawFrom
       (BehavioralProfile.toHistoryPolicy G profile)
       current fuel
 
-/-- Mixed discrete-PMF complete-history semantics. -/
-noncomputable def mixedCompleteHistorySemantics
+/-- Mixed discrete finite-law complete-history semantics. -/
+def mixedCompleteHistorySemantics
     (G : ObservedChanceGame N U)
-    [Fintype N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)] :
     G.BoundedCompleteHistorySemantics where
@@ -351,12 +353,12 @@ theorem unilateralHistoryLaw_eq
     (current :
       G.observed.base.toArena.HistoryFrom G.observed.base.init)
     (fuel : ℕ) :
-    S.historyLaw
-        (Function.update profile i deviation) current fuel =
-      T.historyLaw
+    (S.historyLaw
+        (Function.update profile i deviation) current fuel).Equivalent
+      (T.historyLaw
         (Function.update (R.mapProfile profile) i
           (R.mapStrategy i deviation))
-        current fuel := by
+        current fuel) := by
   rw [← R.mapProfile_update profile i deviation]
   exact R.historyLaw_eq
     (Function.update profile i deviation) current fuel
@@ -374,14 +376,14 @@ def TargetDeviationsCoveredAt
     (fuel : ℕ) : Prop :=
   ∀ (i : N) (targetDeviation : T.Strategy i),
     ∃ sourceDeviation : S.Strategy i,
-      T.historyLaw
+      (T.historyLaw
           (Function.update (R.mapProfile profile)
             i targetDeviation)
-          current fuel =
-        T.historyLaw
+          current fuel).Equivalent
+        (T.historyLaw
           (R.mapProfile
             (Function.update profile i sourceDeviation))
-          current fuel
+          current fuel)
 
 end CompleteHistoryLawRealization
 
@@ -393,39 +395,38 @@ profile and every source unilateral deviation.
 
 The equal action/state universe is the existing `FreshQueryTree` execution
 boundary; it is not a restriction on the general observed-game carrier. -/
-noncomputable def behavioralToMixedCompleteHistoryRealization
+theorem behavioralToMixedCompleteHistoryRealization
     (G :
       ObservedChanceGame.{uN, uU, uAS, uAS, uO, uI, uP} N U)
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (h : G.observed.FiniteNoAbsentMindednessHypotheses) :
-    BoundedCompleteHistorySemantics.CompleteHistoryLawRealization
-      G.behavioralCompleteHistorySemantics
-      G.mixedCompleteHistorySemantics := by
-  letI (i : N) : Finite (G.observed.InfoState i) :=
-    h.finiteInfoState i
-  letI (i : N) : Fintype (G.observed.InfoState i) :=
-    Fintype.ofFinite (G.observed.InfoState i)
-  refine
-    { mapStrategy :=
-        fun i strategy =>
-          h.behavioralToMixedStrategy i strategy
-      historyLaw_eq := ?_ }
+    ∀ (profile : G.observed.BehavioralProfile)
+      (current :
+        G.observed.base.toArena.HistoryFrom G.observed.base.init)
+      (fuel : ℕ),
+      (G.behavioralCompleteHistorySemantics.historyLaw
+        profile current fuel).Equivalent
+      (G.mixedCompleteHistorySemantics.historyLaw
+        (h.behavioralToMixedProfile profile) current fuel) := by
   intro profile current fuel
-  exact
-    (G.behavioralToMixed_stoppedHistoryLawFrom_of_noAbsentMindedness
-      h profile current fuel).symm
+  exact (G.behavioralToMixed_stoppedHistoryLawFrom_of_noAbsentMindedness
+    h profile current fuel).symm
 
 /-- Perfect-recall conditional behavioralization gives root-scoped complete
 history-law equivalence for every arbitrary mixed profile. -/
 theorem mixedToBehavioral_completeHistoryLawEquivalentAt
     (G : ObservedChanceGame N U)
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
+    [∀ (i : N) (information : G.observed.RepresentedInfo i),
+      DecidableEq
+        (G.observed.InfoAction i information.1)]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (certificate : G.observed.RecallCertificate)
     (profile : G.observed.MixedProfile)
+    (offPath : G.observed.BehavioralProfile)
     (current :
       G.observed.base.toArena.HistoryFrom G.observed.base.init)
     (fuel : ℕ) :
@@ -433,20 +434,24 @@ theorem mixedToBehavioral_completeHistoryLawEquivalentAt
       G.behavioralCompleteHistorySemantics
       profile
       (certificate.behavioralizeMixedProfileFrom
-        G.observed current profile)
+        G.observed current profile offPath)
       current fuel :=
   G.mixedToBehavioral_stoppedHistoryLawFrom
-    certificate profile current fuel
+    certificate profile offPath current fuel
 
 /-- The mixed-to-behavioral perfect-recall realization preserves optional
 terminal-history laws. -/
 theorem mixedToBehavioral_terminalHistoryLawEquivalentAt
     (G : ObservedChanceGame N U)
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
+    [∀ (i : N) (information : G.observed.RepresentedInfo i),
+      DecidableEq
+        (G.observed.InfoAction i information.1)]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (certificate : G.observed.RecallCertificate)
     (profile : G.observed.MixedProfile)
+    (offPath : G.observed.BehavioralProfile)
     (current :
       G.observed.base.toArena.HistoryFrom G.observed.base.init)
     (fuel : ℕ) :
@@ -454,20 +459,24 @@ theorem mixedToBehavioral_terminalHistoryLawEquivalentAt
       G.behavioralCompleteHistorySemantics
       profile
       (certificate.behavioralizeMixedProfileFrom
-        G.observed current profile)
+        G.observed current profile offPath)
       current fuel :=
   (G.mixedToBehavioral_completeHistoryLawEquivalentAt
-    certificate profile current fuel).terminalHistory
+    certificate profile offPath current fuel).terminalHistory
 
 /-- The mixed-to-behavioral perfect-recall realization preserves optional
 terminal-payoff laws as a consequence of complete-history-law equality. -/
 theorem mixedToBehavioral_payoffLawEquivalentAt
     (G : ObservedChanceGame N U)
-    [Fintype N] [DecidableEq N]
+    [Fintype N] [LinearOrder N]
+    [∀ (i : N) (information : G.observed.RepresentedInfo i),
+      DecidableEq
+        (G.observed.InfoAction i information.1)]
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (certificate : G.observed.RecallCertificate)
     (profile : G.observed.MixedProfile)
+    (offPath : G.observed.BehavioralProfile)
     (current :
       G.observed.base.toArena.HistoryFrom G.observed.base.init)
     (fuel : ℕ) :
@@ -475,9 +484,9 @@ theorem mixedToBehavioral_payoffLawEquivalentAt
       G.behavioralCompleteHistorySemantics
       profile
       (certificate.behavioralizeMixedProfileFrom
-        G.observed current profile)
+        G.observed current profile offPath)
       current fuel :=
   (G.mixedToBehavioral_completeHistoryLawEquivalentAt
-    certificate profile current fuel).payoff
+    certificate profile offPath current fuel).payoff
 
 end ExtensiveGame.ObservedChanceGame
