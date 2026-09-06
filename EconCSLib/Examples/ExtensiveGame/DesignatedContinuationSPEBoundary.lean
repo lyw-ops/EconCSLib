@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
 import EconCSLib.GameTheory.ExtensiveGame.Compiler.GameTreeOccurrenceObserved
+import Mathlib.Tactic.FinCases
 
 /-!
 # EconCSLib.Examples.ExtensiveGame.DesignatedContinuationSPEBoundary
@@ -134,6 +135,7 @@ theorem threat_not_isNashAt_continuation :
     hnash (1 : Player) rewardDeviation rewardDeviation_variant
   norm_num [continuation, outcome_Node, threat, rewardDeviation,
     punishPayoff, rewardPayoff] at hbound
+  omega
 
 /-- The empty complete history. -/
 def initial :
@@ -262,16 +264,16 @@ theorem rootOnly_noChance :
   simpa [rootOnlyObserved] using
     toExtensiveGame_noChanceOnHistories root
 
-theorem rootOnly_pureTerminating :
-    rootOnlyObserved.PureTerminatingOnRoots
-      rootOnly_noChance rootOnlyRoots := by
-  intro current hroot profile
+def rootOnly_pureTerminationPlan :
+    ∀ current, rootOnlyRoots.IsRoot current →
+      rootOnlyObserved.PureTerminationPlanAt rootOnly_noChance current := by
+  intro current hroot
   have hcurrent : current = initial := by
     simpa [rootOnlyObserved] using hroot
   subst current
   simpa [rootOnlyObserved, rootOnly_noChance] using
-    (toObservedGame_pureTerminatingOnAllContinuations
-      root initial trivial profile)
+    (toObservedGame_pureTerminationPlanOnAllContinuations
+      root initial trivial)
 
 /-- The initial-only presentation still admits a nonempty lawful subgame
 system. It is deliberately conservative: its only root is the whole game. -/
@@ -293,28 +295,218 @@ compiler. -/
 def endpointThreatProfile : (toObservedGame root).PureProfile :=
   playerProfileToObservedProfile root (fun _ => threat)
 
+/-- The represented root decision coordinate. -/
+def rootInformation : (toObservedGame root).RepresentedInfo (0 : Player) :=
+  ⟨⟨0, .Leaf quitPayoff, [continuation]⟩, ⟨{
+    history := initial
+    mover := rfl
+    decision :=
+      (toExtensiveGame root).toArena.isDecision_of_not_isTerminal _
+        (toExtensiveGame_not_isTerminal_node root 0
+          (.Leaf quitPayoff) [continuation])
+    infoAt_eq := rfl
+  }⟩⟩
+
+/-- The represented off-path player-`1` decision coordinate. -/
+def continuationInformation :
+    (toObservedGame root).RepresentedInfo (1 : Player) :=
+  ⟨⟨1, .Leaf punishPayoff, [.Leaf rewardPayoff]⟩, ⟨{
+    history := offPath
+    mover := rfl
+    decision :=
+      (toExtensiveGame root).toArena.isDecision_of_not_isTerminal _
+        (toExtensiveGame_not_isTerminal_node root 1
+          (.Leaf punishPayoff) [.Leaf rewardPayoff])
+    infoAt_eq := rfl
+  }⟩⟩
+
+/-- Direct observed execution at the root uses the represented root
+coordinate, independently of the proof object carried by the history. -/
+theorem observedActionAtNode_root_choice
+    (profile : (toObservedGame root).PureProfile)
+    (history :
+      (toExtensiveGame root).toArena.History root
+        (.Node (0 : Player) (.Leaf quitPayoff) [continuation])) :
+    observedActionAtNode root profile 0 (.Leaf quitPayoff) [continuation]
+        history =
+      profile 0 rootInformation := by
+  rfl
+
+/-- Direct observed execution at the off-path node uses its represented
+continuation coordinate for every concrete occurrence history. -/
+theorem observedActionAtNode_continuation_choice
+    (profile : (toObservedGame root).PureProfile)
+    (history :
+      (toExtensiveGame root).toArena.History root
+        (.Node (1 : Player) (.Leaf punishPayoff)
+          [.Leaf rewardPayoff])) :
+    observedActionAtNode root profile 1 (.Leaf punishPayoff)
+        [.Leaf rewardPayoff] history =
+      profile 1 continuationInformation := by
+  rfl
+
+/-- A profile choosing the punishment child at the continuation evaluates to
+the punishment payoff from every concrete history ending there. -/
+theorem observedOutcomeFrom_continuation_eq_punish
+    (profile : (toObservedGame root).PureProfile)
+    (current : (toExtensiveGame root).toArena.HistoryFrom root)
+    (hcurrent : current.1 = continuation)
+    (hchoice :
+      profile 1 continuationInformation =
+        (⟨.Leaf punishPayoff, List.mem_cons_self⟩ :
+          (toObservedGame root).InfoAction 1
+            continuationInformation.1)) :
+    observedOutcomeFrom root profile current = punishPayoff := by
+  rcases current with ⟨state, history⟩
+  simp only at hcurrent
+  subst state
+  change
+    observedOutcomeFrom root profile
+      ⟨.Node (1 : Player) (.Leaf punishPayoff) [.Leaf rewardPayoff],
+        history⟩ = punishPayoff
+  rw [observedOutcomeFrom_node,
+    observedActionAtNode_continuation_choice, hchoice]
+  apply observedOutcomeFrom_eq_of_endpoint_leaf
+  rfl
+
+@[simp]
+theorem threatProfile_root_apply :
+    threatProfile 0 rootInformation =
+      (⟨.Leaf quitPayoff, List.mem_cons_self⟩ :
+        (toObservedGame root).InfoAction 0 rootInformation.1) :=
+  rfl
+
+@[simp]
+theorem threatProfile_continuation_apply :
+    threatProfile 1 continuationInformation =
+      (⟨.Leaf punishPayoff, List.mem_cons_self⟩ :
+        (toObservedGame root).InfoAction 1
+          continuationInformation.1) :=
+  rfl
+
+@[simp]
+theorem endpointThreatProfile_continuation_apply :
+    endpointThreatProfile 1 continuationInformation =
+      (⟨.Leaf punishPayoff, List.mem_cons_self⟩ :
+        (toObservedGame root).InfoAction 1
+          continuationInformation.1) :=
+  rfl
+
+/-- Executable regression: compiling and evaluating the endpoint threat
+profile reaches the immediate-quit payoff. -/
+example :
+    (observedToGameForm root).outcome endpointThreatProfile 0 = 0 ∧
+      (observedToGameForm root).outcome endpointThreatProfile 1 = 0 := by
+  native_decide
+
+@[simp]
+theorem rewardObserved_continuation_apply :
+    playerStrategyToObservedStrategy root 1 rewardDeviation
+        continuationInformation =
+      (⟨.Leaf rewardPayoff,
+        List.mem_cons_of_mem (GameTree.Leaf punishPayoff)
+          List.mem_cons_self⟩ :
+        (toObservedGame root).InfoAction 1
+          continuationInformation.1) := by
+  simp [playerStrategyToObservedStrategy, rewardDeviation,
+    continuationInformation]
+
 /-- The endpoint threat lifted into the occurrence-sensitive strategy
 space. -/
 def occurrenceThreatProfile :
     (toOccurrenceObservedGame root).PureProfile :=
   liftEndpointPureProfile root endpointThreatProfile
 
+example : occurrenceOutcome root occurrenceThreatProfile
+    ⟨root, Arena.History.nil⟩ 0 = 0 := by
+  native_decide
+
 /-- The incredible-threat profile passes the deliberately weak
 designated-continuation predicate because only the initial root is checked. -/
 theorem threat_isNashOnInitialRoot :
     rootOnlyObserved.IsPureNashOnRoots
-      rootOnly_noChance rootOnlyRoots rootOnly_pureTerminating
+      rootOnly_noChance rootOnlyRoots rootOnly_pureTerminationPlan
       (fun payoff => payoff) threatProfile := by
   intro current hroot
   have hcurrent : current = initial := by
     simpa [rootOnlyObserved] using hroot
   subst current
-  have hcompiled :=
-    (terminalContinuationGameForm_isNash_iff_isNashAt
-      root (fun _ => threat) initial).mpr
-        threat_isNashAt_root
-  simpa [rootOnlyObserved, rootOnly_noChance,
-    rootOnly_pureTerminating, threatProfile] using hcompiled
+  intro i deviation
+  let termination := rootOnly_pureTerminationPlan initial
+    (by simpa [rootOnlyRoots, rootOnlyObserved, initial])
+  change
+    (toObservedGame root).terminalPayoffFrom
+        (Function.update threatProfile i deviation)
+        (toExtensiveGame_noChanceOnHistories root) initial
+        (termination.fuel (Function.update threatProfile i deviation))
+        (termination.terminal
+          (Function.update threatProfile i deviation)) i ≤
+      (toObservedGame root).terminalPayoffFrom
+        threatProfile (toExtensiveGame_noChanceOnHistories root) initial
+        (termination.fuel threatProfile)
+        (termination.terminal threatProfile) i
+  rw [terminalPayoffFrom_observedProfile_eq_outcome root,
+    terminalPayoffFrom_observedProfile_eq_outcome root]
+  fin_cases i
+  · change
+      observedOutcomeFrom root
+          (Function.update threatProfile 0 deviation) initial 0 ≤
+        observedOutcomeFrom root threatProfile initial 0
+    simp only [initial, Arena.HistoryFrom.nil]
+    change
+      observedOutcomeFrom root
+          (Function.update threatProfile 0 deviation)
+          ⟨.Node (0 : Player) (.Leaf quitPayoff) [continuation],
+            Arena.History.nil⟩ 0 ≤
+        observedOutcomeFrom root threatProfile
+          ⟨.Node (0 : Player) (.Leaf quitPayoff) [continuation],
+            Arena.History.nil⟩ 0
+    rw [observedOutcomeFrom_node, observedOutcomeFrom_node]
+    rw [observedActionAtNode_root_choice,
+      observedActionAtNode_root_choice]
+    rw [Function.update_self, threatProfile_root_apply]
+    have hchoice :
+        (deviation rootInformation).1 = .Leaf quitPayoff ∨
+          (deviation rootInformation).1 = continuation := by
+      simpa [rootInformation] using (deviation rootInformation).2
+    rcases hchoice with hquit | hcontinue
+    · rw [observedOutcomeFrom_eq_of_endpoint_leaf root _ _
+          quitPayoff hquit,
+        observedOutcomeFrom_eq_of_endpoint_leaf root _ _
+          quitPayoff rfl]
+    · have hupdatedChoice :
+          (Function.update threatProfile 0 deviation)
+              1 continuationInformation =
+            (⟨.Leaf punishPayoff, List.mem_cons_self⟩ :
+              (toObservedGame root).InfoAction 1
+                continuationInformation.1) := by
+        rw [Function.update_of_ne (by decide)]
+        exact threatProfile_continuation_apply
+      rw [observedOutcomeFrom_continuation_eq_punish
+          (Function.update threatProfile 0 deviation) _ hcontinue
+          hupdatedChoice,
+        observedOutcomeFrom_eq_of_endpoint_leaf root _ _
+          quitPayoff rfl]
+      simp [punishPayoff, quitPayoff]
+  · change
+      observedOutcomeFrom root
+          (Function.update threatProfile 1 deviation) initial 1 ≤
+        observedOutcomeFrom root threatProfile initial 1
+    simp only [initial, Arena.HistoryFrom.nil]
+    change
+      observedOutcomeFrom root
+          (Function.update threatProfile 1 deviation)
+          ⟨.Node (0 : Player) (.Leaf quitPayoff) [continuation],
+            Arena.History.nil⟩ 1 ≤
+        observedOutcomeFrom root threatProfile
+          ⟨.Node (0 : Player) (.Leaf quitPayoff) [continuation],
+            Arena.History.nil⟩ 1
+    rw [observedOutcomeFrom_node, observedOutcomeFrom_node]
+    rw [observedActionAtNode_root_choice,
+      observedActionAtNode_root_choice]
+    rw [Function.update_of_ne (by decide)]
+    rw [threatProfile_root_apply]
+    simp [quitPayoff]
 
 /-- Relative to the explicit conservative initial-only lawful system, the
 threat satisfies subgame perfection *on that system* exactly because its sole
@@ -324,7 +516,7 @@ theorem threat_isPureSubgamePerfectOn_rootOnly :
     rootOnlyObserved.IsPureSubgamePerfectOn
       rootOnly_noChance rootOnlySubgameSystem
       (fun current hroot =>
-        rootOnly_pureTerminating current
+        rootOnly_pureTerminationPlan current
           (by simpa [rootOnlyRoots, rootOnlySubgameSystem] using hroot))
       (fun payoff => payoff) threatProfile := by
   intro current hroot
@@ -337,16 +529,55 @@ ordinary all-history endpoint compiler. -/
 theorem threat_fails_offPath_continuation :
     ¬ ((toObservedGame root).terminalContinuationGameForm
         (toExtensiveGame_noChanceOnHistories root) offPath
-        ((toObservedGame_pureTerminatingOnAllContinuations root)
+        ((toObservedGame_pureTerminationPlanOnAllContinuations root)
           offPath trivial)).IsNash
       (fun payoff : Player → ℤ => payoff)
       (playerProfileToObservedProfile root
         (fun _ => threat)) := by
-  simpa [offPath] using
-    (not_congr
-      (terminalContinuationGameForm_isNash_iff_isNashAt
-        root (fun _ => threat) offPath)).mpr
-        threat_not_isNashAt_continuation
+  intro hnash
+  have hbound :=
+    hnash (1 : Player)
+      (playerStrategyToObservedStrategy root 1 rewardDeviation)
+  let termination :=
+    toObservedGame_pureTerminationPlanOnAllContinuations
+      root offPath trivial
+  change
+    (toObservedGame root).terminalPayoffFrom
+        (Function.update endpointThreatProfile 1
+          (playerStrategyToObservedStrategy root 1 rewardDeviation))
+        (toExtensiveGame_noChanceOnHistories root) offPath
+        (termination.fuel
+          (Function.update endpointThreatProfile 1
+            (playerStrategyToObservedStrategy root 1 rewardDeviation)))
+        (termination.terminal
+          (Function.update endpointThreatProfile 1
+            (playerStrategyToObservedStrategy root 1 rewardDeviation))) 1 ≤
+      (toObservedGame root).terminalPayoffFrom
+        endpointThreatProfile
+        (toExtensiveGame_noChanceOnHistories root) offPath
+        (termination.fuel endpointThreatProfile)
+        (termination.terminal endpointThreatProfile) 1
+    at hbound
+  rw [terminalPayoffFrom_observedProfile_eq_outcome root,
+    terminalPayoffFrom_observedProfile_eq_outcome root] at hbound
+  change
+    observedOutcomeFrom root
+        (Function.update endpointThreatProfile 1
+          (playerStrategyToObservedStrategy root 1 rewardDeviation))
+        offPath 1 ≤
+      observedOutcomeFrom root endpointThreatProfile offPath 1
+    at hbound
+  simp only [offPath, continuation, observedOutcomeFrom_node] at hbound
+  rw [observedActionAtNode_continuation_choice,
+    observedActionAtNode_continuation_choice,
+    Function.update_self,
+    rewardObserved_continuation_apply] at hbound
+  rw [endpointThreatProfile_continuation_apply] at hbound
+  rw [observedOutcomeFrom_eq_of_endpoint_leaf root _ _ rewardPayoff rfl,
+    observedOutcomeFrom_eq_of_endpoint_leaf root _ _ punishPayoff rfl]
+    at hbound
+  norm_num [rewardPayoff, punishPayoff] at hbound
+  omega
 
 /-- The lifted threat fails standard all-history SPE in the canonical
 occurrence-sensitive compiler.
@@ -359,7 +590,7 @@ theorem occurrenceThreat_not_isPureStandardSubgamePerfect :
     ¬ (toOccurrenceObservedGame root).IsPureStandardSubgamePerfect
       (toExtensiveGame_noChanceOnHistories root)
       (occurrenceCompleteSubgameSystem root)
-      (toOccurrenceObservedGame_pureTerminatingOn root)
+      (toOccurrenceObservedGame_pureTerminationPlanOn root)
       (fun payoff : Player → ℤ => payoff)
       occurrenceThreatProfile := by
   intro hspe
@@ -367,7 +598,7 @@ theorem occurrenceThreat_not_isPureStandardSubgamePerfect :
       (toOccurrenceObservedGame root).IsPureNashOnRoots
           (toExtensiveGame_noChanceOnHistories root)
           (occurrenceAllContinuationRoots root)
-          (toOccurrenceObservedGame_pureTerminatingOnAllContinuations root)
+          (toOccurrenceObservedGame_pureTerminationPlanOnAllContinuations root)
           (fun payoff : Player → ℤ => payoff)
           occurrenceThreatProfile := by
     intro current _hroot
@@ -376,7 +607,7 @@ theorem occurrenceThreat_not_isPureStandardSubgamePerfect :
       (toObservedGame root).IsPureNashOnRoots
         (toExtensiveGame_noChanceOnHistories root)
         (endpointAllContinuationRoots root)
-        (toObservedGame_pureTerminatingOnAllContinuations root)
+        (toObservedGame_pureTerminationPlanOnAllContinuations root)
         (fun payoff : Player → ℤ => payoff)
         endpointThreatProfile :=
     endpoint_isPureNashOnAllContinuations_of_occurrence_lift
