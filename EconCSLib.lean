@@ -31,7 +31,8 @@ import EconCSLib.Math.Convex.FinitePolyhedron
 
 -- Math/Probability
 import EconCSLib.Math.Probability.Blackwell
-import EconCSLib.Math.Probability.PMF
+import EconCSLib.Math.Probability.FiniteLaw
+import EconCSLib.Math.Probability.Effective
 
 -- Math/LinearAlgebra
 import EconCSLib.Math.LinearAlgebra.FourierMotzkin
