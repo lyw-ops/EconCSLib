@@ -88,15 +88,21 @@ def game : ObservedChanceGame Unit Unit where
         rw [hstate]
         exact ⟨Empty.elim⟩
 
-noncomputable local instance terminalDecidable :
+local instance terminalDecidable :
     (state : game.observed.base.State) →
       Decidable (game.observed.base.isTerminal state) :=
-  fun _state => Classical.propDecidable _
+  fun state => match state with
+    | .root => isFalse (fun h => h.false false)
+    | .terminal => isTrue ⟨Empty.elim⟩
 
-noncomputable local instance observedTerminalDecidable :
+local instance observedTerminalDecidable :
     (state : observed.base.State) →
       Decidable (observed.base.isTerminal state) :=
-  fun _state => Classical.propDecidable _
+  terminalDecidable
+
+example : decide (game.observed.base.isTerminal .root) = false ∧
+    decide (observed.base.isTerminal .terminal) = true := by
+  native_decide
 
 /-- Every represented decision is the root and has no prior personal
 decision. -/
@@ -124,24 +130,42 @@ theorem infoState_not_finite :
   change ¬ Finite ℕ
   exact not_finite_iff_infinite.mpr inferInstance
 
-/-- A countably supported mixed plan over the infinite contingent table. -/
-noncomputable def mixedProfile : observed.MixedProfile :=
-  fun _player => PMF.pure (fun _information => false)
+/-- A finitely supported mixed plan over the infinite contingent table. -/
+def mixedProfile : observed.MixedProfile :=
+  fun _player => FiniteLaw.pure (fun _information => false)
+
+local instance actionDecidable
+    (i : Unit) (information : observed.RepresentedInfo i) :
+    DecidableEq (observed.InfoAction i information.1) := by
+  cases i
+  change DecidableEq Bool
+  infer_instance
+
+local instance gameActionDecidable
+    (i : Unit) (information : game.observed.RepresentedInfo i) :
+    DecidableEq (game.observed.InfoAction i information.1) := by
+  cases i
+  change DecidableEq Bool
+  infer_instance
 
 /-- Empty absolute root history. -/
 def root : observed.base.History :=
   Arena.HistoryFrom.nil base.toArena base.init
 
 /-- The beyond-finite theorem applies at every bounded horizon despite the
-infinite declared information carrier. -/
-theorem bounded_history_realization (fuel : ℕ) :
-    game.mixedStoppedHistoryLawFrom mixedProfile root fuel =
-      observed.base.toArena.stochasticHistoryPMFFrom
+infinite declared information carrier.  The caller supplies the behavioral
+assessment used only at zero-mass personal histories. -/
+theorem bounded_history_realization
+    (offPath : observed.BehavioralProfile)
+    (fuel : ℕ) :
+    (game.mixedStoppedHistoryLawFrom
+      mixedProfile root fuel).Equivalent
+      (observed.base.toArena.stochasticHistoryLawFrom
         (ObservedChanceGame.BehavioralProfile.toHistoryPolicy game
           (recallCertificate.behavioralizeMixedProfileFrom
-            observed root mixedProfile))
-        root fuel :=
+            observed root mixedProfile offPath))
+        root fuel) :=
   game.countablySupportedMixedToBehavioral_boundedHistoryLaw
-    recallCertificate mixedProfile root fuel
+    recallCertificate mixedProfile offPath root fuel
 
 end Examples.InfiniteInformationKuhnBoundary
