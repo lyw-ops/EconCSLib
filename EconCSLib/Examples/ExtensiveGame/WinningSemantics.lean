@@ -88,15 +88,23 @@ theorem not_terminal_after (first : Bool) :
     ¬ arena.IsTerminal (.after first) :=
   fun hterminal => hterminal.false false
 
-noncomputable local instance terminalDecidable
+local instance terminalDecidable
     (state : game.base.State) :
     Decidable (game.base.isTerminal state) :=
-  Classical.propDecidable _
+  match state with
+  | .root => isFalse not_terminal_root
+  | .after first => isFalse (not_terminal_after first)
+  | .terminal first second => isTrue (terminal_terminal first second)
 
-noncomputable local instance arenaTerminalDecidable
+local instance arenaTerminalDecidable
     (state : arena.State) :
     Decidable (arena.IsTerminal state) :=
-  Classical.propDecidable _
+  terminalDecidable state
+
+example : decide (game.base.isTerminal .root) = false ∧
+    decide (arena.IsTerminal (.after false)) = false ∧
+    decide (arena.IsTerminal (.terminal false true)) = true := by
+  native_decide
 
 theorem noChance : base.NoChance := by
   intro state hnonterminal
@@ -146,6 +154,19 @@ theorem zero_strategic :
 def initial : arena.HistoryFrom .root :=
   Arena.HistoryFrom.nil arena .root
 
+/-- The sole represented decision-information coordinate of player `1`. -/
+def oneInformation : game.RepresentedInfo 1 :=
+  game.representedInfoAt initial 1 rfl ⟨false⟩
+
+@[simp]
+theorem representedInfo_one_eq
+    (information : game.RepresentedInfo 1) :
+    information = oneInformation := by
+  apply Subtype.ext
+  change information.1 = ()
+  cases information.1
+  rfl
+
 def afterFalse : arena.HistoryFrom .root :=
   ⟨.after false, initial.2.snoc false⟩
 
@@ -194,13 +215,13 @@ theorem zero_not_pathwise :
   have honeState := congrArg Sigma.fst hone
   simp only [ExtensiveGame.ObservedGame.PureStrategy.actionAt, game] at hzeroState honeState
   change State.after false =
-    State.after (strategy ()) at hzeroState
+    State.after (strategy oneInformation) at hzeroState
   change State.terminal false true =
-    State.terminal false (strategy ()) at honeState
-  have hchosenFalse : strategy () = false := by
+    State.terminal false (strategy oneInformation) at honeState
+  have hchosenFalse : strategy oneInformation = false := by
     injection hzeroState with h
     exact h.symm
-  have hchosenTrue : strategy () = true := by
+  have hchosenTrue : strategy oneInformation = true := by
     injection honeState with _ h
     exact h.symm
   rw [hchosenFalse] at hchosenTrue
