@@ -316,4 +316,54 @@ theorem expectRat_eq_integral
 
 end ExactLaw
 
+/-- Correctness of an effective preimage compiler with respect to a concrete
+measurable function. -/
+structure EffectiveMap.Represents
+    {SourceCode : Type uEvent} {TargetCode : Type vEvent}
+    {α : Type uα} {β : Type uβ} [MeasurableSpace α] [MeasurableSpace β]
+    (mapping : EffectiveMap SourceCode TargetCode)
+    (sourceSemantics : EventSemantics SourceCode α)
+    (targetSemantics : EventSemantics TargetCode β)
+    (f : α → β) : Prop where
+  /-- Concrete map used by the semantic pushforward. -/
+  measurable : Measurable f
+  /-- Compiled source code denotes the concrete preimage. -/
+  preimage : ∀ event,
+    sourceSemantics.denote (mapping.preimage event) =
+      f ⁻¹' targetSemantics.denote event
+
+namespace EffectiveLaw.Represents
+
+variable {SourceCode : Type uEvent} {TargetCode : Type vEvent}
+variable {α : Type uα} {β : Type uβ}
+variable [MeasurableSpace α] [MeasurableSpace β]
+
+/-- Effective pushforward preserves representation when the event compiler
+denotes measurable preimages. -/
+theorem map {law : EffectiveLaw SourceCode}
+    {mapping : EffectiveMap SourceCode TargetCode}
+    {sourceSemantics : EventSemantics SourceCode α}
+    {targetSemantics : EventSemantics TargetCode β}
+    {μ : Measure α} {f : α → β}
+    (hlaw : law.Represents sourceSemantics μ)
+    (hmapping : mapping.Represents sourceSemantics targetSemantics f) :
+    (law.map mapping).Represents targetSemantics (μ.map f) := by
+  letI : IsProbabilityMeasure μ := hlaw.isProbabilityMeasure
+  refine
+    { isProbabilityMeasure :=
+        Measure.isProbabilityMeasure_map hmapping.measurable.aemeasurable
+      mass := ?_ }
+  intro event
+  refine (hlaw.mass (mapping.preimage event)).congr ?_
+  have hmeasure :
+      (μ.map f).real (targetSemantics.denote event) =
+        μ.real (f ⁻¹' targetSemantics.denote event) := by
+    simp only [Measure.real]
+    rw [Measure.map_apply hmapping.measurable
+      (targetSemantics.measurable_denote event)]
+  rw [hmapping.preimage event]
+  exact hmeasure.symm
+
+end EffectiveLaw.Represents
+
 end EffectiveProbability
