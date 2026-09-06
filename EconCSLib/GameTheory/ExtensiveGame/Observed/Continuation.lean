@@ -477,7 +477,7 @@ variable {N U : Type*}
 
 /-- The bounded behavioral continuation family on a separately supplied root
 presentation. -/
-noncomputable def behavioralContinuationFamilyOnRoots
+def behavioralContinuationFamilyOnRoots
     (G : ObservedChanceGame N U)
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
@@ -489,7 +489,7 @@ noncomputable def behavioralContinuationFamilyOnRoots
     G.observed.base.toArena.HistoryFrom
       G.observed.base.init
   IsDeclaredRoot := roots.IsRoot
-  Outcome := PMF (Option (N → U))
+  Outcome := FiniteLaw (Option (N → U))
   outcome := fun current profile =>
     G.behavioralStoppedPayoffLawFrom profile current fuel
 
@@ -521,7 +521,7 @@ theorem isBehavioralNashOnRootsAtFuel_iff_continuationFamily
         (G.observed.base.isTerminal state)]
     (roots : G.observed.RootPresentation)
     (utility :
-      PMF (Option (N → U)) → N → V)
+      FiniteLaw (Option (N → U)) → N → V)
     (profile : G.observed.BehavioralProfile)
     (fuel : ℕ) :
     G.IsBehavioralNashOnRootsAtFuel
@@ -537,7 +537,7 @@ variable {G H : ObservedChanceGame N U}
 
 /-- A strict observed chance-EFG isomorphism induces an isomorphism of the
 complete bounded behavioral continuation families. -/
-noncomputable def behavioralContinuationFamilyIso
+def behavioralContinuationFamilyIso
     [(state : G.observed.base.State) →
       Decidable
         (G.observed.base.isTerminal state)]
@@ -585,7 +585,7 @@ theorem behavioralContinuationFamilyIso_utilityCompatible
       e.observedIso.PreservesRootPresentations
         sourceRoots targetRoots)
     (utility :
-      PMF (Option (N → U)) → N → V)
+      FiniteLaw (Option (N → U)) → N → V)
     (fuel : ℕ) :
     (e.behavioralContinuationFamilyIso
       sourceRoots targetRoots hroots fuel).toHom.UtilityCompatible
@@ -602,7 +602,7 @@ variable {G H : ObservedChanceGame N U}
 
 /-- A chance-aware information refinement induces one semantic morphism
 between the complete bounded behavioral continuation families. -/
-noncomputable def behavioralContinuationFamilyHom
+def behavioralContinuationFamilyHom
     [(state : G.observed.base.State) →
       Decidable
         (G.observed.base.isTerminal state)]
@@ -651,7 +651,7 @@ theorem behavioralContinuationFamilyHom_utilityCompatible
       r.observedRefinement.PreservesRootPresentations
         sourceRoots targetRoots)
     (utility :
-      PMF (Option (N → U)) → N → V)
+      FiniteLaw (Option (N → U)) → N → V)
     (fuel : ℕ) :
     (r.behavioralContinuationFamilyHom
       sourceRoots targetRoots hroots fuel).UtilityCompatible
@@ -720,7 +720,7 @@ relational-root continuation simulation.
 
 This is the semantic form used to compose an information refinement after a
 weak/stuttering compiler bridge. -/
-noncomputable def behavioralContinuationFamilySimulation
+def behavioralContinuationFamilySimulation
     [(state : G.observed.base.State) →
       Decidable
         (G.observed.base.isTerminal state)]
