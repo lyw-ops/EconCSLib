@@ -9,7 +9,7 @@ import EconCSLib.GameTheory.ExtensiveGame.Relations.Discrete.Morphism
 /-!
 # Naturality of bounded stochastic history execution
 
-This relation-side module proves exact PMF naturality under a strict
+This relation-side module proves exact FiniteLaw naturality under a strict
 isomorphism of complete-history unfoldings. The execution implementation
 therefore remains independent of the higher Arena relation hierarchy.
 -/
@@ -21,7 +21,7 @@ variable {A B : Arena} {sourceStart : A.State}
 
 /-- Exact naturality of bounded stochastic execution under a strict
 isomorphism of complete-history unfoldings. -/
-theorem map_stochasticHistoryPMFFrom
+theorem map_stochasticHistoryLawFrom
     [(state : A.State) → Decidable (A.IsTerminal state)]
     [(state : B.State) → Decidable (B.IsTerminal state)]
     (e :
@@ -39,62 +39,62 @@ theorem map_stochasticHistoryPMFFrom
           targetPolicy (e.stateEquiv history) htarget)
     (current : A.HistoryFrom sourceStart) :
     ∀ fuel,
-      (A.stochasticHistoryPMFFrom
+      (A.stochasticHistoryLawFrom
           sourcePolicy current fuel).map e.stateEquiv =
-        B.stochasticHistoryPMFFrom
+        B.stochasticHistoryLawFrom
           targetPolicy (e.stateEquiv current) fuel := by
   intro fuel
   induction fuel generalizing current with
   | zero =>
-      exact PMF.pure_map e.stateEquiv current
+      exact FiniteLaw.pure_map e.stateEquiv current
   | succ fuel ih =>
       by_cases hsource : A.IsTerminal current.1
       · have htarget :
             B.IsTerminal (e.stateEquiv current).1 :=
           (e.isTerminal_iff current).mp hsource
-        rw [A.stochasticHistoryPMFFrom_succ_of_terminal
+        rw [A.stochasticHistoryLawFrom_succ_of_terminal
           sourcePolicy current fuel hsource]
-        rw [B.stochasticHistoryPMFFrom_succ_of_terminal
+        rw [B.stochasticHistoryLawFrom_succ_of_terminal
           targetPolicy (e.stateEquiv current)
           fuel htarget]
-        exact PMF.pure_map e.stateEquiv current
+        exact FiniteLaw.pure_map e.stateEquiv current
       · have htarget :
             ¬ B.IsTerminal (e.stateEquiv current).1 :=
           not_congr (e.isTerminal_iff current) |>.mp hsource
-        rw [A.stochasticHistoryPMFFrom_succ_of_not_terminal
+        rw [A.stochasticHistoryLawFrom_succ_of_not_terminal
           sourcePolicy current fuel hsource]
-        rw [B.stochasticHistoryPMFFrom_succ_of_not_terminal
+        rw [B.stochasticHistoryLawFrom_succ_of_not_terminal
           targetPolicy (e.stateEquiv current)
           fuel htarget]
         let sourceLaw := sourcePolicy current hsource
         let targetContinuation :=
           fun action =>
-            B.stochasticHistoryPMFFrom targetPolicy
+            B.stochasticHistoryLawFrom targetPolicy
               ⟨B.next (e.stateEquiv current).1 action,
                 (e.stateEquiv current).2.snoc action⟩
               fuel
         calc
           (sourceLaw.bind
               (fun action =>
-                A.stochasticHistoryPMFFrom sourcePolicy
+                A.stochasticHistoryLawFrom sourcePolicy
                   ⟨A.next current.1 action,
                     current.2.snoc action⟩
                   fuel)).map e.stateEquiv =
             sourceLaw.bind
               (fun action =>
-                (A.stochasticHistoryPMFFrom sourcePolicy
+                (A.stochasticHistoryLawFrom sourcePolicy
                     ⟨A.next current.1 action,
                       current.2.snoc action⟩
                     fuel).map e.stateEquiv) :=
-              PMF.map_bind sourceLaw
+              FiniteLaw.map_bind sourceLaw
                 (fun action =>
-                  A.stochasticHistoryPMFFrom sourcePolicy
+                  A.stochasticHistoryLawFrom sourcePolicy
                     ⟨A.next current.1 action,
                       current.2.snoc action⟩ fuel)
                 e.stateEquiv
           _ = sourceLaw.bind
               (fun action =>
-                B.stochasticHistoryPMFFrom targetPolicy
+                B.stochasticHistoryLawFrom targetPolicy
                   (e.stateEquiv
                     ⟨A.next current.1 action,
                       current.2.snoc action⟩)
@@ -114,13 +114,13 @@ theorem map_stochasticHistoryPMFFrom
             unfold targetContinuation
             apply congrArg
               (fun next =>
-                B.stochasticHistoryPMFFrom
+                B.stochasticHistoryLawFrom
                   targetPolicy next fuel)
             exact e.map_next current action
           _ = (sourceLaw.map
                 (e.actionEquiv current)).bind
               targetContinuation :=
-            (PMF.bind_map sourceLaw
+            (FiniteLaw.bind_map sourceLaw
               (e.actionEquiv current)
               targetContinuation).symm
           _ = (targetPolicy
