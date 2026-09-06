@@ -2,9 +2,10 @@
 
 This is the implementation continuation of
 [`efg-general-foundations-2-strategy.md`](efg-general-foundations-2-strategy.md).
-Section numbering continues from the foundation documents. The theorem and
-delivery roadmap continues in
-[`efg-general-foundations-4-theorem-roadmap.md`](efg-general-foundations-4-theorem-roadmap.md).
+Section numbering continues from the foundation documents. Current gaps and
+future proof targets live in focused boundary notes,
+[`efg-mathematical-provenance.md`](efg-mathematical-provenance.md), and staged
+knowledge nodes rather than a separate delivery roadmap.
 
 Status: Phase A, the foundational Phase B/D carriers, and finite plus
 structurally well-founded perfect-information logical determinacy are
@@ -181,10 +182,9 @@ def ObservedGame.AllDecisionInfoRepresented (G : ObservedGame N U) : Prop :=
     Nonempty (G.DecisionInfoWitness i information)
 ```
 
-The first finite certificate should require full representation. A later
-represented-information subtype is justified only if it supplies exact
-restriction/extension and deviation-coverage theorems for existing total
-strategies.
+`RepresentedInfo` is now the canonical strategy coordinate. Full raw
+representation remains an optional certificate for source formats that need
+it; finite certificates quantify over represented coordinates directly.
 
 ### 14.5 Winning strategies
 
@@ -205,7 +205,7 @@ Quantification over all other player and nature moves gives robust winning.
 Almost-sure winning is defined separately from a generated probability law.
 
 For imperfect information, the selected player's consistency is structural
-because its strategy is indexed by `InfoState`. Opponent coordinates in an
+because its strategy is indexed by `RepresentedInfo`. Opponent coordinates in an
 arbitrary compatible path need not be jointly strategy-consistent. Therefore
 the implemented API also provides `HasStrategicWinningStrategy`, quantifying
 over no-chance pure profiles with a nonvacuous
@@ -289,16 +289,16 @@ profile. Full infinite path-law transfer remains a separate theorem track.
 
 Prove:
 
-- `AllDecisionInfoRepresented` plus finite reachable histories implies finite
-  `InfoState`;
-- full representation plus decision-mover coherence rules out empty action
-  fibers because `actionEquiv` transports a legal decision action;
+- finite represented information, rather than finite raw `InfoState`, is the
+  strategy-space hypothesis;
+- every represented coordinate has a nonempty action fiber directly from its
+  constructive decision witness and `actionEquiv`;
 - signal perfect recall implies the intended current-observation no-forgetting
   law;
 - existing perfect recall remains exactly the own-information/own-action
   condition;
-- restriction to represented information, if added, preserves all executed
-  laws and is deviation-complete.
+- strict morphisms/refinements explicitly transport represented coordinates
+  and their dependent action fibers.
 
 Implemented now: payoff-free classic, private-signal, and public-signal
 factorization certificates; classic and signal no-absent-mindedness theorems;
