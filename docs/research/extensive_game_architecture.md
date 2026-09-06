@@ -391,16 +391,19 @@ The old `TreeShapedFrom` condition quantified over proofs of a proposition,
 It now quantifies over `Arena.History`, so it genuinely asserts at most one
 action history to each state.
 
-### 3. Add a game-bound observed EFG layer
+### 3. Add a game-bound decision layer with optional observations
 
 [`Game.lean`](../../EconCSLib/GameTheory/ExtensiveGame/Observed/Game.lean)
 implements the first wrapper over an Arena game and its histories rather than
-copying transition data.  The prototype deliberately separates:
+copying transition data. The current carrier deliberately separates:
 
+- `ControlledDecisionGame`, which owns decision information and actions
+  without requiring any observation carrier;
 - `Observation i`, defined for every player at every history;
 - `PublicObservation`, also defined at every history;
 - `InfoState i`, indexing player decision information only;
-- `infoAt`, defined when the base mover is `some i`;
+- `infoAt`, defined when the base mover is `some i` and the endpoint carries
+  constructive `IsDecision` evidence;
 - `InfoAction i I`, with an equivalence to the underlying Arena action at each
   represented decision history.
 
@@ -411,17 +414,21 @@ terminal outcome semantics to later layers; for no-chance games it uses the
 base mover and terminal payoff fields, while `ObservedChanceGame` supplies the
 separate chance-law layer.
 
-The action equivalence is load-bearing.  It makes a player's pure strategy have
-the intended game-bound type:
+The action equivalence is load-bearing. A witness-backed subtype removes raw
+information values that do not occur at a real decision, so the strategy types
+are:
 
 ```lean
-PureStrategy G i := (I : G.InfoState i) → G.InfoAction i I
-BehaviorStrategy G i := (I : G.InfoState i) → PMF (G.InfoAction i I)
+PureStrategy G i :=
+  (I : G.RepresentedInfo i) → G.InfoAction i I.1
+BehavioralStrategy G i :=
+  (I : G.RepresentedInfo i) → PMF (G.InfoAction i I.1)
 ```
 
 Thus two histories in the same information state are forced to use the same
 abstract action or distribution.  Proof obligations then show that the
-abstract action is legal at each represented decision history.
+abstract action is legal at each represented decision history. Unused raw
+`InfoState` values do not enlarge or empty the strategy space.
 
 The following should be predicates, not fields stored merely for convenience:
 
@@ -679,7 +686,7 @@ Completed and Lean-checked:
 - Perfect-recall structural layer:
   `ObservedGame.ownDecisionHistory`,
   `HasSingletonInformation`, `HasPerfectRecall`, `PerfectRecall`,
-  `RecallCertificate`, `PerfectRecall.toRecallCertificate`,
+  `RecallCertificate`, `RecallCertificate.perfectRecall`,
   `recallCertificate_nonempty_iff_perfectRecall`,
   `PerfectInformation.perfectRecall`,
   `ObservedGame.Iso.map_ownDecisionHistory`, and
