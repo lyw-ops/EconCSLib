@@ -10,10 +10,11 @@ import EconCSLib.GameTheory.ExtensiveGame.Observed.Controlled.Infrastructure.Wel
 # Payoff-free finite EFG certificates
 
 Structural finite-EFG hypotheses for `ControlledObservedGame`. General
-represented-information and mover-coherence certificates live in
+represented-information and mover-normalization certificates live in
 `Controlled.Infrastructure.WellFormed`; this leaf adds only the assumptions and
 consequences that genuinely require a finite reachable unfolding or a
-structural history-length bound.
+structural history-length bound. Pure-profile inhabitation is already general
+and is therefore not restated under `FiniteEFGHypotheses`.
 -/
 
 namespace ExtensiveGame.ControlledObservedGame
@@ -35,19 +36,21 @@ structure FiniteEFGHypotheses
   hasLengthBound :
     G.base.toArena.HasLengthBoundFrom
       G.base.init lengthBound
-  /-- Each reachable concrete action fiber is finite. -/
+  /-- Explicit enumeration of each reachable concrete action fiber. -/
   finiteAction :
     ∀ history : G.base.History,
-      Finite (G.base.Action history.1)
-  /-- Each information-state carrier is finite. -/
-  finiteInfoState :
-    ∀ i : N, Finite (G.InfoState i)
-  /-- No ghost information states occur. -/
-  allDecisionInfoRepresented :
-    G.AllDecisionInfoRepresented
-  /-- Player labels denote genuine decision nodes. -/
-  decisionMoverCoherent :
-    G.DecisionMoverCoherent
+      Fintype (G.base.Action history.1)
+  /-- Executable presentation of every represented decision carrier.
+
+  The explicit equivalence fixes a stable coordinate order.  Equality on
+  each abstract action fiber is stored as data because finite laws may have
+  an infinite ambient outcome type even though their support is finite.  Raw
+  `InfoState` values that never occur at a decision remain irrelevant. -/
+  finiteDecisionPresentation :
+    ∀ i : N,
+      (Σ size : ℕ, G.RepresentedInfo i ≃ Fin size) ×
+        (∀ information : G.RepresentedInfo i,
+          DecidableEq (G.InfoAction i information.1))
 
 namespace FiniteEFGHypotheses
 
@@ -65,13 +68,6 @@ theorem eventuallyTerminates
     play.EventuallyTerminates :=
   Arena.HasLengthBoundAt.eventuallyTerminates
     h.hasLengthBound play
-
-/-- A finite-EFG certificate supplies an inhabited pure-profile carrier. -/
-theorem nonempty_pureProfile
-    (h : G.FiniteEFGHypotheses) :
-    Nonempty G.PureProfile :=
-  h.allDecisionInfoRepresented.nonempty_pureProfile
-    h.decisionMoverCoherent
 
 end FiniteEFGHypotheses
 
