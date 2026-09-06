@@ -53,10 +53,19 @@ def base : ExtensiveGame Unit Unit where
 def game : ExtensiveGame.ObservedGame Unit Unit :=
   ExtensiveGame.ObservedGame.completeInformation base
 
-noncomputable instance terminalDecidable :
+local instance terminalDecidable :
     (state : game.base.State) →
       Decidable (game.base.isTerminal state) :=
-  fun _state => Classical.dec _
+  fun state => match state with
+    | (false, false) => isFalse (fun h => h.false ())
+    | (false, true) => isTrue ⟨Empty.elim⟩
+    | (true, _) => isFalse (fun h => h.false ())
+
+example : decide (game.base.isTerminal (false, false)) = false ∧
+    decide (game.base.isTerminal (false, true)) = true ∧
+    decide (game.base.isTerminal (true, false)) = false ∧
+    decide (game.base.isTerminal (true, true)) = false := by
+  native_decide
 
 /-- Every complete history from the initial state remains on the reachable
 component. -/
@@ -110,7 +119,7 @@ theorem allDecisionInfoRepresented :
   refine ⟨
     { history := information.1
       mover := information.2.1
-      nonterminal := information.2.2
+      decision := information.2.2
       infoAt_eq := rfl }⟩
 
 /-- Every reachable player-labelled history is the nonterminal root. -/
@@ -126,51 +135,65 @@ theorem decisionMoverCoherent :
   | true =>
       simp [game, base] at hmover
 
-/-- A canonical pure profile exists for the represented one-step decision. -/
-noncomputable def profile : game.PureProfile :=
-  fun _ information =>
-    Classical.choice
-      (allDecisionInfoRepresented.nonempty_infoAction
-        decisionMoverCoherent
-        () information)
+/-- The complete pure profile selects the sole legal action at each decision. -/
+def profile : game.PureProfile := by
+  intro player information
+  rcases information with ⟨⟨⟨⟨ghost, done⟩, history⟩, hmover, hdecision⟩, hrepresented⟩
+  cases ghost with
+  | false =>
+    cases done with
+    | false => exact ()
+    | true => cases hmover
+  | true => exact ()
 
 /-- Reachable no-chance is sufficient to build the canonical pure history
 policy; the unreachable nature state is never queried. -/
-noncomputable def pureHistoryPolicy :
+def pureHistoryPolicy :
     game.base.toArena.HistoryPolicy game.base.init :=
   ExtensiveGame.ControlledObservedGame.PureProfile.toHistoryPolicy
     (G := game.toControlledObservedGame) profile noChanceOnHistories
 
-/-- Every pure profile terminates from the initial history after one step. -/
-theorem pureTerminatesInitially :
-    game.PureTerminatingAt noChanceOnHistories
-      (Arena.HistoryFrom.nil game.base.toArena game.base.init) := by
-  intro arbitraryProfile
-  refine ⟨1, ?_⟩
-  let current :=
-    Arena.HistoryFrom.nil game.base.toArena game.base.init
-  have hnonterminal : ¬game.base.isTerminal current.1 := by
-    change ¬IsEmpty Unit
-    intro hterminal
-    exact hterminal.false ()
-  change game.base.isTerminal
-    (game.stoppedHistoryFrom arbitraryProfile noChanceOnHistories current 1).1
-  rw [ExtensiveGame.ObservedGame.stoppedHistoryFrom]
-  rw [Arena.stoppedHistoryFrom_succ_of_not_terminal
-    (ExtensiveGame.ControlledObservedGame.PureProfile.toHistoryPolicy
-      (G := game.toControlledObservedGame)
-      arbitraryProfile noChanceOnHistories)
-    current 0 hnonterminal]
-  rw [Arena.stoppedHistoryFrom_zero]
-  change IsEmpty Empty
-  infer_instance
+/-- Executable one-step termination plan from the initial history. -/
+def pureTerminationPlanInitially :
+    game.PureTerminationPlanAt noChanceOnHistories
+      (Arena.HistoryFrom.nil game.base.toArena game.base.init) where
+  fuel := fun _profile => 1
+  terminal := by
+    intro arbitraryProfile
+    let current :=
+      Arena.HistoryFrom.nil game.base.toArena game.base.init
+    have hnonterminal : ¬game.base.isTerminal current.1 := by
+      change ¬IsEmpty Unit
+      intro hterminal
+      exact hterminal.false ()
+    change game.base.isTerminal
+      (game.stoppedHistoryFrom arbitraryProfile noChanceOnHistories current 1).1
+    rw [ExtensiveGame.ObservedGame.stoppedHistoryFrom]
+    rw [Arena.stoppedHistoryFrom_succ_of_not_terminal
+      (ExtensiveGame.ControlledObservedGame.PureProfile.toHistoryPolicy
+        (G := game.toControlledObservedGame)
+        arbitraryProfile noChanceOnHistories)
+      current 0 hnonterminal]
+    rw [Arena.stoppedHistoryFrom_zero]
+    change IsEmpty Empty
+    infer_instance
 
 /-- The total pure continuation game form is available from reachable
 no-chance even though the global arena contains an unreachable nature node. -/
-noncomputable def initialContinuationGameForm :
+def initialContinuationGameForm :
     GameForm Unit :=
   game.terminalContinuationGameForm noChanceOnHistories
     (Arena.HistoryFrom.nil game.base.toArena game.base.init)
-    pureTerminatesInitially
+    pureTerminationPlanInitially
+
+-- A zero horizon stays at the root; one actual policy step terminates.
+example :
+    (fun before after : Bool × Bool =>
+      before = (false, false) ∧ after = (false, true))
+    (game.base.toArena.stoppedHistoryFrom pureHistoryPolicy
+      (Arena.HistoryFrom.nil game.base.toArena game.base.init) 0).1
+    (game.base.toArena.stoppedHistoryFrom pureHistoryPolicy
+      (Arena.HistoryFrom.nil game.base.toArena game.base.init) 1).1 := by
+  native_decide
 
 end Examples.ReachableNoChance
