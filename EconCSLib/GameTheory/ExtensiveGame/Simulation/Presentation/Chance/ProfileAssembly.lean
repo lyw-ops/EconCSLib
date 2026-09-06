@@ -7,7 +7,7 @@ import EconCSLib.GameTheory.ExtensiveGame.Simulation.Presentation.Chance.Measura
 import EconCSLib.GameTheory.ExtensiveGame.Simulation.Presentation.Kernel.ProfileAssembly
 
 /-!
-# Presentation.Chance.ProfileAssembly — PMF player-profile assembly
+# Presentation.Chance.ProfileAssembly — finite-law player-profile assembly
 
 This module is the exact compatibility seam between the established
 `ObservedChanceGame.MeasurablePresentation` API and the general measurable
@@ -18,7 +18,7 @@ measurable ownership cannot be recovered from the old local correctness
 equations alone. Given that certificate and one reference behavioral profile,
 `profileAssembly` reuses the old profile's fixed abstract chance lift.
 
-Every old PMF behavioral profile can then be split into tagged player kernels
+Every finite-law behavioral profile can then be split into tagged player kernels
 and reassembled. The resulting compiled event policy is exactly the old
 compiled policy.
 -/
@@ -37,10 +37,10 @@ variable
   {G : ObservedChanceGame N U}
   {model : MeasurableHistoryModel G}
 
-/-- Construct measurable player-profile assembly data for an old PMF
+/-- Construct measurable player-profile assembly data for a finite-law
 presentation. The reference profile supplies only the abstract chance lift;
 the realized chance law remains the presentation's fixed law. -/
-noncomputable def profileAssembly
+def profileAssembly
     (presentation : MeasurablePresentation G model)
     (roles :
       presentation.toKernelPresentation.InformationRoles)
@@ -50,7 +50,7 @@ noncomputable def profileAssembly
     roles
     (presentation.toKernelBehavioralProfile reference)
 
-/-- Splitting and reassembling an old PMF profile preserves its original
+/-- Splitting and reassembling a finite-law profile preserves its original
 compiled event policy exactly. -/
 theorem profileAssembly_split_reassembly_compiledPolicy
     (presentation : MeasurablePresentation G model)
