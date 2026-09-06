@@ -169,4 +169,65 @@ theorem ext {left right : EffectiveLaw EventCode}
 
 end EffectiveLaw
 
+/-- Exact rational event masses, useful when a symbolic non-atomic model has
+closed-form answers for its selected event language. -/
+structure ExactLaw (EventCode : Type uEvent) where
+  /-- Exact rational mass of one coded event. -/
+  mass : EventCode → ℚ
+
+namespace ExactLaw
+
+variable {EventCode : Type uEvent}
+
+/-- Regard an exact rational law as an arbitrary-precision effective law. -/
+def toEffective (law : ExactLaw EventCode) : EffectiveLaw EventCode where
+  mass event := RatOracle.exact (law.mass event)
+
+/-- Exact expectation of a finite rational observable. -/
+def expectRat (law : ExactLaw EventCode) :
+    SimpleObservable EventCode → ℚ
+  | .const value => value
+  | .indicator event => law.mass event
+  | .add left right => law.expectRat left + law.expectRat right
+  | .scale coefficient observable =>
+      coefficient * law.expectRat observable
+
+@[simp]
+theorem expectRat_const (law : ExactLaw EventCode) (value : ℚ) :
+    law.expectRat (.const value) = value :=
+  rfl
+
+@[simp]
+theorem expectRat_indicator (law : ExactLaw EventCode) (event : EventCode) :
+    law.expectRat (.indicator event) = law.mass event :=
+  rfl
+
+@[simp]
+theorem expectRat_add (law : ExactLaw EventCode)
+    (left right : SimpleObservable EventCode) :
+    law.expectRat (.add left right) =
+      law.expectRat left + law.expectRat right :=
+  rfl
+
+@[simp]
+theorem expectRat_scale (law : ExactLaw EventCode) (coefficient : ℚ)
+    (observable : SimpleObservable EventCode) :
+    law.expectRat (.scale coefficient observable) =
+      coefficient * law.expectRat observable :=
+  rfl
+
+/-- The effective oracle obtained from an exact rational law encloses the
+law's structurally computed exact expectation. -/
+theorem toEffective_expect_encloses (law : ExactLaw EventCode)
+    (observable : SimpleObservable EventCode) :
+    (law.toEffective.expect observable).Encloses
+      (law.expectRat observable) := by
+  induction observable with
+  | const value => exact RatOracle.exact_encloses value
+  | indicator event => exact RatOracle.exact_encloses (law.mass event)
+  | add left right ihLeft ihRight => exact ihLeft.add ihRight
+  | scale coefficient observable ih => exact ih.scale coefficient
+
+end ExactLaw
+
 end EffectiveProbability
