@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
 import EconCSLib.GameTheory.ExtensiveGame.Simulation.Presentation.Kernel.ProfileAssembly
+import EconCSLib.Math.Probability.PMF.ToMeasure
 import Mathlib.MeasureTheory.Constructions.UnitInterval
 
 /-!
@@ -148,7 +149,9 @@ example (i : Bool) (history : History)
     (hnonterminal : ¬ base.isTerminal history.1) :
     observed.observe i history = history ∧
       observed.publicObserve history = () ∧
-      observed.infoAt history i hmover hnonterminal = history := by
+      observed.infoAt history i hmover
+          (base.toArena.isDecision_of_not_isTerminal
+            _ hnonterminal) = history := by
   simp [observed]
 
 /-- The established discrete measurable history model is exact here because
@@ -334,18 +337,37 @@ theorem playerInformationSet_measurable :
   (historySet_measurable playerHistorySet).prod
     MeasurableSet.univ
 
+private def terminalDecision (node : Node) :
+    Decidable (base.isTerminal node) := by
+  change Decidable (IsEmpty (nodeAction node))
+  cases node with
+  | first => exact isFalse (fun h => h.false ())
+  | second => exact isFalse (fun h => h.false ())
+  | terminal => exact isTrue ⟨fun action => nomatch action⟩
+
 /-- Exact measurable role data on history-valued information. -/
 def roles :
     presentation.InformationRoles where
   playerTagMeasurable := ⊤
+  playerTagDecidableEq := inferInstance
   playerTagSingleton_measurable := by
     intro _
     exact MeasurableSpace.measurableSet_top
   terminalInformationSet := fun _ => terminalInformationSet
+  terminalInformationDecidable := fun _ information => by
+    change Decidable (information ∈ terminalInformationSet)
+    letI := terminalDecision information.1.1
+    change Decidable (base.isTerminal information.1.1 ∧ True)
+    infer_instance
   terminalInformationSet_measurable := by
     intro _
     exact terminalInformationSet_measurable
   playerInformationSet := fun _ => playerInformationSet
+  playerInformationDecidable := fun _ information => by
+    change Decidable (information ∈ playerInformationSet)
+    letI := terminalDecision information.1.1
+    change Decidable (¬ base.isTerminal information.1.1 ∧ True)
+    infer_instance
   playerInformationSet_measurable := by
     intro _
     exact playerInformationSet_measurable
@@ -414,7 +436,7 @@ theorem no_nonterminal_chance
           exact ⟨Empty.elim⟩)
 
 /-- Profile assembly with unreachable zero chance law. -/
-noncomputable def assembly :
+def assembly :
     presentation.ProfileAssembly where
   toInformationRoles := roles
   chanceAbstractKernel := fun _ => 0
@@ -721,12 +743,12 @@ noncomputable def deviatedProfile :
 /-! ## Strict witnesses and regression theorems -/
 
 /-- Inhabited root event prefix. -/
-noncomputable def rootPrefix : AnalyticArena.EventPrefix 0 :=
-  fun _ => AnalyticArena.initialEvent rootHistory
+def rootPrefix : AnalyticArena.EventPrefix 0 :=
+  fun _ => (rootHistory, Sum.inl ())
 
 /-- Inhabited second-player event prefix. -/
-noncomputable def secondPrefix : AnalyticArena.EventPrefix 0 :=
-  fun _ => AnalyticArena.initialEvent secondHistory
+def secondPrefix : AnalyticArena.EventPrefix 0 :=
+  fun _ => (secondHistory, Sum.inl ())
 
 @[simp]
 theorem latestEventState_rootPrefix :
