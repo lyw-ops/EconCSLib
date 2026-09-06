@@ -3,10 +3,14 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from scripts.check_efg_governance import (
+    EXPECTED_EFFECTIVE_AGGREGATE_IMPORTS,
     FROZEN_MINIMAL_CORE_STRUCTURES,
-    controlled_observed_universe_mapping_is_valid,
+    controlled_carrier_universe_mapping_is_valid,
     documentation_link_errors,
+    documented_large_efg_modules,
     frozen_structure_digest,
+    large_efg_line_band,
+    semantic_compatibility_source_is_valid,
 )
 
 
@@ -16,6 +20,28 @@ class EFGGovernanceTest(unittest.TestCase):
 
     def test_minimal_core_compatibility_freeze_is_deferred(self):
         self.assertEqual(FROZEN_MINIMAL_CORE_STRUCTURES, {})
+
+    def test_effective_probability_aggregates_keep_pure_and_analytic_split(self):
+        self.assertEqual(
+            EXPECTED_EFFECTIVE_AGGREGATE_IMPORTS[
+                "EconCSLib.Math.Probability.Effective"
+            ],
+            {
+                "EconCSLib.Math.Probability.Effective.Enclosure",
+                "EconCSLib.Math.Probability.Effective.Core",
+                "EconCSLib.Math.Probability.Effective.Uniform",
+            },
+        )
+        self.assertEqual(
+            EXPECTED_EFFECTIVE_AGGREGATE_IMPORTS[
+                "EconCSLib.Math.Probability.Effective.Analytic"
+            ],
+            {
+                "EconCSLib.Math.Probability.Effective",
+                "EconCSLib.Math.Probability.Effective.Semantics",
+                "EconCSLib.Math.Probability.Effective.UniformSemantics",
+            },
+        )
 
     def test_frozen_structure_digest_ignores_comments_and_whitespace(self):
         compact = """\
@@ -72,29 +98,75 @@ namespace Arena
             frozen_structure_digest(source, self.START, self.END)
         )
 
-    def test_controlled_observed_universe_mapping_keeps_action_and_state_separate(
+    def test_controlled_carrier_universe_mapping_keeps_action_and_state_separate(
         self,
     ):
         valid = """\
-structure ControlledObservedGame (N : Type uN) where
+structure ControlledDecisionGame (N : Type uN) where
   base : ControlledGame.{uN, uA, uS} N
   InfoState : N → Type uI
   InfoAction : (i : N) → InfoState i → Type uA
-namespace ControlledObservedGame
+structure ControlledObservedGame (N : Type uN)
+    extends ControlledDecisionGame.{uN, uA, uS, uI} N where
+  Observation : N → Type uO
 """
         state_tied = """\
-structure ControlledObservedGame (N : Type uN) where
+structure ControlledDecisionGame (N : Type uN) where
   base : ControlledGame.{uN, uS, uA} N
   InfoState : N → Type uI
   InfoAction : (i : N) → InfoState i → Type uA
-namespace ControlledObservedGame
+structure ControlledObservedGame (N : Type uN)
+    extends ControlledDecisionGame.{uN, uA, uS, uI} N where
+  Observation : N → Type uO
+"""
+        observed_swapped = """\
+structure ControlledDecisionGame (N : Type uN) where
+  base : ControlledGame.{uN, uA, uS} N
+  InfoState : N → Type uI
+  InfoAction : (i : N) → InfoState i → Type uA
+structure ControlledObservedGame (N : Type uN)
+    extends ControlledDecisionGame.{uN, uS, uA, uI} N where
+  Observation : N → Type uO
 """
 
         self.assertTrue(
-            controlled_observed_universe_mapping_is_valid(valid)
+            controlled_carrier_universe_mapping_is_valid(valid)
         )
         self.assertFalse(
-            controlled_observed_universe_mapping_is_valid(state_tied)
+            controlled_carrier_universe_mapping_is_valid(state_tied)
+        )
+        self.assertFalse(
+            controlled_carrier_universe_mapping_is_valid(observed_swapped)
+        )
+
+    def test_large_efg_line_bands_are_stable(self):
+        self.assertEqual(large_efg_line_band(800), "800-999")
+        self.assertEqual(large_efg_line_band(999), "800-999")
+        self.assertEqual(large_efg_line_band(1000), "1000-1199")
+        self.assertEqual(large_efg_line_band(1200), "1200+")
+        with self.assertRaises(ValueError):
+            large_efg_line_band(799)
+
+    def test_large_file_audit_parser_reports_duplicate_module(self):
+        source = """\
+| Module | Line band | Decision |
+|---|---:|---|
+| `EconCSLib.GameTheory.ExtensiveGame.Observed.Game` | `800-999` | Keep |
+| `EconCSLib.GameTheory.ExtensiveGame.Observed.Game` | `800-999` | Keep |
+"""
+
+        rows, duplicates = documented_large_efg_modules(source)
+
+        self.assertEqual(
+            rows,
+            {
+                "EconCSLib.GameTheory.ExtensiveGame.Observed.Game":
+                    "800-999"
+            },
+        )
+        self.assertEqual(
+            duplicates,
+            {"EconCSLib.GameTheory.ExtensiveGame.Observed.Game"},
         )
 
     def test_documentation_link_check_accepts_existing_relative_target(self):
@@ -116,6 +188,30 @@ namespace ControlledObservedGame
                 documentation_link_errors([source]),
                 [f"{source}: unresolved local Markdown link missing.md"],
             )
+
+    def test_semantic_compatibility_bridge_requires_certificate_without_data(self):
+        valid = """\
+/-- The word `noncomputable def` in documentation is harmless. -/
+def reindex (x : Nat) := x
+theorem measure_compute_eq_semantics : reindex 0 = 0 := rfl
+"""
+        noncomputable_data = """\
+noncomputable def interpretedValue : Nat := 0
+theorem interpretedValue_eq_zero : interpretedValue = 0 := rfl
+"""
+        missing_equality = "def reindex (x : Nat) := x\n"
+        represents = """\
+theorem effective_law_represents_volume : True := by trivial
+"""
+
+        self.assertTrue(semantic_compatibility_source_is_valid(valid))
+        self.assertTrue(semantic_compatibility_source_is_valid(represents))
+        self.assertFalse(
+            semantic_compatibility_source_is_valid(noncomputable_data)
+        )
+        self.assertFalse(
+            semantic_compatibility_source_is_valid(missing_equality)
+        )
 
 
 if __name__ == "__main__":
