@@ -3,7 +3,7 @@ Copyright (c) 2026 EconCSLib contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
-import EconCSLib.Math.Probability.PMF.Coupling
+import EconCSLib.Math.Probability.FiniteLaw.Coupling
 
 /-!
 # Discrete probability-kernel arenas
@@ -13,7 +13,7 @@ simulations.
 
 This module is the implementation leaf for finite discrete execution.
 `KernelArena` is the discrete stochastic analogue of `Arena`: an action
-selects a normalized `PMF` of successor states rather than one deterministic
+selects a normalized `FiniteLaw` of successor states rather than one deterministic
 successor.
 The simulation relation uses an explicit coupling of source and target
 successor laws. Consequently it preserves probability mass, not merely the
@@ -31,7 +31,7 @@ there exactly.
 
 * `KernelArena` — dependent actions and normalized stochastic transitions.
 * `KernelArena.Hom` — a functional transition-kernel morphism.
-* `KernelArena.Simulation` — action matching by relational PMF couplings.
+* `KernelArena.Simulation` — action matching by relational finite-law couplings.
 
 ## Main result
 
@@ -41,14 +41,14 @@ there exactly.
 
 /-- A discrete stochastic transition arena.
 
-`next s a` is a `PMF`, so normalization is enforced by construction. -/
+`next s a` is a `FiniteLaw`, so normalization is enforced by construction. -/
 structure KernelArena where
   /-- The stochastic state space. -/
   State : Type*
   /-- Available actions at a state. -/
   Action : State → Type*
   /-- The normalized successor-state law after choosing an action. -/
-  next : (s : State) → Action s → PMF State
+  next : (s : State) → Action s → FiniteLaw State
 
 namespace KernelArena
 
@@ -75,7 +75,7 @@ def id (A : KernelArena) : A.Hom A where
   action := fun _ => _root_.id
   map_next := by
     intro s a
-    exact PMF.map_id (A.next s a)
+    exact FiniteLaw.map_id (A.next s a)
 
 end Hom
 
@@ -90,8 +90,8 @@ structure Simulation (A B : KernelArena) where
   match_action :
     ∀ {s : A.State} {t : B.State}, Rel s t →
       ∀ a : A.Action s,
-        ∃ b : B.Action t,
-          PMF.RelCoupling Rel (A.next s a) (B.next t b)
+        Σ b : B.Action t,
+          FiniteLaw.RelCoupling Rel (A.next s a) (B.next t b)
 
 /-- Every strict kernel-Arena morphism induces a stochastic simulation on the
 graph of its state map. -/
@@ -101,29 +101,35 @@ def Hom.toSimulation {A B : KernelArena} (f : A.Hom B) :
   match_action := by
     intro source target hrelated action
     subst target
-    refine
-      ⟨f.action source action,
+    let graph : A.State →
+        {pair : A.State × B.State // f.state pair.1 = pair.2} :=
+      fun nextSource =>
+        ⟨(nextSource, f.state nextSource), rfl⟩
+    let joint := (A.next source action).map graph
+    have hleft :
+        (joint.map fun pair => pair.1.1) = A.next source action := by
+      simp only [joint]
+      rw [FiniteLaw.map_comp]
+      simpa [graph, Function.comp_def] using
+        FiniteLaw.map_id (A.next source action)
+    have hright :
+        (joint.map fun pair => pair.1.2) =
+          B.next (f.state source) (f.action source action) := by
+      simp only [joint]
+      rw [FiniteLaw.map_comp]
+      calc
         (A.next source action).map
-          (fun nextSource => (nextSource, f.state nextSource)),
-        ?_, ?_, ?_⟩
-    · simpa [PMF.map_comp, Function.comp_def] using
-        PMF.map_id (A.next source action)
-    · calc
-        ((A.next source action).map
-            (fun nextSource => (nextSource, f.state nextSource))).map
-              Prod.snd =
+            ((fun pair => pair.1.2) ∘ graph) =
             (A.next source action).map f.state := by
-              rw [PMF.map_comp]
-              rfl
+          rfl
         _ = B.next (f.state source) (f.action source action) :=
           f.map_next source action
-    · intro pair hpair
-      obtain ⟨nextSource, _, hmap⟩ :=
-        (PMF.mem_support_map_iff
-          (p := A.next source action)
-          (f := fun nextSource => (nextSource, f.state nextSource))
-          (b := pair)).mp hpair
-      subst pair
-      rfl
+    exact
+      ⟨f.action source action,
+        { joint := joint
+          leftEquivalent := FiniteLaw.Equivalent.of_eq hleft
+          rightEquivalent := FiniteLaw.Equivalent.of_eq hright
+          leftPositive := fun outcome => by rw [hleft]
+          rightPositive := fun outcome => by rw [hright] }⟩
 
 end KernelArena
