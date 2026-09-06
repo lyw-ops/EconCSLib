@@ -9,18 +9,21 @@ import Mathlib.Probability.Kernel.IonescuTulcea.Traj
 /-!
 # Kernel.StatePath — infinite state paths for measurable kernel arenas
 
-Ionescu--Tulcea path semantics for a terminal-aware
+Supplied Ionescu--Tulcea path semantics for a terminal-aware
 `MeasurableKernelArena.ActionPolicy`.
 
 The stopped state-step kernel is pulled back along the latest-state projection
-of each finite history.  Mathlib's Ionescu--Tulcea theorem then gives a
-probability measure on infinite state paths.  The main marginal theorem proves
+of each finite history. `PathExecution` supplies the complete law, prefix
+measures, and coordinate measures with exact certificates. Analytic existence
+is proved only in `Prop`; the data projections do not construct measures.
+The main marginal theorem proves
 that coordinate `n` is exactly the finite `endpointMeasure` already audited;
 embedded discrete policies therefore recover `KernelArena.stateLawFrom`
 coordinate by coordinate.
 
 ## Main definitions
 
+* `ActionPolicy.PathExecution` — supplied complete law and exact marginals.
 * `ActionPolicy.pathStepKernel` — next-state kernel on finite state histories.
 * `ActionPolicy.pathMeasure` — probability measure on `ℕ → A.State`.
 * `ActionPolicy.prefixMeasure` — joint finite-prefix law.
@@ -33,7 +36,7 @@ coordinate by coordinate.
 * `ActionPolicy.coordinateMeasure_eq_endpointMeasure` — exact coordinate
   marginal theorem.
 * `KernelArena.Policy.toMeasurable_coordinateMeasure` — exact recovery of the
-  old stopped PMF endpoint law.
+  stopped finite-law endpoint law.
 * `ActionPolicy.ae_path_eq_const_of_terminal` — terminal starts give the
   constant path almost surely when state singletons are measurable.
 
@@ -43,6 +46,7 @@ semantics.
 -/
 
 open MeasureTheory ProbabilityTheory
+open scoped ENNReal
 
 universe uS uA
 
@@ -87,25 +91,67 @@ instance pathStepKernel_isMarkov (policy : A.ActionPolicy)
   rw [pathStepKernel]
   infer_instance
 
-/-- Infinite discrete-event state-path law from an initial state. -/
-noncomputable def pathMeasure (policy : A.ActionPolicy)
+/-- Supplied infinite state laws and their observable marginals.
+
+The complete law and both finite observations are data. Exact equations tie
+these fields to the stopped policy and to each other; no measure pushforward
+or infinite extension is performed by the data projections below. -/
+class PathExecution (policy : A.ActionPolicy)
+    (hterminal : MeasurableSet A.terminalSet) where
+  /-- Complete state-path law at each initial state. -/
+  path : A.State → Measure (ℕ → A.State)
+  /-- The supplied law is the stopped Ionescu--Tulcea law. -/
+  path_eq : ∀ initialState, path initialState =
+    Kernel.traj (policy.pathStepKernel hterminal) 0 (fun _ => initialState)
+  /-- Joint finite-prefix measures, supplied independently of computation. -/
+  prefixLaw : (initialState : A.State) → (time : ℕ) →
+    Measure (Π _index : Finset.Iic time, A.State)
+  /-- The supplied prefixes are exact restrictions of the complete law. -/
+  prefix_eq : ∀ initialState time, prefixLaw initialState time =
+    (path initialState).map (Preorder.frestrictLe time)
+  /-- Single-coordinate measures. -/
+  coordinate : A.State → ℕ → Measure A.State
+  /-- The supplied coordinates are exact evaluations of the complete law. -/
+  coordinate_eq : ∀ initialState time, coordinate initialState time =
+    (path initialState).map (fun path => path time)
+
+/-- Infinite extension and its marginal measures exist as mathematical data.
+This theorem provides no executable selection of those measures. -/
+theorem PathExecution.nonempty (policy : A.ActionPolicy)
+    (hterminal : MeasurableSet A.terminalSet) :
+    Nonempty (PathExecution policy hterminal) := by
+  let law := fun initialState =>
+    Kernel.traj (policy.pathStepKernel hterminal) 0 (fun _ => initialState)
+  exact ⟨{
+    path := law
+    path_eq := fun _ => rfl
+    prefixLaw := fun initialState time =>
+      (law initialState).map (Preorder.frestrictLe time)
+    prefix_eq := fun _ _ => rfl
+    coordinate := fun initialState time =>
+      (law initialState).map (fun path => path time)
+    coordinate_eq := fun _ _ => rfl }⟩
+
+/-- Infinite discrete-event state-path law supplied for an initial state. -/
+def pathMeasure (policy : A.ActionPolicy)
     (hterminal : MeasurableSet A.terminalSet)
-    (initialState : A.State) :
-    Measure (ℕ → A.State) :=
-  Kernel.traj (policy.pathStepKernel hterminal) 0
-    (fun _ => initialState)
+    [execution : PathExecution policy hterminal]
+    (initialState : A.State) : Measure (ℕ → A.State) :=
+  execution.path initialState
 
 /-- The deterministic-initial-state path law is exactly Mathlib's
 `trajMeasure` started from the corresponding Dirac measure. -/
 theorem pathMeasure_eq_trajMeasure (policy : A.ActionPolicy)
     (hterminal : MeasurableSet A.terminalSet)
+    [PathExecution policy hterminal]
     (initialState : A.State) :
     policy.pathMeasure hterminal initialState =
       Kernel.trajMeasure
         (X := StateAt A)
         (Measure.dirac initialState)
         (policy.pathStepKernel hterminal) := by
-  rw [pathMeasure, Kernel.trajMeasure]
+  change PathExecution.path policy hterminal initialState = _
+  rw [PathExecution.path_eq, Kernel.trajMeasure]
   rw [Measure.map_dirac' (by fun_prop)]
   change
     Kernel.traj (policy.pathStepKernel hterminal) 0
@@ -119,38 +165,41 @@ theorem pathMeasure_eq_trajMeasure (policy : A.ActionPolicy)
 /-- The Ionescu--Tulcea state-path law is a probability measure. -/
 instance pathMeasure_isProbability (policy : A.ActionPolicy)
     (hterminal : MeasurableSet A.terminalSet)
+    [PathExecution policy hterminal]
     (initialState : A.State) :
     IsProbabilityMeasure
       (policy.pathMeasure hterminal initialState) := by
-  rw [pathMeasure]
+  change IsProbabilityMeasure (PathExecution.path policy hterminal initialState)
+  rw [PathExecution.path_eq]
   infer_instance
 
 /-- Marginal state law at one path coordinate. -/
-noncomputable def coordinateMeasure (policy : A.ActionPolicy)
+def coordinateMeasure (policy : A.ActionPolicy)
     (hterminal : MeasurableSet A.terminalSet)
-    (initialState : A.State) (time : ℕ) :
-    Measure A.State :=
-  (policy.pathMeasure hterminal initialState).map
-    (fun path => path time)
+    [execution : PathExecution policy hterminal]
+    (initialState : A.State) (time : ℕ) : Measure A.State :=
+  execution.coordinate initialState time
 
-/-- Joint law of the path prefix through `time`. -/
-noncomputable def prefixMeasure (policy : A.ActionPolicy)
+/-- Joint law of the supplied path prefix through `time`. -/
+def prefixMeasure (policy : A.ActionPolicy)
     (hterminal : MeasurableSet A.terminalSet)
+    [execution : PathExecution policy hterminal]
     (initialState : A.State) (time : ℕ) :
     Measure (Π _index : Finset.Iic time, A.State) :=
-  (policy.pathMeasure hterminal initialState).map
-    (Preorder.frestrictLe time)
+  execution.prefixLaw initialState time
 
 /-- Ionescu--Tulcea identifies each prefix law with the corresponding
 finite partial-trajectory kernel. -/
 theorem prefixMeasure_eq_partialTraj (policy : A.ActionPolicy)
     (hterminal : MeasurableSet A.terminalSet)
+    [PathExecution policy hterminal]
     (initialState : A.State) (time : ℕ) :
     policy.prefixMeasure hterminal initialState time =
       Kernel.partialTraj
         (policy.pathStepKernel hterminal) 0 time
         (fun _ => initialState) := by
-  rw [prefixMeasure, pathMeasure]
+  change PathExecution.prefixLaw policy hterminal initialState time = _
+  rw [PathExecution.prefix_eq, PathExecution.path_eq]
   exact
     @Kernel.traj_map_frestrictLe_apply
       (StateAt A) (fun _ => inferInstance)
@@ -206,11 +255,14 @@ theorem pathStepKernel_comp (policy : A.ActionPolicy)
 law. -/
 theorem coordinateMeasure_eq_map_prefix (policy : A.ActionPolicy)
     (hterminal : MeasurableSet A.terminalSet)
+    [PathExecution policy hterminal]
     (initialState : A.State) (time : ℕ) :
     policy.coordinateMeasure hterminal initialState time =
       (policy.prefixMeasure hterminal initialState time).map
         (latestState time) := by
-  rw [coordinateMeasure, prefixMeasure]
+  change PathExecution.coordinate policy hterminal initialState time =
+    (PathExecution.prefixLaw policy hterminal initialState time).map (latestState time)
+  rw [PathExecution.coordinate_eq, PathExecution.prefix_eq]
   rw [Measure.map_map
     (measurable_latestState time)
     (by fun_prop)]
@@ -218,6 +270,7 @@ theorem coordinateMeasure_eq_map_prefix (policy : A.ActionPolicy)
 
 theorem coordinateMeasure_zero (policy : A.ActionPolicy)
     (hterminal : MeasurableSet A.terminalSet)
+    [PathExecution policy hterminal]
     (initialState : A.State) :
     policy.coordinateMeasure hterminal initialState 0 =
       Measure.dirac initialState := by
@@ -230,6 +283,7 @@ theorem coordinateMeasure_zero (policy : A.ActionPolicy)
 /-- Coordinate marginals evolve by the stopped state-step kernel. -/
 theorem coordinateMeasure_succ (policy : A.ActionPolicy)
     (hterminal : MeasurableSet A.terminalSet)
+    [PathExecution policy hterminal]
     (initialState : A.State) (time : ℕ) :
     policy.coordinateMeasure hterminal initialState time.succ =
       policy.stepKernel hterminal ∘ₘ
@@ -262,6 +316,8 @@ endpoint law. -/
 theorem coordinateMeasure_eq_endpointMeasure
     (policy : A.ActionPolicy)
     (hterminal : MeasurableSet A.terminalSet)
+    [PathExecution policy hterminal]
+    [EndpointExecution policy hterminal]
     (initialState : A.State) (time : ℕ) :
     policy.coordinateMeasure hterminal initialState time =
       policy.endpointMeasure hterminal time initialState := by
@@ -276,12 +332,15 @@ theorem coordinateMeasure_eq_endpointMeasure
 theorem ae_path_apply_eq_of_terminal
     (policy : A.ActionPolicy)
     (hterminal : MeasurableSet A.terminalSet)
+    [PathExecution policy hterminal]
     [MeasurableSingletonClass A.State]
     (initialState : A.State)
     (hstate : IsEmpty (A.Action initialState))
     (time : ℕ) :
     ∀ᵐ path ∂policy.pathMeasure hterminal initialState,
       path time = initialState := by
+  obtain ⟨execution⟩ := EndpointExecution.nonempty policy hterminal
+  letI := execution
   letI : IsProbabilityMeasure
       (policy.pathMeasure hterminal initialState) := inferInstance
   let event : Set (ℕ → A.State) :=
@@ -302,6 +361,9 @@ theorem ae_path_apply_eq_of_terminal
       ((fun path => path time) ⁻¹' {initialState}) = 1
   rw [← Measure.map_apply (measurable_pi_apply time)
     (measurableSet_singleton initialState)]
+  change (Measure.map (fun path => path time)
+    (PathExecution.path policy hterminal initialState)) {initialState} = 1
+  rw [← PathExecution.coordinate_eq]
   change
     policy.coordinateMeasure hterminal initialState time
       {initialState} = 1
@@ -315,6 +377,7 @@ theorem ae_path_apply_eq_of_terminal
 theorem ae_path_eq_const_of_terminal
     (policy : A.ActionPolicy)
     (hterminal : MeasurableSet A.terminalSet)
+    [PathExecution policy hterminal]
     [MeasurableSingletonClass A.State]
     (initialState : A.State)
     (hstate : IsEmpty (A.Action initialState)) :
@@ -334,15 +397,25 @@ end MeasurableKernelArena
 namespace KernelArena
 
 /-- Every coordinate marginal of the analytic path law for an embedded
-discrete policy recovers the existing stopped PMF state law exactly. -/
+discrete policy recovers the executable stopped state law exactly. -/
 theorem Policy.toMeasurable_coordinateMeasure
     {A : KernelArena}
-    (policy : A.Policy) (initialState : A.State) (time : ℕ) :
+    [(state : A.State) → Decidable (IsEmpty (A.Action state))]
+    (policy : A.Policy)
+    [MeasurableKernelArena.ActionPolicy.PathExecution policy.toMeasurable
+      A.toMeasurable_measurableSet_terminalSet]
+    (initialState : A.State) (time : ℕ) :
     policy.toMeasurable.coordinateMeasure
         A.toMeasurable_measurableSet_terminalSet
         initialState time =
-      @PMF.toMeasure A.State ⊤
-        (A.stateLawFrom policy time initialState) := by
+      (A.stateLawFrom policy time initialState).atoms.foldr
+        (fun atom rest =>
+          (atom.2 : ENNReal) • @Measure.dirac _ ⊤ atom.1 + rest)
+        0 := by
+  obtain ⟨execution⟩ :=
+    MeasurableKernelArena.ActionPolicy.EndpointExecution.nonempty
+      policy.toMeasurable A.toMeasurable_measurableSet_terminalSet
+  letI := execution
   rw [MeasurableKernelArena.ActionPolicy.coordinateMeasure_eq_endpointMeasure]
   exact policy.toMeasurable_endpointMeasure time initialState
 
