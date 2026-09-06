@@ -32,10 +32,10 @@ open MeasurableKernelArena
 
 /-- One nonterminal state with two Boolean actions and a deterministic
 self-loop. -/
-noncomputable def discreteArena : KernelArena where
+def discreteArena : KernelArena where
   State := Unit
   Action := fun _ => Bool
-  next := fun _ _ => PMF.pure ()
+  next := fun _ _ => FiniteLaw.pure ()
 
 /-- Analytic top-measurable embedding of the one-state arena. -/
 noncomputable abbrev arena : MeasurableKernelArena :=
@@ -46,13 +46,13 @@ def actionBundle (action : Bool) :
     arena.ActionBundle :=
   ⟨(), action⟩
 
-noncomputable local instance actionBundleMeasurableSingletonClass :
+local instance actionBundleMeasurableSingletonClass :
     MeasurableSingletonClass arena.ActionBundle where
   measurableSet_singleton := by
     intro _
     exact MeasurableSpace.measurableSet_top
 
-noncomputable local instance stateMeasurableSingletonClass :
+local instance stateMeasurableSingletonClass :
     MeasurableSingletonClass arena.State where
   measurableSet_singleton := by
     intro _
@@ -170,14 +170,14 @@ theorem actionBundle_true_ne_false :
       (eq_of_heq haction.2).symm
 
 /-- An arbitrary retained prefix through absolute time one. -/
-noncomputable def retainedPrefix :
+def retainedPrefix :
     arena.ContinuationPrefix 1 :=
-  fun _ => arena.initialEvent ()
+  fun _ => ((), Sum.inl ())
 
 /-- The canonical fresh prefix at the unique state. -/
-noncomputable def freshPrefix :
+def freshPrefix :
     arena.ContinuationPrefix 0 :=
-  fun _ => arena.initialEvent ()
+  fun _ => ((), Sum.inl ())
 
 /-- The fresh prefix is canonically rooted at the retained latest state. -/
 theorem freshPrefix_rooted :
@@ -193,6 +193,7 @@ theorem freshPrefix_rooted :
       (Finset.mem_Iic.mp time.2)
   simp [
     setInitialPrefix,
+    initialEvent,
     freshPrefix,
     htime]
 
