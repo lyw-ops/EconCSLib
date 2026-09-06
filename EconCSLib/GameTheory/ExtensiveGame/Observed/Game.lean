@@ -24,7 +24,7 @@ This indexing makes information-set consistency structural: a pure strategy
 has type
 
 ```lean
-(I : G.InfoState i) → G.InfoAction i I
+(I : G.RepresentedInfo i) → G.InfoAction i I.1
 ```
 
 and therefore cannot inspect the concrete history after receiving `I`.
@@ -103,20 +103,20 @@ structure ObservedGame (N : Type uN) (U : Type uU) where
   observable signal.  This map need not be injective: an information state
   may retain memory beyond the current signal. -/
   infoObserve : (i : N) → InfoState i → Observation i
-  /-- The decision information state at a nonterminal history controlled by
-  player `i`. -/
+  /-- The decision information state at a genuine decision history controlled
+  by player `i`. -/
   infoAt :
     ∀ (h : base.toArena.HistoryFrom base.init) (i : N),
       base.mover h.1 = some i →
-        ¬ base.isTerminal h.1 → InfoState i
+        base.toArena.IsDecision h.1 → InfoState i
   /-- Decision information projects to the acting player's current
   observation.  This does not assert that `InfoState` contains no additional
   memory. -/
   infoAt_observe :
     ∀ (h : base.toArena.HistoryFrom base.init) (i : N)
       (hmover : base.mover h.1 = some i)
-      (hnonterminal : ¬ base.isTerminal h.1),
-      infoObserve i (infoAt h i hmover hnonterminal) = observe i h
+      (hdecision : base.toArena.IsDecision h.1),
+      infoObserve i (infoAt h i hmover hdecision) = observe i h
   /-- Abstract actions available at a player information state. -/
   InfoAction : (i : N) → InfoState i → Type uA
   /-- Abstract information-state actions are exactly the legal base actions at
@@ -124,8 +124,8 @@ structure ObservedGame (N : Type uN) (U : Type uU) where
   actionEquiv :
     ∀ (h : base.toArena.HistoryFrom base.init) (i : N)
       (hmover : base.mover h.1 = some i)
-      (hnonterminal : ¬ base.isTerminal h.1),
-      InfoAction i (infoAt h i hmover hnonterminal) ≃ base.Action h.1
+      (hdecision : base.toArena.IsDecision h.1),
+      InfoAction i (infoAt h i hmover hdecision) ≃ base.Action h.1
 
 namespace ObservedGame
 
@@ -158,6 +158,11 @@ theorem toControlledObservedGame_base
     (G : ObservedGame N U) :
     G.toControlledObservedGame.base = G.base.toControlledGame :=
   rfl
+
+/-- Package the information state at one concrete observed decision as a
+represented strategy coordinate. -/
+abbrev representedInfoAt :=
+  G.toControlledObservedGame.representedInfoAt
 
 /-- Add an arbitrary endpoint-state payoff interpretation to a payoff-free
 controlled observed game.
@@ -430,7 +435,7 @@ base labels a terminal endpoint with player `i`. -/
 abbrev DecisionHistory (base : ExtensiveGame N U) (i : N) :=
   {history : History base //
     base.mover history.1 = some i ∧
-      ¬ base.isTerminal history.1}
+      base.toArena.IsDecision history.1}
 
 /-- Legal actions at one decision history of player `i`. -/
 abbrev DecisionAction (base : ExtensiveGame N U) (i : N)
@@ -554,12 +559,12 @@ theorem root_information_singleton (system : G.SubgameSystem)
     (hproper :
       root ≠ Arena.HistoryFrom.nil G.base.toArena G.base.init) :
     ∀ (i : N) (hmover : G.base.mover root.1 = some i)
-      (hnonterminal : ¬ G.base.isTerminal root.1)
+      (hdecision : G.base.toArena.IsDecision root.1)
       (other : G.base.toArena.HistoryFrom G.base.init)
       (hother : G.base.mover other.1 = some i)
-      (hother_nonterminal : ¬ G.base.isTerminal other.1),
-      G.infoAt root i hmover hnonterminal =
-          G.infoAt other i hother hother_nonterminal →
+      (hother_decision : G.base.toArena.IsDecision other.1),
+      G.infoAt root i hmover hdecision =
+          G.infoAt other i hother hother_decision →
         other = root :=
   ControlledObservedGame.SubgameSystem.root_information_singleton
     system root hroot hproper
@@ -570,12 +575,12 @@ theorem information_closed (system : G.SubgameSystem)
     (hroot : system.IsRoot root) :
     ∀ current, G.IsContinuationOf root current →
       ∀ (i : N) (hmover : G.base.mover current.1 = some i)
-        (hnonterminal : ¬ G.base.isTerminal current.1)
+        (hdecision : G.base.toArena.IsDecision current.1)
         (other : G.base.toArena.HistoryFrom G.base.init)
         (hother : G.base.mover other.1 = some i)
-        (hother_nonterminal : ¬ G.base.isTerminal other.1),
-        G.infoAt current i hmover hnonterminal =
-            G.infoAt other i hother hother_nonterminal →
+        (hother_decision : G.base.toArena.IsDecision other.1),
+        G.infoAt current i hmover hdecision =
+            G.infoAt other i hother hother_decision →
           G.IsContinuationOf root other :=
   ControlledObservedGame.SubgameSystem.information_closed
     system root hroot
@@ -644,6 +649,19 @@ abbrev DecisionInfoWitness
     (information : G.InfoState i) :=
   G.toControlledObservedGame.DecisionInfoWitness i information
 
+/-- Decision-information values represented by at least one concrete player
+decision. -/
+abbrev RepresentedInfo (i : N) :=
+  G.toControlledObservedGame.RepresentedInfo i
+
+/-- Every represented observed-game information coordinate has an abstract
+legal action. -/
+theorem representedInfo_nonempty_infoAction
+    (i : N) (information : G.RepresentedInfo i) :
+    Nonempty (G.InfoAction i information.1) :=
+  G.toControlledObservedGame.representedInfo_nonempty_infoAction
+    i information
+
 /-- A game-bound pure strategy for player `i`: one abstract action at every
 information state, with no concrete history argument. -/
 abbrev PureStrategy (i : N) : Type _ :=
@@ -657,27 +675,27 @@ abbrev PureProfile : Type _ :=
 renaming, up to dependent-function reindexing. -/
 def relabelPureProfileEquiv (e : M ≃ N) :
     (G.relabelPlayers e).PureProfile ≃ G.PureProfile :=
-  e.piCongrLeft G.PureStrategy
+  G.toControlledObservedGame.relabelPureProfileEquiv e
 
 /-- The legal base action prescribed by a pure strategy at a concrete history
 controlled by player `i`. -/
 def PureStrategy.actionAt {i : N} (σ : G.PureStrategy i)
     (h : G.base.toArena.HistoryFrom G.base.init)
     (hmover : G.base.mover h.1 = some i)
-    (hnonterminal : ¬ G.base.isTerminal h.1) :
+    (hdecision : G.base.toArena.IsDecision h.1) :
     G.base.Action h.1 :=
-  G.actionEquiv h i hmover hnonterminal
-    (σ (G.infoAt h i hmover hnonterminal))
+  ControlledObservedGame.PureStrategy.actionAt
+    G.toControlledObservedGame σ h hmover hdecision
 
 /-- The legal base action prescribed by a profile at a concrete
 player-controlled history. -/
 def PureProfile.actionAt (σ : G.PureProfile)
     (h : G.base.toArena.HistoryFrom G.base.init) (i : N)
     (hmover : G.base.mover h.1 = some i)
-    (hnonterminal : ¬ G.base.isTerminal h.1) :
+    (hdecision : G.base.toArena.IsDecision h.1) :
     G.base.Action h.1 :=
   ObservedGame.PureStrategy.actionAt
-    G (σ i) h hmover hnonterminal
+    G (σ i) h hmover hdecision
 
 /-- Equal information states force a pure profile to make the same packaged
 abstract choice.  Packaging the action with its dependent information-state
@@ -687,19 +705,19 @@ theorem PureProfile.choice_eq_of_infoState_eq
     (h k : G.base.toArena.HistoryFrom G.base.init)
     (hmover : G.base.mover h.1 = some i)
     (kmover : G.base.mover k.1 = some i)
-    (hnonterminal : ¬ G.base.isTerminal h.1)
-    (knonterminal : ¬ G.base.isTerminal k.1)
+    (hdecision : G.base.toArena.IsDecision h.1)
+    (kdecision : G.base.toArena.IsDecision k.1)
     (hsame :
-      G.infoAt h i hmover hnonterminal =
-        G.infoAt k i kmover knonterminal) :
-    (⟨G.infoAt h i hmover hnonterminal,
-        σ i (G.infoAt h i hmover hnonterminal)⟩ :
-      Σ I : G.InfoState i, G.InfoAction i I) =
-    ⟨G.infoAt k i kmover knonterminal,
-      σ i (G.infoAt k i kmover knonterminal)⟩ :=
+      G.infoAt h i hmover hdecision =
+        G.infoAt k i kmover kdecision) :
+    (⟨G.toControlledObservedGame.representedInfoAt h i hmover hdecision,
+        σ i (G.toControlledObservedGame.representedInfoAt h i hmover hdecision)⟩ :
+      Σ I : G.RepresentedInfo i, G.InfoAction i I.1) =
+    ⟨G.toControlledObservedGame.representedInfoAt k i kmover kdecision,
+      σ i (G.toControlledObservedGame.representedInfoAt k i kmover kdecision)⟩ :=
   ControlledObservedGame.PureProfile.choice_eq_of_infoState_eq
     G.toControlledObservedGame σ i h k hmover kmover
-      hnonterminal knonterminal hsame
+      hdecision kdecision hsame
 
 /-- Equal decision information states imply equal public observations at the
 represented histories. -/
@@ -707,15 +725,15 @@ theorem publicObserve_eq_of_infoAt_eq
     (i : N) (h k : G.base.toArena.HistoryFrom G.base.init)
     (hmover : G.base.mover h.1 = some i)
     (kmover : G.base.mover k.1 = some i)
-    (hnonterminal : ¬ G.base.isTerminal h.1)
-    (knonterminal : ¬ G.base.isTerminal k.1)
+    (hdecision : G.base.toArena.IsDecision h.1)
+    (kdecision : G.base.toArena.IsDecision k.1)
     (hsame :
-      G.infoAt h i hmover hnonterminal =
-        G.infoAt k i kmover knonterminal) :
+      G.infoAt h i hmover hdecision =
+        G.infoAt k i kmover kdecision) :
     G.publicObserve h = G.publicObserve k :=
   ControlledObservedGame.publicObserve_eq_of_infoAt_eq
     G.toControlledObservedGame i h k hmover kmover
-      hnonterminal knonterminal hsame
+      hdecision kdecision hsame
 
 /-- The mover option at a nonterminal history is inhabited in a no-chance
 game. -/
@@ -762,7 +780,8 @@ theorem PureProfile.toHistoryPolicy_of_mover
     (hnonterminal : ¬ G.base.isTerminal h.1) (i : N)
     (hmover : G.base.mover h.1 = some i) :
     σ.toHistoryPolicy G hNoChance h hnonterminal =
-      σ.actionAt G h i hmover hnonterminal := by
+      σ.actionAt G h i hmover
+        (G.base.toArena.isDecision_of_not_isTerminal h.1 hnonterminal) := by
   simpa only [PureProfile.actionAt] using
     (ControlledObservedGame.PureProfile.toHistoryPolicy_of_mover
       σ hNoChance h hnonterminal i hmover)
