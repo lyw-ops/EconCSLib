@@ -231,7 +231,7 @@ instance instAbstractKernelIsSFinite
 
 /-- Abstract action selection after measurable comap along the fixed
 information statistic. -/
-noncomputable def prefixAbstractKernel
+def prefixAbstractKernel
     (policy : RealizedActionPolicy realization) (time : ℕ) :
     Kernel
       (A.EventPrefix time)
@@ -387,7 +387,7 @@ structure by a measurable refinement.
 
 The concrete realization already receives the full prefix, so only the
 abstract information index changes. -/
-noncomputable def pullback
+def pullback
     {fine coarse : EventInformation A}
     (realization : ActionRealization coarse)
     (_factor : Hom fine coarse) :
@@ -408,7 +408,7 @@ variable
 
 /-- Pull an abstract coarse-information policy back along a measurable
 fine-to-coarse factor while retaining the same concrete realization. -/
-noncomputable def pullback
+def pullback
     (policy : RealizedActionPolicy coarseRealization)
     (factor : Hom fine coarse) :
     RealizedActionPolicy (coarseRealization.pullback factor) where
