@@ -14,10 +14,10 @@ concepts. `HasPathwiseWinningStrategy` universally quantifies over opponent
 and nature moves. This module instead fixes a probability law on ambient
 history paths and asks that almost every sampled path be legal and winning.
 
-The probability measure remains on the ordinary function space used by
-Ionescu--Tulcea. A sample is bundled into `CompletePlayFromHistory` only after
-supplying the common unbundled legality predicate. No measurable structure on
-the dependent bundled play type is assumed.
+The supplied probability measure remains on the ordinary function space. A
+sample is bundled into `CompletePlayFromHistory` only after supplying the
+common unbundled legality predicate. No measurable structure on the dependent
+bundled play type is assumed.
 -/
 
 open MeasureTheory
@@ -50,8 +50,8 @@ def IsMeasurableWinningPathEvent
 /-- Almost-everywhere winning for an arbitrary measure on ambient
 complete-history paths.
 
-Illegal paths do not count as winning. For canonical stochastic execution,
-`pathLaw_ae_isCompletePlayPathFrom` supplies legality almost everywhere.
+Illegal paths do not count as winning. A supplied stochastic execution law
+must certify legality almost everywhere.
 
 This deliberately does not call the law probabilistic: in particular the zero
 measure makes every almost-everywhere statement true. Use
@@ -120,19 +120,20 @@ theorem IsAlmostSurelyWinningUnder.mono
 
 end WinningConditionFrom
 
-/-- Almost-sure winning under the canonical infinite law of one stochastic
-history policy. -/
+/-- Almost-sure winning under a supplied infinite law indexed by one
+stochastic history policy. -/
 def StochasticHistoryPolicy.IsAlmostSurelyWinning
-    [(state : A.State) → Decidable (A.IsTerminal state)]
     [MeasurableSpace (A.HistoryFrom start)]
-    [MeasurableSingletonClass (A.HistoryFrom start)]
-    [Countable (A.HistoryFrom start)]
     (policy : A.StochasticHistoryPolicy start)
     (current : A.HistoryFrom start)
+    (supplied : ProbabilityMeasure (ℕ → A.HistoryFrom start))
     (W : A.WinningConditionFrom current N)
-    (i : N) : Prop :=
-  W.IsAlmostSurelyWinningUnder
-    (pathLaw policy current) i
+    (i : N) : Prop := by
+  letI : IsProbabilityMeasure (pathLaw policy current supplied) := by
+    rw [pathLaw]
+    infer_instance
+  exact W.IsAlmostSurelyWinningUnder
+    (pathLaw policy current supplied) i
 
 /-- If player `i` wins every legal complete play, then every canonical
 stochastic history policy is almost surely winning for `i`.
@@ -140,21 +141,23 @@ stochastic history policy is almost surely winning for `i`.
 This is a support theorem, not a converse: a law may assign probability zero
 to legal losing plays. -/
 theorem StochasticHistoryPolicy.isAlmostSurelyWinning_of_forall
-    [(state : A.State) → Decidable (A.IsTerminal state)]
     [MeasurableSpace (A.HistoryFrom start)]
-    [MeasurableSingletonClass (A.HistoryFrom start)]
-    [Countable (A.HistoryFrom start)]
     (policy : A.StochasticHistoryPolicy start)
     (current : A.HistoryFrom start)
+    (supplied : ProbabilityMeasure (ℕ → A.HistoryFrom start))
     (W : A.WinningConditionFrom current N)
     (i : N)
+    (legal :
+      ∀ᵐ path ∂(supplied : Measure (ℕ → A.HistoryFrom start)),
+        A.IsCompletePlayPathFrom current path)
     (hwins :
       ∀ play : A.CompletePlayFromHistory current,
         play ∈ W i) :
-    policy.IsAlmostSurelyWinning current W i := by
-  filter_upwards
-    [pathLaw_ae_isCompletePlayPathFrom policy current]
-      with path hlegal
+    policy.IsAlmostSurelyWinning current supplied W i := by
+  letI : IsProbabilityMeasure (pathLaw policy current supplied) := by
+    rw [pathLaw]
+    infer_instance
+  filter_upwards [legal] with path hlegal
   exact
     ⟨hlegal,
       hwins
