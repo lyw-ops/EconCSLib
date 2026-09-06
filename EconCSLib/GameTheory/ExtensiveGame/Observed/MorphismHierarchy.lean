@@ -252,24 +252,30 @@ theorem toInformationRefinement_mapStrategy
       e.strategyEquiv i strategy := by
   funext information
   let sourceInformation :=
-    (e.infoStateEquiv i).symm information
+    e.toInformationRefinement.toControlled.forgetRepresentedInfo
+      i information
   have hinformation :
-      e.infoStateEquiv i sourceInformation =
-        information :=
-    (e.infoStateEquiv i).apply_symm_apply
-      information
+      e.representedInfoEquiv i sourceInformation =
+        information := by
+    apply Subtype.ext
+    exact (e.infoStateEquiv i).apply_symm_apply information.1
   change
     e.infoActionEquivOverTarget
-        i information
-        (strategy sourceInformation) =
+        i information.1
+        (strategy
+          (e.toInformationRefinement.toControlled.forgetRepresentedInfo
+            i information)) =
       e.strategyEquiv i strategy information
   symm
   exact
     Equiv.piCongr_apply_of_eq
-      (W := G.InfoAction i)
-      (Z := H.InfoAction i)
-      (e.infoStateEquiv i)
-      (e.infoActionEquiv i)
+      (W := fun information : G.RepresentedInfo i =>
+        G.InfoAction i information.1)
+      (Z := fun information : H.RepresentedInfo i =>
+        H.InfoAction i information.1)
+      (e.representedInfoEquiv i)
+      (fun information =>
+        e.representedInfoActionEquiv i information)
       strategy sourceInformation information
       hinformation
 
@@ -308,29 +314,32 @@ theorem toInformationRefinement_mapBehavioralStrategy
       e.behavioralStrategyEquiv i strategy := by
   funext information
   let sourceInformation :=
-    (e.infoStateEquiv i).symm information
+    e.toInformationRefinement.toControlled.forgetRepresentedInfo
+      i information
   have hinformation :
-      e.infoStateEquiv i sourceInformation =
-        information :=
-    (e.infoStateEquiv i).apply_symm_apply
-      information
+      e.representedInfoEquiv i sourceInformation =
+        information := by
+    apply Subtype.ext
+    exact (e.infoStateEquiv i).apply_symm_apply information.1
   change
-    (strategy sourceInformation).map
+    (strategy
+      (e.toInformationRefinement.toControlled.forgetRepresentedInfo
+        i information)).map
         (e.infoActionEquivOverTarget
-          i information) =
+          i information.1) =
       e.behavioralStrategyEquiv i
         strategy information
   symm
   have hpi :=
     Equiv.piCongr_apply_of_eq
-      (W := fun information =>
-        PMF (G.InfoAction i information))
-      (Z := fun information =>
-        PMF (H.InfoAction i information))
-      (e.infoStateEquiv i)
+      (W := fun information : G.RepresentedInfo i =>
+        FiniteLaw (G.InfoAction i information.1))
+      (Z := fun information : H.RepresentedInfo i =>
+        FiniteLaw (H.InfoAction i information.1))
+      (e.representedInfoEquiv i)
       (fun information =>
-        PMF.mapEquiv
-          (e.infoActionEquiv i information))
+        FiniteLaw.mapEquiv
+          (e.representedInfoActionEquiv i information))
       strategy sourceInformation information
       hinformation
   unfold behavioralStrategyEquiv
@@ -339,15 +348,15 @@ theorem toInformationRefinement_mapBehavioralStrategy
     cast
         (congrArg
           (fun information =>
-            PMF (H.InfoAction i information))
+            FiniteLaw (H.InfoAction i information.1))
           hinformation)
         ((strategy sourceInformation).map
-          (e.infoActionEquiv
+          (e.representedInfoActionEquiv
             i sourceInformation)) =
       (strategy sourceInformation).map
         (e.infoActionEquivOverTarget
-          i information)
-  rw [PMF.cast_map]
+          i information.1)
+  rw [FiniteLaw.cast_map]
   apply congrArg
     (fun actionMap =>
       (strategy sourceInformation).map actionMap)
