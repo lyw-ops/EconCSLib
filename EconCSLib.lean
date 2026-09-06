@@ -29,6 +29,7 @@ import EconCSLib.Math.Simplex
 
 -- Math/Probability: exact executable finite laws
 import EconCSLib.Math.Probability.FiniteLaw
+import EconCSLib.Math.Probability.FiniteMarkovChain
 
 -- Math/LinearAlgebra
 import EconCSLib.Math.LinearAlgebra.FourierMotzkin
