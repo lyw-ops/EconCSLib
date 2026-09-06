@@ -59,13 +59,34 @@ exactly where every constraint enters.
 The remaining rows show where additional focused notes can be added as APIs
 stabilize.
 
-For EFG work, start with the
-[`authority and claim inventory`](efg-document-authority.md). It gives five
-short routes: choosing an import, locating declaration ownership, reviewing
-mathematics and preservation, changing a facade/lifecycle state, and selecting
-an open research task. In particular, `Interface.StructuralCore` is the exact
-narrow structural import, `Interface.Core` is the broader Foundation Facade,
-and their compatibility freeze is currently deferred.
+For EFG work, start with the conceptual route and finite worked-example route
+in [`extensive_game.md`](extensive_game.md). Use the
+[`authority and claim inventory`](efg-document-authority.md) only when locating
+the owner of an import, policy, preservation claim, or research boundary. In
+particular, `Interface.StructuralCore` is the exact narrow structural import,
+`Interface.Core` is the broader Foundation Facade, API growth is frozen, and
+their compatibility freeze is currently deferred.
+
+For the whole-EFG computation migration, see the
+[file plan](efg-file-plan.md) and [complete file inventory](efg-file-plan-inventory.md).
+They distinguish implemented landing modules from remaining extraction or
+consumer-migration work and retain the existing architecture, lifecycle and
+proof authorities.
+For the retained main-library noncomputable declarations, the
+[strict feasibility analysis](efg-library-computability.md) and
+[58-item ledger](efg-library-computability-declarations.md) distinguish exact
+signature replacements, effective representations, and numerical evaluation.
+The [algorithm opportunity audit](efg-algorithm-opportunity-audit.md) marks
+existing and missing finite algorithms, computable infinite observables,
+certified approximations, semidecision procedures, and mathematical
+obstructions. The
+[algorithm implementation ledger](efg-algorithm-implementation-ledger.md)
+records each method, effective input contract, owner, correctness target, and
+implementation stage.
+The [two-track representation contract](efg-semantic-compatibility.md) governs
+how executable definitions relate to those analytic semantics. Analytic
+definitions are not described as legacy merely because an effective subdomain
+has an algorithm.
 
 ## What a module note set should contain
 
