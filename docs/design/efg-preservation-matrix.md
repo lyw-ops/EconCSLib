@@ -6,6 +6,9 @@ authoritative. A cell marked “premise” means the property is not part of the
 relation itself: a transfer theorem must receive an explicit certificate.
 The canonical pre-stability import for the formal relation-strength vocabulary
 is `EconCSLib.GameTheory.ExtensiveGame.Interface.Preservation`.
+The ownership and dependency direction of the structural, finite PMF,
+infinite discrete, analytic-kernel, and FOSG regimes is fixed separately by
+[`efg-semantic-universes.md`](efg-semantic-universes.md).
 
 ## Strength vocabulary
 
