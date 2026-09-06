@@ -164,6 +164,7 @@ also run:
 
 ```bash
 python3 scripts/check_efg_api_growth.py
+python3 scripts/check_efg_computability.py
 python3 scripts/check_efg_governance.py
 ```
 
