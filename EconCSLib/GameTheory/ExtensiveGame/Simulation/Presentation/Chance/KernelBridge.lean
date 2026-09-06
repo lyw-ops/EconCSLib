@@ -26,8 +26,8 @@ branching:
 * chance histories use the declared chance kernel exactly.
 
 The finite analytic endpoint law is proved equal to
-`Arena.stochasticHistoryPMFFrom` after `PMF.toMeasure`, not merely coupled or
-equal on support.
+the weighted-Dirac interpretation of `Arena.stochasticHistoryLawFrom`. This is
+measure equality at every finite horizon.
 
 The lift deliberately does **not** claim that the current
 `EventInformation.ActionPolicy` represents a player's imperfect-information
@@ -47,8 +47,8 @@ transport those abstract action laws to history-specific concrete fibers.
 
 ## Main results
 
-* `Arena.historyKernelArena_stateLawFrom_eq_stochasticHistoryPMFFrom` — exact
-  finite stopped-history PMF equality.
+* `Arena.historyKernelArena_stateLawFrom_eq_stochasticHistoryLawFrom` — exact
+  equality of finite stopped-history laws.
 * `ObservedChanceGame.BehavioralProfile.toHistoryKernelPolicy_of_mover` and
   `toHistoryKernelPolicy_of_chance` — exact semantic branch equations.
 * `ObservedChanceGame.BehavioralProfile.toMeasurable_endpointMeasure` — exact
@@ -56,6 +56,13 @@ transport those abstract action laws to history-specific concrete fibers.
 -/
 
 open MeasureTheory ProbabilityTheory
+open scoped ENNReal
+
+local macro "finiteLawMeasureTop(" law:term ")" : term =>
+  `(($law).atoms.foldr
+      (fun atom rest =>
+        (atom.2 : ENNReal) • @Measure.dirac _ ⊤ atom.1 + rest)
+      0)
 
 namespace Arena
 
@@ -63,22 +70,31 @@ variable {A : Arena} {start : A.State}
 
 /-- Turn complete histories from `start` into a discrete kernel arena.
 
-The transition is deterministic but represented by a `PMF`, so the result can
+The transition is deterministic but represented by a `FiniteLaw`, so the result can
 reuse both the discrete stochastic trajectory API and its exact analytic
 embedding. -/
-noncomputable def historyKernelArena (A : Arena) (start : A.State) :
+def historyKernelArena (A : Arena) (start : A.State) :
     KernelArena where
   State := A.HistoryFrom start
   Action := fun history => A.Action history.1
   next := fun history action =>
-    PMF.pure
+    FiniteLaw.pure
       ⟨A.next history.1 action, history.2.snoc action⟩
+
+/-- The history-kernel lift uses the source arena's executable terminal test. -/
+local instance historyKernelActionEmptinessDecidable
+    {A : Arena} {start : A.State}
+    [(state : A.State) → Decidable (A.IsTerminal state)] :
+    (history : (A.historyKernelArena start).State) →
+      Decidable
+        (IsEmpty ((A.historyKernelArena start).Action history)) :=
+  fun history => inferInstanceAs (Decidable (A.IsTerminal history.1))
 
 @[simp]
 theorem historyKernelArena_next (A : Arena) (start : A.State)
     (history : A.HistoryFrom start) (action : A.Action history.1) :
     (A.historyKernelArena start).next history action =
-      PMF.pure
+      FiniteLaw.pure
         ⟨A.next history.1 action, history.2.snoc action⟩ :=
   rfl
 
@@ -93,7 +109,7 @@ namespace StochasticHistoryPolicy
 
 /-- A history-dependent Arena policy is stationary after complete histories
 are made the states of `Arena.historyKernelArena`. -/
-noncomputable def toKernelPolicy
+def toKernelPolicy
     (policy : A.StochasticHistoryPolicy start) :
     (A.historyKernelArena start).Policy :=
   fun history hnonterminal => policy history hnonterminal
@@ -119,19 +135,19 @@ theorem historyKernelArena_stepLaw
         policy.toKernelPolicy history hnonterminal =
       (policy history hnonterminal).map fun action =>
         ⟨A.next history.1 action, history.2.snoc action⟩ := by
-  exact PMF.bind_pure_comp _ _
+  exact (FiniteLaw.map_eq_bind_pure_comp _ _).symm
 
 /-- The lifted finite state law is exactly the existing stopped stochastic
 history executor.
 
-This is equality of `PMF`s on complete histories at every finite horizon. -/
-theorem historyKernelArena_stateLawFrom_eq_stochasticHistoryPMFFrom
+This is equality of `FiniteLaw` values on complete histories at every finite horizon. -/
+theorem historyKernelArena_stateLawFrom_eq_stochasticHistoryLawFrom
     [(state : A.State) → Decidable (A.IsTerminal state)]
     (policy : A.StochasticHistoryPolicy start)
     (horizon : ℕ) (current : A.HistoryFrom start) :
     (A.historyKernelArena start).stateLawFrom
         policy.toKernelPolicy horizon current =
-      A.stochasticHistoryPMFFrom policy current horizon := by
+      A.stochasticHistoryLawFrom policy current horizon := by
   induction horizon generalizing current with
   | zero =>
       rfl
@@ -143,20 +159,20 @@ theorem historyKernelArena_stateLawFrom_eq_stochasticHistoryPMFFrom
           hterminal
         rw [KernelArena.stateLawFrom, dif_pos hterminal']
         exact
-          (A.stochasticHistoryPMFFrom_succ_of_terminal
+          (A.stochasticHistoryLawFrom_succ_of_terminal
             policy current horizon hterminal).symm
       · have hnonterminal' :
             ¬ IsEmpty
               ((A.historyKernelArena start).Action current) :=
           hterminal
         rw [KernelArena.stateLawFrom, dif_neg hnonterminal']
-        rw [KernelArena.stepLaw, PMF.bind_bind]
+        rw [KernelArena.stepLaw, FiniteLaw.bind_bind]
         simp only [
           StochasticHistoryPolicy.toKernelPolicy,
-          historyKernelArena_next, PMF.pure_bind]
+          historyKernelArena_next, FiniteLaw.pure_bind]
         simp_rw [ih]
         exact
-          (A.stochasticHistoryPMFFrom_succ_of_not_terminal
+          (A.stochasticHistoryLawFrom_succ_of_not_terminal
             policy current horizon hterminal).symm
 
 end Arena
@@ -165,11 +181,24 @@ namespace ExtensiveGame.ObservedChanceGame
 
 variable {N U : Type*} (G : ObservedChanceGame N U)
 
+/-- The observed history lift reuses the game's executable terminal test. -/
+local instance observedHistoryKernelActionEmptinessDecidable
+    [(state : G.observed.base.State) →
+      Decidable (G.observed.base.isTerminal state)] :
+    (history : (G.observed.base.toArena.historyKernelArena
+      G.observed.base.init).State) →
+      Decidable
+        (IsEmpty ((G.observed.base.toArena.historyKernelArena
+          G.observed.base.init).Action history)) :=
+  fun history =>
+    inferInstanceAs
+      (Decidable (G.observed.base.isTerminal history.1))
+
 namespace BehavioralProfile
 
 /-- Lift an observed behavioral profile and its declared chance kernels to a
 stationary policy on complete history states. -/
-noncomputable def toHistoryKernelPolicy
+def toHistoryKernelPolicy
     (profile : G.observed.BehavioralProfile) :
     (G.observed.base.toArena.historyKernelArena
       G.observed.base.init).Policy :=
@@ -257,7 +286,7 @@ theorem historyKernelArena_stepLaw_of_chance
       G.observed.base.init).stepLaw
         (toHistoryKernelPolicy G profile)
         history hnonterminal =
-      G.chanceSuccessorKernel history
+      G.chanceSuccessorLaw history
         ⟨hmover, hnonterminal⟩ := by
   change
     (G.observed.base.toArena.historyKernelArena
@@ -271,7 +300,7 @@ theorem historyKernelArena_stepLaw_of_chance
   rfl
 
 /-- The finite lifted endpoint law is exactly the original behavioral/chance
-stopped-history PMF. -/
+stopped-history finite law. -/
 theorem historyKernelArena_stateLawFrom_eq
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
@@ -282,13 +311,13 @@ theorem historyKernelArena_stateLawFrom_eq
     (G.observed.base.toArena.historyKernelArena
       G.observed.base.init).stateLawFrom
         (toHistoryKernelPolicy G profile) horizon current =
-      G.observed.base.toArena.stochasticHistoryPMFFrom
+      G.observed.base.toArena.stochasticHistoryLawFrom
         (toHistoryPolicy G profile) current horizon :=
-  Arena.historyKernelArena_stateLawFrom_eq_stochasticHistoryPMFFrom
+  Arena.historyKernelArena_stateLawFrom_eq_stochasticHistoryLawFrom
     (toHistoryPolicy G profile) horizon current
 
 /-- The analytic one-step law at a player history is exactly the measure
-associated to the player's concrete successor-history PMF. -/
+associated to the player's concrete successor-history finite law. -/
 theorem toMeasurable_stepKernel_apply_of_mover
     (profile : G.observed.BehavioralProfile)
     (history :
@@ -301,19 +330,15 @@ theorem toMeasurable_stepKernel_apply_of_mover
         (G.observed.base.toArena.historyKernelArena
           G.observed.base.init).toMeasurable_measurableSet_terminalSet
         history =
-      @PMF.toMeasure
-        (G.observed.base.toArena.HistoryFrom G.observed.base.init) ⊤
-        ((profile.actionLawAt G.observed history i hmover
+      finiteLawMeasureTop(
+        (profile.actionLawAt G.observed history i hmover
           hnonterminal).map
           (fun action =>
             ⟨G.observed.base.next history.1 action,
               history.2.snoc action⟩)) := by
   calc
-    _ =
-        @PMF.toMeasure
-          (G.observed.base.toArena.HistoryFrom
-            G.observed.base.init) ⊤
-          ((G.observed.base.toArena.historyKernelArena
+    _ = finiteLawMeasureTop(
+          (G.observed.base.toArena.historyKernelArena
             G.observed.base.init).stepLaw
               (toHistoryKernelPolicy G profile)
               history hnonterminal) :=
@@ -322,10 +347,7 @@ theorem toMeasurable_stepKernel_apply_of_mover
           G.observed.base.init)
         (toHistoryKernelPolicy G profile) history hnonterminal
     _ = _ := congrArg
-      (fun law =>
-        @PMF.toMeasure
-          (G.observed.base.toArena.HistoryFrom
-            G.observed.base.init) ⊤ law)
+      (fun law => finiteLawMeasureTop(law))
       (historyKernelArena_stepLaw_of_mover
         G profile history hnonterminal i hmover)
 
@@ -342,16 +364,11 @@ theorem toMeasurable_stepKernel_apply_of_chance
         (G.observed.base.toArena.historyKernelArena
           G.observed.base.init).toMeasurable_measurableSet_terminalSet
         history =
-      @PMF.toMeasure
-        (G.observed.base.toArena.HistoryFrom G.observed.base.init) ⊤
-        (G.chanceSuccessorKernel history
-          ⟨hmover, hnonterminal⟩) := by
+      finiteLawMeasureTop(
+        G.chanceSuccessorLaw history ⟨hmover, hnonterminal⟩) := by
   calc
-    _ =
-        @PMF.toMeasure
-          (G.observed.base.toArena.HistoryFrom
-            G.observed.base.init) ⊤
-          ((G.observed.base.toArena.historyKernelArena
+    _ = finiteLawMeasureTop(
+          (G.observed.base.toArena.historyKernelArena
             G.observed.base.init).stepLaw
               (toHistoryKernelPolicy G profile)
               history hnonterminal) :=
@@ -360,19 +377,20 @@ theorem toMeasurable_stepKernel_apply_of_chance
           G.observed.base.init)
         (toHistoryKernelPolicy G profile) history hnonterminal
     _ = _ := congrArg
-      (fun law =>
-        @PMF.toMeasure
-          (G.observed.base.toArena.HistoryFrom
-            G.observed.base.init) ⊤ law)
+      (fun law => finiteLawMeasureTop(law))
       (historyKernelArena_stepLaw_of_chance
         G profile history hnonterminal hmover)
 
 /-- Every finite analytic endpoint measure of the lifted observed behavior is
-exactly `PMF.toMeasure` of the existing stopped-history executor. -/
+the weighted-Dirac measure of the stopped-history executor. -/
 theorem toMeasurable_endpointMeasure
     [(state : G.observed.base.State) →
       Decidable (G.observed.base.isTerminal state)]
     (profile : G.observed.BehavioralProfile)
+    [MeasurableKernelArena.ActionPolicy.EndpointExecution
+      (toHistoryKernelPolicy G profile).toMeasurable
+      (G.observed.base.toArena.historyKernelArena
+        G.observed.base.init).toMeasurable_measurableSet_terminalSet]
     (horizon : ℕ)
     (current :
       G.observed.base.toArena.HistoryFrom G.observed.base.init) :
@@ -380,16 +398,12 @@ theorem toMeasurable_endpointMeasure
         (G.observed.base.toArena.historyKernelArena
           G.observed.base.init).toMeasurable_measurableSet_terminalSet
         horizon current =
-      @PMF.toMeasure
-        (G.observed.base.toArena.HistoryFrom G.observed.base.init) ⊤
-        (G.observed.base.toArena.stochasticHistoryPMFFrom
+      finiteLawMeasureTop(
+        G.observed.base.toArena.stochasticHistoryLawFrom
           (toHistoryPolicy G profile) current horizon) := by
   calc
-    _ =
-        @PMF.toMeasure
-          (G.observed.base.toArena.HistoryFrom
-            G.observed.base.init) ⊤
-          ((G.observed.base.toArena.historyKernelArena
+    _ = finiteLawMeasureTop(
+          (G.observed.base.toArena.historyKernelArena
             G.observed.base.init).stateLawFrom
               (toHistoryKernelPolicy G profile)
               horizon current) :=
@@ -398,10 +412,7 @@ theorem toMeasurable_endpointMeasure
           G.observed.base.init)
         (toHistoryKernelPolicy G profile) horizon current
     _ = _ := congrArg
-      (fun law =>
-        @PMF.toMeasure
-          (G.observed.base.toArena.HistoryFrom
-            G.observed.base.init) ⊤ law)
+      (fun law => finiteLawMeasureTop(law))
       (historyKernelArena_stateLawFrom_eq
         G profile horizon current)
 
