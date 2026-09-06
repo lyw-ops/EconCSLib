@@ -3,7 +3,7 @@ Copyright (c) 2026 EconCSLib contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
-import EconCSLib.GameTheory.ExtensiveGame.Execution.Discrete.KernelArena
+import EconCSLib.Math.Probability.FiniteLaw.Coupling
 import EconCSLib.GameTheory.ExtensiveGame.Observed.Chance
 
 /-!
@@ -34,15 +34,14 @@ namespace Examples.CouplingBoundary
 open ExtensiveGame
 
 /-- The nonuniform source law, with true mass `1/3` and false mass `2/3`. -/
-noncomputable def sourceLaw : PMF Bool :=
-  PMF.bernoulli (1 / 3) (by
-    apply div_le_one_of_le₀
-    · norm_num
-    · positivity)
+def sourceLaw : FiniteLaw Bool where
+  atoms := [(true, 1 / 3), (false, 2 / 3)]
+  normalized := by norm_num
 
 /-- The fair target law. -/
-noncomputable def targetLaw : PMF Bool :=
-  PMF.bernoulli (1 / 2) (by norm_num)
+def targetLaw : FiniteLaw Bool where
+  atoms := [(true, 1 / 2), (false, 1 / 2)]
+  normalized := by norm_num
 
 /-- The selected coarse observable forgets the Boolean atom label. -/
 def coarseObservable (_ : Bool) : Unit :=
@@ -53,30 +52,46 @@ agree. -/
 def Related (source target : Bool) : Prop :=
   coarseObservable source = coarseObservable target
 
-/-- Concrete joint PMF used as the coupling witness. -/
-noncomputable def witnessCoupling :
-    PMF (Bool × Bool) :=
-  PMF.independentCoupling sourceLaw targetLaw
+/-- Bundle a Boolean pair with its trivial coarse-observation relation. -/
+def relatedPair (source target : Bool) :
+    {pair : Bool × Bool // Related pair.1 pair.2} :=
+  ⟨(source, target), rfl⟩
 
-/-- Every supported pair of the concrete joint law satisfies the coarse
-cross-type relation. -/
-theorem witnessCoupling_supported :
-    ∀ pair ∈ witnessCoupling.support,
-      Related pair.1 pair.2 := by
-  intro pair hpair
-  rfl
+/-- Concrete finite joint law used as the coupling witness. -/
+def witnessCoupling :
+    FiniteLaw {pair : Bool × Bool // Related pair.1 pair.2} where
+  atoms :=
+    [(relatedPair true true, 1 / 6),
+      (relatedPair true false, 1 / 6),
+      (relatedPair false true, 1 / 3),
+      (relatedPair false false, 1 / 3)]
+  normalized := by norm_num
 
 /-- **N-4.** The two finite atomic laws admit a relational coupling with exact
 marginals and relation-supported mass. -/
-theorem coupling_exists :
-    PMF.RelCoupling Related sourceLaw targetLaw := by
-  exact
-    ⟨witnessCoupling,
-      PMF.independentCoupling_map_fst
-        sourceLaw targetLaw,
-      PMF.independentCoupling_map_snd
-        sourceLaw targetLaw,
-      witnessCoupling_supported⟩
+def coupling_exists :
+    FiniteLaw.RelCoupling Related sourceLaw targetLaw where
+  joint := witnessCoupling
+  leftEquivalent := by
+    intro value
+    simp [FiniteLaw.map, witnessCoupling,
+      sourceLaw, relatedPair]
+    ring
+  rightEquivalent := by
+    intro value
+    simp [FiniteLaw.map, witnessCoupling,
+      targetLaw, relatedPair]
+    ring
+  leftPositive := by
+    intro outcome
+    cases outcome <;>
+      simp [FiniteLaw.HasPositiveAtom, FiniteLaw.map, witnessCoupling,
+        sourceLaw, relatedPair]
+  rightPositive := by
+    intro outcome
+    cases outcome <;>
+      simp [FiniteLaw.HasPositiveAtom, FiniteLaw.map, witnessCoupling,
+        targetLaw, relatedPair]
 
 /-- The support relation is not the graph of a deterministic map: the
 particular source state `false` is related to both distinct target states. -/
@@ -95,8 +110,13 @@ theorem sourceLaw_ne_targetLaw :
     sourceLaw ≠ targetLaw := by
   intro heq
   have hmass :=
-    congrArg (fun law : PMF Bool => law true) heq
-  simp [sourceLaw, targetLaw, PMF.bernoulli_apply] at hmass
+    congrArg (fun law : FiniteLaw Bool => law.mass true) heq
+  norm_num [sourceLaw, targetLaw, FiniteLaw.mass,
+    FiniteLaw.eventMass] at hmass
+  have hcast := congrArg (fun weight : ℚ≥0 => (weight : ℚ)) hmass
+  have hcross := (div_eq_div_iff (by norm_num : (3 : ℚ) ≠ 0)
+    (by norm_num : (2 : ℚ) ≠ 0)).mp hcast
+  simp at hcross
 
 /-- **N-4, universal separation.** No equivalence of the two-point atom type
 pushes the nonuniform source law to the fair target law.
@@ -111,29 +131,30 @@ theorem no_equivPushforward :
   intro e heq
   have hmass :=
     congrArg
-      (fun law : PMF Bool => law (e true))
+      (fun law : FiniteLaw Bool => law.mass (e true))
       heq
-  dsimp only at hmass
-  have hsource :
-      sourceLaw.map e (e true) =
-        sourceLaw true := by
-    calc
-      sourceLaw.map e (e true) =
-          sourceLaw (e.symm (e true)) :=
-        PMF.map_equiv_apply sourceLaw e (e true)
-      _ = sourceLaw true := by
-        rw [e.symm_apply_apply]
-  rw [hsource] at hmass
-  cases hvalue : e true <;>
-    simp [sourceLaw, targetLaw, PMF.bernoulli_apply,
-      hvalue] at hmass
+  cases hfalse : e false <;> cases htrue : e true
+  · exact Bool.false_ne_true (e.injective (hfalse.trans htrue.symm))
+  · norm_num [sourceLaw, targetLaw, FiniteLaw.map, FiniteLaw.mass,
+      FiniteLaw.eventMass, hfalse, htrue] at hmass
+    have hcast := congrArg (fun weight : ℚ≥0 => (weight : ℚ)) hmass
+    have hcross := (div_eq_div_iff (by norm_num : (3 : ℚ) ≠ 0)
+      (by norm_num : (2 : ℚ) ≠ 0)).mp hcast
+    simp at hcross
+  · norm_num [sourceLaw, targetLaw, FiniteLaw.map, FiniteLaw.mass,
+      FiniteLaw.eventMass, hfalse, htrue] at hmass
+    have hcast := congrArg (fun weight : ℚ≥0 => (weight : ℚ)) hmass
+    have hcross := (div_eq_div_iff (by norm_num : (3 : ℚ) ≠ 0)
+      (by norm_num : (2 : ℚ) ≠ 0)).mp hcast
+    simp at hcross
+  · exact Bool.false_ne_true (e.injective (hfalse.trans htrue.symm))
 
 /-- Equality follows only after explicit observable maps are supplied and
 shown equal on related support. This is the functional bridge
 `PMF.RelCoupling.map_eq`, not definitional equality of the original PMFs. -/
 theorem coarseObservableLaw_eq :
-    sourceLaw.map coarseObservable =
-      targetLaw.map coarseObservable :=
+    (sourceLaw.map coarseObservable).Equivalent
+      (targetLaw.map coarseObservable) :=
   coupling_exists.map_eq
     (fun _ _ hrelated => hrelated)
 
@@ -191,14 +212,14 @@ theorem chanceInitial_isChance :
     exact hterminal.false false
 
 /-- The observed chance game carrying the nonuniform source kernel. -/
-noncomputable def sourceChanceGame :
+def sourceChanceGame :
     ObservedChanceGame Unit Unit where
   observed := chanceObserved
   chanceKernel := fun _ _ => sourceLaw
 
 /-- The otherwise identical observed chance game carrying the fair target
 kernel. -/
-noncomputable def targetChanceGame :
+def targetChanceGame :
     ObservedChanceGame Unit Unit where
   observed := chanceObserved
   chanceKernel := fun _ _ => targetLaw
