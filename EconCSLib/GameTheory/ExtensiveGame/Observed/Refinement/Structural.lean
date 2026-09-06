@@ -102,11 +102,11 @@ structure InformationRefinement
   map_infoAt :
     ∀ (history : G.base.toArena.HistoryFrom G.base.init) (i : N)
       (hsource : G.base.mover history.1 = some i)
-      (hsource_nonterminal : ¬ G.base.isTerminal history.1)
+      (hsource_nonterminal : G.base.toArena.IsDecision history.1)
       (htarget :
         H.base.mover (historyIso.stateEquiv history).1 = some i)
       (htarget_nonterminal :
-        ¬ H.base.isTerminal (historyIso.stateEquiv history).1),
+        H.base.toArena.IsDecision (historyIso.stateEquiv history).1),
       G.infoAt history i hsource hsource_nonterminal =
         forgetInfo i
           (H.infoAt (historyIso.stateEquiv history) i htarget
@@ -116,11 +116,11 @@ structure InformationRefinement
   map_infoActionAt :
     ∀ (history : G.base.toArena.HistoryFrom G.base.init) (i : N)
       (hsource : G.base.mover history.1 = some i)
-      (hsource_nonterminal : ¬ G.base.isTerminal history.1)
+      (hsource_nonterminal : G.base.toArena.IsDecision history.1)
       (htarget :
         H.base.mover (historyIso.stateEquiv history).1 = some i)
       (htarget_nonterminal :
-        ¬ H.base.isTerminal (historyIso.stateEquiv history).1)
+        H.base.toArena.IsDecision (historyIso.stateEquiv history).1)
       (action :
         G.InfoAction i
           (G.infoAt history i hsource hsource_nonterminal)),
@@ -219,13 +219,13 @@ def infoActionEquivAt
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource : G.base.mover history.1 = some i)
-    (hsource_nonterminal : ¬ G.base.isTerminal history.1)
+    (hsource_nonterminal : G.base.toArena.IsDecision history.1)
     (htarget :
       H.base.mover
           (r.historyIso.stateEquiv history).1 =
         some i)
     (htarget_nonterminal :
-      ¬ H.base.isTerminal
+      H.base.toArena.IsDecision
         (r.historyIso.stateEquiv history).1) :
     G.InfoAction i
         (G.infoAt history i hsource hsource_nonterminal) ≃
@@ -249,13 +249,13 @@ theorem infoActionEquivAt_apply
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource : G.base.mover history.1 = some i)
-    (hsource_nonterminal : ¬ G.base.isTerminal history.1)
+    (hsource_nonterminal : G.base.toArena.IsDecision history.1)
     (htarget :
       H.base.mover
           (r.historyIso.stateEquiv history).1 =
         some i)
     (htarget_nonterminal :
-      ¬ H.base.isTerminal
+      H.base.toArena.IsDecision
         (r.historyIso.stateEquiv history).1)
     (action :
       G.InfoAction i
@@ -280,13 +280,13 @@ theorem map_infoActionEquivAt
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource : G.base.mover history.1 = some i)
-    (hsource_nonterminal : ¬ G.base.isTerminal history.1)
+    (hsource_nonterminal : G.base.toArena.IsDecision history.1)
     (htarget :
       H.base.mover
           (r.historyIso.stateEquiv history).1 =
         some i)
     (htarget_nonterminal :
-      ¬ H.base.isTerminal
+      H.base.toArena.IsDecision
         (r.historyIso.stateEquiv history).1)
     (action :
       G.InfoAction i
@@ -344,7 +344,7 @@ theorem refl_infoActionEquivAt
     (i : N)
     (hsource htarget : G.base.mover history.1 = some i)
     (hsource_nonterminal htarget_nonterminal :
-      ¬ G.base.isTerminal history.1)
+      G.base.toArena.IsDecision history.1)
     (action :
       G.InfoAction i
         (G.infoAt history i hsource hsource_nonterminal)) :
@@ -362,13 +362,13 @@ def transInfoAt {K : ObservedGame N U}
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource : G.base.mover history.1 = some i)
-    (hsource_nonterminal : ¬ G.base.isTerminal history.1)
+    (hsource_nonterminal : G.base.toArena.IsDecision history.1)
     (hmiddle :
       H.base.mover
           (r.historyIso.stateEquiv history).1 =
         some i)
     (hmiddle_nonterminal :
-      ¬ H.base.isTerminal
+      H.base.toArena.IsDecision
         (r.historyIso.stateEquiv history).1)
     (htarget :
       K.base.mover
@@ -376,7 +376,7 @@ def transInfoAt {K : ObservedGame N U}
             (r.historyIso.stateEquiv history)).1 =
         some i)
     (htarget_nonterminal :
-      ¬ K.base.isTerminal
+      K.base.toArena.IsDecision
         (s.historyIso.stateEquiv
           (r.historyIso.stateEquiv history)).1) :
     G.infoAt history i hsource hsource_nonterminal =
@@ -501,9 +501,9 @@ def trans {K : ObservedGame N U}
       rw [r.map_mover history]
       exact hsource
     let hmiddle_nonterminal :
-        ¬ H.base.isTerminal
+        H.base.toArena.IsDecision
           (r.historyIso.stateEquiv history).1 :=
-      (not_congr (r.historyIso.isTerminal_iff history)).mp
+      (r.historyIso.isDecision_iff history).mp
         hsource_nonterminal
     exact
       r.transInfoAt s history i
@@ -520,8 +520,8 @@ def trans {K : ObservedGame N U}
       rw [r.map_mover history]
       exact hsource
     let hmiddle_nonterminal :
-        ¬ H.base.isTerminal middleHistory.1 :=
-      (not_congr (r.historyIso.isTerminal_iff history)).mp
+        H.base.toArena.IsDecision middleHistory.1 :=
+      (r.historyIso.isDecision_iff history).mp
         hsource_nonterminal
     let sourceInformation :=
       G.infoAt history i hsource hsource_nonterminal
@@ -625,13 +625,13 @@ theorem trans_infoActionEquivAt {K : ObservedGame N U}
     (history : G.base.toArena.HistoryFrom G.base.init)
     (i : N)
     (hsource : G.base.mover history.1 = some i)
-    (hsource_nonterminal : ¬ G.base.isTerminal history.1)
+    (hsource_nonterminal : G.base.toArena.IsDecision history.1)
     (hmiddle :
       H.base.mover
           (r.historyIso.stateEquiv history).1 =
         some i)
     (hmiddle_nonterminal :
-      ¬ H.base.isTerminal
+      H.base.toArena.IsDecision
         (r.historyIso.stateEquiv history).1)
     (htarget :
       K.base.mover
@@ -639,7 +639,7 @@ theorem trans_infoActionEquivAt {K : ObservedGame N U}
             (r.historyIso.stateEquiv history)).1 =
         some i)
     (htarget_nonterminal :
-      ¬ K.base.isTerminal
+      K.base.toArena.IsDecision
         (s.historyIso.stateEquiv
           (r.historyIso.stateEquiv history)).1)
     (action :
