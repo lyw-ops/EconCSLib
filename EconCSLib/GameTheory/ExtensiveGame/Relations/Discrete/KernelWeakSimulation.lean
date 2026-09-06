@@ -51,21 +51,24 @@ namespace KernelArena
 An action records a macro action together with a successor in the support of
 its transition law.  This is an operational path view only; it does not turn a
 chance outcome into a strategic choice. -/
-noncomputable def supportArena (A : KernelArena) : Arena where
+def supportArena (A : KernelArena) : Arena where
   State := A.State
   Action := fun state =>
     Σ action : A.Action state,
-      { nextState : A.State // nextState ∈ (A.next state action).support }
+      { nextState : A.State //
+        (A.next state action).HasPositiveAtom nextState }
   next := fun _ realized => realized.2.1
 
 /-- The support Arena is terminal exactly when the kernel Arena has no macro
-action.  PMF support nonemptiness is essential in the forward direction. -/
+action. Finite-law positive-atom nonemptiness is essential in the forward
+direction. -/
 theorem supportArena_isTerminal_iff (A : KernelArena) (state : A.State) :
     A.supportArena.IsTerminal state ↔ IsEmpty (A.Action state) := by
   constructor
   · intro hterminal
     refine ⟨fun action => ?_⟩
-    obtain ⟨nextState, hnextState⟩ := (A.next state action).support_nonempty
+    obtain ⟨nextState, hnextState⟩ :=
+      (A.next state action).exists_hasPositiveAtom
     exact hterminal.false ⟨action, ⟨nextState, hnextState⟩⟩
   · intro hterminal
     exact ⟨fun realized => hterminal.false realized.1⟩
@@ -87,13 +90,13 @@ structure ProbabilisticWeakSimulation
     ∀ {source : A.State} {target : B.HistoryFrom start},
       Rel source target →
       ∀ action : A.Action source,
-        ∃ policy : B.StochasticHistoryPolicy start,
-          ∃ fuel : ℕ,
-            0 < fuel ∧
-            PolicyAdmissible policy ∧
-            PMF.RelCoupling Rel
-              (A.next source action)
-              (B.stochasticHistoryPMFFrom policy target fuel)
+        PSigma fun policy : B.StochasticHistoryPolicy start =>
+          PSigma fun fuel : ℕ =>
+            PSigma fun _hpositive : 0 < fuel =>
+              PSigma fun _hadmissible : PolicyAdmissible policy =>
+                FiniteLaw.RelCoupling Rel
+                  (A.next source action)
+                  (B.stochasticHistoryLawFrom policy target fuel)
   /-- Source and target macro states terminate simultaneously. -/
   terminal_iff :
     ∀ {source : A.State} {target : B.HistoryFrom start},
@@ -122,7 +125,7 @@ structure ExecutionAction
 Its actions are positive-length admissible policies together with their
 horizon, and its transition kernel is the exact endpoint law of that finite
 execution. -/
-noncomputable def executionKernelArena
+def executionKernelArena
     (B : Arena) (start : B.State)
     [(state : B.State) → Decidable (B.IsTerminal state)]
     (PolicyAdmissible : B.StochasticHistoryPolicy start → Prop) :
@@ -131,7 +134,7 @@ noncomputable def executionKernelArena
   Action := fun history =>
     ExecutionAction B start PolicyAdmissible history
   next := fun history execution =>
-    B.stochasticHistoryPMFFrom execution.policy history execution.fuel
+    B.stochasticHistoryLawFrom execution.policy history execution.fuel
 
 namespace ProbabilisticWeakSimulation
 
@@ -142,10 +145,10 @@ variable {A : KernelArena} {B : Arena} {start : B.State}
 /-- Regard a probabilistic weak serializer as an ordinary kernel simulation
 between macro-boundary arenas.
 
-This theorem retains the exact PMF coupling.  Only the internal serialized
+This theorem retains the exact finite-law coupling.  Only the internal serialized
 micro steps are hidden inside an `ExecutionAction`; no probability weights
 are forgotten. -/
-noncomputable def toKernelSimulation
+def toKernelSimulation
     (R : ProbabilisticWeakSimulation A B start PolicyAdmissible) :
     A.Simulation (executionKernelArena B start PolicyAdmissible) where
   Rel := R.Rel
@@ -204,7 +207,7 @@ theorem toKernelSimulation_terminal_iff
 
 /-- Forget probability weights and obtain a weak simulation between realized
 support paths and the target history unfolding. -/
-noncomputable def toSupportWeakSimulation
+def toSupportWeakSimulation
     (R : ProbabilisticWeakSimulation A B start PolicyAdmissible) :
     A.supportArena.WeakSimulation (B.unfoldFrom start) where
   Rel := R.Rel
@@ -212,28 +215,10 @@ noncomputable def toSupportWeakSimulation
     intro source target hrelated realized
     obtain ⟨sourceAction, nextSource, hnextSource⟩ := realized
     obtain
-      ⟨policy, fuel, hfuel, _, coupling,
-        hfirst, hsecond, hcoupling⟩ :=
+      ⟨policy, fuel, hfuel, _, coupling⟩ :=
       R.match_action hrelated sourceAction
-    have hfirstSupport :
-        nextSource ∈ (coupling.map Prod.fst).support := by
-      rw [hfirst]
-      exact hnextSource
-    obtain ⟨pair, hpair, hpairFirst⟩ :=
-      (PMF.mem_support_map_iff
-        (p := coupling) (f := Prod.fst) (b := nextSource)).mp
-        hfirstSupport
-    rcases pair with ⟨coupledSource, coupledTarget⟩
-    simp only at hpairFirst
-    subst coupledSource
-    have htargetSupport :
-        coupledTarget ∈
-          (B.stochasticHistoryPMFFrom policy target fuel).support := by
-      rw [← hsecond]
-      exact
-        (PMF.mem_support_map_iff
-          (p := coupling) (f := Prod.snd) (b := coupledTarget)).mpr
-          ⟨(nextSource, coupledTarget), hpair, rfl⟩
+    obtain ⟨coupledTarget, htargetPositive, hcoupled⟩ :=
+      coupling.exists_right_of_hasPositiveAtom_left hnextSource
     have hsourceNonterminal : ¬ IsEmpty (A.Action source) := by
       intro hterminal
       exact hterminal.false sourceAction
@@ -241,9 +226,9 @@ noncomputable def toSupportWeakSimulation
       intro hterminal
       exact hsourceNonterminal ((R.terminal_iff hrelated).mpr hterminal)
     obtain ⟨suffix, _, hsuffix⟩ :=
-      B.exists_positive_suffix_of_mem_support_stochasticHistoryPMFFrom
+      B.exists_positive_suffix_of_hasPositiveAtom_stochasticHistoryLawFrom
         policy target coupledTarget fuel hfuel htargetNonterminal
-          htargetSupport
+          htargetPositive
     have htargetEq :
         (⟨coupledTarget.1, target.2.append suffix⟩ :
           B.HistoryFrom start) = coupledTarget := by
@@ -253,7 +238,7 @@ noncomputable def toSupportWeakSimulation
       ⟨⟨coupledTarget.1, target.2.append suffix⟩,
         ⟨target.2.liftAppend suffix⟩, ?_⟩
     rw [htargetEq]
-    exact hcoupling _ hpair
+    exact hcoupled
   terminal_iff := by
     intro source target hrelated
     calc
@@ -271,28 +256,10 @@ theorem toSupportWeakSimulation_progressing
   intro source target hrelated realized
   obtain ⟨sourceAction, nextSource, hnextSource⟩ := realized
   obtain
-    ⟨policy, fuel, hfuel, _, coupling,
-      hfirst, hsecond, hcoupling⟩ :=
+    ⟨policy, fuel, hfuel, _, coupling⟩ :=
     R.match_action hrelated sourceAction
-  have hfirstSupport :
-      nextSource ∈ (coupling.map Prod.fst).support := by
-    rw [hfirst]
-    exact hnextSource
-  obtain ⟨pair, hpair, hpairFirst⟩ :=
-    (PMF.mem_support_map_iff
-      (p := coupling) (f := Prod.fst) (b := nextSource)).mp
-      hfirstSupport
-  rcases pair with ⟨coupledSource, coupledTarget⟩
-  simp only at hpairFirst
-  subst coupledSource
-  have htargetSupport :
-      coupledTarget ∈
-        (B.stochasticHistoryPMFFrom policy target fuel).support := by
-    rw [← hsecond]
-    exact
-      (PMF.mem_support_map_iff
-        (p := coupling) (f := Prod.snd) (b := coupledTarget)).mpr
-        ⟨(nextSource, coupledTarget), hpair, rfl⟩
+  obtain ⟨coupledTarget, htargetPositive, hcoupled⟩ :=
+    coupling.exists_right_of_hasPositiveAtom_left hnextSource
   have hsourceNonterminal : ¬ IsEmpty (A.Action source) := by
     intro hterminal
     exact hterminal.false sourceAction
@@ -300,9 +267,9 @@ theorem toSupportWeakSimulation_progressing
     intro hterminal
     exact hsourceNonterminal ((R.terminal_iff hrelated).mpr hterminal)
   obtain ⟨suffix, hsuffixPositive, hsuffix⟩ :=
-    B.exists_positive_suffix_of_mem_support_stochasticHistoryPMFFrom
+    B.exists_positive_suffix_of_hasPositiveAtom_stochasticHistoryLawFrom
       policy target coupledTarget fuel hfuel htargetNonterminal
-        htargetSupport
+        htargetPositive
   have htargetEq :
       (⟨coupledTarget.1, target.2.append suffix⟩ :
         B.HistoryFrom start) = coupledTarget := by
@@ -316,7 +283,7 @@ theorem toSupportWeakSimulation_progressing
       Arena.History.length_liftAppend (A := B) target.2 suffix
     exact hlength.symm ▸ hsuffixPositive
   · rw [htargetEq]
-    exact hcoupling _ hpair
+    exact hcoupled
 
 end ProbabilisticWeakSimulation
 
