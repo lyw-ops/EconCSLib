@@ -4,7 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 -/
 
 import EconCSLib.GameTheory.ExtensiveGame.Simulation.Kernel.StatePath
+import EconCSLib.Math.Probability.PMF.ToMeasure
 import Mathlib.MeasureTheory.Constructions.UnitInterval
+import Mathlib.Probability.ProbabilityMassFunction.Constructions
 
 /-!
 # A genuinely continuous stochastic-arena boundary
@@ -35,22 +37,41 @@ def actionBundleMeasurable :
     MeasurableSpace (Σ _state : Set.Icc (0 : ℝ) 1, Unit) :=
   (inferInstance : MeasurableSpace (Set.Icc (0 : ℝ) 1)).comap Sigma.fst
 
+/-- Explicit analytic input for the non-atomic regression.
+
+Both kernels are supplied mathematical objects. The certificates fix their
+laws exactly; neither uniform sampling nor Dirac-measure construction is
+claimed to be an executable operation. -/
+class AnalyticInput where
+  /-- Uniform successor law, supplied as a measurable kernel. -/
+  transition : @Kernel (Σ _state : Set.Icc (0 : ℝ) 1, Unit)
+    (Set.Icc (0 : ℝ) 1) actionBundleMeasurable inferInstance
+  /-- Every transition is unit-interval volume. -/
+  transition_eq : ∀ stateAction, transition stateAction = volume
+  /-- The unique-action law, supplied as a measurable kernel. -/
+  action : @Kernel (Set.Icc (0 : ℝ) 1)
+    (Σ _state : Set.Icc (0 : ℝ) 1, Unit) inferInstance actionBundleMeasurable
+  /-- The supplied action kernel selects precisely the legal unique action. -/
+  action_eq : ∀ state, action state =
+    @Measure.dirac (Σ _state : Set.Icc (0 : ℝ) 1, Unit)
+      actionBundleMeasurable ⟨state, ()⟩
+
+variable [inputs : AnalyticInput]
+
 /-- A one-action arena whose next state is uniformly distributed on the unit
 interval, independently of the current state. -/
-noncomputable def continuousArena : MeasurableKernelArena where
+def continuousArena : MeasurableKernelArena where
   State := Set.Icc (0 : ℝ) 1
   Action := fun _ => Unit
   stateMeasurable := inferInstance
   actionBundleMeasurable := actionBundleMeasurable
   stateProjection_measurable := comap_measurable Sigma.fst
-  transition :=
-    @Kernel.const
-      (Σ _state : Set.Icc (0 : ℝ) 1, Unit)
-      (Set.Icc (0 : ℝ) 1)
-      actionBundleMeasurable inferInstance
-      volume
+  transition := inputs.transition
   transition_isMarkov := by
-    exact Kernel.const.instIsMarkovKernel
+    constructor
+    intro stateAction
+    rw [inputs.transition_eq]
+    infer_instance
 
 @[simp]
 theorem continuousArena_nextMeasure
@@ -58,7 +79,7 @@ theorem continuousArena_nextMeasure
     (action : continuousArena.Action state) :
     continuousArena.nextMeasure state action =
       (volume : Measure (Set.Icc (0 : ℝ) 1)) :=
-  rfl
+  inputs.transition_eq ⟨state, action⟩
 
 /-- Selecting the arena's unique action is measurable for the pullback sigma
 algebra on the dependent action bundle. -/
@@ -81,21 +102,24 @@ theorem measurable_uniqueAction :
 
 /-- The unique-action analytic policy.  There are no terminal states, so its
 action kernel is a Dirac probability law at every state. -/
-noncomputable def continuousPolicy :
+def continuousPolicy :
     continuousArena.ActionPolicy where
-  kernel := Kernel.deterministic
-    (fun state => (⟨state, Unit.unit⟩ :
-      continuousArena.ActionBundle))
-    measurable_uniqueAction
+  kernel := inputs.action
   terminal_zero := by
     intro state hterminal
     exact (hterminal.false Unit.unit).elim
   nonterminal_isProbability := by
-    intro _ _
+    intro state _
+    change @IsProbabilityMeasure (Σ _state : Set.Icc (0 : ℝ) 1, Unit)
+      actionBundleMeasurable (inputs.action state)
+    rw [inputs.action_eq state]
     infer_instance
   legal := by
     intro state _
-    rw [Kernel.deterministic_apply measurable_uniqueAction]
+    letI : MeasurableSpace (Σ _state : Set.Icc (0 : ℝ) 1, Unit) :=
+      actionBundleMeasurable
+    change ∀ᵐ stateAction ∂inputs.action state, stateAction.1 = state
+    rw [inputs.action_eq state]
     have hfiber :
         @MeasurableSet continuousArena.ActionBundle
           continuousArena.actionBundleMeasurable
@@ -136,19 +160,23 @@ theorem continuousPolicy_stepKernel
         continuousArena_measurableSet_terminalSet state =
       (volume : Measure (Set.Icc (0 : ℝ) 1)) := by
   rw [MeasurableKernelArena.ActionPolicy.stepKernel_apply_nonterminal]
-  · change
+  · change (inputs.action state).bind continuousArena.transition = _
+    rw [inputs.action_eq state]
+    change
       (Measure.dirac
         (⟨state, Unit.unit⟩ : continuousArena.ActionBundle)).bind
           continuousArena.transition =
         (volume : Measure (Set.Icc (0 : ℝ) 1))
     rw [Measure.dirac_bind continuousArena.transition.measurable]
-    rfl
+    exact inputs.transition_eq _
   · intro hterminal
     exact hterminal.false Unit.unit
 
 /-- Every positive-horizon endpoint kernel of the continuous example is the
 constant volume kernel. -/
-theorem continuousPolicy_endpointKernel_succ (horizon : ℕ) :
+theorem continuousPolicy_endpointKernel_succ
+    [MeasurableKernelArena.ActionPolicy.EndpointExecution continuousPolicy
+      continuousArena_measurableSet_terminalSet] (horizon : ℕ) :
     continuousPolicy.endpointKernel
         continuousArena_measurableSet_terminalSet horizon.succ =
       Kernel.const continuousArena.State
@@ -169,6 +197,8 @@ theorem continuousPolicy_endpointKernel_succ (horizon : ℕ) :
 /-- Every positive finite endpoint law remains unit-interval volume. -/
 @[simp]
 theorem continuousPolicy_endpointMeasure_succ
+    [MeasurableKernelArena.ActionPolicy.EndpointExecution continuousPolicy
+      continuousArena_measurableSet_terminalSet]
     (horizon : ℕ) (state : continuousArena.State) :
     continuousPolicy.endpointMeasure
         continuousArena_measurableSet_terminalSet
@@ -182,6 +212,7 @@ theorem continuousPolicy_endpointMeasure_succ
   rw [continuousPolicy_endpointKernel_succ]
   rfl
 
+omit inputs in
 /-- The continuous transition law is not the measure associated to any
 discrete probability mass function on the unit interval. -/
 theorem no_discretePMF_representation :
@@ -212,6 +243,8 @@ theorem no_discretePMF_stepKernel_representation
 /-- No positive finite endpoint law of the continuous example comes from a
 discrete PMF. -/
 theorem no_discretePMF_endpointMeasure_representation
+    [MeasurableKernelArena.ActionPolicy.EndpointExecution continuousPolicy
+      continuousArena_measurableSet_terminalSet]
     (horizon : ℕ) (state : continuousArena.State) :
     ¬ ∃ p : PMF (Set.Icc (0 : ℝ) 1),
       p.toMeasure =
@@ -224,17 +257,25 @@ theorem no_discretePMF_endpointMeasure_representation
 /-- Every positive-time path coordinate has the non-atomic volume law. -/
 @[simp]
 theorem continuousPolicy_coordinateMeasure_succ
+    [MeasurableKernelArena.ActionPolicy.PathExecution continuousPolicy
+      continuousArena_measurableSet_terminalSet]
     (time : ℕ) (state : continuousArena.State) :
     continuousPolicy.coordinateMeasure
         continuousArena_measurableSet_terminalSet
         state time.succ =
       (volume : Measure (Set.Icc (0 : ℝ) 1)) := by
+  obtain ⟨execution⟩ :=
+    MeasurableKernelArena.ActionPolicy.EndpointExecution.nonempty
+      continuousPolicy continuousArena_measurableSet_terminalSet
+  letI := execution
   rw [MeasurableKernelArena.ActionPolicy.coordinateMeasure_eq_endpointMeasure]
   exact continuousPolicy_endpointMeasure_succ time state
 
 /-- The entire continuous state-path law is not the measure associated to any
 discrete PMF on path space. -/
 theorem no_discretePMF_pathMeasure_representation
+    [MeasurableKernelArena.ActionPolicy.PathExecution continuousPolicy
+      continuousArena_measurableSet_terminalSet]
     (state : continuousArena.State) :
     ¬ ∃ p : PMF (ℕ → Set.Icc (0 : ℝ) 1),
       p.toMeasure =
@@ -266,7 +307,7 @@ theorem no_discretePMF_pathMeasure_representation
       _ =
           continuousPolicy.coordinateMeasure
             continuousArena_measurableSet_terminalSet state 1 :=
-        by rfl
+        (MeasurableKernelArena.ActionPolicy.PathExecution.coordinate_eq state 1).symm
   exact hcoordinate.trans
     (continuousPolicy_coordinateMeasure_succ 0 state)
 
