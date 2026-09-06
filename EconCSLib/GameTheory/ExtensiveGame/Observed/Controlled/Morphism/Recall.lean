@@ -30,7 +30,8 @@ variable {G H : ControlledObservedGame N}
 through its information-state and information-action equivalences. -/
 def personalDecisionEquiv (e : G.Iso H) (i : N) :
     G.PersonalDecision i ≃ H.PersonalDecision i :=
-  (e.infoStateEquiv i).sigmaCongr (e.infoActionEquiv i)
+  (e.representedInfoEquiv i).sigmaCongr fun information =>
+    e.infoActionEquiv i information.1
 
 private theorem sigma_mk_cast_eq
     {α : Type*} {fiber : α → Type*}
@@ -56,18 +57,22 @@ theorem map_personalDecisionAt
         (e.historyIso.actionEquiv history action) =
       e.personalDecisionEquiv i
         (G.personalDecisionAt i history hsource action) := by
-  let hsource_nonterminal : ¬ G.base.isTerminal history.1 :=
-    fun hterminal => hterminal.false action
+  let hsource_nonterminal : G.base.toArena.IsDecision history.1 :=
+    ⟨action⟩
   let htarget_nonterminal :
-      ¬ H.base.isTerminal
+      H.base.toArena.IsDecision
         (e.historyIso.stateEquiv history).1 :=
-    fun hterminal =>
-      hterminal.false (e.historyIso.actionEquiv history action)
+    ⟨e.historyIso.actionEquiv history action⟩
   let sourceInformation :=
     G.infoAt history i hsource hsource_nonterminal
   let sourceAction :=
     (G.actionEquiv history i hsource
       hsource_nonterminal).symm action
+  let sourceCoordinate :=
+    G.representedInfoAt history i hsource hsource_nonterminal
+  let targetCoordinate :=
+    H.representedInfoAt (e.historyIso.stateEquiv history) i
+      htarget htarget_nonterminal
   have hinfo :
       e.infoStateEquiv i sourceInformation =
         H.infoAt (e.historyIso.stateEquiv history) i htarget
@@ -76,6 +81,10 @@ theorem map_personalDecisionAt
       htarget htarget_nonterminal
   let mappedAction :=
     e.infoActionEquiv i sourceInformation sourceAction
+  let mappedCoordinateAction :
+      H.InfoAction i (e.representedInfoEquiv i sourceCoordinate).1 := by
+    simpa [sourceCoordinate, sourceInformation,
+      ControlledObservedGame.Iso.representedInfoEquiv] using mappedAction
   let transportedAction :=
     cast (congrArg (H.InfoAction i) hinfo) mappedAction
   have haction :
@@ -95,27 +104,25 @@ theorem map_personalDecisionAt
       transportedAction] using
       (e.map_infoActionAt history i hsource hsource_nonterminal
         htarget htarget_nonterminal sourceAction).symm
+  have hcoordinate :
+      e.representedInfoEquiv i sourceCoordinate = targetCoordinate :=
+    Subtype.ext hinfo
   change
-    (⟨H.infoAt
-        (e.historyIso.stateEquiv history) i htarget
-        htarget_nonterminal,
+    (⟨targetCoordinate,
       (H.actionEquiv
         (e.historyIso.stateEquiv history) i htarget
         htarget_nonterminal).symm
         (e.historyIso.actionEquiv history action)⟩ :
       H.PersonalDecision i) =
     e.personalDecisionEquiv i
-      (⟨sourceInformation, sourceAction⟩ :
+      (⟨sourceCoordinate, sourceAction⟩ :
         G.PersonalDecision i)
   rw [haction]
-  change
-    (⟨H.infoAt
-        (e.historyIso.stateEquiv history) i htarget
-        htarget_nonterminal,
-      transportedAction⟩ :
-      H.PersonalDecision i) =
-    ⟨e.infoStateEquiv i sourceInformation, mappedAction⟩
-  exact sigma_mk_cast_eq hinfo mappedAction
+  apply Sigma.ext hcoordinate.symm
+  simp [personalDecisionEquiv, sourceCoordinate, targetCoordinate,
+    sourceInformation, mappedAction,
+    transportedAction]
+  exact cast_heq _ _
 
 /-- Strict history mapping sends a player's remembered decision sequence to
 the pointwise-mapped source sequence. -/
@@ -206,9 +213,9 @@ private theorem infoAt_eq_of_history_eq
     {first second : K.base.History}
     (hhistory : first = second)
     (hfirst : K.base.mover first.1 = some i)
-    (hfirst_nonterminal : ¬ K.base.isTerminal first.1)
+    (hfirst_nonterminal : K.base.toArena.IsDecision first.1)
     (hsecond : K.base.mover second.1 = some i)
-    (hsecond_nonterminal : ¬ K.base.isTerminal second.1) :
+    (hsecond_nonterminal : K.base.toArena.IsDecision second.1) :
     K.infoAt first i hfirst hfirst_nonterminal =
       K.infoAt second i hsecond hsecond_nonterminal := by
   subst second
@@ -252,23 +259,21 @@ theorem hasPerfectRecall_iff [DecidableEq N]
       rw [e.map_mover sourceSecond] at hmapped
       exact hmapped
     have hmappedFirst_nonterminal :
-        ¬ H.base.isTerminal
+        H.base.toArena.IsDecision
           (e.historyIso.stateEquiv sourceFirst).1 := by
       simpa [hmapFirst] using htargetFirst_nonterminal
     have hmappedSecond_nonterminal :
-        ¬ H.base.isTerminal
+        H.base.toArena.IsDecision
           (e.historyIso.stateEquiv sourceSecond).1 := by
       simpa [hmapSecond] using htargetSecond_nonterminal
     have hsourceFirst_nonterminal :
-        ¬ G.base.isTerminal sourceFirst.1 :=
-      (not_congr
-        (e.historyIso.isTerminal_iff sourceFirst)).mpr
-          hmappedFirst_nonterminal
+        G.base.toArena.IsDecision sourceFirst.1 :=
+      (e.historyIso.isDecision_iff sourceFirst).mpr
+        hmappedFirst_nonterminal
     have hsourceSecond_nonterminal :
-        ¬ G.base.isTerminal sourceSecond.1 :=
-      (not_congr
-        (e.historyIso.isTerminal_iff sourceSecond)).mpr
-          hmappedSecond_nonterminal
+        G.base.toArena.IsDecision sourceSecond.1 :=
+      (e.historyIso.isDecision_iff sourceSecond).mpr
+        hmappedSecond_nonterminal
     have hsourceInfo :
         G.infoAt sourceFirst i hsourceFirst
             hsourceFirst_nonterminal =
@@ -366,17 +371,15 @@ theorem hasPerfectRecall_iff [DecidableEq N]
       rw [e.map_mover sourceSecond]
       exact hsourceSecond
     have htargetFirst_nonterminal :
-        ¬ H.base.isTerminal
+        H.base.toArena.IsDecision
           (e.historyIso.stateEquiv sourceFirst).1 :=
-      (not_congr
-        (e.historyIso.isTerminal_iff sourceFirst)).mp
-          hsourceFirst_nonterminal
+      (e.historyIso.isDecision_iff sourceFirst).mp
+        hsourceFirst_nonterminal
     have htargetSecond_nonterminal :
-        ¬ H.base.isTerminal
+        H.base.toArena.IsDecision
           (e.historyIso.stateEquiv sourceSecond).1 :=
-      (not_congr
-        (e.historyIso.isTerminal_iff sourceSecond)).mp
-          hsourceSecond_nonterminal
+      (e.historyIso.isDecision_iff sourceSecond).mp
+        hsourceSecond_nonterminal
     have htargetInfo :
         H.infoAt
             (e.historyIso.stateEquiv sourceFirst)
@@ -572,23 +575,21 @@ theorem hasEventClockSignalPerfectRecall_of
     rw [e.map_mover sourceSecond] at hmapped
     exact hmapped
   have hmappedFirst_nonterminal :
-      ¬ H.base.isTerminal
+      H.base.toArena.IsDecision
         (e.historyIso.stateEquiv sourceFirst).1 := by
     simpa [hmapFirst] using htargetFirst_nonterminal
   have hmappedSecond_nonterminal :
-      ¬ H.base.isTerminal
+      H.base.toArena.IsDecision
         (e.historyIso.stateEquiv sourceSecond).1 := by
     simpa [hmapSecond] using htargetSecond_nonterminal
   have hsourceFirst_nonterminal :
-      ¬ G.base.isTerminal sourceFirst.1 :=
-    (not_congr
-      (e.historyIso.isTerminal_iff sourceFirst)).mpr
-        hmappedFirst_nonterminal
+      G.base.toArena.IsDecision sourceFirst.1 :=
+    (e.historyIso.isDecision_iff sourceFirst).mpr
+      hmappedFirst_nonterminal
   have hsourceSecond_nonterminal :
-      ¬ G.base.isTerminal sourceSecond.1 :=
-    (not_congr
-      (e.historyIso.isTerminal_iff sourceSecond)).mpr
-        hmappedSecond_nonterminal
+      G.base.toArena.IsDecision sourceSecond.1 :=
+    (e.historyIso.isDecision_iff sourceSecond).mpr
+      hmappedSecond_nonterminal
   have hmappedFirst :
       H.base.mover
           (e.historyIso.stateEquiv sourceFirst).1 =
