@@ -8,7 +8,13 @@ import EconCSLib.GameTheory.GameForm.Continuation.Simulation
 /-!
 # EconCSLib.GameTheory.GameForm.Continuation.Iso
 
-Invertible continuation semantics and exact two-way Nash-on-declared-roots transfer.
+An isomorphism supplies equivalences of roots, player strategies, and
+outcomes that commute with continuation evaluation. Read `Iso`, its `toHom`
+view and inverse, then the composition laws and two-way transfer of
+`IsNashOnRoots`.
+
+The equivalence transports the declared-root predicate; it does not certify
+that those roots form a lawful subgame system.
 -/
 
 universe uN uS uR uO uV
