@@ -145,13 +145,31 @@ theorem secondDecision_nonterminal :
   simp [absentMindedGame, base, secondDecision,
     Arena.IsTerminal, rungAction]
 
+/-- The first endpoint has an available action. -/
+theorem firstDecision_isDecision :
+    absentMindedGame.base.toArena.IsDecision firstDecision.1 :=
+  absentMindedGame.base.toArena.isDecision_of_not_isTerminal
+    firstDecision.1 firstDecision_nonterminal
+
+/-- The second endpoint has an available action. -/
+theorem secondDecision_isDecision :
+    absentMindedGame.base.toArena.IsDecision secondDecision.1 :=
+  absentMindedGame.base.toArena.isDecision_of_not_isTerminal
+    secondDecision.1 secondDecision_nonterminal
+
 /-- The single player-`0` decision key. -/
 def currentKey : absentMindedGame.DecisionKey :=
-  ⟨0, absentMindedGame.infoAt firstDecision 0 rfl
-    firstDecision_nonterminal⟩
+  ⟨0, absentMindedGame.representedInfoAt firstDecision 0 rfl
+    firstDecision_isDecision⟩
 
-instance : DecidableEq absentMindedGame.DecisionKey :=
-  inferInstanceAs (DecidableEq (Σ _ : Fin 1, Unit))
+local instance : DecidableEq absentMindedGame.DecisionKey :=
+  inferInstanceAs (DecidableEq (Σ _i : Fin 1, {_information : Unit // _}))
+
+-- Erasing the repeated key uses executable equality on the finite fields.
+example : ({currentKey} : Finset absentMindedGame.DecisionKey).erase
+    ⟨0, absentMindedGame.representedInfoAt secondDecision 0 rfl
+      secondDecision_isDecision⟩ = ∅ := by
+  native_decide
 
 /-- The availability premise of `FutureDecisionKeysAvailable.afterPlayer` is
 satisfied at the first decision: this game has a single decision key, so the
@@ -177,9 +195,9 @@ and prevents treating a decision information state as automatically fresh at
 successive decision points. -/
 theorem infoState_recurs :
     absentMindedGame.infoAt firstDecision 0 rfl
-        firstDecision_nonterminal =
+        firstDecision_isDecision =
       absentMindedGame.infoAt secondDecision 0 rfl
-        secondDecision_nonterminal := rfl
+        secondDecision_isDecision := rfl
 
 /-- The whole game is a lawful subgame even though its initial information
 state recurs later. The initial-root convention is essential for general
@@ -207,8 +225,8 @@ theorem secondDecision_not_isLawfulSubgameRoot :
   have heq :=
     hlawful.root_information_singleton
       secondDecision_ne_initial
-      0 rfl secondDecision_nonterminal
-      firstDecision rfl firstDecision_nonterminal
+      0 rfl secondDecision_isDecision
+      firstDecision rfl firstDecision_isDecision
       infoState_recurs.symm
   exact secondDecision_ne_initial (by
     simpa [firstDecision, absentMindedGame, base] using heq.symm)
@@ -223,7 +241,7 @@ theorem not_hasNoAbsentMindedness :
     ¬ absentMindedGame.HasNoAbsentMindedness 0 := by
   intro h
   exact h firstDecision rfl stepAction Rung.s1 Arena.History.nil
-    rfl secondDecision_nonterminal rfl
+    rfl secondDecision_isDecision rfl
 
 /-- Global no-absent-mindedness also fails.
 
